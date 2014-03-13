@@ -1,0 +1,29 @@
+adwords:
+  developer_token: INSERT_DEVELOPER_TOKEN_HERE
+  user_agent: INSERT_USER_AGENT_HERE
+  client_id: INSERT_OAUTH_2_CLIENT_ID_HERE
+  client_secret: INSERT_CLIENT_SECRET_HERE
+  refresh_token: INSERT_REFRESH_TOKEN_HERE
+# The following values are optional:
+#  client_customer_id: INSERT_CLIENT_CUSTOMER_ID_HERE
+#  partial_failure: True
+#  validate_only: True
+#  https_proxy: INSERT_PROXY_URL_HERE:PORT
+
+dfp:
+  application_name: INSERT_APPLICATION_NAME_HERE
+  client_id: INSERT_OAUTH_2_CLIENT_ID_HERE
+  client_secret: INSERT_CLIENT_SECRET_HERE
+  refresh_token: INSERT_REFRESH_TOKEN_HERE
+# The following values are optional:
+#  network_code: INSERT_NETWORK_CODE_HERE
+#  https_proxy: INSERT_PROXY_URL_HERE:PORT
+
+dfa:
+  username: INSERT_DFA_USERNAME_HERE
+  application_name: INSERT_APPLICATION_NAME_HERE
+  client_id: INSERT_OAUTH_2_CLIENT_ID_HERE
+  client_secret: INSERT_CLIENT_SECRET_HERE
+  refresh_token: INSERT_REFRESH_TOKEN_HERE
+# The following values are optional:
+#  https_proxy: INSERT_PROXY_URL_HERE:PORT
