@@ -21,7 +21,7 @@ __author__ = ('Nicholas Chen',
 
 import uuid
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 # Set the IDs of the custom criteria to be used in the segment rule.

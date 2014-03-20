@@ -22,7 +22,7 @@ To create a placement, run create_placements.py.
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 

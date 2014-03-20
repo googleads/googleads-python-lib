@@ -21,7 +21,7 @@ To determine which orders exist, run get_all_orders.py."""
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 ORDER_ID = 'INSERT_ORDER_ID_HERE'

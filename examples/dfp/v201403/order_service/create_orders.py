@@ -23,7 +23,7 @@ __author__ = ('Nicholas Chen',
 
 import uuid
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 COMPANY_ID = 'INSERT_ADVERTISER_COMPANY_ID_HERE'

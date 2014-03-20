@@ -30,7 +30,7 @@ import base64
 import os
 import uuid
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 # Set id of the advertiser (company) that the creative will be assigned to.

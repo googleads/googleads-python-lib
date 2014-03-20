@@ -26,7 +26,7 @@ __author__ = ('Vincent Tsao',
 
 import uuid
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 # Set the ID of the advertiser company this activity group is associated with.

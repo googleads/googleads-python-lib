@@ -452,7 +452,9 @@ class ReportDownloader(object):
       an AdWordsReportBadRequestError will be returned. Otherwise, an
       AdWordsReportError will be returned.
     """
-    content = error.read().decode()
+    content = error.read()
+    if sys.version_info[0] == 3:
+      content = content.decode()
     if 'reportDownloadError' in content:
       try:
         tree = ElementTree.fromstring(content)

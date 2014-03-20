@@ -23,7 +23,7 @@ __author__ = ('Nicholas Chen',
 
 import datetime
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 ORDER_ID = 'INSERT_ORDER_ID_HERE'

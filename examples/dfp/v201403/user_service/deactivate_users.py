@@ -23,7 +23,7 @@ get_all_users.py."""
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 USER_ID = 'INSERT_USER_ID_TO_DEACTIVATE_HERE'

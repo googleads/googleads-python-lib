@@ -22,7 +22,7 @@ Tags: CampaignCriterionService.mutate
 __author__ = ('api.msaniscalchi@gmail.com (Mark Saniscalchi)',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import adwords
 
 CAMPAIGN_ID = 'INSERT_CAMPAIGN_ID_HERE'

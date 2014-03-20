@@ -24,7 +24,7 @@ __author__ = ('api.msaniscalchi@gmail.com (Mark Saniscalchi)',
 
 import uuid
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import adwords
 
 BUDGET_ID = 'INSERT_BUDGET_ID_HERE'

@@ -23,7 +23,7 @@ __author__ = ('Nicholas Chen',
 
 from datetime import date
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 # Set the placement that the prospective line item will target.

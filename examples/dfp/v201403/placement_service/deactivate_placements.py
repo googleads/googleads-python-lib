@@ -22,7 +22,7 @@ To determine which placements exist, run get_all_placements.py.
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 PLACEMENT_ID = 'INSERT_PLACEMENT_ID_HERE'

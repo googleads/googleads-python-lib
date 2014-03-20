@@ -21,7 +21,7 @@ To determine which line items exist, run get_all_line_items.py."""
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 # Set id of the order to get line items from.

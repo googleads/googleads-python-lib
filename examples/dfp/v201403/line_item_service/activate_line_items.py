@@ -25,7 +25,7 @@ get_all_line_items.py."""
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 # Set the id of the order to get line items from.

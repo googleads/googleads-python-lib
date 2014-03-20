@@ -1,3 +1,8 @@
+1.0.2 - 03/20/2014
+==================
+- Fixed a typo in examples/dfp/auth/generate_refresh_token.py (there was a
+  trailing comma after the scope).
+
 1.0.1 - 03/13/2014
 ==================
 - Fixed a bug with the AdWords ReportDownloader failing to decode unicode

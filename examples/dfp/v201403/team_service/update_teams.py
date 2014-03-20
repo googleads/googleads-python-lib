@@ -25,7 +25,7 @@ Tags: TeamService.getTeamsByStatement, TeamService.updateTeams
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 AD_UNIT_ID = 'INSERT_AD_UNIT_ID_HERE'

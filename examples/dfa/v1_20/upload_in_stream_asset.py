@@ -31,7 +31,7 @@ __author__ = 'Joseph DiLallo'
 
 import base64
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfa
 
 # Set the parameters for the In-Stream video asset.

@@ -22,7 +22,7 @@ Tags: ad.getAdTypes
 
 __author__ = 'Joseph DiLallo'
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfa
 
 

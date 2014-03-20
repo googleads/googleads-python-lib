@@ -26,7 +26,7 @@ Tags: CustomTargetingService.getCustomTargetingValuesByStatement
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 KEY_ID = 'INSERT_CUSTOM_TARGETING_KEY_ID_HERE'

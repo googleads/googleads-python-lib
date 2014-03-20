@@ -25,7 +25,7 @@ Tags: CreativeService.updateCreatives
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 IMAGE_CREATIVE_ID = 'INSERT_IMAGE_CREATIVE_ID_HERE'

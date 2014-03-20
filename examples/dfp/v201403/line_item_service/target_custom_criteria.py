@@ -25,7 +25,7 @@ __author__ = ('Nicholas Chen',
 
 import pprint
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 LINE_ITEM_ID = 'INSERT_LINE_ITEM_ID_HERE'

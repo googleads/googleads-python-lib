@@ -22,7 +22,7 @@ __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 import tempfile
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 from googleads import errors
 

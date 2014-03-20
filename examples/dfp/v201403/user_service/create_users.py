@@ -21,7 +21,7 @@ To determine which users exist, run get_all_users.py."""
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 NEW_USER_EMAIL_ADDRESS = 'INSERT_EMAIL_ADDRESS_HERE'

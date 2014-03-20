@@ -22,7 +22,7 @@ To create custom targeting keys, run create_custom_targeting_keys_and_values.py.
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 

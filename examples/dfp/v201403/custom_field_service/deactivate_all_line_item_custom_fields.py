@@ -25,7 +25,7 @@ Tags: CustomFieldService.performCustomFieldAction
 __author__ = ('Nicholas Chen',
               'Joseph DiLallo')
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 

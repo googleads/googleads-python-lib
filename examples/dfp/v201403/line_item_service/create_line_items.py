@@ -26,7 +26,7 @@ __author__ = ('Nicholas Chen',
 from datetime import date
 import uuid
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 from googleads import dfp
 
 # Set order that the created line item will belong to and add the id of a

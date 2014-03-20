@@ -28,7 +28,7 @@ __author__ = ('api.msaniscalchi@gmail.com (Mark Saniscalchi)',
 import time
 import uuid
 
-# Import appropriate classes from the client library.
+# Import appropriate modules from the client library.
 import suds
 
 from googleads import adwords
