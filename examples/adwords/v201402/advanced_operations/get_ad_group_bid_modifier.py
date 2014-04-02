@@ -16,6 +16,11 @@
 
 """Retrieves the ad group level bid modifiers for a campaign.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: AdGroupBidModifierService.get
 """
 
@@ -29,8 +34,8 @@ PAGE_SIZE = 500
 
 def main(client):
   # Initialize appropriate service.
-  ad_group_bid_modifier_service = client.GetAdGroupBidModifierService(
-      version='v201402')
+  ad_group_bid_modifier_service = client.GetService(
+      'AdGroupBidModifierService', version='v201402')
 
   # Get all ad group bid modifiers for the campaign.
   selector = {
@@ -49,7 +54,8 @@ def main(client):
     page = ad_group_bid_modifier_service.get(selector)
     if page['entries']:
       for modifier in page['entries']:
-        value = modifier.get('bidModifier') or 'unset'
+        value = (modifier['bidModifier'] if 'bidModifier' in modifier
+                 else 'unset')
         print ('Campaign ID %s, AdGroup ID %s, Criterion ID %s has ad group '
                'level modifier: %s' %
                (modifier['campaignId'], modifier['adGroupId'],

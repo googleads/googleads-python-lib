@@ -20,6 +20,11 @@ It updates a user team association by setting the overridden access type to read
 only for all teams that the user belongs to. To determine which users exists,
 run get_all_users.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: UserTeamAssociationService.getUserTeamAssociationsByStatement
 Tags: UserTeamAssociationService.updateUserTeamAssociations
 """

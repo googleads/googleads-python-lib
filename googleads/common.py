@@ -21,13 +21,12 @@ import sys
 import warnings
 
 import suds
-import suds.plugin
 import yaml
 
 import googleads.errors
 import googleads.oauth2
 
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _PYTHON_VERSION = 'Python/%d.%d' % (sys.version_info[0], sys.version_info[1])
 
@@ -76,7 +75,7 @@ def LoadFromStorage(path, yaml_key, required_values, optional_values):
     path = os.path.expanduser(path)
   try:
     with open(path, 'r') as handle:
-      data = yaml.load(handle.read()).get(yaml_key) or {}
+      data = yaml.safe_load(handle.read()).get(yaml_key) or {}
   except IOError:
     raise googleads.errors.GoogleAdsValueError(
         'Given yaml file, %s, could not be opened.' % path)
@@ -137,7 +136,12 @@ def _PackForSuds(obj, factory):
     will be an instance of a class generated from the WSDL. Otherwise, this will
     be the same data type as the input obj was.
   """
-  if isinstance(obj, dict):
+  if obj in ({}, None):
+    # Force suds to serialize empty objects. There are legitimate use cases for
+    # this, for example passing in an empty SearchCriteria object to a DFA
+    # search method in order to select everything.
+    return suds.null()
+  elif isinstance(obj, dict):
     if 'xsi_type' in obj:
       try:
         new_obj = factory.create(obj['xsi_type'])
@@ -169,8 +173,6 @@ def _PackForSuds(obj, factory):
     return new_obj
   elif isinstance(obj, (list, tuple)):
     return [_PackForSuds(item, factory) for item in obj]
-  elif obj is None:
-    return suds.null()
   else:
     return obj
 

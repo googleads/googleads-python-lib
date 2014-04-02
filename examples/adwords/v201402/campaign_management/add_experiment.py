@@ -22,6 +22,11 @@ split (10%), then adds experimental bid changes for an ad group, and adds an
 experiment-only keyword. To get campaigns, run get_campaigns.py. To get ad
 groups, run get_ad_groups.py. To get keywords, run get_keywords.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: ExperimentService.mutate
 Api: AdWordsOnly
 """

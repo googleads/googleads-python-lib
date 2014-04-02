@@ -21,6 +21,11 @@ into. To create a campaign, run create_campaign.py. To get DFA site ID, run
 get_dfa_site.py. To get a size ID, run get_size.py. To get placement types, run
 get_placement_types.py. To get pricing types, run get_pricing_types.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: placement.savePlacement
 """
 

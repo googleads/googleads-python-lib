@@ -16,6 +16,11 @@
 
 """This example retrieves keyword traffic estimates.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: TrafficEstimatorService.get
 Api: AdWordsOnly
 """

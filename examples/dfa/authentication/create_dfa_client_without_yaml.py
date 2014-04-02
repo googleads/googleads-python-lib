@@ -45,7 +45,9 @@ def main(client_id, client_secret, refresh_token, user_profile_name,
 
   dfa_client = dfa.DfaClient(user_profile_name, oauth2_client, application_name)
 
-  results = dfa_client.GetService('CampaignService').getCampaignsByCriteria({})
+  campaign_service = dfa_client.GetService(
+      'campaign', server='https://advertisersapitest.doubleclick.net')
+  results = campaign_service.getCampaignsByCriteria({})
   if results['records']:
     for campaign in results['records']:
       print ('Campaign with name \'%s\' and ID \'%s\' was found.'

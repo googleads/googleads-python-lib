@@ -21,6 +21,11 @@ provided. To get assets file names, run create_html_asset.py and
 create_image_asset.py. To get a size ID, run get_size.py. To get a creative
 type ID, run get_creative_type.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: creative.saveCreative
 """
 

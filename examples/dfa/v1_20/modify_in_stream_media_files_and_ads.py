@@ -24,6 +24,11 @@ To create an In-Stream video creative, run create_in_stream_video_creative.py.
 To add an In-Stream asset to an In-Stream video creative, run
 upload_in_stream_asset.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: creative.saveCreative
 """
 

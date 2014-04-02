@@ -20,6 +20,11 @@ To determine which custom fields exist, run get_all_custom_fields.py.
 To determine which line item exist, run get_all_line_items.py.
 To create custom field options, run create_custom_field_options.py
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: CustomFieldService.getCustomFieldsByStatement
       LineItemService.getLineItemsByStatement
 """

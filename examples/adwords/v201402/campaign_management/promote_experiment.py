@@ -20,6 +20,11 @@ Promoting an experiment permanently applies all the experimental changes made to
 its related ad groups, criteria and ads. To add an experiment, run
 add_experiment.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: ExperimentService.mutate
 Api: AdWordsOnly
 """

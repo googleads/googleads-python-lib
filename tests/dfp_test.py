@@ -44,8 +44,7 @@ class DfpHeaderHandlerTest(unittest.TestCase):
     oauth_header = {'oauth', 'header'}
     self.dfp_client.network_code = network_code
     self.dfp_client.application_name = app_name
-    self.dfp_client.oauth2_client.CreateHttpHeader.return_value = (
-        oauth_header)
+    self.dfp_client.oauth2_client.CreateHttpHeader.return_value = oauth_header
 
     self.header_handler.SetHeaders(suds_client)
 
@@ -276,32 +275,6 @@ class DataDownloaderTest(unittest.TestCase):
          'query': ('SELECT Id, Name FROM Line_Item LIMIT 500 OFFSET 0')})
     self.assertEqual([], result_set)
 
-  def testFilterStatement(self):
-    values = [{
-        'key': 'test_key',
-        'value': {
-            'xsi_type': 'TextValue',
-            'value': 'test_value'
-        }
-    }]
-    test_statement = googleads.dfp.FilterStatement()
-    self.assertEqual(test_statement.ToStatement(),
-                     {'query': ' LIMIT 500 OFFSET 0', 'values': None})
-    test_statement.offset += 30
-    self.assertEqual(test_statement.ToStatement(),
-                     {'query': ' LIMIT 500 OFFSET 30', 'values': None})
-    test_statement.offset = 123
-    test_statement.limit = 5
-    self.assertEqual(test_statement.ToStatement(),
-                     {'query': ' LIMIT 5 OFFSET 123', 'values': None})
-    test_statement = googleads.dfp.FilterStatement(
-        'SELECT Id FROM Line_Item WHERE key = :test_key', limit=300, offset=20,
-        values=values)
-    self.assertEqual(test_statement.ToStatement(),
-                     {'query': 'SELECT Id FROM Line_Item WHERE key = '
-                               ':test_key LIMIT 300 OFFSET 20',
-                      'values': values})
-
   def testWaitForReport_success(self):
     id_ = '1g684'
     input_ = {'query': 'something', 'id': id_}
@@ -363,6 +336,36 @@ class DataDownloaderTest(unittest.TestCase):
     self.report_downloader._GetPqlService()
     self.report_downloader._dfp_client.GetService.assert_called_once_with(
         'PublisherQueryLanguageService', version, 'https://www.google.com')
+
+
+class FilterStatementTest(unittest.TestCase):
+  """Tests for the FilterStatement class."""
+
+  def testFilterStatement(self):
+    values = [{
+        'key': 'test_key',
+        'value': {
+            'xsi_type': 'TextValue',
+            'value': 'test_value'
+        }
+    }]
+    test_statement = googleads.dfp.FilterStatement()
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': ' LIMIT 500 OFFSET 0', 'values': None})
+    test_statement.offset += 30
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': ' LIMIT 500 OFFSET 30', 'values': None})
+    test_statement.offset = 123
+    test_statement.limit = 5
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': ' LIMIT 5 OFFSET 123', 'values': None})
+    test_statement = googleads.dfp.FilterStatement(
+        'SELECT Id FROM Line_Item WHERE key = :test_key', limit=300, offset=20,
+        values=values)
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': 'SELECT Id FROM Line_Item WHERE key = '
+                               ':test_key LIMIT 300 OFFSET 20',
+                      'values': values})
 
 
 if __name__ == '__main__':

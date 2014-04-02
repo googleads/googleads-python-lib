@@ -20,6 +20,11 @@ To create an activity group, run create_spotlight_activity_group.py. To get tag
 methods types, run get_tag_methods.py. To get activity type IDs, run
 get_activity_types.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: spotlight.saveSpotlightActivity
 """
 

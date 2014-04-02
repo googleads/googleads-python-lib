@@ -26,6 +26,11 @@ The end result of this is that any campaign or ad group whose CampaignFeed
 or AdGroupFeed points to the Feed's ID will now serve line 1 and line 2
 descriptions in its sitelinks.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: FeedItemService.mutate
 Tags: FeedMappingService.mutate, FeedService.mutate
 """

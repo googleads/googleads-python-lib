@@ -19,6 +19,11 @@
 This example displays advertiser name, ID and spotlight configuration ID for
 the given search criteria. Results are limited to first 10 records.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: advertiser.getAdvertisers
 """
 

@@ -16,6 +16,11 @@
 
 """Adds a Shared Bidding Strategy and uses it to construct a campaign.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: BiddingStrategyService.mutate
 Tags: BudgetService.mutate, CampaignService.mutate
 """
@@ -140,6 +145,7 @@ def CreateCampaignWithBiddingStrategy(client, bidding_strategy_id, budget_id):
       'biddingStrategyConfiguration': {
           'biddingStrategyId': bidding_strategy_id
       },
+      'advertisingChannelType': 'SEARCH',
       'settings': [{
           'xsi_type': 'KeywordMatchSetting',
           'optIn': 'true'

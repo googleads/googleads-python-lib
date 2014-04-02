@@ -26,6 +26,11 @@ use the same workflow to replace a non-linear ad by setting the 'nonLinear' flag
 instead. You may not use this method to swap out media files (a.k.a. video
 assets).
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: creative.replaceInStreamAsset
 """
 

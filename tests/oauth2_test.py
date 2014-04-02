@@ -35,7 +35,7 @@ URL_REQUEST_PATH = ('urllib2' if PYTHON2 else 'urllib.request')
 class GoogleOAuth2ClientTest(unittest.TestCase):
   """Tests for the googleads.oauth2.GoogleOAuth2Client class."""
 
-  def testSetHeaders(self):
+  def testCreateHttpHeader(self):
     """For coverage."""
     self.assertRaises(
         NotImplementedError,
@@ -57,12 +57,12 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
           self.client_id, self.client_secret, self.refresh_token,
           self.https_proxy)
 
-  def testHeaderHandler_noRefresh(self):
+  def testCreateHttpHeader_noRefresh(self):
     header = {'Authorization': 'b'}
     self.oauthlib_client.add_token.return_value = ('unused', header, 'unusued')
     self.assertEqual(header, self.googleads_client.CreateHttpHeader())
 
-  def testHeaderHandler_refresh(self):
+  def testCreateHttpHeader_refresh(self):
     header = {u'Authorization': 'b'}
     post_body = 'post_body'
     content = u'content'
@@ -88,7 +88,7 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
     self.assertEqual(2, len(self.oauthlib_client.add_token.call_args_list))
     self.assertEqual(str, type(returned_header.keys()[0]))
 
-  def testHeaderHandler_refreshFails(self):
+  def testCreateHttpHeader_refreshFails(self):
     post_body = 'post_body'
     error = urllib2.HTTPError('', 400, 'Bad Request', {}, None)
 

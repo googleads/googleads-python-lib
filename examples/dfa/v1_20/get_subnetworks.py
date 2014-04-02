@@ -22,6 +22,11 @@ Note that the permissions assigned to a subnetwork are not returned in a
 human-readable format with this example. Run get_available_permissions.py to
 see what permissions are available on a subnetwork.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: subnetwork.getSubnetworks
 """
 

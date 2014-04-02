@@ -21,6 +21,11 @@ This example assumes the email and password belong to an MCC.
 Note: this code example won't work with test accounts. See
 https://developers.google.com/adwords/api/docs/test-accounts
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: AlertService.get
 Api: AdWordsOnly
 """

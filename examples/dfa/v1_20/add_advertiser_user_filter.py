@@ -23,6 +23,11 @@ A similar pattern can be applied to set filters limiting site, user role,
 and/or campaign access for any user. To get the Filter Criteria Type ID, run
 get_user_filter_types.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: user.getUser, user.saveUser
 """
 

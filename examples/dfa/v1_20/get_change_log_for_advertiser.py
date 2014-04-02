@@ -22,6 +22,11 @@ A similar pattern can be applied to get change logs for many other object
 types. Run get_change_log_object_types.py for a list of other supported object
 types and their ID numbers.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: changelog.getChangeLogRecords
 """
 

@@ -16,7 +16,12 @@
 
 """Imports offline conversion values for specific clicks into your account.
 
-To get THE Google Click ID for a click, run a CLICK_PERFORMANCE_REPORT.
+To get the Google Click ID for a click, run a CLICK_PERFORMANCE_REPORT.
+
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
 
 Tags: ConversionTrackerService.mutate, OfflineConversionFeedService.mutate
 """

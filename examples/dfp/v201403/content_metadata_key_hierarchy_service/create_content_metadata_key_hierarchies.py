@@ -21,6 +21,11 @@ get_all_content_metadata_key_hierarchies.py.
 
 This feature is only available to DFP video publishers.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: ContentMetadataKeyHierarchyService.createContentMetadataKeyHierarchies
 """
 

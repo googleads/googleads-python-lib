@@ -19,6 +19,11 @@
 
 To get ad groups, run get_ad_groups.py. To get keywords, run add_keywords.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: AdGroupAdService.mutate, AdParamService.mutate
 Api: AdWordsOnly
 """

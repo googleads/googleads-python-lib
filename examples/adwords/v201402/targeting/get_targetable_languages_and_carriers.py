@@ -16,6 +16,11 @@
 
 """Retrieves all languages and carriers available for targeting.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: ConstantDataService.getLanguageCriterion
 Tags: ConstantDataService.getCarrierCriterion
 """

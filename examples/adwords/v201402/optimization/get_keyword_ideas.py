@@ -16,6 +16,11 @@
 
 """This example retrieves keywords that are related to a given keyword.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: TargetingIdeaService.get
 Api: AdWordsOnly
 """

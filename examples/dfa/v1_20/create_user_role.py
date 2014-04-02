@@ -20,6 +20,11 @@ To get the subnetwork ID, run get_subnetworks.py. To get the available
 permissions, run get_available_permissions.py. To get the parent user role ID,
 run get_user_roles.py.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: userrole.saveUserRole
 """
 

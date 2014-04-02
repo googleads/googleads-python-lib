@@ -21,6 +21,11 @@ within campaign start and end dates. To create creatives, run
 create_[type]_creative.py. To get available placements, run get_placements.py.
 To get a size ID, run get_size.py example.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: ad.saveAd
 """
 

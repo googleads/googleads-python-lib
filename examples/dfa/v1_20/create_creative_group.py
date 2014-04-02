@@ -19,6 +19,11 @@
 To get an advertiser ID, run get_advertisers.py. Valid group numbers are limited
 to 1 or 2.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: creativegroup.saveCreativeGroup
 """
 

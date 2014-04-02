@@ -19,6 +19,11 @@
 CAUTION: An advertiser that has campaigns associated with it cannot be
 removed from an advertiser group once assigned.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: advertisergroup.assignAdvertisersToAdvertiserGroup
 """
 

@@ -1,11 +1,24 @@
+1.0.3 - 04/02/2014
+==================
+* The common module's LoadFromStorage method now parses the yaml file with
+  safe_load rather than load.
+* Fixed a typo in examples/dfa/authentication/create_dfa_client_without_yaml.py
+  (the service was 'CampaignService' instead of 'campaign'). This resolves
+  issue #4.
+* Changed examples/dfa/authentication/create_dfa_client_without_yaml.py to run
+  against the DFA test environment in order to match all other DFA examples.
+* Changed common._PackForSuds to force suds to serialize empty objects into XML.
+  There are many use cases for this in Google's Ads APIs, such as passing empty
+  search criteria into DFA search methods in order to select everything.
+
 1.0.2 - 03/20/2014
 ==================
-- Fixed a typo in examples/dfp/auth/generate_refresh_token.py (there was a
-  trailing comma after the scope).
+* Fixed a typo in examples/dfp/authentication/generate_refresh_token.py (there
+  was a trailing comma after the scope).
 
 1.0.1 - 03/13/2014
 ==================
-- Fixed a bug with the AdWords ReportDownloader failing to decode unicode
+* Fixed a bug with the AdWords ReportDownloader failing to decode unicode
   characters in reports. This resolves issue #1.
 
 1.0.0 - 03/05/2014

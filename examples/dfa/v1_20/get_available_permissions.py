@@ -23,6 +23,11 @@ belongs to. You may enter a subnetwork ID to see the maximum permissions a
 user role belonging to it can have, or enter '0' as the subnetwork ID to see
 all possible permissions.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: userrole.getAvailablePermissions
 """
 

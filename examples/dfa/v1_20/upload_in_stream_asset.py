@@ -24,6 +24,11 @@ use the same workflow to upload companion ads or non-linear ads to your creative
 by setting the 'companion' or 'nonLinear' flags instead, respectively. Only one
 flag may be set per upload request.
 
+The LoadFromStorage method is pulling credentials and properties from a
+"googleads.yaml" file. By default, it looks for this file in your home
+directory. For more information, see the "Caching authentication information"
+section of our README.
+
 Tags: creative.uploadInStreamAsset
 """
 

@@ -37,6 +37,14 @@ in the fields for the API you plan to use. The library's `LoadFromStorage`
 methods default to looking for a file with this name in your home directory,
 but you can pass in a path to any file with the correct yaml contents.
 
+```python
+# Use the default location - your home directory:
+adwords_client = adwords.AdWordsClient.LoadFromStorage()
+
+# Alternatively, pass in the location of the file:
+dfp_client = dfp.DfpClient.LoadFromStorage('C:\My\Directory\googleads.yaml')
+```
+
 ##Where do I submit bug reports and/or feature requests?
 
 Use the issue tracker at:
@@ -92,7 +100,6 @@ suds_client.set_options(
 
 suds_client.service.mutate([operation])
 ```
-
 
 ##External Dependencies:
 
