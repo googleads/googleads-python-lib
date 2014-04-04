@@ -188,9 +188,14 @@ class AdWordsClient(object):
     """
     if server[-1] == '/': server = server[:-1]
     try:
+      
+      proxy_option=None
+      if self.https_proxy: proxy_option={'https': self.https_proxy}
+
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT %
-          (server, _SERVICE_MAP[version][service_name], version, service_name))
+          (server, _SERVICE_MAP[version][service_name], version, service_name),
+          proxy=proxy_option)
     except KeyError:
       if version in _SERVICE_MAP:
         raise googleads.errors.GoogleAdsValueError(
@@ -202,7 +207,6 @@ class AdWordsClient(object):
             'Unrecognized version of the AdWords API. Version given: %s '
             'Supported versions: %s' % (version, _SERVICE_MAP.keys()))
 
-    if self.https_proxy: client.set_options(proxy={'https': self.https_proxy})
     return googleads.common.SudsServiceProxy(
         client, _AdWordsHeaderHandler(self, version))
 
