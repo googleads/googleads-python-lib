@@ -1,3 +1,7 @@
+1.0.4 - 04/22/2014
+* Fixed a bug where https_proxy wasn't set for retrieving the API WSDL. This
+  resolves issue #5.
+
 1.0.3 - 04/02/2014
 ==================
 * The common module's LoadFromStorage method now parses the yaml file with
