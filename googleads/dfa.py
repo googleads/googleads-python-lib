@@ -129,8 +129,15 @@ class DfaClient(object):
     """
     server = server[:-1] if server[-1] == '/' else server
     try:
+      proxy_option = None
+      if self.https_proxy:
+        proxy_option = {
+            'https': self.https_proxy
+        }
+
       client = suds.client.Client(
-          self._SOAP_SERVICE_FORMAT % (server, version, service_name))
+          self._SOAP_SERVICE_FORMAT % (server, version, service_name),
+          proxy=proxy_option)
     except suds.transport.TransportError:
       if version in self._SERVICE_MAP:
         if service_name in self._SERVICE_MAP[version]:
@@ -145,7 +152,6 @@ class DfaClient(object):
             'Unrecognized version of the DFA API. Version given: %s Supported '
             'versions: %s' % (version, self._SERVICE_MAP.keys()))
 
-    if self.https_proxy: client.set_options(proxy={'https': self.https_proxy})
     return googleads.common.SudsServiceProxy(client, self._header_handler)
 
 

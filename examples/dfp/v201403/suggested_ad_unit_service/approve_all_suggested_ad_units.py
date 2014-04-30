@@ -64,7 +64,6 @@ def main(client):
           statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         num_approved_suggested_ad_units += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break
 

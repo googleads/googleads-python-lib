@@ -153,8 +153,15 @@ class DfpClient(object):
     """
     server = server[:-1] if server[-1] == '/' else server
     try:
+      proxy_option = None
+      if self.https_proxy:
+        proxy_option = {
+            'https': self.https_proxy
+        }
+
       client = suds.client.Client(
-          self._SOAP_SERVICE_FORMAT % (server, version, service_name))
+          self._SOAP_SERVICE_FORMAT % (server, version, service_name),
+          proxy=proxy_option)
     except suds.transport.TransportError:
       if version in _SERVICE_MAP:
         if service_name in _SERVICE_MAP[version]:
@@ -169,7 +176,6 @@ class DfpClient(object):
             'Unrecognized version of the DFP API. Version given: %s Supported '
             'versions: %s' % (version, _SERVICE_MAP.keys()))
 
-    if self.https_proxy: client.set_options(proxy={'https': self.https_proxy})
     return googleads.common.SudsServiceProxy(client, self._header_handler)
 
   def GetDataDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],

@@ -188,9 +188,11 @@ class AdWordsClient(object):
     """
     if server[-1] == '/': server = server[:-1]
     try:
-      
-      proxy_option=None
-      if self.https_proxy: proxy_option={'https': self.https_proxy}
+      proxy_option = None
+      if self.https_proxy:
+        proxy_option = {
+            'https': self.https_proxy
+        }
 
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT %
