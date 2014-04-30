@@ -229,7 +229,7 @@ class AdWordsClient(object):
     Returns:
       A ReportDownloader tied to this AdWordsClient, ready to download reports.
     """
-    return ReportDownloader(self, version, server, https_proxy=self.https_proxy)
+    return ReportDownloader(self, version, server)
 
 
 class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
@@ -301,7 +301,7 @@ class ReportDownloader(object):
   _REPORT_DEFINITION_NAME = 'reportDefinition'
 
   def __init__(self, adwords_client, version=sorted(_SERVICE_MAP.keys())[-1],
-               server='https://adwords.google.com', https_proxy=None):
+               server='https://adwords.google.com'):
     """Initializes a ReportDownloader.
 
     Args:
@@ -318,10 +318,12 @@ class ReportDownloader(object):
     self._namespace = self._NAMESPACE_FORMAT % version
     self._end_point = self._END_POINT_FORMAT % (server, version)
     self._header_handler = _AdWordsHeaderHandler(adwords_client, version)
-    self._https_proxy = https_proxy
 
     proxy_option=None
-    if self._https_proxy: proxy_option={'https': self._https_proxy}
+    if self._adwords_client.https_proxy: 
+      proxy_option={
+        'https': self._adwords_client.https_proxy
+      }
 
     schema_url = self._SCHEMA_FORMAT % (server, version)
     schema = suds.client.Client(
@@ -408,8 +410,11 @@ class ReportDownloader(object):
     request = urllib2.Request(
         self._end_point, post_body,
         self._header_handler.GetReportDownloadHeaders(return_money_in_micros))
-    if self._adwords_client.https_proxy:
-      request.set_proxy(self._adwords_client.https_proxy, 'https')
+    #TODO: Removed by Rodrigo (doesn't work)
+    #if self._adwords_client.https_proxy:
+    #  print 'Using proxy %s' % self._adwords_client.https_proxy
+
+    #  request.set_proxy(self._adwords_client.https_proxy, 'https')
     try:
       response = urllib2.urlopen(request)
     except urllib2.HTTPError, e:
