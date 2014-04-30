@@ -227,7 +227,7 @@ class AdWordsClient(object):
     Returns:
       A ReportDownloader tied to this AdWordsClient, ready to download reports.
     """
-    return ReportDownloader(self, version, server)
+    return ReportDownloader(self, version, server, https_proxy=self.https_proxy)
 
 
 class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
@@ -299,7 +299,7 @@ class ReportDownloader(object):
   _REPORT_DEFINITION_NAME = 'reportDefinition'
 
   def __init__(self, adwords_client, version=sorted(_SERVICE_MAP.keys())[-1],
-               server='https://adwords.google.com'):
+               server='https://adwords.google.com', https_proxy=None):
     """Initializes a ReportDownloader.
 
     Args:
@@ -316,12 +316,16 @@ class ReportDownloader(object):
     self._namespace = self._NAMESPACE_FORMAT % version
     self._end_point = self._END_POINT_FORMAT % (server, version)
     self._header_handler = _AdWordsHeaderHandler(adwords_client, version)
+    self._https_proxy = https_proxy
+
+    proxy_option=None
+    if self._https_proxy: proxy_option={'https': self._https_proxy}
 
     schema_url = self._SCHEMA_FORMAT % (server, version)
     schema = suds.client.Client(
         schema_url,
         doctor=suds.xsd.doctor.ImportDoctor(suds.xsd.doctor.Import(
-            self._namespace, schema_url))).wsdl.schema
+            self._namespace, schema_url)),proxy=proxy_option).wsdl.schema
     self._report_definition_type = schema.elements[
         (self._REPORT_DEFINITION_NAME, self._namespace)]
     self._marshaller = suds.mx.literal.Literal(schema)
