@@ -209,7 +209,8 @@ class ReportDownloaderTest(unittest.TestCase):
 
   def testDownloadReport(self):
     output_file = io.StringIO()
-    report_definition = {'table': 'campaigns'}
+    report_definition = {'table': 'campaigns',
+                         'downloadFormat': 'CSV'}
     serialized_report = 'nuinbwuign'
     post_body = urllib.urlencode({'__rdxml': serialized_report})
     if not PYTHON2:
@@ -240,7 +241,8 @@ class ReportDownloaderTest(unittest.TestCase):
 
   def testDownloadReport_failure(self):
     output_file = io.StringIO()
-    report_definition = {'table': 'campaigns'}
+    report_definition = {'table': 'campaigns',
+                         'downloadFormat': 'CSV'}
     serialized_report = 'hjuibnibguo'
     post_body = urllib.urlencode({'__rdxml': serialized_report})
     if not PYTHON2:
@@ -272,6 +274,22 @@ class ReportDownloaderTest(unittest.TestCase):
 
     self.assertEqual('', output_file.getvalue())
     self.header_handler.GetReportDownloadHeaders.assert_called_once_with(True)
+
+  def testDownloadReport_incompatibleFormatFailure(self):
+    output_file = io.StringIO()
+    report_definition = {'table': 'campaigns',
+                         'downloadFormat': 'GZIPPED_CSV'}
+    serialized_report = 'hjuibnibguo'
+    post_body = urllib.urlencode({'__rdxml': serialized_report})
+    if not PYTHON2:
+      post_body = bytes(post_body, 'utf-8')
+
+    self.assertRaises(googleads.errors.GoogleAdsValueError,
+                      self.report_downloader.DownloadReport,
+                      report_definition,
+                      output_file, True)
+
+    self.assertEqual('', output_file.getvalue())
 
   def testDownloadReportWithAwql(self):
     output_file = io.StringIO()

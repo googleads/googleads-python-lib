@@ -170,7 +170,9 @@ class DataDownloaderTest(unittest.TestCase):
                                    'minute': '12',
                                    'second': '12',
                                    'timeZoneID': 'PST8PDT'},
-                         'Value.Type': 'DateTimeValue'}]},
+                         'Value.Type': 'DateTimeValue'},
+                        {'value': None,
+                         'Value.Type': 'NumberValue'}]},
             {'values': [{'value': 'A second row of PQL response!',
                          'Value.Type': 'TextValue'},
                         {'value': {'date': {
@@ -185,7 +187,9 @@ class DataDownloaderTest(unittest.TestCase):
                                    'minute': '02',
                                    'second': '02',
                                    'timeZoneID': 'GMT'},
-                         'Value.Type': 'DateTimeValue'}]}]
+                         'Value.Type': 'DateTimeValue'},
+                        {'value': '123456',
+                         'Value.Type': 'NumberValue'}]}]
 
     self.pql_service.select.return_value = {'rows': rval, 'columnTypes': header}
 
@@ -200,12 +204,14 @@ class DataDownloaderTest(unittest.TestCase):
                      ('"Some random PQL response...",'
                       '"1999-04-03",'
                       '123,'
-                      '"2012-11-05T12:12:12-08:00"\r\n'))
+                      '"2012-11-05T12:12:12-08:00",'
+                      '"-"\r\n'))
     self.assertEqual(csv_file.readline(),
                      ('"A second row of PQL response!",'
                       '"2009-02-05",'
                       '345,'
-                      '"2013-01-03T02:02:02Z"\r\n'))
+                      '"2013-01-03T02:02:02Z",'
+                      '123456\r\n'))
     csv_file.close()
 
     self.pql_service.select.assert_called_once_with(
@@ -229,7 +235,9 @@ class DataDownloaderTest(unittest.TestCase):
                                    'minute': '12',
                                    'second': '12',
                                    'timeZoneID': 'PST8PDT'},
-                         'Value.Type': 'DateTimeValue'}]},
+                         'Value.Type': 'DateTimeValue'},
+                        {'value': None,
+                         'Value.Type': 'NumberValue'}]},
             {'values': [{'value': 'A second row of PQL response!',
                          'Value.Type': 'SomeUnknownValue'},
                         {'value': {'date': {
@@ -244,7 +252,9 @@ class DataDownloaderTest(unittest.TestCase):
                                    'minute': '02',
                                    'second': '02',
                                    'timeZoneID': 'GMT'},
-                         'Value.Type': 'DateTimeValue'}]}]
+                         'Value.Type': 'DateTimeValue'},
+                        {'value': '123456',
+                         'Value.Type': 'NumberValue'}]}]
 
     self.pql_service.select.return_value = {'rows': rval, 'columnTypes': header}
 

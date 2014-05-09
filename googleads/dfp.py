@@ -375,18 +375,21 @@ class DataDownloader(object):
     """
     field = pql_value['value']
 
-    if pql_value['Value.Type'] == 'TextValue':
-      return field
-    elif pql_value['Value.Type'] == 'NumberValue':
-      return float(field) if '.' in field else int(field)
-    elif pql_value['Value.Type'] == 'DateTimeValue':
-      return self._ConvertDateTimeToOffset(field)
-    elif pql_value['Value.Type'] == 'DateValue':
-      return datetime.date(int(field['date']['year']),
-                           int(field['date']['month']),
-                           int(field['date']['day'])).isoformat()
+    if field:
+      if pql_value['Value.Type'] == 'TextValue':
+        return field.encode('UTF8')
+      elif pql_value['Value.Type'] == 'NumberValue':
+        return float(field) if '.' in field else int(field)
+      elif pql_value['Value.Type'] == 'DateTimeValue':
+        return self._ConvertDateTimeToOffset(field)
+      elif pql_value['Value.Type'] == 'DateValue':
+        return datetime.date(int(field['date']['year']),
+                             int(field['date']['month']),
+                             int(field['date']['day'])).isoformat()
+      else:
+        return field
     else:
-      return field
+      return '-'
 
   def _PageThroughPqlSet(self, pql_query, output_function, values):
     """Pages through a pql_query and performs an action (output_function).

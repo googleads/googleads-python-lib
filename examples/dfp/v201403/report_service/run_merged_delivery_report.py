@@ -48,21 +48,21 @@ def main(client):
     report_job_id = report_downloader.WaitForReport(report_job)
   except errors.DfpReportError, e:
     print 'Failed to generate report. Error was: %s' % e
-  else:
-    # Change to your preferred export format.
-    export_format = 'CSV_DUMP'
 
-    report_file = tempfile.NamedTemporaryFile(suffix='.csv.gz', delete=False)
+  # Change to your preferred export format.
+  export_format = 'CSV_DUMP'
 
-    # Download report data.
-    report_downloader.DownloadReportToFile(
-        report_job_id, export_format, report_file)
+  report_file = tempfile.NamedTemporaryFile(suffix='.csv.gz', delete=False)
 
-    report_file.close()
+  # Download report data.
+  report_downloader.DownloadReportToFile(
+      report_job_id, export_format, report_file)
 
-    # Display results.
-    print 'Report job with id \'%s\' downloaded to:\n%s' % (
-        report_job['id'], report_file.name)
+  report_file.close()
+
+  # Display results.
+  print 'Report job with id \'%s\' downloaded to:\n%s' % (
+      report_job_id, report_file.name)
 
 if __name__ == '__main__':
   # Initialize client object.

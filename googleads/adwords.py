@@ -319,11 +319,16 @@ class ReportDownloader(object):
     self._end_point = self._END_POINT_FORMAT % (server, version)
     self._header_handler = _AdWordsHeaderHandler(adwords_client, version)
 
+    proxy_option = None
+    if self._adwords_client.https_proxy:
+      proxy_option = {'https': self._adwords_client.https_proxy}
+
     schema_url = self._SCHEMA_FORMAT % (server, version)
     schema = suds.client.Client(
         schema_url,
         doctor=suds.xsd.doctor.ImportDoctor(suds.xsd.doctor.Import(
-            self._namespace, schema_url))).wsdl.schema
+            self._namespace, schema_url)),
+        proxy=proxy_option).wsdl.schema
     self._report_definition_type = schema.elements[
         (self._REPORT_DEFINITION_NAME, self._namespace)]
     self._marshaller = suds.mx.literal.Literal(schema)
@@ -340,16 +345,25 @@ class ReportDownloader(object):
           that will be downloaded.
       [optional]
       output: A writable object where the contents of the report will be written
-          to.
+          to. If the report is gzip compressed, you need to specify an output
+          that can write binary data.
       return_money_in_micros: A boolean indicating whether money should be
           represented as micros in reports. If None is supplied the AdWords
           server will use its default value, which is currently True.
 
     Raises:
-      An AdWordsReportBadRequestError if the report download fails due to
-      improper input. If the request fails for any other reason (for example,
-      a network error), an AdWordsReportError will be raised instead.
+      AdWordsReportBadRequestError: if the report download fails due to
+          improper input.
+      GoogleAdsValueError: if the user-specified report format is incompatible
+          with the output.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
     """
+    if (report_definition['downloadFormat'].startswith('GZIPPED_')
+        and getattr(output, 'mode', 'w') != 'wb'):
+      raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
+                                                 ' output for GZIPPED formats.')
+
     self._DownloadReport(self._SerializeReportDefinition(report_definition),
                          output, return_money_in_micros)
 
@@ -367,16 +381,25 @@ class ReportDownloader(object):
           https://developers.google.com/adwords/api/docs/guides/reporting
       [optional]
       output: A writable object where the contents of the report will be written
-          to.
+          to. If the report is gzip compressed, you need to specify an output
+          that can write binary data.
       return_money_in_micros: A boolean indicating whether money should be
           represented as micros in reports. If None is supplied the AdWords
           server will use its default value, which is currently True.
 
     Raises:
-      An AdWordsReportBadRequestError if the report download fails due to
-      improper input. If the request fails for any other reason (for example,
-      a network error), an AdWordsReportError will be raised instead.
+      AdWordsReportBadRequestError: if the report download fails due to
+          improper input.
+      GoogleAdsValueError: if the user-specified report format is incompatible
+          with the output.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
     """
+    if (file_format.startswith('GZIPPED_')
+        and getattr(output, 'mode', 'w') != 'wb'):
+      raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
+                                                 ' output for GZIPPED formats.')
+
     self._DownloadReport(self._SerializeAwql(query, file_format), output,
                          return_money_in_micros)
 
@@ -393,11 +416,12 @@ class ReportDownloader(object):
           server will use its default value, which is currently True.
 
     Raises:
-      An AdWordsReportBadRequestError if the report download fails due to
-      improper input. If the HTTP request fails with any other status code, an
-      AdWordsReportError will be raised instead. In the event of certain other
-      failures, a urllib2.URLError (Python 2) or urllib.error.URLError
-      (Python 3) will be raised.
+      AdWordsReportBadRequestError: if the report download fails due to
+        improper input. In the event of certain other failures, a
+        urllib2.URLError (Python 2) or urllib.error.URLError (Python 3) will be
+        raised.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
     """
     if sys.version_info[0] == 3:
       post_body = bytes(post_body, 'utf8')
@@ -414,7 +438,8 @@ class ReportDownloader(object):
       while True:
         chunk = response.read(_CHUNK_SIZE)
         if not chunk: break
-        output.write(chunk.decode() if sys.version_info[0] == 3 else chunk)
+        output.write(chunk.decode() if sys.version_info[0] == 3
+                     and getattr(output, 'mode', 'w') == 'w' else chunk)
 
   def _SerializeAwql(self, query, file_format):
     """Serializes an AWQL query and file format for transport.
