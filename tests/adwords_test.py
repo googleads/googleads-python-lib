@@ -31,6 +31,8 @@ import googleads.adwords
 import googleads.common
 import googleads.errors
 
+from suds.cache import NoCache
+
 PYTHON2 = sys.version_info[0] == 2
 URL_REQUEST_PATH = ('urllib2' if PYTHON2 else 'urllib.request')
 
@@ -122,13 +124,14 @@ class AdWordsClientTest(unittest.TestCase):
   """Tests for the googleads.adwords.AdWordsClient class."""
 
   def setUp(self):
+    self.cache = NoCache()
     self.dev_token = 'developers developers developers'
     self.user_agent = 'users users user'
     self.oauth2_client = 'unused'
     self.https_proxy = 'my.proxy:443'
     self.adwords_client = googleads.adwords.AdWordsClient(
         self.dev_token, self.oauth2_client, self.user_agent,
-        https_proxy=self.https_proxy)
+        https_proxy=self.https_proxy, cache=self.cache)
 
   def testLoadFromStorage(self):
     with mock.patch('googleads.common.LoadFromStorage') as mock_load:
@@ -154,7 +157,7 @@ class AdWordsClientTest(unittest.TestCase):
 
       mock_client.assert_called_once_with(
           'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
-          % (namespace, version, service), proxy=https_proxy)
+          % (namespace, version, service), proxy=https_proxy, cache=self.cache)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
     # Use the default server and https_proxy.
@@ -164,7 +167,7 @@ class AdWordsClientTest(unittest.TestCase):
 
       mock_client.assert_called_once_with(
           'https://adwords.google.com/api/adwords/%s/%s/%s?wsdl'
-          % (namespace, version, service), proxy=None)
+          % (namespace, version, service), proxy=None, cache=self.cache)
       self.assertFalse(mock_client.return_value.set_options.called)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 

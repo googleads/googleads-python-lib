@@ -25,6 +25,7 @@ from xml.etree import ElementTree
 import suds.client
 import suds.mx.literal
 import suds.xsd.doctor
+from suds.cache import NoCache
 
 import googleads.common
 import googleads.errors
@@ -108,8 +109,7 @@ class AdWordsClient(object):
   _SOAP_SERVICE_FORMAT = '%s/api/adwords/%s/%s/%s?wsdl'
 
   @classmethod
-  def LoadFromStorage(
-      cls, path=os.path.join(os.path.expanduser('~'), 'googleads.yaml')):
+  def LoadFromStorage(cls, path=None):
     """Creates an AdWordsClient with information stored in a yaml file.
 
     Args:
@@ -124,6 +124,9 @@ class AdWordsClient(object):
       information necessary to instantiate a client object - either a
       required key was missing or an OAuth 2.0 key was missing.
     """
+    if path is None:
+      path = os.path.join(os.path.expanduser('~'), 'googleads.yaml')
+
     return cls(**googleads.common.LoadFromStorage(
         path, cls._YAML_KEY, cls._REQUIRED_INIT_VALUES,
         cls._OPTIONAL_INIT_VALUES))
@@ -131,7 +134,7 @@ class AdWordsClient(object):
   def __init__(
       self, developer_token, oauth2_client, user_agent,
       client_customer_id=None, validate_only=False, partial_failure=False,
-      https_proxy=None):
+      https_proxy=None, cache=NoCache()):
     """Initializes an AdWordsClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -157,6 +160,7 @@ class AdWordsClient(object):
           this header.
       https_proxy: A string identifying the URL of a proxy that all HTTPS
           requests should be routed through.
+      cache: A subclass of suds.cache.Cache that defaults to NoCache.
     """
     self.developer_token = developer_token
     self.oauth2_client = oauth2_client
@@ -165,6 +169,7 @@ class AdWordsClient(object):
     self.validate_only = validate_only
     self.partial_failure = partial_failure
     self.https_proxy = https_proxy
+    self.cache = cache
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
                  server='https://adwords.google.com'):
@@ -197,7 +202,7 @@ class AdWordsClient(object):
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT %
           (server, _SERVICE_MAP[version][service_name], version, service_name),
-          proxy=proxy_option)
+          proxy=proxy_option, cache=self.cache)
     except KeyError:
       if version in _SERVICE_MAP:
         raise googleads.errors.GoogleAdsValueError(
@@ -328,7 +333,7 @@ class ReportDownloader(object):
         schema_url,
         doctor=suds.xsd.doctor.ImportDoctor(suds.xsd.doctor.Import(
             self._namespace, schema_url)),
-        proxy=proxy_option).wsdl.schema
+        proxy=proxy_option, cache=self._adwords_client.cache).wsdl.schema
     self._report_definition_type = schema.elements[
         (self._REPORT_DEFINITION_NAME, self._namespace)]
     self._marshaller = suds.mx.literal.Literal(schema)

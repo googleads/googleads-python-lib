@@ -26,6 +26,8 @@ import urllib2
 import pytz
 import suds.client
 import suds.transport
+from suds.cache import NoCache
+
 
 import googleads.common
 import googleads.errors
@@ -37,6 +39,25 @@ _CHUNK_SIZE = 16 * 1024
 # A giant dictionary of DFP versions and the services they support.
 _SERVICE_MAP = {
     'v201403':
+        ('ActivityGroupService', 'ActivityService', 'AdRuleService',
+         'AudienceSegmentService', 'BaseRateService', 'CompanyService',
+         'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
+         'OrderService', 'PlacementService', 'ProductService',
+         'ProductTemplateService', 'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardCustomizationService',
+         'RateCardCustomizationGroupService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201405':
         ('ActivityGroupService', 'ActivityService', 'AdRuleService',
          'AudienceSegmentService', 'BaseRateService', 'CompanyService',
          'ContactService', 'ContentBundleService',
@@ -86,8 +107,7 @@ class DfpClient(object):
   _SOAP_SERVICE_FORMAT = '%s/apis/ads/publisher/%s/%s?wsdl'
 
   @classmethod
-  def LoadFromStorage(
-      cls, path=os.path.join(os.path.expanduser('~'), 'googleads.yaml')):
+  def LoadFromStorage(cls, path=None):
     """Creates a DfpClient with information stored in a yaml file.
 
     Args:
@@ -102,12 +122,15 @@ class DfpClient(object):
       information necessary to instantiate a client object - either a
       required key was missing or an OAuth 2.0 key was missing.
     """
+    if path is None:
+      path = os.path.join(os.path.expanduser('~'), 'googleads.yaml')
+
     return cls(**googleads.common.LoadFromStorage(
         path, cls._YAML_KEY, cls._REQUIRED_INIT_VALUES,
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, oauth2_client, application_name, network_code=None,
-               https_proxy=None):
+               https_proxy=None, cache=NoCache()):
     """Initializes a DfpClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -124,11 +147,13 @@ class DfpClient(object):
           calls require this header to be set.
       https_proxy: A string identifying the URL of a proxy that all HTTPS
           requests should be routed through.
+      cache: A subclass of suds.cache.Cache that defaults to NoCache.
     """
     self.oauth2_client = oauth2_client
     self.application_name = application_name
     self.network_code = network_code
     self.https_proxy = https_proxy
+    self.cache = cache
     self._header_handler = _DfpHeaderHandler(self)
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
@@ -161,7 +186,7 @@ class DfpClient(object):
 
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT % (server, version, service_name),
-          proxy=proxy_option)
+          proxy=proxy_option, cache=self.cache)
     except suds.transport.TransportError:
       if version in _SERVICE_MAP:
         if service_name in _SERVICE_MAP[version]:

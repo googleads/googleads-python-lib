@@ -22,6 +22,7 @@ import suds.client
 import suds.sax.element
 import suds.transport
 import suds.wsse
+from suds.cache import NoCache
 
 import googleads.common
 import googleads.errors
@@ -63,8 +64,7 @@ class DfaClient(object):
   }
 
   @classmethod
-  def LoadFromStorage(
-      cls, path=os.path.join(os.path.expanduser('~'), 'googleads.yaml')):
+  def LoadFromStorage(cls, path=None):
     """Creates an DfaClient with information stored in a yaml file.
 
     Args:
@@ -79,12 +79,15 @@ class DfaClient(object):
       information necessary to instantiate a client object - either a
       required key was missing or an OAuth 2.0 key was missing.
     """
+    if path is None:
+      path = os.path.join(os.path.expanduser('~'), 'googleads.yaml')
+
     return cls(**googleads.common.LoadFromStorage(
         path, cls._YAML_KEY, cls._REQUIRED_INIT_VALUES,
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, username, oauth2_client, application_name,
-               https_proxy=None):
+               https_proxy=None, cache=NoCache()):
     """Initializes a DfaClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -100,11 +103,13 @@ class DfaClient(object):
       [optional]
       https_proxy: A string identifying the URL of a proxy that all HTTPS
           requests should be routed through.
+      cache: A subclass of suds.cache.Cache that defaults to NoCache.
     """
     self.username = username
     self.oauth2_client = oauth2_client
     self.application_name = application_name
     self.https_proxy = https_proxy
+    self.cache = cache
     self._header_handler = _DfaHeaderHandler(self)
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
@@ -137,7 +142,7 @@ class DfaClient(object):
 
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT % (server, version, service_name),
-          proxy=proxy_option)
+          proxy=proxy_option, cache=self.cache)
     except suds.transport.TransportError:
       if version in self._SERVICE_MAP:
         if service_name in self._SERVICE_MAP[version]:

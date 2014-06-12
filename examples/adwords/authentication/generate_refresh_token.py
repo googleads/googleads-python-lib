@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generates a refresh token for use with AdWords."""
+"""Generates refresh token for AdWords using the Installed Application flow."""
 
 __author__ = 'Joseph DiLallo'
 

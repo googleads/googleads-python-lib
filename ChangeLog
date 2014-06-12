@@ -1,4 +1,9 @@
+1.0.6 - 05/29/2014
+==================
+* Add support for v201405 for DFP client library.
+
 1.0.5 - 05/07/2014
+==================
 * Fixed an issue where PQL fields weren't encoding properly / not handling None
   responses correctly. This resolves issue #9.
 * Fixed an issue where the AdWords ReportDownloader would fail when downloading
@@ -8,6 +13,7 @@
   retrieving the WSDL.
 
 1.0.4 - 04/22/2014
+==================
 * Fixed a bug where https_proxy wasn't set for retrieving the API WSDL. This
   resolves issue #5.
 
