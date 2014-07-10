@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example gets all campaigns with AWQL.
+"""This example gets all campaigns.
 
 To add a campaign, run add_campaign.py.
 
@@ -23,15 +23,18 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignService.query
+Tags: CampaignService.get
 """
 
-__author__ = ('api.kwinter@gmail.com (Kevin Winter)'
-              'Joseph DiLallo')
+__author__ = 'Joseph DiLallo'
 
+import logging
 import time
 
 from googleads import adwords
+
+logging.basicConfig(level=logging.INFO)
+logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 
 
 PAGE_SIZE = 100
@@ -39,15 +42,21 @@ PAGE_SIZE = 100
 
 def main(client):
   # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+  campaign_service = client.GetService('CampaignService', version='v201406')
 
-  # Construct query and get all campaigns.
+  # Construct selector and get all campaigns.
   offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
+  selector = {
+      'fields': ['Id', 'Name', 'Status'],
+      'paging': {
+          'startIndex': str(offset),
+          'numberResults': str(PAGE_SIZE)
+      }
+  }
 
   more_pages = True
   while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
+    page = campaign_service.get(selector)
 
     # Display results.
     if 'entries' in page:
@@ -58,11 +67,11 @@ def main(client):
     else:
       print 'No campaigns were found.'
     offset += PAGE_SIZE
+    selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])
     time.sleep(1)
 
 
 if __name__ == '__main__':
-  # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
   main(adwords_client)

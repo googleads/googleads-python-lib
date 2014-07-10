@@ -14,54 +14,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
+"""This example deletes an ad group criterion using the 'REMOVE' operator.
 
-Note by default this account will only be accessible via parent MCC.
+To get ad group criteria, run get_keywords.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CreateAccountService.mutate
+Tags: AdGroupCriterionService.mutate
 Api: AdWordsOnly
 """
 
 __author__ = ('api.kwinter@gmail.com (Kevin Winter)'
               'Joseph DiLallo')
 
-from datetime import datetime
-
 from googleads import adwords
 
 
-def main(client):
+AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
+CRITERION_ID = 'INSERT_CRITERION_ID_HERE'
+
+
+def main(client, ad_group_id, criterion_id):
   # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201402')
+  ad_group_criterion_service = client.GetService(
+      'AdGroupCriterionService', version='v201406')
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
-  operations = [{
-      'operator': 'ADD',
-      'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
+  # Construct operations and delete ad group criteria.
+  operations = [
+      {
+          'operator': 'REMOVE',
+          'operand': {
+              'xsi_type': 'BiddableAdGroupCriterion',
+              'adGroupId': ad_group_id,
+              'criterion': {
+                  'id': criterion_id
+              }
+          }
       }
-  }]
-
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
+  ]
+  result = ad_group_criterion_service.mutate(operations)
 
   # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID \'%s\' was successfully created.'
-           % account['customerId'])
+  for criterion in result['value']:
+    print ('Ad group criterion with ad group id \'%s\', criterion id \'%s\', '
+           'and type \'%s\' was deleted.'
+           % (criterion['adGroupId'], criterion['criterion']['id'],
+              criterion['criterion']['Criterion.Type']))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, AD_GROUP_ID, CRITERION_ID)

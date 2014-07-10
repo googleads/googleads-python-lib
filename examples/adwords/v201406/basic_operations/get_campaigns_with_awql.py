@@ -39,7 +39,7 @@ PAGE_SIZE = 100
 
 def main(client):
   # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+  campaign_service = client.GetService('CampaignService', version='v201406')
 
   # Construct query and get all campaigns.
   offset = 0

@@ -68,10 +68,54 @@ _SERVICE_MAP = {
         'MutateJobService': 'cm',
         'OfflineConversionFeedService': 'cm',
         'ReportDefinitionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+    },
+    'v201406': {
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'AlertService': 'mcm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignAdExtensionService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'ExperimentService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'GeoLocationService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'MutateJobService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
         'TargetingIdeaService': 'o',
         'TrafficEstimatorService': 'o',
     },
 }
+
+# The endpoint used by default when making AdWords API requests.
+_DEFAULT_ENDPOINT = 'https://adwords.google.com'
 
 
 class AdWordsClient(object):
@@ -172,7 +216,7 @@ class AdWordsClient(object):
     self.cache = cache
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
-                 server='https://adwords.google.com'):
+                 server=_DEFAULT_ENDPOINT):
     """Creates a service client for the given service.
 
     Args:
@@ -218,7 +262,7 @@ class AdWordsClient(object):
         client, _AdWordsHeaderHandler(self, version))
 
   def GetReportDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
-                          server='https://adwords.google.com'):
+                          server=_DEFAULT_ENDPOINT):
     """Creates a downloader for AdWords reports.
 
     This is a convenience method. It is functionally identical to calling
@@ -285,7 +329,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
         'User-Agent': ''.join([self._adwords_client.user_agent, self._LIB_SIG,
                                ',gzip'])
     })
-    if return_money_in_micros is not None:
+    if return_money_in_micros is not None and self._version != 'v201406':
       headers.update({'returnMoneyInMicros': str(return_money_in_micros)})
     return headers
 
@@ -306,7 +350,7 @@ class ReportDownloader(object):
   _REPORT_DEFINITION_NAME = 'reportDefinition'
 
   def __init__(self, adwords_client, version=sorted(_SERVICE_MAP.keys())[-1],
-               server='https://adwords.google.com'):
+               server=_DEFAULT_ENDPOINT):
     """Initializes a ReportDownloader.
 
     Args:

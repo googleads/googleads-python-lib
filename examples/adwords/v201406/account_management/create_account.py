@@ -14,52 +14,51 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example gets all campaigns with AWQL.
+"""This example illustrates how to create an account.
 
-To add a campaign, run add_campaign.py.
+Note by default this account will only be accessible via parent MCC.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignService.query
+Tags: CreateAccountService.mutate
+Api: AdWordsOnly
 """
 
 __author__ = ('api.kwinter@gmail.com (Kevin Winter)'
               'Joseph DiLallo')
 
-import time
+from datetime import datetime
 
 from googleads import adwords
 
 
-PAGE_SIZE = 100
-
-
 def main(client):
   # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+  managed_customer_service = client.GetService(
+      'ManagedCustomerService', version='v201406')
 
-  # Construct query and get all campaigns.
-  offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
+  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
+  # Construct operations and add campaign.
+  operations = [{
+      'operator': 'ADD',
+      'operand': {
+          'name': 'Account created with ManagedCustomerService on %s' % today,
+          'currencyCode': 'EUR',
+          'dateTimeZone': 'Europe/London',
+      }
+  }]
 
-  more_pages = True
-  while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
+  # Create the account. It is possible to create multiple accounts with one
+  # request by sending an array of operations.
+  accounts = managed_customer_service.mutate(operations)
 
-    # Display results.
-    if 'entries' in page:
-      for campaign in page['entries']:
-        print ('Campaign with id \'%s\', name \'%s\', and status \'%s\' was '
-               'found.' % (campaign['id'], campaign['name'],
-                           campaign['status']))
-    else:
-      print 'No campaigns were found.'
-    offset += PAGE_SIZE
-    more_pages = offset < int(page['totalNumEntries'])
-    time.sleep(1)
+  # Display results.
+  for account in accounts['value']:
+    print ('Account with customer ID \'%s\' was successfully created.'
+           % account['customerId'])
 
 
 if __name__ == '__main__':

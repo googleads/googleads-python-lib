@@ -1,3 +1,12 @@
+1.0.7 - 07/7/2014
+=================
+* Added support for v201406 of the AdWords/DoubleClick Ad Exchange Client
+  Library.
+* Added CampaignSharedSetService, LabelService, SharedCriterionService, and
+  SharedSetService for AdWords.
+* Updated AdWords OAuth 2.0 scope.
+  See: https://developers.google.com/adwords/api/docs/guides/authentication.
+
 1.0.6 - 05/29/2014
 ==================
 * Add support for v201405 for DFP client library.

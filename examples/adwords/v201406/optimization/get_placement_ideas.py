@@ -14,22 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example gets all campaigns with AWQL.
-
-To add a campaign, run add_campaign.py.
+"""Retrieves urls that have content keywords related to a given website.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignService.query
+Tags: TargetingIdeaService.get
 """
 
 __author__ = ('api.kwinter@gmail.com (Kevin Winter)'
               'Joseph DiLallo')
-
-import time
 
 from googleads import adwords
 
@@ -39,30 +35,47 @@ PAGE_SIZE = 100
 
 def main(client):
   # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+  targeting_idea_service = client.GetService(
+      'TargetingIdeaService', version='v201406')
 
-  # Construct query and get all campaigns.
+  # Construct selector object and retrieve related placements.
   offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
-
+  url = 'http://mars.google.com'
+  selector = {
+      'searchParameters': [{
+          'xsi_type': 'RelatedToUrlSearchParameter',
+          'urls': [url],
+          'includeSubUrls': 'false'
+      }],
+      'ideaType': 'PLACEMENT',
+      'requestType': 'IDEAS',
+      'requestedAttributeTypes': ['SAMPLE_URL'],
+      'paging': {
+          'startIndex': str(offset),
+          'numberResults': str(PAGE_SIZE)
+      }
+  }
   more_pages = True
   while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
+    page = targeting_idea_service.get(selector)
 
     # Display results.
     if 'entries' in page:
-      for campaign in page['entries']:
-        print ('Campaign with id \'%s\', name \'%s\', and status \'%s\' was '
-               'found.' % (campaign['id'], campaign['name'],
-                           campaign['status']))
+      for result in page['entries']:
+        result = result['data'][0]['value']
+        print 'Related content keywords were found at \'%s\' url.' % result
+      print
+      print ('Total urls found with content keywords related to keywords at '
+             '\'%s\': %s' % (url, page['totalNumEntries']))
     else:
-      print 'No campaigns were found.'
+      print 'No content keywords were found at \'%s\'.' % url
     offset += PAGE_SIZE
+    selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])
-    time.sleep(1)
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
+
   main(adwords_client)

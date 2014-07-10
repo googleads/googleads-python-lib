@@ -14,55 +14,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example gets all campaigns with AWQL.
+"""This example updates status for a given ad group.
 
-To add a campaign, run add_campaign.py.
+To get ad groups, run get_ad_groups.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignService.query
+Tags: AdGroupService.mutate
 """
 
 __author__ = ('api.kwinter@gmail.com (Kevin Winter)'
               'Joseph DiLallo')
 
-import time
-
 from googleads import adwords
 
 
-PAGE_SIZE = 100
+AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
 
 
-def main(client):
+def main(client, ad_group_id):
   # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+  ad_group_service = client.GetService('AdGroupService', version='v201406')
 
-  # Construct query and get all campaigns.
-  offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
+  # Construct operations and update an ad group.
+  operations = [{
+      'operator': 'SET',
+      'operand': {
+          'id': ad_group_id,
+          'status': 'PAUSED'
+      }
+  }]
+  ad_groups = ad_group_service.mutate(operations)
 
-  more_pages = True
-  while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
-
-    # Display results.
-    if 'entries' in page:
-      for campaign in page['entries']:
-        print ('Campaign with id \'%s\', name \'%s\', and status \'%s\' was '
-               'found.' % (campaign['id'], campaign['name'],
-                           campaign['status']))
-    else:
-      print 'No campaigns were found.'
-    offset += PAGE_SIZE
-    more_pages = offset < int(page['totalNumEntries'])
-    time.sleep(1)
+  # Display results.
+  for ad_group in ad_groups['value']:
+    print ('Ad group with name \'%s\' and id \'%s\' was updated.'
+           % (ad_group['name'], ad_group['id']))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, AD_GROUP_ID)

@@ -14,50 +14,69 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example gets all campaigns with AWQL.
+"""This example gets all campaigns with a specific label.
 
-To add a campaign, run add_campaign.py.
+To add a label to campaigns, run add_campaign_labels.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignService.query
+Tags: CampaignService.get
 """
 
-__author__ = ('api.kwinter@gmail.com (Kevin Winter)'
-              'Joseph DiLallo')
+__author__ = 'Mark Saniscalchi'
 
 import time
 
 from googleads import adwords
 
 
+LABEL_ID = 'INSERT_LABEL_ID_HERE'
 PAGE_SIZE = 100
 
 
-def main(client):
+def main(client, label_id):
   # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+  campaign_service = client.GetService('CampaignService', version='v201406')
 
-  # Construct query and get all campaigns.
   offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
+  selector = {
+      'fields': ['Id', 'Name', 'Labels'],
+      # Labels filtering is performed by ID. You can use CONTAINS_ANY to select
+      # campaigns with any of the label IDs, CONTAINS_ALL to select campaigns
+      # with all of the label IDs, or CONTAINS_NONE to select campaigns with
+      # none of the label IDs.
+      'ordering': {
+          'field': 'Name',
+          'sortOrder': 'ASCENDING'
+          },
+      'paging': {
+          'startIndex': str(offset),
+          'numberResults': str(PAGE_SIZE)
+      },
+      'predicates': {
+          'field': 'Labels',
+          'operator': 'CONTAINS_ANY',
+          'values': [label_id]
+      }
+  }
 
   more_pages = True
   while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
+    page = campaign_service.get(selector)
 
     # Display results.
     if 'entries' in page:
       for campaign in page['entries']:
-        print ('Campaign with id \'%s\', name \'%s\', and status \'%s\' was '
-               'found.' % (campaign['id'], campaign['name'],
-                           campaign['status']))
+        print ('Campaign found with Id \'%s\', name \'%s\', and labels: %s'
+               % (campaign['id'], campaign['name'], campaign['labels']))
     else:
       print 'No campaigns were found.'
+
     offset += PAGE_SIZE
+    selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])
     time.sleep(1)
 
@@ -65,4 +84,5 @@ def main(client):
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, LABEL_ID)

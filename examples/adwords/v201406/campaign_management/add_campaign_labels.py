@@ -14,55 +14,57 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example gets all campaigns with AWQL.
-
-To add a campaign, run add_campaign.py.
+"""This example adds a label to multiple campaigns.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignService.query
+Tags: CampaignService.mutateLabel
 """
 
-__author__ = ('api.kwinter@gmail.com (Kevin Winter)'
-              'Joseph DiLallo')
-
-import time
+__author__ = 'Mark Saniscalchi'
 
 from googleads import adwords
 
 
-PAGE_SIZE = 100
+CAMPAIGN_ID1 = 'INSERT_FIRST_CAMPAIGN_ID_HERE'
+CAMPAIGN_ID2 = 'INSERT_SECOND_CAMPAIGN_ID_HERE'
+LABEL_ID = 'INSERT_LABEL_ID_HERE'
 
 
-def main(client):
+def main(client, campaign_id1, campaign_id2, label_id):
   # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+  campaign_service = client.GetService('CampaignService', version='v201406')
 
-  # Construct query and get all campaigns.
-  offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
+  operations = [
+      {
+          'operator': 'ADD',
+          'operand': {
+              'campaignId': campaign_id1,
+              'labelId': label_id,
+          }
+      },
+      {
+          'operator': 'ADD',
+          'operand': {
+              'campaignId': campaign_id2,
+              'labelId': label_id,
+          }
+      }
+  ]
 
-  more_pages = True
-  while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
+  result = campaign_service.mutateLabel(operations)
 
-    # Display results.
-    if 'entries' in page:
-      for campaign in page['entries']:
-        print ('Campaign with id \'%s\', name \'%s\', and status \'%s\' was '
-               'found.' % (campaign['id'], campaign['name'],
-                           campaign['status']))
-    else:
-      print 'No campaigns were found.'
-    offset += PAGE_SIZE
-    more_pages = offset < int(page['totalNumEntries'])
-    time.sleep(1)
+  # Display results.
+  for label in result['value']:
+    print ('CampaignLabel with campaignId \'%s\' and labelId \'%s\' was added.'
+           % (label['campaignId'], label['labelId']))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, CAMPAIGN_ID1, CAMPAIGN_ID2, LABEL_ID)

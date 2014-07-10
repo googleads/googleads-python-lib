@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,55 +14,65 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example gets all campaigns with AWQL.
+"""This example gets all ad group criteria in an account.
 
-To add a campaign, run add_campaign.py.
+To add placements, run add_placements.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignService.query
+Tags: AdGroupCriterionService.get
 """
 
-__author__ = ('api.kwinter@gmail.com (Kevin Winter)'
-              'Joseph DiLallo')
-
-import time
+__author__ = 'api.kwinter@gmail.com (Kevin Winter)'
 
 from googleads import adwords
 
 
-PAGE_SIZE = 100
+PAGE_SIZE = 500
 
 
 def main(client):
   # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+  ad_group_criterion_service = client.GetService(
+      'AdGroupCriterionService', version='v201406')
 
-  # Construct query and get all campaigns.
+  # Construct selector and get all ad group criteria.
   offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
-
+  selector = {
+      'fields': ['AdGroupId', 'Id', 'PlacementUrl'],
+      'predicates': [{
+          'field': 'CriteriaType',
+          'operator': 'EQUALS',
+          'values': ['PLACEMENT']
+      }],
+      'paging': {
+          'startIndex': str(offset),
+          'numberResults': str(PAGE_SIZE)
+      }
+  }
   more_pages = True
   while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
+    page = ad_group_criterion_service.get(selector)
 
     # Display results.
     if 'entries' in page:
-      for campaign in page['entries']:
-        print ('Campaign with id \'%s\', name \'%s\', and status \'%s\' was '
-               'found.' % (campaign['id'], campaign['name'],
-                           campaign['status']))
+      for criterion in page['entries']:
+        print ('Placement ad group criterion with ad group id \'%s\', '
+               'criterion id \'%s\' and url \'%s\'.'
+               % (criterion['adGroupId'], criterion['criterion']['id'],
+                  criterion['criterion']['url']))
     else:
-      print 'No campaigns were found.'
+      print 'No placements were found.'
     offset += PAGE_SIZE
+    selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])
-    time.sleep(1)
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
+
   main(adwords_client)

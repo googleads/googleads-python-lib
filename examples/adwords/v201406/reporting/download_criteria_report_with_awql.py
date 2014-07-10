@@ -14,55 +14,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example gets all campaigns with AWQL.
+"""This example downloads a criteria performance report with AWQL.
 
-To add a campaign, run add_campaign.py.
+To get report fields, run get_report_fields.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignService.query
+Tags: ReportDefinitionService.mutate
+Api: AdWordsOnly
 """
 
 __author__ = ('api.kwinter@gmail.com (Kevin Winter)'
               'Joseph DiLallo')
 
-import time
-
 from googleads import adwords
 
 
-PAGE_SIZE = 100
+# Specify where to download the file here.
+PATH = '/tmp/report_download.csv'
 
 
-def main(client):
+def main(client, path):
   # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+  report_downloader = client.GetReportDownloader(version='v201406')
 
-  # Construct query and get all campaigns.
-  offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
+  # Create report query.
+  report_query = ('SELECT CampaignId, AdGroupId, Id, Criteria, CriteriaType, '
+                  'Impressions, Clicks, Cost '
+                  'FROM CRITERIA_PERFORMANCE_REPORT '
+                  'WHERE Status IN [ENABLED, PAUSED] '
+                  'DURING LAST_7_DAYS')
 
-  more_pages = True
-  while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
+  with open(path, 'w') as output_file:
+    report_downloader.DownloadReportWithAwql(report_query, 'CSV', output_file)
 
-    # Display results.
-    if 'entries' in page:
-      for campaign in page['entries']:
-        print ('Campaign with id \'%s\', name \'%s\', and status \'%s\' was '
-               'found.' % (campaign['id'], campaign['name'],
-                           campaign['status']))
-    else:
-      print 'No campaigns were found.'
-    offset += PAGE_SIZE
-    more_pages = offset < int(page['totalNumEntries'])
-    time.sleep(1)
+  print 'Report was downloaded to \'%s\'.' % path
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, PATH)

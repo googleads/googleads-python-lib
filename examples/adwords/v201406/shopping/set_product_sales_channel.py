@@ -14,55 +14,58 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example gets all campaigns with AWQL.
-
-To add a campaign, run add_campaign.py.
+"""This example sets the product sales channel.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignService.query
+Tags: CampaignCriterionService.mutate
 """
 
-__author__ = ('api.kwinter@gmail.com (Kevin Winter)'
+__author__ = ('api.msaniscalchi@gmail.com (Mark Saniscalchi)',
               'Joseph DiLallo')
 
-import time
-
+# Import appropriate modules from the client library.
 from googleads import adwords
 
+CAMPAIGN_ID = 'INSERT_CAMPAIGN_ID_HERE'
 
-PAGE_SIZE = 100
+# ProductSalesChannel is a fixedId criterion, with the possible values
+# defined here.
+ONLINE = '200'
+LOCAL = '201'
 
 
-def main(client):
-  # Initialize appropriate service.
-  campaign_service = client.GetService('CampaignService', version='v201402')
+def main(client, campaign_id):
+  campaign_criterion_service = client.GetService(
+      'CampaignCriterionService', version='v201406')
 
-  # Construct query and get all campaigns.
-  offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
+  product_sales_channel = {
+      'xsi_type': 'ProductSalesChannel',
+      'id': ONLINE
+  }
 
-  more_pages = True
-  while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
+  campaign_criterion = {
+      'campaignId': campaign_id,
+      'criterion': product_sales_channel
+  }
 
-    # Display results.
-    if 'entries' in page:
-      for campaign in page['entries']:
-        print ('Campaign with id \'%s\', name \'%s\', and status \'%s\' was '
-               'found.' % (campaign['id'], campaign['name'],
-                           campaign['status']))
-    else:
-      print 'No campaigns were found.'
-    offset += PAGE_SIZE
-    more_pages = offset < int(page['totalNumEntries'])
-    time.sleep(1)
+  operations = [{
+      'operator': 'ADD',
+      'operand': campaign_criterion
+  }]
+
+  result = campaign_criterion_service.mutate(operations)
+
+  for criterion in result['value']:
+    print ('Added ProductSalesChannel CampaignCriterion with ID: %s'
+           % (criterion['criterion']['id']))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, CAMPAIGN_ID)
