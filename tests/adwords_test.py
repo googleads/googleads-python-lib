@@ -35,6 +35,7 @@ from suds.cache import NoCache
 
 PYTHON2 = sys.version_info[0] == 2
 URL_REQUEST_PATH = ('urllib2' if PYTHON2 else 'urllib.request')
+CURRENT_VERSION = sorted(googleads.adwords._SERVICE_MAP.keys())[-1]
 
 
 class AdWordsHeaderHandlerTest(unittest.TestCase):
@@ -42,8 +43,10 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
 
   def setUp(self):
     self.adwords_client = mock.Mock()
+    self.header_handler_v201402 = googleads.adwords._AdWordsHeaderHandler(
+        self.adwords_client, 'v201402')
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
-        self.adwords_client, 'v12345')
+        self.adwords_client, CURRENT_VERSION)
 
   def testSetHeaders(self):
     suds_client = mock.Mock()
@@ -65,7 +68,8 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
 
     # Check that the SOAP header has the correct values.
     suds_client.factory.create.assert_called_once_with(
-        '{https://adwords.google.com/api/adwords/cm/v12345}SoapHeader')
+        '{https://adwords.google.com/api/adwords/cm/%s}SoapHeader' %
+        CURRENT_VERSION)
     soap_header = suds_client.factory.create.return_value
     self.assertEqual(ccid, soap_header.clientCustomerId)
     self.assertEqual(dev_token, soap_header.developerToken)
@@ -79,7 +83,7 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     suds_client.set_options.assert_any_call(
         soapheaders=soap_header, headers=oauth_header)
 
-  def testGetReportDownloadHeaders(self):
+  def testGetReportDownloadHeaders_v201402(self):
     ccid = 'client customer id'
     dev_token = 'developer token'
     user_agent = 'user agent!'
@@ -103,17 +107,52 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     # Check that returnMoneyInMicros works when set to true.
     expected_return_value['returnMoneyInMicros'] = 'True'
     self.assertEqual(expected_return_value,
-                     self.header_handler.GetReportDownloadHeaders(True))
+                     self.header_handler_v201402.GetReportDownloadHeaders(True))
 
     # Check that returnMoneyInMicros works when set to false.
     expected_return_value['returnMoneyInMicros'] = 'False'
     self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
-                     self.header_handler.GetReportDownloadHeaders(False))
+                     self.header_handler_v201402.GetReportDownloadHeaders(False)
+                    )
 
     # Default returnMoneyInMicros value is not included in the headers.
     del expected_return_value['returnMoneyInMicros']
+    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
+        oauth_header)
+    self.assertEqual(expected_return_value,
+                     self.header_handler.GetReportDownloadHeaders())
+
+  def testGetReportDownloadHeaders_v201406(self):
+    ccid = 'client customer id'
+    dev_token = 'developer token'
+    user_agent = 'user agent!'
+    oauth_header = {'Authorization': 'header'}
+    self.adwords_client.client_customer_id = ccid
+    self.adwords_client.developer_token = dev_token
+    self.adwords_client.user_agent = user_agent
+    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
+        oauth_header)
+    expected_return_value = {
+        'Content-type': 'application/x-www-form-urlencoded',
+        'developerToken': dev_token,
+        'clientCustomerId': ccid,
+        'Authorization': 'header',
+        'User-Agent': ''.join([
+            user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            ',gzip'])
+    }
+
+    # Check that returnMoneyInMicros fails when set to true.
+    self.assertRaises(googleads.errors.GoogleAdsValueError,
+                      self.header_handler.GetReportDownloadHeaders, True)
+
+    # Check that returnMoneyInMicros fails when set to false.
+    self.assertRaises(googleads.errors.GoogleAdsValueError,
+                      self.header_handler.GetReportDownloadHeaders, False)
+
+    # Check that it works when returnMoneyInMicros not set.
     self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
@@ -144,7 +183,7 @@ class AdWordsClientTest(unittest.TestCase):
                             googleads.adwords.AdWordsClient)
 
   def testGetService_success(self):
-    version = googleads.adwords._SERVICE_MAP.keys()[0]
+    version = CURRENT_VERSION
     service = googleads.adwords._SERVICE_MAP[version].keys()[0]
     namespace = googleads.adwords._SERVICE_MAP[version][service]
 
@@ -172,7 +211,7 @@ class AdWordsClientTest(unittest.TestCase):
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_badService(self):
-    version = googleads.adwords._SERVICE_MAP.keys()[0]
+    version = CURRENT_VERSION
     self.assertRaises(
         googleads.errors.GoogleAdsValueError, self.adwords_client.GetService,
         'GYIVyievfyiovslf', version)
@@ -195,7 +234,7 @@ class ReportDownloaderTest(unittest.TestCase):
   """Tests for the googleads.adwords.ReportDownloader class."""
 
   def setUp(self):
-    self.version = googleads.adwords._SERVICE_MAP.keys()[-1]
+    self.version = CURRENT_VERSION
     self.marshaller = mock.Mock()
     self.header_handler = mock.Mock()
     self.adwords_client = mock.Mock()

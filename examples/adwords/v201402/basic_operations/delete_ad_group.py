@@ -29,8 +29,6 @@ Tags: AdGroupService.mutate
 __author__ = ('api.kwinter@gmail.com (Kevin Winter)'
               'Joseph DiLallo')
 
-from datetime import datetime
-
 from googleads import adwords
 
 
@@ -46,10 +44,6 @@ def main(client, ad_group_id):
       'operator': 'SET',
       'operand': {
           'id': ad_group_id,
-          # We recommend including the original name when renaming before
-          # delete.
-          'name': ('Deleted on %s' %
-                   datetime.today().strftime('%Y%m%d %H:%M:%S.%f')),
           'status': 'DELETED'
       }
   }]

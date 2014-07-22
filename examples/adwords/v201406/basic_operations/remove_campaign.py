@@ -29,8 +29,6 @@ Tags: CampaignService.mutate
 __author__ = ('api.kwinter@gmail.com (Kevin Winter)'
               'Joseph DiLallo')
 
-from datetime import datetime
-
 from googleads import adwords
 
 
@@ -46,10 +44,6 @@ def main(client, campaign_id):
       'operator': 'SET',
       'operand': {
           'id': campaign_id,
-          # We recommend including the original name when renaming before
-          # delete.
-          'name': ('Removed on %s' %
-                   datetime.today().strftime('%Y%m%d %H:%M:%S.%f')),
           'status': 'REMOVED'
       }
   }]

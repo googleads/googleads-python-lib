@@ -1,3 +1,8 @@
+2.0.0 - 07/22/2014
+=================
+* AdGroups/Campaigns no longer renamed on remove/delete in examples, obsolete.
+* GoogleAdsValueError now thrown when returnMoneyInMicros is sent with v201406.
+
 1.0.7 - 07/7/2014
 =================
 * Added support for v201406 of the AdWords/DoubleClick Ad Exchange Client

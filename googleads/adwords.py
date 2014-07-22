@@ -116,6 +116,8 @@ _SERVICE_MAP = {
 
 # The endpoint used by default when making AdWords API requests.
 _DEFAULT_ENDPOINT = 'https://adwords.google.com'
+# The final version where return_money_in_micros is accepted.
+_FINAL_RETURN_MONEY_IN_MICROS_VERSION = 'v201402'
 
 
 class AdWordsClient(object):
@@ -320,7 +322,20 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
         headers=self._adwords_client.oauth2_client.CreateHttpHeader())
 
   def GetReportDownloadHeaders(self, return_money_in_micros=None):
-    """Returns a dictionary of headers for a report download request."""
+    """Returns a dictionary of headers for a report download request.
+
+    Args:
+      return_money_in_micros: A boolean indicating whether money should be
+          represented as micros in reports. If None is supplied the AdWords
+          server will use its default value, which is currently True.
+
+    Returns:
+      A dictionary containing the headers configured for downloading a report.
+
+    Raises:
+      GoogleAdsValueError: if return_money_in_micros used with incompatible
+          version.
+    """
     headers = self._adwords_client.oauth2_client.CreateHttpHeader()
     headers.update({
         'Content-type': self._CONTENT_TYPE,
@@ -329,8 +344,13 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
         'User-Agent': ''.join([self._adwords_client.user_agent, self._LIB_SIG,
                                ',gzip'])
     })
-    if return_money_in_micros is not None and self._version != 'v201406':
-      headers.update({'returnMoneyInMicros': str(return_money_in_micros)})
+    if return_money_in_micros is not None:
+      if self._version == _FINAL_RETURN_MONEY_IN_MICROS_VERSION:
+        headers.update({'returnMoneyInMicros': str(return_money_in_micros)})
+      else:
+        raise googleads.errors.GoogleAdsValueError('returnMoneyInMicros isn\'t'
+                                                   'supported in this version.')
+
     return headers
 
 
