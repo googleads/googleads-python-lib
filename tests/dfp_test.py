@@ -99,7 +99,8 @@ class DfpClientTest(unittest.TestCase):
 
       mock_client.assert_called_once_with(
           'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
-          % (self.version, service), proxy=https_proxy, cache=self.cache)
+          % (self.version, service), proxy=https_proxy, cache=self.cache,
+          timeout=600)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
     # Use the default server and https proxy.
@@ -108,8 +109,9 @@ class DfpClientTest(unittest.TestCase):
       suds_service = self.dfp_client.GetService(service, self.version)
 
       mock_client.assert_called_once_with(
-          'https://www.google.com/apis/ads/publisher/%s/%s?wsdl'
-          % (self.version, service), proxy=None, cache=self.cache)
+          'https://ads.google.com/apis/ads/publisher/%s/%s?wsdl'
+          % (self.version, service), proxy=None, cache=self.cache,
+          timeout=600)
       self.assertFalse(mock_client.return_value.set_options.called)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
@@ -334,7 +336,7 @@ class DataDownloaderTest(unittest.TestCase):
 
     self.report_downloader._GetReportService()
     self.report_downloader._dfp_client.GetService.assert_called_once_with(
-        'ReportService', self.version, 'https://www.google.com')
+        'ReportService', self.version, 'https://ads.google.com')
 
   def testGetPqlService(self):
     self.report_downloader._dfp_client = mock.Mock()
@@ -342,7 +344,7 @@ class DataDownloaderTest(unittest.TestCase):
 
     self.report_downloader._GetPqlService()
     self.report_downloader._dfp_client.GetService.assert_called_once_with(
-        'PublisherQueryLanguageService', self.version, 'https://www.google.com')
+        'PublisherQueryLanguageService', self.version, 'https://ads.google.com')
 
 
 class FilterStatementTest(unittest.TestCase):

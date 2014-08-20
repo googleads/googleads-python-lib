@@ -38,7 +38,7 @@ def main(client):
           'value': 'PREDEFINED'
       }
   }]
-  query = 'WHERE type = :type',
+  query = 'WHERE type = :type'
   statement = dfp.FilterStatement(query, values)
 
   # Get custom targeting keys by statement.

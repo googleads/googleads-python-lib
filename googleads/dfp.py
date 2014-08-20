@@ -32,6 +32,8 @@ from suds.cache import NoCache
 import googleads.common
 import googleads.errors
 
+# The endpoint server for DFP.
+DEFAULT_ENDPOINT = 'https://ads.google.com'
 # The suggested page limit per page fetched from the API.
 SUGGESTED_PAGE_LIMIT = 500
 # The chunk size used for report downloads.
@@ -72,6 +74,24 @@ _SERVICE_MAP = {
          'ProductTemplateService', 'ProposalLineItemService', 'ProposalService',
          'PublisherQueryLanguageService', 'RateCardCustomizationService',
          'RateCardCustomizationGroupService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201408':
+        ('ActivityGroupService', 'ActivityService', 'AdRuleService',
+         'AudienceSegmentService', 'BaseRateService', 'CompanyService',
+         'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
+         'OrderService', 'PlacementService', 'PremiumRateService',
+         'ProductService', 'ProductTemplateService', 'ProposalLineItemService',
+         'ProposalService', 'PublisherQueryLanguageService', 'RateCardService',
          'ReconciliationOrderReportService', 'ReconciliationReportRowService',
          'ReconciliationReportService', 'ReportService',
          'SuggestedAdUnitService', 'TeamService', 'UserService',
@@ -157,7 +177,7 @@ class DfpClient(object):
     self._header_handler = _DfpHeaderHandler(self)
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
-                 server='https://www.google.com'):
+                 server=DEFAULT_ENDPOINT):
     """Creates a service client for the given service.
 
     Args:
@@ -186,7 +206,7 @@ class DfpClient(object):
 
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT % (server, version, service_name),
-          proxy=proxy_option, cache=self.cache)
+          proxy=proxy_option, cache=self.cache, timeout=600)
     except suds.transport.TransportError:
       if version in _SERVICE_MAP:
         if service_name in _SERVICE_MAP[version]:
@@ -204,7 +224,7 @@ class DfpClient(object):
     return googleads.common.SudsServiceProxy(client, self._header_handler)
 
   def GetDataDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
-                        server='https://www.google.com'):
+                        server=DEFAULT_ENDPOINT):
     """Creates a downloader for DFP reports and PQL result sets.
 
     This is a convenience method. It is functionally identical to calling
@@ -279,7 +299,7 @@ class DataDownloader(object):
   """A utility that can be used to download reports and PQL result sets."""
 
   def __init__(self, dfp_client, version=sorted(_SERVICE_MAP.keys())[-1],
-               server='https://www.google.com'):
+               server=DEFAULT_ENDPOINT):
     """Initializes a DataDownloader.
 
     Args:

@@ -248,7 +248,7 @@ class AdWordsClient(object):
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT %
           (server, _SERVICE_MAP[version][service_name], version, service_name),
-          proxy=proxy_option, cache=self.cache)
+          proxy=proxy_option, cache=self.cache, timeout=600)
     except KeyError:
       if version in _SERVICE_MAP:
         raise googleads.errors.GoogleAdsValueError(

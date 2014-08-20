@@ -39,14 +39,13 @@ def main(client):
 
   # Set filter statement and bind value for reportQuery.
   values = [{
-      'key': 'ancestor_ad_unit_id',
+      'key': 'parent_ad_unit_id',
       'value': {
           'xsi_type': 'NumberValue',
           'value': root_ad_unit_id
       }
   }]
-  filter_statement = {'query': 'WHERE AD_UNIT_ANCESTOR_AD_UNIT_ID'
-                               ' = :ancestor_ad_unit_id',
+  filter_statement = {'query': 'WHERE PARENT_AD_UNIT_ID = :parent_ad_unit_id',
                       'values': values}
 
   # Create report job.

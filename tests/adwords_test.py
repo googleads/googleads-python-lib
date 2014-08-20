@@ -196,7 +196,8 @@ class AdWordsClientTest(unittest.TestCase):
 
       mock_client.assert_called_once_with(
           'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
-          % (namespace, version, service), proxy=https_proxy, cache=self.cache)
+          % (namespace, version, service), proxy=https_proxy, cache=self.cache,
+          timeout=600)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
     # Use the default server and https_proxy.
@@ -206,7 +207,8 @@ class AdWordsClientTest(unittest.TestCase):
 
       mock_client.assert_called_once_with(
           'https://adwords.google.com/api/adwords/%s/%s/%s?wsdl'
-          % (namespace, version, service), proxy=None, cache=self.cache)
+          % (namespace, version, service), proxy=None, cache=self.cache,
+          timeout=600)
       self.assertFalse(mock_client.return_value.set_options.called)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
