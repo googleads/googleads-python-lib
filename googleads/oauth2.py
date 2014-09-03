@@ -27,9 +27,11 @@ __author__ = 'Joseph DiLallo'
 import logging
 import sys
 import urllib2
+import json
 
 from oauthlib import oauth2
 
+from googleads import errors
 
 class GoogleOAuth2Client(object):
   """An OAuth 2.0 client for use with Google APIs.
@@ -90,6 +92,43 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
     self._client_secret = client_secret
     self.https_proxy = https_proxy
 
+  def HandleOAuthError(self, error):
+    """HTTP Errors during OAuth operations are all handled here.
+
+    Always raises an exception. Which one depends on the OAuth error code in
+    the response body.
+    """
+
+    error_str = u'{}'.format(error)
+
+    # HTTPError instances have a read() method when it was given a file-object,
+    # i.e. a response body is available.
+    if hasattr(error, 'read'):
+      msg_body = error.read()
+    else:
+      raise errors.OAuthUnknownError(error_str)
+
+    # TODO: check content type of response before parsing json
+
+    try:
+      oauth_error = json.loads(msg_body)
+    except ValueError:
+      raise errors.OAuthUnknownError(error_str)
+
+    # See http://tools.ietf.org/html/rfc6749#section-5.2 for error codes.
+    error_map = {
+      'invalid_request': errors.OAuthInvalidRequestError,
+      'invalid_grant': errors.OAuthInvalidGrantError,
+      'invalid_scope': errors.OAuthInvalidScopeError,
+      'invalid_client': errors.OAuthInvalidClientError,
+      'unauthorized_client': errors.OAuthUnauthorizedClientError,
+      'unsupported_grant_type': errors.OAuthUnsupportedGrantTypeError,
+    }
+
+    error_msg = oauth_error.get('error')
+    exc_type = error_map.get(error_msg, errors.OAuthUnknownError)
+    raise exc_type(oauth_error)
+
   def CreateHttpHeader(self):
     """Creates an OAuth 2.0 HTTP header.
 
@@ -119,6 +158,8 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
         content = urllib2.urlopen(request).read().decode()
         self._oauthlib_client.parse_request_body_response(content)
         _, oauth2_header, _ = self._oauthlib_client.add_token(self._TOKEN_URL)
+      except urllib2.HTTPError, e:
+        self.HandleOAuthError(e)
       except Exception, e:
         logging.warning('OAuth 2.0 credentials failed to refresh! Failure was: '
                         '%s', e)

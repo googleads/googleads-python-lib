@@ -27,6 +27,7 @@ import mock
 from oauthlib import oauth2
 
 import googleads.oauth2
+from googleads import errors
 
 PYTHON2 = sys.version_info[0] == 2
 URL_REQUEST_PATH = ('urllib2' if PYTHON2 else 'urllib.request')
@@ -89,19 +90,22 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
     self.assertEqual(str, type(returned_header.keys()[0]))
 
   def testCreateHttpHeader_refreshFails(self):
-    post_body = 'post_body'
-    error = urllib2.HTTPError('', 400, 'Bad Request', {}, None)
+    request_body = 'request_body'
+    response_body = u'{ "error": "invalid_grant" }'
+    error = urllib2.HTTPError('', 400, 'Bad Request', {},
+                              io.StringIO(response_body))
 
     self.oauthlib_client.add_token.side_effect = oauth2.TokenExpiredError()
-    self.oauthlib_client.prepare_refresh_body.return_value = post_body
+    self.oauthlib_client.prepare_refresh_body.return_value = request_body
 
     with mock.patch(URL_REQUEST_PATH + '.urlopen') as mock_urlopen:
       with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
         mock_urlopen.side_effect = error
-        self.assertEqual({}, self.googleads_client.CreateHttpHeader())
+        self.assertRaises(errors.OAuthInvalidGrantError,
+            self.googleads_client.CreateHttpHeader)
 
         mock_request.assert_called_once_with(
-            mock.ANY, post_body if PYTHON2 else bytes(post_body, 'utf-8'),
+            mock.ANY, request_body if PYTHON2 else bytes(post_body, 'utf-8'),
             mock.ANY)
         mock_urlopen.assert_called_once_with(mock_request.return_value)
     self.assertFalse(self.oauthlib_client.parse_request_body_response.called)

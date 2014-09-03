@@ -22,6 +22,38 @@ class GoogleAdsError(Exception):
   pass
 
 
+class OAuthError(GoogleAdsError):
+  """Parent class of all OAuth related errors."""
+
+
+class OAuthInvalidRequestError(OAuthError):
+  """The request is incomplete or malformed."""
+
+
+class OAuthInvalidGrantError(OAuthError):
+  """The grant  or refresh token is invalid."""
+
+
+class OAuthInvalidClientError(OAuthError):
+  """Client authentication failed."""
+
+
+class OAuthInvalidScopeError(OAuthError):
+  """The requested scope is invalid."""
+
+
+class OAuthUnauthorizedClientError(OAuthError):
+  """The client is not authorized to use this authorization grant type."""
+
+
+class OAuthUnsupportedGrantTypeError(OAuthError):
+  """The grant type is not supported by the authorization server."""
+
+
+class OAuthUnknownError(OAuthError):
+  """An unknown, unhandled OAuth error occured."""
+
+
 class GoogleAdsValueError(GoogleAdsError):
   """Error indicating that the user input for a function was invalid."""
   pass
