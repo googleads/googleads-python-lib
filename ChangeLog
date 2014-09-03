@@ -1,3 +1,8 @@
+2.0.2 - 09/03/2014
+=================
+* Added Ad Customizer example for AdWords.
+* Extend timeout on SUDs to correspond to access token expiry.
+
 2.0.1 - 08/20/2014
 =================
 * Added support for v201408 for DFP client library.

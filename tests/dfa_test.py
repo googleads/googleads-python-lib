@@ -108,7 +108,8 @@ class DfaClientTest(unittest.TestCase):
 
       mock_client.assert_called_once_with(
           'https://testing.test.com/%s/api/dfa-api/%s?wsdl'
-          % (version, service), proxy=https_proxy, cache=self.cache)
+          % (version, service), proxy=https_proxy, cache=self.cache,
+          timeout=3600)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
     # Use the default server and https_proxy.
@@ -118,7 +119,7 @@ class DfaClientTest(unittest.TestCase):
 
       mock_client.assert_called_once_with(
           'https://advertisersapi.doubleclick.com/%s/api/dfa-api/%s?wsdl'
-          % (version, service), proxy=None, cache=self.cache)
+          % (version, service), proxy=None, cache=self.cache, timeout=3600)
       self.assertFalse(mock_client.return_value.set_options.called)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
