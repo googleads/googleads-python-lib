@@ -152,10 +152,15 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
       try:
         request = urllib2.Request(self._GOOGLE_OAUTH2_ENDPOINT, post_body,
                                   self._OAUTH2_REFRESH_HEADERS)
+
         if self.https_proxy:
-          request.set_proxy(self.https_proxy, 'https')
+          proxy_support = urllib2.ProxyHandler({'https': self.https_proxy})
+          opener = urllib2.build_opener(proxy_support)
+        else:
+          opener = urllib2.build_opener()
+
         # Need to decode the content - in Python 3 it's bytes, not a string.
-        content = urllib2.urlopen(request).read().decode()
+        content = opener.open(request).read().decode()
         self._oauthlib_client.parse_request_body_response(content)
         _, oauth2_header, _ = self._oauthlib_client.add_token(self._TOKEN_URL)
       except urllib2.HTTPError, e:

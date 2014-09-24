@@ -248,7 +248,7 @@ class AdWordsClient(object):
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT %
           (server, _SERVICE_MAP[version][service_name], version, service_name),
-          proxy=proxy_option, cache=self.cache, timeout=600)
+          proxy=proxy_option, cache=self.cache, timeout=3600)
     except KeyError:
       if version in _SERVICE_MAP:
         raise googleads.errors.GoogleAdsValueError(
@@ -402,6 +402,13 @@ class ReportDownloader(object):
         (self._REPORT_DEFINITION_NAME, self._namespace)]
     self._marshaller = suds.mx.literal.Literal(schema)
 
+  def _DownloadReportCheckFormat(self, file_format, output):
+    if(file_format.startswith('GZIPPED_')
+       and not 'b' in getattr(output, 'mode', 'w')):
+      raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
+                                                 ' output for GZIPPED formats.')
+
+
   def DownloadReport(self, report_definition, output=sys.stdout,
                      return_money_in_micros=None):
     """Downloads an AdWords report using a report definition.
@@ -428,11 +435,7 @@ class ReportDownloader(object):
       AdWordsReportError: if the request fails for any other reason; e.g. a
           network error.
     """
-    if (report_definition['downloadFormat'].startswith('GZIPPED_')
-        and getattr(output, 'mode', 'w') != 'wb'):
-      raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
-                                                 ' output for GZIPPED formats.')
-
+    self._DownloadReportCheckFormat(report_definition['downloadFormat'], output)
     self._DownloadReport(self._SerializeReportDefinition(report_definition),
                          output, return_money_in_micros)
 
@@ -464,11 +467,7 @@ class ReportDownloader(object):
       AdWordsReportError: if the request fails for any other reason; e.g. a
           network error.
     """
-    if (file_format.startswith('GZIPPED_')
-        and getattr(output, 'mode', 'w') != 'wb'):
-      raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
-                                                 ' output for GZIPPED formats.')
-
+    self._DownloadReportCheckFormat(file_format, output)
     self._DownloadReport(self._SerializeAwql(query, file_format), output,
                          return_money_in_micros)
 

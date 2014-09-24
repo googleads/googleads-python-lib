@@ -142,7 +142,7 @@ class DfaClient(object):
 
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT % (server, version, service_name),
-          proxy=proxy_option, cache=self.cache)
+          proxy=proxy_option, cache=self.cache, timeout=3600)
     except suds.transport.TransportError:
       if version in self._SERVICE_MAP:
         if service_name in self._SERVICE_MAP[version]:
