@@ -30,9 +30,6 @@ ORDER_ID = 'INSERT_ORDER_ID_HERE'
 
 
 def main(client, order_id):
-  # Initialize a DataDownloader.
-  report_downloader = client.GetDataDownloader(version='v201408')
-
   # Create statement object to filter for an order.
   values = [{
       'key': 'id',
@@ -57,6 +54,9 @@ def main(client, order_id):
           'dateRangeType': 'LAST_MONTH'
       }
   }
+
+  # Initialize a DataDownloader.
+  report_downloader = client.GetDataDownloader(version='v201408')
 
   try:
     # Run the report and wait for it to finish.
