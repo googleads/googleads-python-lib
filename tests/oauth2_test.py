@@ -113,6 +113,30 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
     self.assertFalse(self.oauthlib_client.parse_request_body_response.called)
     self.oauthlib_client.add_token.assert_called_once_with(mock.ANY)
 
+  # TODO: Many tests have lots of redundant code. Refactor common code.
+  def testCreateHttpHeader_BadGateway(self):
+    request_body = 'request_body'
+    response_body = u'{ "error": "invalid_grant" }'
+    error = urllib2.HTTPError('', 502, 'Bad Gateway', {},
+                              io.StringIO(response_body))
+
+    self.oauthlib_client.add_token.side_effect = oauth2.TokenExpiredError()
+    self.oauthlib_client.prepare_refresh_body.return_value = request_body
+
+    with mock.patch(URL_REQUEST_PATH + '.build_opener') as mock_opener:
+      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+        mock_opener.return_value.open.side_effect = error
+
+        self.assertRaises(errors.OAuthTemporaryServerError,
+            self.googleads_client.CreateHttpHeader)
+
+        mock_request.assert_called_once_with(mock.ANY,
+            request_body if PYTHON2 else bytes(post_body, 'utf-8'), mock.ANY)
+        mock_opener.return_value.open.assert_called_once_with(
+            mock_request.return_value)
+    self.assertFalse(self.oauthlib_client.parse_request_body_response.called)
+    self.oauthlib_client.add_token.assert_called_once_with(mock.ANY)
+
 
 if __name__ == '__main__':
   unittest.main()

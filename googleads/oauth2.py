@@ -97,9 +97,16 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
 
     Always raises an exception. Which one depends on the OAuth error code in
     the response body.
+
+    The error param is should be of type urllib2.HTTPError.
     """
 
     error_str = u'{}'.format(error)
+
+    # Most server errors are only temporary and may very well be successful
+    # upon retry.
+    if int(error.code) in (500, 502, 503, 504):
+        raise errors.OAuthTemporaryServerError(error_str)
 
     # HTTPError instances have a read() method when it was given a file-object,
     # i.e. a response body is available.

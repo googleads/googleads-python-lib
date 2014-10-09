@@ -50,6 +50,10 @@ class OAuthUnsupportedGrantTypeError(OAuthError):
   """The grant type is not supported by the authorization server."""
 
 
+class OAuthTemporaryServerError(OAuthError):
+    """The server could temporarily not handle the request. Please retry."""
+
+
 class OAuthUnknownError(OAuthError):
   """An unknown, unhandled OAuth error occured."""
 
