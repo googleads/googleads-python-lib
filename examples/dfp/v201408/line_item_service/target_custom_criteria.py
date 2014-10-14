@@ -94,11 +94,11 @@ def main(client, line_item_id, key_id1, key_id2, key_id3, value_id1, value_id2,
 
   # Set custom criteria targeting on the line item.
   line_item = line_item_service.getLineItemsByStatement(
-      statement.ToStatement())
+      statement.ToStatement())['results'][0]
   line_item['targeting']['customTargeting'] = top_set
 
   # Update line item.
-  line_item = line_item_service.updateLineItem(line_item)
+  line_item = line_item_service.updateLineItems([line_item])[0]
 
   # Display results.
   if line_item:

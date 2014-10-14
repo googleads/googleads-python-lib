@@ -41,11 +41,11 @@ CONVERSION_VALUE = 'INSERT_CONVERSION_VALUE_HERE'
 
 def main(client, conversion_name, click_id, conversion_time, conversion_value):
   # Initialize appropriate services.
-  conversion_tracker_service = client.GetConversionTrackerService(
-      version='v201406')
+  conversion_tracker_service = client.GetService('ConversionTrackerService',
+                                                 version='v201406')
 
-  offline_conversion_feed_service = client.GetOfflineConversionFeedService(
-      version='v201406')
+  offline_conversion_feed_service = client.GetService(
+      'OfflineConversionFeedService', version='v201406')
 
   # Once created, this entry will be visible under
   # Tools and Analysis->Conversion and will have "Source = Import".
@@ -64,7 +64,7 @@ def main(client, conversion_name, click_id, conversion_time, conversion_value):
 
   response = conversion_tracker_service.mutate(
       [upload_conversion_operation])
-  new_upload_conversion = response['value'][0]
+  new_upload_conversion = response['value']
 
   print ('New upload conversion type with name \'%s\' and ID \'%s\' was '
          'created.' % (new_upload_conversion['name'],
@@ -85,7 +85,7 @@ def main(client, conversion_name, click_id, conversion_time, conversion_value):
 
   offline_conversion_response = offline_conversion_feed_service.mutate(
       [offline_conversion_operation])
-  new_feed = offline_conversion_response['value'][0]
+  new_feed = offline_conversion_response['value']
 
   print ('Uploaded offline conversion value of \'%s\' for Google Click ID '
          '\'%s\' to \'%s\'.' % (new_feed['conversionValue'],

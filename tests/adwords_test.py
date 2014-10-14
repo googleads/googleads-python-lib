@@ -97,7 +97,9 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         'Content-type': 'application/x-www-form-urlencoded',
         'developerToken': dev_token,
         'clientCustomerId': ccid,
-        'returnMoneyInMicros': 'False',
+        'returnMoneyInMicros': 'True',
+        'skipReportHeader': 'True',
+        'skipReportSummary': 'True',
         'Authorization': 'header',
         'User-Agent': ''.join([
             user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
@@ -105,16 +107,17 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     }
 
     # Check that returnMoneyInMicros works when set to true.
-    expected_return_value['returnMoneyInMicros'] = 'True'
     self.assertEqual(expected_return_value,
-                     self.header_handler_v201402.GetReportDownloadHeaders(True))
+                     self.header_handler_v201402.GetReportDownloadHeaders(
+                         True, True, True))
 
     # Check that returnMoneyInMicros works when set to false.
     expected_return_value['returnMoneyInMicros'] = 'False'
     self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
-                     self.header_handler_v201402.GetReportDownloadHeaders(False)
+                     self.header_handler_v201402.GetReportDownloadHeaders(
+                         False, True, True)
                     )
 
     # Default returnMoneyInMicros value is not included in the headers.
@@ -122,7 +125,8 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
-                     self.header_handler.GetReportDownloadHeaders())
+                     self.header_handler.GetReportDownloadHeaders(
+                         skip_report_header=True, skip_report_summary=True))
 
   def testGetReportDownloadHeaders_v201406(self):
     ccid = 'client customer id'
@@ -156,21 +160,28 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
-                     self.header_handler.GetReportDownloadHeaders())
+                     self.header_handler.GetReportDownloadHeaders(
+                         skip_report_header=False, skip_report_summary=False))
 
 
 class AdWordsClientTest(unittest.TestCase):
   """Tests for the googleads.adwords.AdWordsClient class."""
 
   def setUp(self):
+    oauth_header = {'Authorization': 'header'}
     self.cache = NoCache()
+    self.client_customer_id = 'client customer id'
     self.dev_token = 'developers developers developers'
     self.user_agent = 'users users user'
-    self.oauth2_client = 'unused'
+    self.oauth2_client = mock.Mock()
+    self.oauth2_client.CreateHttpHeader.return_value = dict(oauth_header)
     self.https_proxy = 'my.proxy:443'
     self.adwords_client = googleads.adwords.AdWordsClient(
         self.dev_token, self.oauth2_client, self.user_agent,
+        client_customer_id=self.client_customer_id,
         https_proxy=self.https_proxy, cache=self.cache)
+    self.header_handler = googleads.adwords._AdWordsHeaderHandler(
+        self.adwords_client, CURRENT_VERSION)
 
   def testLoadFromStorage(self):
     with mock.patch('googleads.common.LoadFromStorage') as mock_load:
@@ -231,6 +242,15 @@ class AdWordsClientTest(unittest.TestCase):
       mock_downloader.assert_called_once_with(
           self.adwords_client, 'version', 'server')
 
+  def testSetClientCustomerId(self):
+    suds_client = mock.Mock()
+    ccid = 'modified'
+    # Check that the SOAP header has the modified client customer id.
+    self.adwords_client.SetClientCustomerId(ccid)
+    self.header_handler.SetHeaders(suds_client)
+    soap_header = suds_client.factory.create.return_value
+    self.assertEqual(ccid, soap_header.clientCustomerId)
+
 
 class ReportDownloaderTest(unittest.TestCase):
   """Tests for the googleads.adwords.ReportDownloader class."""
@@ -281,7 +301,8 @@ class ReportDownloaderTest(unittest.TestCase):
       self.marshaller.process.assert_called_once_with(mock_content.return_value)
 
     self.assertEqual(content, output_file.getvalue())
-    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(False)
+    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+        False, None, None)
 
   def testDownloadReport_failure(self):
     output_file = io.StringIO()
@@ -317,7 +338,8 @@ class ReportDownloaderTest(unittest.TestCase):
       self.marshaller.process.assert_called_once_with(mock_content.return_value)
 
     self.assertEqual('', output_file.getvalue())
-    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(True)
+    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+        True, None, None)
 
   def testDownloadReport_incompatibleFormatFailure(self):
     output_file = io.StringIO()
@@ -361,7 +383,8 @@ class ReportDownloaderTest(unittest.TestCase):
         mock_urlopen.assert_called_once_with(mock_request.return_value)
 
     self.assertEqual(content, output_file.getvalue())
-    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(True)
+    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+        True, None, None)
 
   def testExtractError_badRequest(self):
     response = mock.Mock()

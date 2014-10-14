@@ -73,16 +73,13 @@ def main(client, target_placement_ids):
           'microAmount': '2000000'
       },
       'primaryGoal': {
-          'goal': {
-              'units': '50',
-              'unitType': 'IMPRESSIONS',
-              'goalType': 'DAILY'
-          }
+          'units': '50',
+          'unitType': 'IMPRESSIONS',
+          'goalType': 'DAILY'
       },
       'contractedUnitsBought': '100',
       'creativeRotationType': 'EVEN',
       'discountType': 'PERCENTAGE',
-      'unitType': 'IMPRESSIONS'
   }
 
   # Get forecast.
