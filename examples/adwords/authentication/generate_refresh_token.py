@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generates a refresh token for use with AdWords."""
+"""Generates refresh token for AdWords using the Installed Application flow."""
 
 __author__ = 'Joseph DiLallo'
 
@@ -32,7 +32,7 @@ CLIENT_SECRET = 'INSERT_CLIENT_SECRET_HERE'
 HTTPS_PROXY = None
 
 # The AdWords API OAuth 2.0 scope.
-SCOPE = u'https://adwords.google.com/api/adwords'
+SCOPE = u'https://www.googleapis.com/auth/adwords'
 # This callback URL will allow you to copy the token from the success screen.
 CALLBACK_URL = 'urn:ietf:wg:oauth:2.0:oob'
 # The HTTP headers needed on OAuth 2.0 refresh requests.

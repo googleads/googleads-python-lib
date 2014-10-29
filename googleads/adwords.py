@@ -17,6 +17,7 @@
 __author__ = 'Joseph DiLallo'
 
 import os
+import StringIO
 import sys
 import urllib
 import urllib2
@@ -25,6 +26,7 @@ from xml.etree import ElementTree
 import suds.client
 import suds.mx.literal
 import suds.xsd.doctor
+from suds.cache import NoCache
 
 import googleads.common
 import googleads.errors
@@ -67,10 +69,95 @@ _SERVICE_MAP = {
         'MutateJobService': 'cm',
         'OfflineConversionFeedService': 'cm',
         'ReportDefinitionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+    },
+    'v201406': {
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'AlertService': 'mcm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignAdExtensionService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'ExperimentService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'GeoLocationService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'MutateJobService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+    },
+    'v201409': {
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignAdExtensionService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'ExperimentService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'GeoLocationService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'MutateJobService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
         'TargetingIdeaService': 'o',
         'TrafficEstimatorService': 'o',
     },
 }
+
+# The endpoint used by default when making AdWords API requests.
+_DEFAULT_ENDPOINT = 'https://adwords.google.com'
+# The final version where return_money_in_micros is accepted.
+_FINAL_RETURN_MONEY_IN_MICROS_VERSION = 'v201402'
 
 
 class AdWordsClient(object):
@@ -108,8 +195,7 @@ class AdWordsClient(object):
   _SOAP_SERVICE_FORMAT = '%s/api/adwords/%s/%s/%s?wsdl'
 
   @classmethod
-  def LoadFromStorage(
-      cls, path=os.path.join(os.path.expanduser('~'), 'googleads.yaml')):
+  def LoadFromStorage(cls, path=None):
     """Creates an AdWordsClient with information stored in a yaml file.
 
     Args:
@@ -124,6 +210,9 @@ class AdWordsClient(object):
       information necessary to instantiate a client object - either a
       required key was missing or an OAuth 2.0 key was missing.
     """
+    if path is None:
+      path = os.path.join(os.path.expanduser('~'), 'googleads.yaml')
+
     return cls(**googleads.common.LoadFromStorage(
         path, cls._YAML_KEY, cls._REQUIRED_INIT_VALUES,
         cls._OPTIONAL_INIT_VALUES))
@@ -131,7 +220,7 @@ class AdWordsClient(object):
   def __init__(
       self, developer_token, oauth2_client, user_agent,
       client_customer_id=None, validate_only=False, partial_failure=False,
-      https_proxy=None):
+      https_proxy=None, cache=NoCache()):
     """Initializes an AdWordsClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -157,6 +246,7 @@ class AdWordsClient(object):
           this header.
       https_proxy: A string identifying the URL of a proxy that all HTTPS
           requests should be routed through.
+      cache: A subclass of suds.cache.Cache that defaults to NoCache.
     """
     self.developer_token = developer_token
     self.oauth2_client = oauth2_client
@@ -165,9 +255,10 @@ class AdWordsClient(object):
     self.validate_only = validate_only
     self.partial_failure = partial_failure
     self.https_proxy = https_proxy
+    self.cache = cache
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
-                 server='https://adwords.google.com'):
+                 server=_DEFAULT_ENDPOINT):
     """Creates a service client for the given service.
 
     Args:
@@ -197,7 +288,7 @@ class AdWordsClient(object):
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT %
           (server, _SERVICE_MAP[version][service_name], version, service_name),
-          proxy=proxy_option)
+          proxy=proxy_option, cache=self.cache, timeout=3600)
     except KeyError:
       if version in _SERVICE_MAP:
         raise googleads.errors.GoogleAdsValueError(
@@ -213,7 +304,7 @@ class AdWordsClient(object):
         client, _AdWordsHeaderHandler(self, version))
 
   def GetReportDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
-                          server='https://adwords.google.com'):
+                          server=_DEFAULT_ENDPOINT):
     """Creates a downloader for AdWords reports.
 
     This is a convenience method. It is functionally identical to calling
@@ -230,6 +321,14 @@ class AdWordsClient(object):
       A ReportDownloader tied to this AdWordsClient, ready to download reports.
     """
     return ReportDownloader(self, version, server)
+
+  def SetClientCustomerId(self, client_customer_id):
+    """Change the client customer id used by the AdWordsClient instance.
+
+    Args:
+      client_customer_id: str New Client Customer Id to use.
+    """
+    self.client_customer_id = client_customer_id
 
 
 class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
@@ -270,8 +369,29 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
         soapheaders=header,
         headers=self._adwords_client.oauth2_client.CreateHttpHeader())
 
-  def GetReportDownloadHeaders(self, return_money_in_micros=None):
-    """Returns a dictionary of headers for a report download request."""
+  def GetReportDownloadHeaders(self, return_money_in_micros=None,
+                               skip_report_header=None,
+                               skip_report_summary=None):
+    """Returns a dictionary of headers for a report download request.
+
+    Args:
+      return_money_in_micros: A boolean indicating whether money should be
+          represented as micros in reports. If None is supplied the AdWords
+          server will use its default value, which is currently True.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
+
+    Returns:
+      A dictionary containing the headers configured for downloading a report.
+
+    Raises:
+      GoogleAdsValueError: if return_money_in_micros used with incompatible
+          version.
+    """
     headers = self._adwords_client.oauth2_client.CreateHttpHeader()
     headers.update({
         'Content-type': self._CONTENT_TYPE,
@@ -280,8 +400,20 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
         'User-Agent': ''.join([self._adwords_client.user_agent, self._LIB_SIG,
                                ',gzip'])
     })
+
+    if skip_report_header:
+      headers.update({'skipReportHeader': str(skip_report_header)})
+
+    if skip_report_summary:
+      headers.update({'skipReportSummary': str(skip_report_summary)})
+
     if return_money_in_micros is not None:
-      headers.update({'returnMoneyInMicros': str(return_money_in_micros)})
+      if self._version == _FINAL_RETURN_MONEY_IN_MICROS_VERSION:
+        headers.update({'returnMoneyInMicros': str(return_money_in_micros)})
+      else:
+        raise googleads.errors.GoogleAdsValueError('returnMoneyInMicros isn\'t'
+                                                   'supported in this version.')
+
     return headers
 
 
@@ -301,7 +433,7 @@ class ReportDownloader(object):
   _REPORT_DEFINITION_NAME = 'reportDefinition'
 
   def __init__(self, adwords_client, version=sorted(_SERVICE_MAP.keys())[-1],
-               server='https://adwords.google.com'):
+               server=_DEFAULT_ENDPOINT):
     """Initializes a ReportDownloader.
 
     Args:
@@ -319,23 +451,29 @@ class ReportDownloader(object):
     self._end_point = self._END_POINT_FORMAT % (server, version)
     self._header_handler = _AdWordsHeaderHandler(adwords_client, version)
 
-    proxy_option=None
-    if self._adwords_client.https_proxy: 
-      proxy_option={
-        'https': self._adwords_client.https_proxy
-      }
+    proxy_option = None
+    if self._adwords_client.https_proxy:
+      proxy_option = {'https': self._adwords_client.https_proxy}
 
     schema_url = self._SCHEMA_FORMAT % (server, version)
     schema = suds.client.Client(
         schema_url,
         doctor=suds.xsd.doctor.ImportDoctor(suds.xsd.doctor.Import(
-            self._namespace, schema_url)),proxy=proxy_option).wsdl.schema
+            self._namespace, schema_url)),
+        proxy=proxy_option, cache=self._adwords_client.cache).wsdl.schema
     self._report_definition_type = schema.elements[
         (self._REPORT_DEFINITION_NAME, self._namespace)]
     self._marshaller = suds.mx.literal.Literal(schema)
 
+  def _DownloadReportCheckFormat(self, file_format, output):
+    if(file_format.startswith('GZIPPED_')
+       and not 'b' in getattr(output, 'mode', 'w')):
+      raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
+                                                 ' output for GZIPPED formats.')
+
   def DownloadReport(self, report_definition, output=sys.stdout,
-                     return_money_in_micros=None):
+                     return_money_in_micros=None, skip_report_header=None,
+                     skip_report_summary=None):
     """Downloads an AdWords report using a report definition.
 
     The report contents will be written to the given output.
@@ -346,21 +484,198 @@ class ReportDownloader(object):
           that will be downloaded.
       [optional]
       output: A writable object where the contents of the report will be written
-          to.
+          to. If the report is gzip compressed, you need to specify an output
+          that can write binary data.
       return_money_in_micros: A boolean indicating whether money should be
           represented as micros in reports. If None is supplied the AdWords
           server will use its default value, which is currently True.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
 
     Raises:
-      An AdWordsReportBadRequestError if the report download fails due to
-      improper input. If the request fails for any other reason (for example,
-      a network error), an AdWordsReportError will be raised instead.
+      AdWordsReportBadRequestError: if the report download fails due to
+          improper input.
+      GoogleAdsValueError: if the user-specified report format is incompatible
+          with the output.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
     """
+    self._DownloadReportCheckFormat(report_definition['downloadFormat'], output)
     self._DownloadReport(self._SerializeReportDefinition(report_definition),
-                         output, return_money_in_micros)
+                         output, return_money_in_micros, skip_report_header,
+                         skip_report_summary)
+
+  def DownloadReportAsStream(self, report_definition,
+                             return_money_in_micros=None,
+                             skip_report_header=None, skip_report_summary=None):
+    """Downloads an AdWords report using a report definition.
+
+    This will return a stream, allowing you to retrieve the report contents.
+
+    Args:
+      report_definition: A dictionary or instance of the ReportDefinition class
+          generated from the schema. This defines the contents of the report
+          that will be downloaded.
+      [optional]
+      return_money_in_micros: A boolean indicating whether money should be
+          represented as micros in reports. If None is supplied the AdWords
+          server will use its default value, which is currently True.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
+
+    Returns:
+      A stream to be used in retrieving the report contents.
+
+    Raises:
+      AdWordsReportBadRequestError: if the report download fails due to
+          improper input.
+      GoogleAdsValueError: if the user-specified report format is incompatible
+          with the output.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
+    """
+    return self._DownloadReportAsStream(
+        self._SerializeReportDefinition(report_definition),
+        return_money_in_micros, skip_report_header, skip_report_summary)
+
+  def DownloadReportAsStreamWithAwql(self, query, file_format,
+                                     return_money_in_micros=None,
+                                     skip_report_header=None,
+                                     skip_report_summary=None):
+    """Downloads an AdWords report using an AWQL query.
+
+    The report contents will be returned as a stream.
+
+    Args:
+      query: A string containing the query which specifies the data you want
+          your report to include.
+      file_format: A string representing the output format for your report.
+          Acceptable values can be found in our API documentation:
+          https://developers.google.com/adwords/api/docs/guides/reporting
+      [optional]
+      return_money_in_micros: A boolean indicating whether money should be
+          represented as micros in reports. If None is supplied the AdWords
+          server will use its default value, which is currently True.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
+
+    Returns:
+      A stream to be used in retrieving the report contents.
+
+    Raises:
+      AdWordsReportBadRequestError: if the report download fails due to
+          improper input.
+      GoogleAdsValueError: if the user-specified report format is incompatible
+          with the output.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
+    """
+    return self._DownloadReportAsStream(self._SerializeAwql(query, file_format),
+                                        return_money_in_micros,
+                                        skip_report_header, skip_report_summary)
+
+  def DownloadReportAsString(self, report_definition,
+                             return_money_in_micros=None,
+                             skip_report_header=None, skip_report_summary=None):
+    """Downloads an AdWords report using a report definition.
+
+    The report contents will be returned as a string.
+
+    Args:
+      report_definition: A dictionary or instance of the ReportDefinition class
+          generated from the schema. This defines the contents of the report
+          that will be downloaded.
+      [optional]
+      return_money_in_micros: A boolean indicating whether money should be
+          represented as micros in reports. If None is supplied the AdWords
+          server will use its default value, which is currently True.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
+
+    Returns:
+      A string containing the report contents.
+
+    Raises:
+      AdWordsReportBadRequestError: if the report download fails due to
+          improper input.
+      GoogleAdsValueError: if the user-specified report format is incompatible
+          with the output.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
+    """
+    try:
+      response = StringIO.StringIO()
+      self._DownloadReport(self._SerializeReportDefinition(report_definition),
+                           response, return_money_in_micros, skip_report_header,
+                           skip_report_summary)
+      return response.getvalue()
+    finally:
+      response.close()
+
+  def DownloadReportAsStringWithAwql(self, query, file_format,
+                                     return_money_in_micros=None,
+                                     skip_report_header=None,
+                                     skip_report_summary=None):
+    """Downloads an AdWords report using an AWQL query.
+
+    The report contents will be returned as a string.
+
+    Args:
+      query: A string containing the query which specifies the data you want
+          your report to include.
+      file_format: A string representing the output format for your report.
+          Acceptable values can be found in our API documentation:
+          https://developers.google.com/adwords/api/docs/guides/reporting
+      [optional]
+      return_money_in_micros: A boolean indicating whether money should be
+          represented as micros in reports. If None is supplied the AdWords
+          server will use its default value, which is currently True.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
+
+    Returns:
+      A string containing the report contents.
+
+    Raises:
+      AdWordsReportBadRequestError: if the report download fails due to
+          improper input.
+      GoogleAdsValueError: if the user-specified report format is incompatible
+          with the output.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
+    """
+    try:
+      response = StringIO.StringIO()
+      self._DownloadReport(self._SerializeAwql(query, file_format), response,
+                           return_money_in_micros, skip_report_header,
+                           skip_report_summary)
+      return response.getvalue()
+    finally:
+      response.close()
 
   def DownloadReportWithAwql(self, query, file_format, output=sys.stdout,
-                             return_money_in_micros=None):
+                             return_money_in_micros=None,
+                             skip_report_header=None, skip_report_summary=None):
     """Downloads an AdWords report using an AWQL query.
 
     The report contents will be written to the given output.
@@ -373,20 +688,33 @@ class ReportDownloader(object):
           https://developers.google.com/adwords/api/docs/guides/reporting
       [optional]
       output: A writable object where the contents of the report will be written
-          to.
+          to. If the report is gzip compressed, you need to specify an output
+          that can write binary data.
       return_money_in_micros: A boolean indicating whether money should be
           represented as micros in reports. If None is supplied the AdWords
           server will use its default value, which is currently True.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
 
     Raises:
-      An AdWordsReportBadRequestError if the report download fails due to
-      improper input. If the request fails for any other reason (for example,
-      a network error), an AdWordsReportError will be raised instead.
+      AdWordsReportBadRequestError: if the report download fails due to
+          improper input.
+      GoogleAdsValueError: if the user-specified report format is incompatible
+          with the output.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
     """
+    self._DownloadReportCheckFormat(file_format, output)
     self._DownloadReport(self._SerializeAwql(query, file_format), output,
-                         return_money_in_micros)
+                         return_money_in_micros, skip_report_header,
+                         skip_report_summary)
 
-  def _DownloadReport(self, post_body, output, return_money_in_micros):
+  def _DownloadReport(self, post_body, output, return_money_in_micros,
+                      skip_report_header, skip_report_summary):
     """Downloads an AdWords report, writing the contents to the given file.
 
     Args:
@@ -397,33 +725,71 @@ class ReportDownloader(object):
       return_money_in_micros: A boolean indicating whether money should be
           represented as micros in reports. If None is supplied the AdWords
           server will use its default value, which is currently True.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
 
     Raises:
-      An AdWordsReportBadRequestError if the report download fails due to
-      improper input. If the HTTP request fails with any other status code, an
-      AdWordsReportError will be raised instead. In the event of certain other
-      failures, a urllib2.URLError (Python 2) or urllib.error.URLError
-      (Python 3) will be raised.
+      AdWordsReportBadRequestError: if the report download fails due to
+        improper input. In the event of certain other failures, a
+        urllib2.URLError (Python 2) or urllib.error.URLError (Python 3) will be
+        raised.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
+    """
+    response = self._DownloadReportAsStream(post_body, return_money_in_micros,
+                                            skip_report_header,
+                                            skip_report_summary)
+    while True:
+      chunk = response.read(_CHUNK_SIZE)
+      if not chunk: break
+      output.write(chunk.decode() if sys.version_info[0] == 3
+                   and getattr(output, 'mode', 'w') == 'w' else chunk)
+
+  def _DownloadReportAsStream(self, post_body, return_money_in_micros,
+                              skip_report_header, skip_report_summary):
+    """Downloads an AdWords report, returning a stream.
+
+    Args:
+      post_body: The contents of the POST request's body as a URL encoded
+          string.
+      return_money_in_micros: A boolean indicating whether money should be
+          represented as micros in reports. If None is supplied the AdWords
+          server will use its default value, which is currently True.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
+
+    Returns:
+      A stream to be used in retrieving the report contents.
+
+    Raises:
+      AdWordsReportBadRequestError: if the report download fails due to
+        improper input. In the event of certain other failures, a
+        urllib2.URLError (Python 2) or urllib.error.URLError (Python 3) will be
+        raised.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
     """
     if sys.version_info[0] == 3:
       post_body = bytes(post_body, 'utf8')
     request = urllib2.Request(
         self._end_point, post_body,
-        self._header_handler.GetReportDownloadHeaders(return_money_in_micros))
-    #TODO: Removed by Rodrigo (doesn't work)
+        self._header_handler.GetReportDownloadHeaders(return_money_in_micros,
+                                                      skip_report_header,
+                                                      skip_report_summary))
     #if self._adwords_client.https_proxy:
-    #  print 'Using proxy %s' % self._adwords_client.https_proxy
-
     #  request.set_proxy(self._adwords_client.https_proxy, 'https')
     try:
-      response = urllib2.urlopen(request)
+      return urllib2.urlopen(request)
     except urllib2.HTTPError, e:
       raise self._ExtractError(e)
-    else:
-      while True:
-        chunk = response.read(_CHUNK_SIZE)
-        if not chunk: break
-        output.write(chunk.decode() if sys.version_info[0] == 3 else chunk)
 
   def _SerializeAwql(self, query, file_format):
     """Serializes an AWQL query and file format for transport.

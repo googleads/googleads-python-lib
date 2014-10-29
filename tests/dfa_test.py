@@ -22,6 +22,7 @@ import unittest
 
 import mock
 import suds.transport
+from suds.cache import NoCache
 
 import googleads.dfa
 import googleads.common
@@ -79,9 +80,10 @@ class DfaClientTest(unittest.TestCase):
     self.application_name = 'application name'
     self.oauth2_client = 'unused'
     self.https_proxy = 'myproxy.com:443'
+    self.cache = NoCache()
     self.dfa_client = googleads.dfa.DfaClient(
         self.username, self.oauth2_client, self.application_name,
-        self.https_proxy)
+        self.https_proxy, self.cache)
 
   def testLoadFromStorage(self):
     with mock.patch('googleads.common.LoadFromStorage') as mock_load:
@@ -106,7 +108,8 @@ class DfaClientTest(unittest.TestCase):
 
       mock_client.assert_called_once_with(
           'https://testing.test.com/%s/api/dfa-api/%s?wsdl'
-          % (version, service), proxy=https_proxy)
+          % (version, service), proxy=https_proxy, cache=self.cache,
+          timeout=3600)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
     # Use the default server and https_proxy.
@@ -116,7 +119,7 @@ class DfaClientTest(unittest.TestCase):
 
       mock_client.assert_called_once_with(
           'https://advertisersapi.doubleclick.com/%s/api/dfa-api/%s?wsdl'
-          % (version, service), proxy=None)
+          % (version, service), proxy=None, cache=self.cache, timeout=3600)
       self.assertFalse(mock_client.return_value.set_options.called)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 

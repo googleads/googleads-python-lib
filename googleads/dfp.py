@@ -26,10 +26,14 @@ import urllib2
 import pytz
 import suds.client
 import suds.transport
+from suds.cache import NoCache
+
 
 import googleads.common
 import googleads.errors
 
+# The endpoint server for DFP.
+DEFAULT_ENDPOINT = 'https://ads.google.com'
 # The suggested page limit per page fetched from the API.
 SUGGESTED_PAGE_LIMIT = 500
 # The chunk size used for report downloads.
@@ -51,6 +55,43 @@ _SERVICE_MAP = {
          'ProductTemplateService', 'ProposalLineItemService', 'ProposalService',
          'PublisherQueryLanguageService', 'RateCardCustomizationService',
          'RateCardCustomizationGroupService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201405':
+        ('ActivityGroupService', 'ActivityService', 'AdRuleService',
+         'AudienceSegmentService', 'BaseRateService', 'CompanyService',
+         'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
+         'OrderService', 'PlacementService', 'ProductService',
+         'ProductTemplateService', 'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardCustomizationService',
+         'RateCardCustomizationGroupService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201408':
+        ('ActivityGroupService', 'ActivityService', 'AdRuleService',
+         'AudienceSegmentService', 'BaseRateService', 'CompanyService',
+         'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
+         'OrderService', 'PlacementService', 'PremiumRateService',
+         'ProductService', 'ProductTemplateService', 'ProposalLineItemService',
+         'ProposalService', 'PublisherQueryLanguageService', 'RateCardService',
          'ReconciliationOrderReportService', 'ReconciliationReportRowService',
          'ReconciliationReportService', 'ReportService',
          'SuggestedAdUnitService', 'TeamService', 'UserService',
@@ -86,8 +127,7 @@ class DfpClient(object):
   _SOAP_SERVICE_FORMAT = '%s/apis/ads/publisher/%s/%s?wsdl'
 
   @classmethod
-  def LoadFromStorage(
-      cls, path=os.path.join(os.path.expanduser('~'), 'googleads.yaml')):
+  def LoadFromStorage(cls, path=None):
     """Creates a DfpClient with information stored in a yaml file.
 
     Args:
@@ -102,12 +142,15 @@ class DfpClient(object):
       information necessary to instantiate a client object - either a
       required key was missing or an OAuth 2.0 key was missing.
     """
+    if path is None:
+      path = os.path.join(os.path.expanduser('~'), 'googleads.yaml')
+
     return cls(**googleads.common.LoadFromStorage(
         path, cls._YAML_KEY, cls._REQUIRED_INIT_VALUES,
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, oauth2_client, application_name, network_code=None,
-               https_proxy=None):
+               https_proxy=None, cache=NoCache()):
     """Initializes a DfpClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -124,15 +167,17 @@ class DfpClient(object):
           calls require this header to be set.
       https_proxy: A string identifying the URL of a proxy that all HTTPS
           requests should be routed through.
+      cache: A subclass of suds.cache.Cache that defaults to NoCache.
     """
     self.oauth2_client = oauth2_client
     self.application_name = application_name
     self.network_code = network_code
     self.https_proxy = https_proxy
+    self.cache = cache
     self._header_handler = _DfpHeaderHandler(self)
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
-                 server='https://www.google.com'):
+                 server=DEFAULT_ENDPOINT):
     """Creates a service client for the given service.
 
     Args:
@@ -161,7 +206,7 @@ class DfpClient(object):
 
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT % (server, version, service_name),
-          proxy=proxy_option)
+          proxy=proxy_option, cache=self.cache, timeout=3600)
     except suds.transport.TransportError:
       if version in _SERVICE_MAP:
         if service_name in _SERVICE_MAP[version]:
@@ -179,7 +224,7 @@ class DfpClient(object):
     return googleads.common.SudsServiceProxy(client, self._header_handler)
 
   def GetDataDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
-                        server='https://www.google.com'):
+                        server=DEFAULT_ENDPOINT):
     """Creates a downloader for DFP reports and PQL result sets.
 
     This is a convenience method. It is functionally identical to calling
@@ -254,7 +299,7 @@ class DataDownloader(object):
   """A utility that can be used to download reports and PQL result sets."""
 
   def __init__(self, dfp_client, version=sorted(_SERVICE_MAP.keys())[-1],
-               server='https://www.google.com'):
+               server=DEFAULT_ENDPOINT):
     """Initializes a DataDownloader.
 
     Args:
@@ -375,18 +420,21 @@ class DataDownloader(object):
     """
     field = pql_value['value']
 
-    if pql_value['Value.Type'] == 'TextValue':
-      return field
-    elif pql_value['Value.Type'] == 'NumberValue':
-      return float(field) if '.' in field else int(field)
-    elif pql_value['Value.Type'] == 'DateTimeValue':
-      return self._ConvertDateTimeToOffset(field)
-    elif pql_value['Value.Type'] == 'DateValue':
-      return datetime.date(int(field['date']['year']),
-                           int(field['date']['month']),
-                           int(field['date']['day'])).isoformat()
+    if field:
+      if pql_value['Value.Type'] == 'TextValue':
+        return field.encode('UTF8')
+      elif pql_value['Value.Type'] == 'NumberValue':
+        return float(field) if '.' in field else int(field)
+      elif pql_value['Value.Type'] == 'DateTimeValue':
+        return self._ConvertDateTimeToOffset(field)
+      elif pql_value['Value.Type'] == 'DateValue':
+        return datetime.date(int(field['date']['year']),
+                             int(field['date']['month']),
+                             int(field['date']['day'])).isoformat()
+      else:
+        return field
     else:
-      return field
+      return '-'
 
   def _PageThroughPqlSet(self, pql_query, output_function, values):
     """Pages through a pql_query and performs an action (output_function).

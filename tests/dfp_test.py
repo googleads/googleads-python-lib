@@ -24,6 +24,7 @@ import unittest
 
 import mock
 import suds.transport
+from suds.cache import NoCache
 
 import googleads.dfp
 import googleads.common
@@ -70,9 +71,11 @@ class DfpClientTest(unittest.TestCase):
     self.application_name = 'application name'
     self.oauth2_client = 'unused'
     self.https_proxy = 'myproxy.com:443'
+    self.cache = NoCache()
+    self.version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
     self.dfp_client = googleads.dfp.DfpClient(
         self.oauth2_client, self.application_name, self.network_code,
-        self.https_proxy)
+        self.https_proxy, self.cache)
 
   def testLoadFromStorage(self):
     with mock.patch('googleads.common.LoadFromStorage') as mock_load:
@@ -85,39 +88,39 @@ class DfpClientTest(unittest.TestCase):
                             googleads.dfp.DfpClient)
 
   def testGetService_success(self):
-    version = googleads.dfp._SERVICE_MAP.keys()[0]
-    service = googleads.dfp._SERVICE_MAP[version][0]
+    service = googleads.dfp._SERVICE_MAP[self.version][0]
 
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
     server = 'https://testing.test.com/'
     https_proxy = {'https': self.https_proxy}
     with mock.patch('suds.client.Client') as mock_client:
-      suds_service = self.dfp_client.GetService(service, version, server)
+      suds_service = self.dfp_client.GetService(service, self.version, server)
 
       mock_client.assert_called_once_with(
           'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
-          % (version, service), proxy=https_proxy)
+          % (self.version, service), proxy=https_proxy, cache=self.cache,
+          timeout=3600)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
     # Use the default server and https proxy.
     self.dfp_client.https_proxy = None
     with mock.patch('suds.client.Client') as mock_client:
-      suds_service = self.dfp_client.GetService(service, version)
+      suds_service = self.dfp_client.GetService(service, self.version)
 
       mock_client.assert_called_once_with(
-          'https://www.google.com/apis/ads/publisher/%s/%s?wsdl'
-          % (version, service), proxy=None)
+          'https://ads.google.com/apis/ads/publisher/%s/%s?wsdl'
+          % (self.version, service), proxy=None, cache=self.cache,
+          timeout=3600)
       self.assertFalse(mock_client.return_value.set_options.called)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_badService(self):
-    version = googleads.dfp._SERVICE_MAP.keys()[0]
     with mock.patch('suds.client.Client') as mock_client:
       mock_client.side_effect = suds.transport.TransportError('', '')
       self.assertRaises(
           googleads.errors.GoogleAdsValueError, self.dfp_client.GetService,
-          'GYIVyievfyiovslf', version)
+          'GYIVyievfyiovslf', self.version)
 
   def testGetService_badVersion(self):
     with mock.patch('suds.client.Client') as mock_client:
@@ -127,12 +130,11 @@ class DfpClientTest(unittest.TestCase):
           'CampaignService', '11111')
 
   def testGetService_transportError(self):
-    version = googleads.dfp._SERVICE_MAP.keys()[0]
-    service = googleads.dfp._SERVICE_MAP[version][0]
+    service = googleads.dfp._SERVICE_MAP[self.version][0]
     with mock.patch('suds.client.Client') as mock_client:
       mock_client.side_effect = suds.transport.TransportError('', '')
       self.assertRaises(suds.transport.TransportError,
-                        self.dfp_client.GetService, service, version)
+                        self.dfp_client.GetService, service, self.version)
 
 
 class DataDownloaderTest(unittest.TestCase):
@@ -145,6 +147,7 @@ class DataDownloaderTest(unittest.TestCase):
     https_proxy = 'myproxy.com:443'
     dfp_client = googleads.dfp.DfpClient(
         oauth2_client, application_name, network_code, https_proxy)
+    self.version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
     self.report_downloader = dfp_client.GetDataDownloader()
     self.pql_service = mock.Mock()
     self.report_service = mock.Mock()
@@ -170,7 +173,9 @@ class DataDownloaderTest(unittest.TestCase):
                                    'minute': '12',
                                    'second': '12',
                                    'timeZoneID': 'PST8PDT'},
-                         'Value.Type': 'DateTimeValue'}]},
+                         'Value.Type': 'DateTimeValue'},
+                        {'value': None,
+                         'Value.Type': 'NumberValue'}]},
             {'values': [{'value': 'A second row of PQL response!',
                          'Value.Type': 'TextValue'},
                         {'value': {'date': {
@@ -185,7 +190,9 @@ class DataDownloaderTest(unittest.TestCase):
                                    'minute': '02',
                                    'second': '02',
                                    'timeZoneID': 'GMT'},
-                         'Value.Type': 'DateTimeValue'}]}]
+                         'Value.Type': 'DateTimeValue'},
+                        {'value': '123456',
+                         'Value.Type': 'NumberValue'}]}]
 
     self.pql_service.select.return_value = {'rows': rval, 'columnTypes': header}
 
@@ -200,12 +207,14 @@ class DataDownloaderTest(unittest.TestCase):
                      ('"Some random PQL response...",'
                       '"1999-04-03",'
                       '123,'
-                      '"2012-11-05T12:12:12-08:00"\r\n'))
+                      '"2012-11-05T12:12:12-08:00",'
+                      '"-"\r\n'))
     self.assertEqual(csv_file.readline(),
                      ('"A second row of PQL response!",'
                       '"2009-02-05",'
                       '345,'
-                      '"2013-01-03T02:02:02Z"\r\n'))
+                      '"2013-01-03T02:02:02Z",'
+                      '123456\r\n'))
     csv_file.close()
 
     self.pql_service.select.assert_called_once_with(
@@ -229,7 +238,9 @@ class DataDownloaderTest(unittest.TestCase):
                                    'minute': '12',
                                    'second': '12',
                                    'timeZoneID': 'PST8PDT'},
-                         'Value.Type': 'DateTimeValue'}]},
+                         'Value.Type': 'DateTimeValue'},
+                        {'value': None,
+                         'Value.Type': 'NumberValue'}]},
             {'values': [{'value': 'A second row of PQL response!',
                          'Value.Type': 'SomeUnknownValue'},
                         {'value': {'date': {
@@ -244,7 +255,9 @@ class DataDownloaderTest(unittest.TestCase):
                                    'minute': '02',
                                    'second': '02',
                                    'timeZoneID': 'GMT'},
-                         'Value.Type': 'DateTimeValue'}]}]
+                         'Value.Type': 'DateTimeValue'},
+                        {'value': '123456',
+                         'Value.Type': 'NumberValue'}]}]
 
     self.pql_service.select.return_value = {'rows': rval, 'columnTypes': header}
 
@@ -320,20 +333,18 @@ class DataDownloaderTest(unittest.TestCase):
   def testGetReportService(self):
     self.report_downloader._dfp_client = mock.Mock()
     self.report_downloader._report_service = None
-    version = googleads.dfp._SERVICE_MAP.keys()[0]
 
     self.report_downloader._GetReportService()
     self.report_downloader._dfp_client.GetService.assert_called_once_with(
-        'ReportService', version, 'https://www.google.com')
+        'ReportService', self.version, 'https://ads.google.com')
 
   def testGetPqlService(self):
     self.report_downloader._dfp_client = mock.Mock()
     self.report_downloader._pql_service = None
-    version = googleads.dfp._SERVICE_MAP.keys()[0]
 
     self.report_downloader._GetPqlService()
     self.report_downloader._dfp_client.GetService.assert_called_once_with(
-        'PublisherQueryLanguageService', version, 'https://www.google.com')
+        'PublisherQueryLanguageService', self.version, 'https://ads.google.com')
 
 
 class FilterStatementTest(unittest.TestCase):

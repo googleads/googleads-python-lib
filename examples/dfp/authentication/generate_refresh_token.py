@@ -32,7 +32,7 @@ CLIENT_SECRET = 'INSERT_CLIENT_SECRET_HERE'
 HTTPS_PROXY = None
 
 # The DFP API OAuth 2.0 scope.
-SCOPE = u'https://www.google.com/apis/ads/publisher'
+SCOPE = u'https://www.googleapis.com/auth/dfp'
 # This callback URL will allow you to copy the token from the success screen.
 CALLBACK_URL = 'urn:ietf:wg:oauth:2.0:oob'
 # The HTTP headers needed on OAuth 2.0 refresh requests.

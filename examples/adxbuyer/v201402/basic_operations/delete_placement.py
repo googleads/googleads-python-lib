@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example deletes an ad group criterion using the 'REMOVE' operator.
+"""This example deletes an ad group criterion using the 'DELETE' operator.
 
 To get ad group criteria, run get_placements.py.
 
@@ -43,7 +43,7 @@ def main(client, ad_group_id, criterion_id):
   # Construct operations and delete ad group criteria.
   operations = [
       {
-          'operator': 'REMOVE',
+          'operator': 'DELETE',
           'operand': {
               'xsi_type': 'BiddableAdGroupCriterion',
               'adGroupId': ad_group_id,

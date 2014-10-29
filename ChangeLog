@@ -1,4 +1,54 @@
+2.1.0 - 10/09/2014
+* Added support for v201409 of the AdWords/DoubleClick Ad Exchange Client
+  Library.
+* Added convenience method for setting Client Customer Id to AdWordsClient.
+* Added ReportDownloader convenience methods.
+* Fixed upload_offline_conversions example. (Fixed issue #24)
+* Fixed issue creating complex types. (Fixed issue #18)
+
+2.0.2 - 09/03/2014
+=================
+* Added Ad Customizer example for AdWords.
+* Extend timeout on SUDs to correspond to access token expiry.
+
+2.0.1 - 08/20/2014
+=================
+* Added support for v201408 for DFP client library.
+* Removed RateCardCustomizationService and RateCardCustomizationGroupService,
+  replaced with PremiumRateService.
+* Changed OAuth2 scope to https://www.googleapis.com/auth/dfp/
+* Changed DFP endpoint to https://ads.google.com/
+
+2.0.0 - 07/22/2014
+=================
+* AdGroups/Campaigns no longer renamed on remove/delete in examples, obsolete.
+* GoogleAdsValueError now thrown when returnMoneyInMicros is sent with v201406.
+
+1.0.7 - 07/7/2014
+=================
+* Added support for v201406 of the AdWords/DoubleClick Ad Exchange Client
+  Library.
+* Added CampaignSharedSetService, LabelService, SharedCriterionService, and
+  SharedSetService for AdWords.
+* Updated AdWords OAuth 2.0 scope.
+  See: https://developers.google.com/adwords/api/docs/guides/authentication.
+
+1.0.6 - 05/29/2014
+==================
+* Add support for v201405 for DFP client library.
+
+1.0.5 - 05/07/2014
+==================
+* Fixed an issue where PQL fields weren't encoding properly / not handling None
+  responses correctly. This resolves issue #9.
+* Fixed an issue where the AdWords ReportDownloader would fail when downloading
+  gzipped reports. Now better documents the need to use binary files in this
+  case. This resolves issue #6.
+* Fixed an artifact from issue #5, ReportDownloader now sets https_proxy before
+  retrieving the WSDL.
+
 1.0.4 - 04/22/2014
+==================
 * Fixed a bug where https_proxy wasn't set for retrieving the API WSDL. This
   resolves issue #5.
 

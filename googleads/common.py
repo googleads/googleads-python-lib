@@ -26,7 +26,7 @@ import yaml
 import googleads.errors
 import googleads.oauth2
 
-VERSION = '1.0.4'
+VERSION = '2.1.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _PYTHON_VERSION = 'Python/%d.%d' % (sys.version_info[0], sys.version_info[1])
 
@@ -127,7 +127,8 @@ def _PackForSuds(obj, factory):
   Args:
     obj: A parameter for a SOAP request which will be packed. If this is
         a dictionary or list, the contents will recursively be packed. If this
-        is not a dictionary or list, the input object is returned unaltered.
+        is not a dictionary or list, the contents will be recursively searched
+        for instances of unpacked dictionaries or lists.
     factory: The suds.client.Factory object which can create instances of the
         classes generated from the WSDL.
 
@@ -174,7 +175,40 @@ def _PackForSuds(obj, factory):
   elif isinstance(obj, (list, tuple)):
     return [_PackForSuds(item, factory) for item in obj]
   else:
+    _RecurseOverObject(obj, factory)
     return obj
+
+
+def _RecurseOverObject(obj, factory, parent=None):
+  """Recurses over a nested structure to look for changes in Suds objects.
+
+    Args:
+      obj: A parameter for a SOAP request field which is to be inspected and
+          will be packed for Suds if an xsi_type is specified, otherwise will be
+          left unaltered.
+      factory: The suds.client.Factory object which can create instances of the
+          classes generated from the WSDL.
+      parent: The parent object that contains the obj parameter to be inspected.
+  """
+  if _IsSudsIterable(obj):
+    # Since in-place modification of the Suds object is taking place, the
+    # iterator should be done over a frozen copy of the unpacked fields.
+    copy_of_obj = tuple(obj)
+    for item in copy_of_obj:
+      if _IsSudsIterable(item):
+        if 'xsi_type' in item:
+          if isinstance(obj, tuple):
+            parent[obj[0]] = _PackForSuds(obj[1], factory)
+          else:
+            obj.remove(item)
+            obj.append(_PackForSuds(item, factory))
+        _RecurseOverObject(item, factory, obj)
+
+
+def _IsSudsIterable(obj):
+  """A short helper method to determine if a field is iterable for Suds."""
+  return (obj and not isinstance(obj, (basestring, long, int))
+          and obj.__iter__)
 
 
 class SudsServiceProxy(object):
