@@ -1,0 +1,14 @@
+{% extends "base_template.html" %}
+{% block script_src %}
+    <script type="text/javascript" src="/js/scripts.js"></script>
+{% endblock %}
+{% block script %}
+    <script type="text/javascript">
+      var button = document.getElementById('showMenuButton'),
+          menu = document.getElementById('menu');
+
+      button.addEventListener('click', function() {
+        showHiddenMenu(button, menu);
+      });
+    </script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "toggle_menu_template.html" %}
+{% block content %}
+  {% if adgroups %}
+  <table class="response_view">
+    <tr class="fields">
+      <td>Id</td>
+      <td>Name</td>
+      <td>Status</td>
+    </tr>
+    {% for adgroup in adgroups %}
+    <tr>
+      <td>{{ adgroup.id }}</td>
+      <td>{{ adgroup.name }}</td>
+      <td>{{ adgroup.status }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>No AdGroups found.</p>
+  {% endif %}
+  <br/><br/><br/>
+  <form id="menu" class="hidden"
+        action="/addAdGroup?clientCustomerId={{ ccid }}&campaignId={{ campaign_id }}"
+        method="post">
+    <table class="modify_view">
+      <tr>
+        <th><label for="name">AdGroup Name: </label></th>
+        <td><input type="text" name="name" size="35"/></td>
+      </tr>
+      <tr>
+        <th><label for="status">Status: </label></th>
+        <td>
+          <label>
+            <input type="radio" name="status" value="ENABLED">
+            Enabled
+          </label>
+          <label>
+            <input type="radio" name="status" value="PAUSED">
+            Paused
+          </label>
+        </td>
+      </tr>
+      <tr align="right">
+        <td colspan="2">
+          <input type="submit" value="Submit"/>
+        </td>
+      </tr>
+    </table>
+  </form>
+  <button id="showMenuButton" type="button" style="cursor:pointer;">
+    Add AdGroup
+  </button>
+{% endblock %}

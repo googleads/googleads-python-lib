@@ -26,7 +26,7 @@ import yaml
 import googleads.errors
 import googleads.oauth2
 
-VERSION = '2.1.0'
+VERSION = '2.2.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _PYTHON_VERSION = 'Python/%d.%d' % (sys.version_info[0], sys.version_info[1])
 
@@ -207,8 +207,7 @@ def _RecurseOverObject(obj, factory, parent=None):
 
 def _IsSudsIterable(obj):
   """A short helper method to determine if a field is iterable for Suds."""
-  return (obj and not isinstance(obj, (basestring, long, int))
-          and obj.__iter__)
+  return (obj and not isinstance(obj, basestring) and hasattr(obj, '__iter__'))
 
 
 class SudsServiceProxy(object):

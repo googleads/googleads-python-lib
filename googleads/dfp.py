@@ -96,6 +96,24 @@ _SERVICE_MAP = {
          'ReconciliationReportService', 'ReportService',
          'SuggestedAdUnitService', 'TeamService', 'UserService',
          'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201411':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CompanyService', 'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
+         'OrderService', 'PlacementService', 'PremiumRateService',
+         'ProductService', 'ProductTemplateService', 'ProposalLineItemService',
+         'ProposalService', 'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
 }
 
 
@@ -405,7 +423,7 @@ class DataDownloader(object):
       values: list dict of bind values to use with the pql_query.
     """
     pql_writer = csv.writer(file_handle, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+                            quotechar='"', quoting=csv.QUOTE_ALL)
     self._PageThroughPqlSet(pql_query, pql_writer.writerow, values)
 
   def _ConvertValueForCsv(self, pql_value):
@@ -418,11 +436,25 @@ class DataDownloader(object):
     Returns:
       str a CSV writer friendly value formatted by Value.Type.
     """
-    field = pql_value['value']
+    if 'value' in pql_value:
+      field = pql_value['value']
+    elif 'values' in pql_value:
+      field = pql_value['values']
+    else:
+      field = None
 
     if field:
+      if isinstance(field, list):
+        if all(single_field['Value.Type'] == field[0]['Value.Type']
+               for single_field in field):
+          return ','.join([
+              '"%s"' % str(self._ConvertValueForCsv(single_field))
+              for single_field in field])
+        else:
+          raise googleads.errors.GoogleAdsValueError(
+              'The set value returned contains unsupported mix value types')
       if pql_value['Value.Type'] == 'TextValue':
-        return field.encode('UTF8')
+        return field.replace('"', '""').encode('UTF8')
       elif pql_value['Value.Type'] == 'NumberValue':
         return float(field) if '.' in field else int(field)
       elif pql_value['Value.Type'] == 'DateTimeValue':

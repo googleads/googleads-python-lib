@@ -1,3 +1,10 @@
+2.2.0 - 11/11/2014
+* Added support for v201411 of the DoubleClick for Publishers Client
+  Library.
+* Added SharedAdUnitService and AdExclusionRuleService.
+* Fixed issue for float support as 'not iterable' (Fixed issue #36).
+* Added App Engine AdWords example.
+
 2.1.0 - 10/09/2014
 * Added support for v201409 of the AdWords/DoubleClick Ad Exchange Client
   Library.

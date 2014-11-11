@@ -1,0 +1,13 @@
+{% extends "base_template.html" %}
+{% block content %}
+  <table class="response_view">
+    <tr class="fields">
+      <td><b>Client Customer Ids</b></td>
+    </tr>
+  {% for account in accounts %}
+    <tr>
+      <td><a href="/showCampaigns?clientCustomerId={{ account.customerId }}">{{ account.customerId }}</a></td>
+    </tr>
+  {% endfor %}
+  </table>
+{% endblock %}

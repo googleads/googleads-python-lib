@@ -1,0 +1,44 @@
+#top {
+  padding-bottom: 5em;
+}
+
+#content {
+  padding-left: 2em;
+}
+
+#bottom {
+  padding-top: 5em;
+}
+
+table.response_view td {
+  text-align: center;
+  padding: 0em 2em 1em 2em;
+}
+
+tr.fields td {
+  font-weight: bold;
+}
+
+table.modify_view th {
+  text-align: left;
+  padding-right: 2em;
+}
+
+table.modify_view label {
+    display: block;
+    vertical-align: baseline;
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+  padding-bottom: 3em
+}
+
+.hidden {
+  display: none;
+}
+
+.shown {
+  display: block;
+}
