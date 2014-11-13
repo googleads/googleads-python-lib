@@ -65,7 +65,7 @@ def main(client, audience_segment_id):
              % (segment['id'], segment['name']))
 
     action = {
-        'AudienceSegmentAction.Type': 'PopulateAudienceSegments'
+        'xsi_type': 'PopulateAudienceSegments'
     }
 
     populated_audience_segments = (

@@ -126,15 +126,12 @@ def main(client, order_id, targeted_video_ad_unit_id,
           'microAmount': '2000000'
       },
       'primaryGoal': {
-          'goal': {
-              'units': '50',
-              'unitType': 'IMPRESSIONS'
-          }
+          'units': '50',
+          'unitType': 'IMPRESSIONS'
       },
       'contractedUnitsBought': '100',
       'creativeRotationType': 'OPTIMIZED',
       'discountType': 'PERCENTAGE',
-      'unitType': 'IMPRESSIONS',
       'allowOverbook': 'true'
   }
 

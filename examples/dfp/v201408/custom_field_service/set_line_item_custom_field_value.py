@@ -36,7 +36,7 @@ __author__ = ('Nicholas Chen',
 from googleads import dfp
 
 # Set the ID of the custom fields, custom field option, and line item.
-CUSTOM_FIELD_ID = 'INSERT_STRING_CUSTOM_FIELD_ID_HERE'
+CUSTOM_FIELD_ID = 'INSERT_CUSTOM_FIELD_ID_HERE'
 DROP_DOWN_CUSTOM_FIELD_ID = 'INSERT_DROP_DOWN_CUSTOM_FIELD_ID_HERE'
 CUSTOM_FIELD_OPTION_ID = 'INSERT_CUSTOM_FIELD_OPTION_ID_HERE'
 LINE_ITEM_ID = 'INSERT_LINE_ITEM_ID_HERE'
@@ -60,11 +60,11 @@ def main(client, custom_field_id, drop_down_custom_field_id,
   }]
   custom_field_query = 'WHERE id = :customFieldId'
   custom_field_statement = dfp.FilterStatement(
-      custom_field_query, custom_field_values)
+      custom_field_query, custom_field_values, 1)
 
   # Get custom field.
   custom_field = custom_field_service.getCustomFieldsByStatement(
-      custom_field_statement.ToStatement())
+      custom_field_statement.ToStatement())['results'][0]
 
   # Create statement to get a drop down custom field.
   drop_down_custom_field_values = [{
@@ -76,11 +76,11 @@ def main(client, custom_field_id, drop_down_custom_field_id,
   }]
   drop_down_custom_field_query = 'WHERE id = :dropDownCustomFieldId'
   drop_down_custom_field_statement = dfp.FilterStatement(
-      drop_down_custom_field_query, drop_down_custom_field_values)
+      drop_down_custom_field_query, drop_down_custom_field_values, 1)
 
   # Get drop-down custom field.
   drop_down_custom_field = custom_field_service.getCustomFieldsByStatement(
-      drop_down_custom_field_statement.ToStatement())
+      drop_down_custom_field_statement.ToStatement())['results'][0]
 
   # Create statement to get a line item.
   line_item_values = [{
@@ -92,11 +92,11 @@ def main(client, custom_field_id, drop_down_custom_field_id,
   }]
   line_item_query = 'WHERE id = :lineItemId'
   line_item_statement = dfp.FilterStatement(
-      line_item_query, line_item_values)
+      line_item_query, line_item_values, 1)
 
   # Get line item.
   line_item = line_item_service.getLineItemsByStatement(
-      line_item_statement.ToStatement())
+      line_item_statement.ToStatement())['results'][0]
 
   if custom_field and line_item:
     # Create custom field values.
@@ -124,9 +124,10 @@ def main(client, custom_field_id, drop_down_custom_field_id,
     # Only add existing custom field values for different custom fields than the
     # ones you are setting.
     for old_custom_field_value in old_custom_field_values:
-      if (old_custom_field_value['customFieldId'] != custom_field_value['id']
+      if (old_custom_field_value['customFieldId'] !=
+          custom_field_value['customFieldId']
           and old_custom_field_value['customFieldId'] !=
-          drop_down_custom_field_value['id']):
+          drop_down_custom_field_value['customFieldId']):
         custom_field_values.append(old_custom_field_value)
 
     line_item['customFieldValues'] = custom_field_values

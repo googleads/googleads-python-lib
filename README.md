@@ -45,6 +45,15 @@ adwords_client = adwords.AdWordsClient.LoadFromStorage()
 dfp_client = dfp.DfpClient.LoadFromStorage('C:\My\Directory\googleads.yaml')
 ```
 
+####How do I change the Client Customer Id at runtime?
+You can change the Client Customer Id with the following:
+
+```
+adwords_client = AdWordsClient.LoadFromStorage()
+adwords_client.SetClientCustomerId('my_client_customer_id')
+```
+
+
 ##Where do I submit bug reports and/or feature requests?
 
 Use the issue tracker at:
@@ -55,6 +64,7 @@ other news:
 
   https://plus.google.com/+GoogleAdsDevelopers
 
+
 ##How do I log SOAP interactions?
 The library uses Python's built in logging framework. If you wish to log your
 SOAP interactions to stdout, you can do the following:
@@ -64,6 +74,7 @@ logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 ```
 If you wish to log to a file, you'll need to attach a log handler to this source
 which is configured to write the output to a file.
+
 
 ##I'm familiar with suds. Can I use suds features with this library?
 Yes, you can. The services returned by the `client.GetService()` functions all
@@ -100,6 +111,7 @@ suds_client.set_options(
 
 suds_client.service.mutate([operation])
 ```
+
 
 ##External Dependencies:
 

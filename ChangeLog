@@ -1,3 +1,18 @@
+2.2.0 - 11/11/2014
+* Added support for v201411 of the DoubleClick for Publishers Client
+  Library.
+* Added SharedAdUnitService and AdExclusionRuleService.
+* Fixed issue for float support as 'not iterable' (Fixed issue #36).
+* Added App Engine AdWords example.
+
+2.1.0 - 10/09/2014
+* Added support for v201409 of the AdWords/DoubleClick Ad Exchange Client
+  Library.
+* Added convenience method for setting Client Customer Id to AdWordsClient.
+* Added ReportDownloader convenience methods.
+* Fixed upload_offline_conversions example. (Fixed issue #24)
+* Fixed issue creating complex types. (Fixed issue #18)
+
 2.0.2 - 09/03/2014
 =================
 * Added Ad Customizer example for AdWords.

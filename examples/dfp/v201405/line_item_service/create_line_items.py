@@ -145,15 +145,12 @@ def main(client, order_id, targeted_placement_ids):
             'microAmount': '2000000'
         },
         'primaryGoal': {
-            'goal': {
-                'units': '50',
-                'unitType': 'IMPRESSIONS'
-            }
+            'units': '50',
+            'unitType': 'IMPRESSIONS'
         },
         'contractedUnitsBought': '100',
         'creativeRotationType': 'EVEN',
         'discountType': 'PERCENTAGE',
-        'unitType': 'IMPRESSIONS',
         'allowOverbook': 'true'
     }
     line_items.append(line_item)

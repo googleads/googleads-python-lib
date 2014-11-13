@@ -153,48 +153,65 @@ class DataDownloaderTest(unittest.TestCase):
     self.report_service = mock.Mock()
     self.report_downloader._pql_service = self.pql_service
     self.report_downloader._report_service = self.report_service
+    self.generic_header = [{'labelName': 'Some random header...'},
+                           {'labelName': 'Another header...'}]
+    self.generic_rval = [{'values': [{
+        'value': 'Some random PQL response...',
+        'Value.Type': 'TextValue'}, {'value': {'date': {
+            'year': '1999', 'month': '04', 'day': '03'}},
+                                     'Value.Type': 'DateValue'},
+                                     {'value': '123',
+                                      'Value.Type': 'NumberValue'},
+                                     {'value': {'date': {'year': '2012',
+                                                         'month': '11',
+                                                         'day': '05'},
+                                                'hour': '12',
+                                                'minute': '12',
+                                                'second': '12',
+                                                'timeZoneID': 'PST8PDT'},
+                                      'Value.Type': 'DateTimeValue'},
+                                     {'value': None,
+                                      'Value.Type': 'NumberValue'},
+                                     {'values': [{
+                                         'value': 'Whatcha thinkin about?',
+                                         'Value.Type': 'TextValue'}, {
+                                             'value': 'Oh nothing, just '
+                                                      'String stuff...',
+                                             'Value.Type': 'TextValue'}],
+                                      'Value.Type': 'SetValue'}]},
+                         {'values': [{'value': 'A second row of PQL response!',
+                                      'Value.Type': 'TextValue'},
+                                     {'value': {'date': {
+                                         'year': '2009',
+                                         'month': '02',
+                                         'day': '05'}},
+                                      'Value.Type': 'DateValue'},
+                                     {'value': '345',
+                                      'Value.Type': 'NumberValue'},
+                                     {'value': {'date': {'year': '2013',
+                                                         'month': '01',
+                                                         'day': '03'},
+                                                'hour': '02',
+                                                'minute': '02',
+                                                'second': '02',
+                                                'timeZoneID': 'GMT'},
+                                      'Value.Type': 'DateTimeValue'},
+                                     {'value': '123456',
+                                      'Value.Type': 'NumberValue'},
+                                     {'values': [{
+                                         'value': 'Look at how many commas '
+                                                  'and "s there are',
+                                         'Value.Type': 'TextValue'}, {
+                                             'value': 'this,is...how,Chris'
+                                                      'topher Walken, talks',
+                                             'Value.Type': 'TextValue'}],
+                                      'Value.Type': 'SetValue'}]}]
 
   def testDownloadPqlResultSetToCsv(self):
     csv_file = StringIO.StringIO()
 
-    header = [{'labelName': 'Some random header...'},
-              {'labelName': 'Another header...'}]
-    rval = [{'values': [{'value': 'Some random PQL response...',
-                         'Value.Type': 'TextValue'},
-                        {'value': {'date': {
-                            'year': '1999', 'month': '04', 'day': '03'}},
-                         'Value.Type': 'DateValue'},
-                        {'value': '123',
-                         'Value.Type': 'NumberValue'},
-                        {'value': {'date': {'year': '2012',
-                                            'month': '11',
-                                            'day': '05'},
-                                   'hour': '12',
-                                   'minute': '12',
-                                   'second': '12',
-                                   'timeZoneID': 'PST8PDT'},
-                         'Value.Type': 'DateTimeValue'},
-                        {'value': None,
-                         'Value.Type': 'NumberValue'}]},
-            {'values': [{'value': 'A second row of PQL response!',
-                         'Value.Type': 'TextValue'},
-                        {'value': {'date': {
-                            'year': '2009', 'month': '02', 'day': '05'}},
-                         'Value.Type': 'DateValue'},
-                        {'value': '345',
-                         'Value.Type': 'NumberValue'},
-                        {'value': {'date': {'year': '2013',
-                                            'month': '01',
-                                            'day': '03'},
-                                   'hour': '02',
-                                   'minute': '02',
-                                   'second': '02',
-                                   'timeZoneID': 'GMT'},
-                         'Value.Type': 'DateTimeValue'},
-                        {'value': '123456',
-                         'Value.Type': 'NumberValue'}]}]
-
-    self.pql_service.select.return_value = {'rows': rval, 'columnTypes': header}
+    self.pql_service.select.return_value = {'rows': self.generic_rval,
+                                            'columnTypes': self.generic_header}
 
     self.report_downloader.DownloadPqlResultToCsv(
         'SELECT Id, Name FROM Line_Item', csv_file)
@@ -206,15 +223,17 @@ class DataDownloaderTest(unittest.TestCase):
     self.assertEqual(csv_file.readline(),
                      ('"Some random PQL response...",'
                       '"1999-04-03",'
-                      '123,'
+                      '"123",'
                       '"2012-11-05T12:12:12-08:00",'
-                      '"-"\r\n'))
+                      '"-","""Whatcha thinkin about?"",""Oh nothing, '
+                      'just String stuff..."""\r\n'))
     self.assertEqual(csv_file.readline(),
                      ('"A second row of PQL response!",'
                       '"2009-02-05",'
-                      '345,'
+                      '"345",'
                       '"2013-01-03T02:02:02Z",'
-                      '123456\r\n'))
+                      '"123456","""Look at how many commas and """"s there are'
+                      '"",""this,is...how,Christopher Walken, talks"""\r\n'))
     csv_file.close()
 
     self.pql_service.select.assert_called_once_with(
@@ -222,57 +241,22 @@ class DataDownloaderTest(unittest.TestCase):
          'query': ('SELECT Id, Name FROM Line_Item LIMIT 500 OFFSET 0')})
 
   def testDownloadPqlResultToList(self):
-    header = [{'labelName': 'Some random header...'},
-              {'labelName': 'Another header...'}]
-    rval = [{'values': [{'value': 'Some random PQL response...',
-                         'Value.Type': 'TextValue'},
-                        {'value': {'date': {
-                            'year': '1999', 'month': '04', 'day': '03'}},
-                         'Value.Type': 'DateValue'},
-                        {'value': '123',
-                         'Value.Type': 'NumberValue'},
-                        {'value': {'date': {'year': '2012',
-                                            'month': '11',
-                                            'day': '05'},
-                                   'hour': '12',
-                                   'minute': '12',
-                                   'second': '12',
-                                   'timeZoneID': 'PST8PDT'},
-                         'Value.Type': 'DateTimeValue'},
-                        {'value': None,
-                         'Value.Type': 'NumberValue'}]},
-            {'values': [{'value': 'A second row of PQL response!',
-                         'Value.Type': 'SomeUnknownValue'},
-                        {'value': {'date': {
-                            'year': '2009', 'month': '02', 'day': '05'}},
-                         'Value.Type': 'DateValue'},
-                        {'value': '345',
-                         'Value.Type': 'NumberValue'},
-                        {'value': {'date': {'year': '2013',
-                                            'month': '01',
-                                            'day': '03'},
-                                   'hour': '02',
-                                   'minute': '02',
-                                   'second': '02',
-                                   'timeZoneID': 'GMT'},
-                         'Value.Type': 'DateTimeValue'},
-                        {'value': '123456',
-                         'Value.Type': 'NumberValue'}]}]
-
-    self.pql_service.select.return_value = {'rows': rval, 'columnTypes': header}
+    self.pql_service.select.return_value = {'rows': self.generic_rval,
+                                            'columnTypes': self.generic_header}
 
     result_set = self.report_downloader.DownloadPqlResultToList(
         'SELECT Id, Name FROM Line_Item')
 
     row1 = [self.report_downloader._ConvertValueForCsv(field)
-            for field in rval[0]['values']]
+            for field in self.generic_rval[0]['values']]
     row2 = [self.report_downloader._ConvertValueForCsv(field)
-            for field in rval[1]['values']]
+            for field in self.generic_rval[1]['values']]
 
     self.pql_service.select.assert_called_once_with(
         {'values': None,
          'query': ('SELECT Id, Name FROM Line_Item LIMIT 500 OFFSET 0')})
-    self.assertEqual([[header[0]['labelName'], header[1]['labelName']],
+    self.assertEqual([[self.generic_header[0]['labelName'],
+                       self.generic_header[1]['labelName']],
                       row1, row2], result_set)
 
   def testDownloadPqlResultToList_NoRows(self):
