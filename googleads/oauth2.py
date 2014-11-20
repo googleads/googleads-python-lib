@@ -90,6 +90,38 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
     self._client_secret = client_secret
     self.https_proxy = https_proxy
 
+  def Refresh(self):
+    """Refreshes the Access Token using the Refresh Token.
+
+    Returns:
+      A dictionary containing one entry: the OAuth 2.0 Bearer header under the
+      'Authorization' key. Don't use this directly for a request, always go
+      through `CreateHttpHeader` to ensure proper encoding!
+    """
+    post_body = self._oauthlib_client.prepare_refresh_body(
+        client_id=self._oauthlib_client.client_id,
+        client_secret=self._client_secret)
+    if sys.version_info[0] == 3:
+      post_body = bytes(post_body, 'utf8')
+    try:
+      request = urllib2.Request(self._GOOGLE_OAUTH2_ENDPOINT, post_body,
+                                self._OAUTH2_REFRESH_HEADERS)
+
+      if self.https_proxy:
+        proxy_support = urllib2.ProxyHandler({'https': self.https_proxy})
+        opener = urllib2.build_opener(proxy_support)
+      else:
+        opener = urllib2.build_opener()
+
+      # Need to decode the content - in Python 3 it's bytes, not a string.
+      content = opener.open(request).read().decode()
+      self._oauthlib_client.parse_request_body_response(content)
+      _, oauth2_header, _ = self._oauthlib_client.add_token(self._TOKEN_URL)
+      return oauth2_header
+    except Exception, e:
+      logging.warning('OAuth 2.0 credentials failed to refresh! Failure was: '
+                      '%s', e)
+
   def CreateHttpHeader(self):
     """Creates an OAuth 2.0 HTTP header.
 
@@ -101,32 +133,10 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
       A dictionary containing one entry: the OAuth 2.0 Bearer header under the
       'Authorization' key.
     """
-    oauth2_header = {}
     try:
       _, oauth2_header, _ = self._oauthlib_client.add_token(self._TOKEN_URL)
     except oauth2.TokenExpiredError:
-      post_body = self._oauthlib_client.prepare_refresh_body(
-          client_id=self._oauthlib_client.client_id,
-          client_secret=self._client_secret)
-      if sys.version_info[0] == 3:
-        post_body = bytes(post_body, 'utf8')
-      try:
-        request = urllib2.Request(self._GOOGLE_OAUTH2_ENDPOINT, post_body,
-                                  self._OAUTH2_REFRESH_HEADERS)
-
-        if self.https_proxy:
-          proxy_support = urllib2.ProxyHandler({'https': self.https_proxy})
-          opener = urllib2.build_opener(proxy_support)
-        else:
-          opener = urllib2.build_opener()
-
-        # Need to decode the content - in Python 3 it's bytes, not a string.
-        content = opener.open(request).read().decode()
-        self._oauthlib_client.parse_request_body_response(content)
-        _, oauth2_header, _ = self._oauthlib_client.add_token(self._TOKEN_URL)
-      except Exception, e:
-        logging.warning('OAuth 2.0 credentials failed to refresh! Failure was: '
-                        '%s', e)
+      oauth2_header = self.Refresh() or {}
     # In Python 2, the headers must all be str - not unicode - or else urllib2
     # will fail to parse the message. oauthlib returns unicode objects.
     if oauth2_header and sys.version_info[0] == 2:
