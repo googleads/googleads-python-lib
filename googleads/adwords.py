@@ -784,8 +784,8 @@ class ReportDownloader(object):
         self._header_handler.GetReportDownloadHeaders(return_money_in_micros,
                                                       skip_report_header,
                                                       skip_report_summary))
-    if self._adwords_client.https_proxy:
-      request.set_proxy(self._adwords_client.https_proxy, 'https')
+    #if self._adwords_client.https_proxy:
+    #  request.set_proxy(self._adwords_client.https_proxy, 'https')
     try:
       return urllib2.urlopen(request)
     except urllib2.HTTPError, e:
