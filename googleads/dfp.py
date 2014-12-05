@@ -26,8 +26,6 @@ import urllib2
 import pytz
 import suds.client
 import suds.transport
-from suds.cache import NoCache
-
 
 import googleads.common
 import googleads.errors
@@ -168,7 +166,7 @@ class DfpClient(object):
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, oauth2_client, application_name, network_code=None,
-               https_proxy=None, cache=NoCache()):
+               https_proxy=None, cache=None):
     """Initializes a DfpClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -185,7 +183,7 @@ class DfpClient(object):
           calls require this header to be set.
       https_proxy: A string identifying the URL of a proxy that all HTTPS
           requests should be routed through.
-      cache: A subclass of suds.cache.Cache that defaults to NoCache.
+      cache: A subclass of suds.cache.Cache; defaults to None.
     """
     self.oauth2_client = oauth2_client
     self.application_name = application_name

@@ -24,7 +24,6 @@ import unittest
 
 import mock
 import suds.transport
-from suds.cache import NoCache
 
 import googleads.dfp
 import googleads.common
@@ -71,7 +70,7 @@ class DfpClientTest(unittest.TestCase):
     self.application_name = 'application name'
     self.oauth2_client = 'unused'
     self.https_proxy = 'myproxy.com:443'
-    self.cache = NoCache()
+    self.cache = None
     self.version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
     self.dfp_client = googleads.dfp.DfpClient(
         self.oauth2_client, self.application_name, self.network_code,

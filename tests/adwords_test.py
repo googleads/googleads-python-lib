@@ -21,6 +21,7 @@ __author__ = 'Joseph DiLallo'
 
 import io
 import sys
+import tempfile
 import unittest
 import urllib
 import urllib2
@@ -30,8 +31,6 @@ import mock
 import googleads.adwords
 import googleads.common
 import googleads.errors
-
-from suds.cache import NoCache
 
 PYTHON2 = sys.version_info[0] == 2
 URL_REQUEST_PATH = ('urllib2' if PYTHON2 else 'urllib.request')
@@ -43,8 +42,6 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
 
   def setUp(self):
     self.adwords_client = mock.Mock()
-    self.header_handler_v201402 = googleads.adwords._AdWordsHeaderHandler(
-        self.adwords_client, 'v201402')
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.adwords_client, CURRENT_VERSION)
 
@@ -83,52 +80,7 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     suds_client.set_options.assert_any_call(
         soapheaders=soap_header, headers=oauth_header)
 
-  def testGetReportDownloadHeaders_v201402(self):
-    ccid = 'client customer id'
-    dev_token = 'developer token'
-    user_agent = 'user agent!'
-    oauth_header = {'Authorization': 'header'}
-    self.adwords_client.client_customer_id = ccid
-    self.adwords_client.developer_token = dev_token
-    self.adwords_client.user_agent = user_agent
-    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
-    expected_return_value = {
-        'Content-type': 'application/x-www-form-urlencoded',
-        'developerToken': dev_token,
-        'clientCustomerId': ccid,
-        'returnMoneyInMicros': 'True',
-        'skipReportHeader': 'True',
-        'skipReportSummary': 'True',
-        'Authorization': 'header',
-        'User-Agent': ''.join([
-            user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
-            ',gzip'])
-    }
-
-    # Check that returnMoneyInMicros works when set to true.
-    self.assertEqual(expected_return_value,
-                     self.header_handler_v201402.GetReportDownloadHeaders(
-                         True, True, True))
-
-    # Check that returnMoneyInMicros works when set to false.
-    expected_return_value['returnMoneyInMicros'] = 'False'
-    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
-    self.assertEqual(expected_return_value,
-                     self.header_handler_v201402.GetReportDownloadHeaders(
-                         False, True, True)
-                    )
-
-    # Default returnMoneyInMicros value is not included in the headers.
-    del expected_return_value['returnMoneyInMicros']
-    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
-    self.assertEqual(expected_return_value,
-                     self.header_handler.GetReportDownloadHeaders(
-                         skip_report_header=True, skip_report_summary=True))
-
-  def testGetReportDownloadHeaders_v201406(self):
+  def testGetReportDownloadHeaders(self):
     ccid = 'client customer id'
     dev_token = 'developer token'
     user_agent = 'user agent!'
@@ -148,15 +100,6 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
             ',gzip'])
     }
 
-    # Check that returnMoneyInMicros fails when set to true.
-    self.assertRaises(googleads.errors.GoogleAdsValueError,
-                      self.header_handler.GetReportDownloadHeaders, True)
-
-    # Check that returnMoneyInMicros fails when set to false.
-    self.assertRaises(googleads.errors.GoogleAdsValueError,
-                      self.header_handler.GetReportDownloadHeaders, False)
-
-    # Check that it works when returnMoneyInMicros not set.
     self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
@@ -169,7 +112,7 @@ class AdWordsClientTest(unittest.TestCase):
 
   def setUp(self):
     oauth_header = {'Authorization': 'header'}
-    self.cache = NoCache()
+    self.cache = None
     self.client_customer_id = 'client customer id'
     self.dev_token = 'developers developers developers'
     self.user_agent = 'users users user'
@@ -260,16 +203,20 @@ class ReportDownloaderTest(unittest.TestCase):
     self.marshaller = mock.Mock()
     self.header_handler = mock.Mock()
     self.adwords_client = mock.Mock()
+    self.opener = mock.Mock()
     self.adwords_client.https_proxy = 'my.proxy.gov:443'
     with mock.patch('suds.client.Client'):
       with mock.patch('suds.xsd.doctor'):
         with mock.patch('suds.mx.literal.Literal') as mock_literal:
           with mock.patch(
               'googleads.adwords._AdWordsHeaderHandler') as mock_handler:
-            mock_literal.return_value = self.marshaller
-            mock_handler.return_value = self.header_handler
-            self.report_downloader = googleads.adwords.ReportDownloader(
-                self.adwords_client, self.version)
+            with mock.patch(
+                URL_REQUEST_PATH + '.OpenerDirector') as mock_opener:
+              mock_literal.return_value = self.marshaller
+              mock_handler.return_value = self.header_handler
+              mock_opener.return_value = self.opener
+              self.report_downloader = googleads.adwords.ReportDownloader(
+                  self.adwords_client, self.version)
 
   def testDownloadReport(self):
     output_file = io.StringIO()
@@ -288,21 +235,53 @@ class ReportDownloaderTest(unittest.TestCase):
     self.marshaller.process.return_value = serialized_report
 
     with mock.patch('suds.mx.Content') as mock_content:
-      with mock.patch(URL_REQUEST_PATH + '.urlopen') as mock_urlopen:
-        with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-          mock_urlopen.return_value = fake_request
-          self.report_downloader.DownloadReport(
-              report_definition, output_file, False)
+      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+        self.opener.open.return_value = fake_request
+        self.report_downloader.DownloadReport(report_definition, output_file)
+        mock_request.assert_called_once_with(
+            ('https://adwords.google.com/api/adwords/reportdownload/%s'
+             % self.version), post_body, headers)
+        self.opener.open.assert_called_once_with(mock_request.return_value)
+        self.marshaller.process.assert_called_once_with(
+            mock_content.return_value)
+        self.assertEqual(content, output_file.getvalue())
+        self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+            None, None)
 
-          mock_request.assert_called_once_with(
-              ('https://adwords.google.com/api/adwords/reportdownload/%s'
-               % self.version), post_body, headers)
-          mock_urlopen.assert_called_once_with(mock_request.return_value)
-      self.marshaller.process.assert_called_once_with(mock_content.return_value)
+  def testDownloadReportCheckFormat_CSVStringSuccess(self):
+    output_file = io.StringIO()
 
-    self.assertEqual(content, output_file.getvalue())
-    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
-        False, None, None)
+    try:
+      self.report_downloader._DownloadReportCheckFormat('CSV', output_file)
+    except googleads.errors.GoogleAdsValueError:
+      self.fail('_DownloadReportCheckFormat raised GoogleAdsValueError'
+                'unexpectedly!')
+
+  def testDownloadReportCheckFormat_GZIPPEDBinaryFileSuccess(self):
+    output_file = io.StringIO()
+
+    try:
+      self.report_downloader._DownloadReportCheckFormat('CSV', output_file)
+    except googleads.errors.GoogleAdsValueError:
+      self.fail('_DownloadReportCheckFormat raised GoogleAdsValueError'
+                'unexpectedly!')
+
+  def testDownloadReportCheckFormat_GZIPPEDBytesIOSuccess(self):
+    output_file = tempfile.TemporaryFile(mode='wb')
+
+    try:
+      self.report_downloader._DownloadReportCheckFormat('GZIPPED_CSV',
+                                                        output_file)
+    except googleads.errors.GoogleAdsValueError:
+      self.fail('_DownloadReportCheckFormat raised GoogleAdsValueError'
+                'unexpectedly!')
+
+  def testDownloadReportCheckFormat_GZIPPEDStringFailure(self):
+    output_file = io.StringIO()
+
+    self.assertRaises(googleads.errors.GoogleAdsValueError,
+                      self.report_downloader._DownloadReportCheckFormat,
+                      'GZIPPED_CSV', output_file)
 
   def testDownloadReport_failure(self):
     output_file = io.StringIO()
@@ -323,39 +302,22 @@ class ReportDownloaderTest(unittest.TestCase):
     self.marshaller.process.return_value = serialized_report
 
     with mock.patch('suds.mx.Content') as mock_content:
-      with mock.patch(URL_REQUEST_PATH + '.urlopen') as mock_urlopen:
-        with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-          mock_urlopen.side_effect = error
-          self.assertRaises(
-              googleads.errors.AdWordsReportError,
-              self.report_downloader.DownloadReport, report_definition,
-              output_file, True)
+      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+        self.opener.open.side_effect = error
+        self.assertRaises(
+            googleads.errors.AdWordsReportError,
+            self.report_downloader.DownloadReport, report_definition,
+            output_file)
 
-          mock_request.assert_called_once_with(
-              ('https://adwords.google.com/api/adwords/reportdownload/%s'
-               % self.version), post_body, headers)
-          mock_urlopen.assert_called_once_with(mock_request.return_value)
-      self.marshaller.process.assert_called_once_with(mock_content.return_value)
-
-    self.assertEqual('', output_file.getvalue())
-    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
-        True, None, None)
-
-  def testDownloadReport_incompatibleFormatFailure(self):
-    output_file = io.StringIO()
-    report_definition = {'table': 'campaigns',
-                         'downloadFormat': 'GZIPPED_CSV'}
-    serialized_report = 'hjuibnibguo'
-    post_body = urllib.urlencode({'__rdxml': serialized_report})
-    if not PYTHON2:
-      post_body = bytes(post_body, 'utf-8')
-
-    self.assertRaises(googleads.errors.GoogleAdsValueError,
-                      self.report_downloader.DownloadReport,
-                      report_definition,
-                      output_file, True)
-
-    self.assertEqual('', output_file.getvalue())
+        mock_request.assert_called_once_with(
+            ('https://adwords.google.com/api/adwords/reportdownload/%s'
+             % self.version), post_body, headers)
+        self.opener.open.assert_called_once_with(mock_request.return_value)
+        self.marshaller.process.assert_called_once_with(
+            mock_content.return_value)
+        self.assertEqual('', output_file.getvalue())
+        self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+            None, None)
 
   def testDownloadReportWithAwql(self):
     output_file = io.StringIO()
@@ -371,20 +333,50 @@ class ReportDownloaderTest(unittest.TestCase):
     fake_request.write(content if PYTHON2 else bytes(content, 'utf-8'))
     fake_request.seek(0)
 
-    with mock.patch(URL_REQUEST_PATH + '.urlopen') as mock_urlopen:
-      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        mock_urlopen.return_value = fake_request
-        self.report_downloader.DownloadReportWithAwql(
-            query, file_format, output_file, True)
+    with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+      self.opener.open.return_value = fake_request
+      self.report_downloader.DownloadReportWithAwql(
+          query, file_format, output_file)
 
-        mock_request.assert_called_once_with(
-            ('https://adwords.google.com/api/adwords/reportdownload/%s'
-             % self.version), post_body, headers)
-        mock_urlopen.assert_called_once_with(mock_request.return_value)
+      mock_request.assert_called_once_with(
+          ('https://adwords.google.com/api/adwords/reportdownload/%s'
+           % self.version), post_body, headers)
+      self.opener.open.assert_called_once_with(mock_request.return_value)
 
     self.assertEqual(content, output_file.getvalue())
     self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
-        True, None, None)
+        None, None)
+
+  def testDownloadReportWithBytesIO(self):
+    output_file = io.BytesIO()
+    report_definition = {'table': 'campaigns',
+                         'downloadFormat': 'GZIPPED_CSV'}
+    serialized_report = 'nuinbwuign'
+    post_body = urllib.urlencode({'__rdxml': serialized_report})
+    if not PYTHON2:
+      post_body = bytes(post_body, 'utf-8')
+    headers = {'Authorization': 'ya29.something'}
+    self.header_handler.GetReportDownloadHeaders.return_value = headers
+    content = u'CONTENT STRING 广告客户'
+    fake_request = io.BytesIO()
+    fake_request.write(content.encode('utf-8') if PYTHON2
+                       else bytes(content, 'utf-8'))
+    fake_request.seek(0)
+    self.marshaller.process.return_value = serialized_report
+
+    with mock.patch('suds.mx.Content') as mock_content:
+      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+        self.opener.open.return_value = fake_request
+        self.report_downloader.DownloadReport(report_definition, output_file)
+        mock_request.assert_called_once_with(
+            ('https://adwords.google.com/api/adwords/reportdownload/%s'
+             % self.version), post_body, headers)
+        self.opener.open.assert_called_once_with(mock_request.return_value)
+        self.marshaller.process.assert_called_once_with(
+            mock_content.return_value)
+        self.assertEqual(content, output_file.getvalue().decode('utf-8'))
+        self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+            None, None)
 
   def testExtractError_badRequest(self):
     response = mock.Mock()

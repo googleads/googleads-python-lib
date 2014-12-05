@@ -98,14 +98,23 @@ def main(client):
       continue
 
     # Find the mean of the min and max values.
-    mean_avg_cpc = (long(estimate['min']['averageCpc']['microAmount']) +
-                    long(estimate['max']['averageCpc']['microAmount'])) / 2
-    mean_avg_pos = (float(estimate['min']['averagePosition']) +
-                    float(estimate['max']['averagePosition'])) / 2
-    mean_clicks = (float(estimate['min']['clicksPerDay']) +
-                   float(estimate['max']['clicksPerDay'])) / 2
-    mean_total_cost = (long(estimate['min']['totalCost']['microAmount']) +
-                       long(estimate['max']['totalCost']['microAmount'])) / 2
+    if (estimate['min']['clicksPerDay'] and estimate['max']['clicksPerDay'] and
+        estimate['min']['impressionsPerDay'] and
+        estimate['max']['impressionsPerDay']):
+      mean_avg_cpc = (int(estimate['min']['averageCpc']['microAmount']) +
+                      int(estimate['max']['averageCpc']['microAmount'])) / 2
+      mean_avg_pos = (float(estimate['min']['averagePosition']) +
+                      float(estimate['max']['averagePosition'])) / 2
+      mean_clicks = (float(estimate['min']['clicksPerDay']) +
+                     float(estimate['max']['clicksPerDay'])) / 2
+      mean_total_cost = (int(estimate['min']['totalCost']['microAmount']) +
+                         int(estimate['max']['totalCost']['microAmount'])) / 2
+    else:
+      # Default to 0 if no clicks/impressions per day.
+      mean_avg_cpc = 0
+      mean_avg_pos = 0
+      mean_clicks = 0
+      mean_total_cost = 0
 
     print ('Results for the keyword with text \'%s\' and match type \'%s\':'
            % (keyword['text'], keyword['matchType']))

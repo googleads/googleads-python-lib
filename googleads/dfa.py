@@ -22,7 +22,6 @@ import suds.client
 import suds.sax.element
 import suds.transport
 import suds.wsse
-from suds.cache import NoCache
 
 import googleads.common
 import googleads.errors
@@ -87,7 +86,7 @@ class DfaClient(object):
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, username, oauth2_client, application_name,
-               https_proxy=None, cache=NoCache()):
+               https_proxy=None, cache=None):
     """Initializes a DfaClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -103,7 +102,7 @@ class DfaClient(object):
       [optional]
       https_proxy: A string identifying the URL of a proxy that all HTTPS
           requests should be routed through.
-      cache: A subclass of suds.cache.Cache that defaults to NoCache.
+      cache: A subclass of suds.cache.Cache; defaults to None.
     """
     self.username = username
     self.oauth2_client = oauth2_client

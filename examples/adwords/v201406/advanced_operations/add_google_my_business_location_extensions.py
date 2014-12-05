@@ -15,7 +15,7 @@
 # limitations under the License.
 
 
-"""Adds a feed that syncs feed items from a Google Places account.
+"""Adds a feed that syncs feed items from a Google My Business (GMB) account.
 
 This example associates the feed with a customer.
 
@@ -39,11 +39,11 @@ import suds
 from googleads import adwords
 from googleads import errors
 
-PLACES_EMAIL_ADDRESS = 'INSERT_PLACES_EMAIL_ADDRESS_HERE'
+GMB_EMAIL_ADDRESS = 'INSERT_GMB_EMAIL_ADDRESS_HERE'
 # To obtain an access token for your Places account, you can run the
 # generate_refresh_token.py example and manually replace the scope with
 # "https://www.google.com/local/add".
-PLACES_ACCESS_TOKEN = 'INSERT_PLACES_OAUTH_ACCESS_TOKEN_HERE'
+GMB_ACCESS_TOKEN = 'INSERT_GMB_OAUTH_ACCESS_TOKEN_HERE'
 
 # The placeholder type for location extensions.
 # See the Placeholder reference page for a list of all the placeholder types
@@ -56,9 +56,9 @@ PLACEHOLDER_LOCATION = 7
 MAX_CUSTOMER_FEED_ADD_ATTEMPTS = 10
 
 
-def main(client, places_email_address, places_access_token):
+def main(client, gmb_email_address, gmb_access_token):
   # Create a feed that will sync to the Google Places account specified by
-  # places_email_address. Do not add FeedAttributes to this object,
+  # gmb_email_address. Do not add FeedAttributes to this object,
   # as AdWords will add them automatically because this will be a
   # system generated feed.
   feed = {
@@ -68,9 +68,9 @@ def main(client, places_email_address, places_access_token):
           'oAuthInfo': {
               'httpMethod': 'GET',
               'httpRequestUrl': 'https://www.google.com/local/add',
-              'httpAuthorizationHeader': 'Bearer %s' % places_access_token
+              'httpAuthorizationHeader': 'Bearer %s' % gmb_access_token
           },
-          'emailAddress': places_email_address,
+          'emailAddress': gmb_email_address,
       },
       # Since this feed's feed items will be managed by AdWords, you must set
       # its origin to ADWORDS.
@@ -78,15 +78,15 @@ def main(client, places_email_address, places_access_token):
   }
 
   # Create an operation to add the feed.
-  places_operations = [{
+  gmb_operations = [{
       'operator': 'ADD',
       'operand': feed
   }]
 
-  places_response = client.GetService('FeedService', version='v201402').mutate(
-      places_operations)
-  added_feed = places_response['value'][0]
-  print 'Added places feed with ID: %d\n' % added_feed['id']
+  gmb_response = client.GetService('FeedService', version='v201406').mutate(
+      gmb_operations)
+  added_feed = gmb_response['value'][0]
+  print 'Added GMB feed with ID: %d\n' % added_feed['id']
 
   # Add a CustomerFeed that associates the feed with this customer for the
   # LOCATION placeholder type.
@@ -110,7 +110,7 @@ def main(client, places_email_address, places_access_token):
   }
 
   customer_feed_service = client.GetService(
-      'CustomerFeedService', version='v201402')
+      'CustomerFeedService', version='v201406')
   added_customer_feed = None
 
   i = 0
@@ -120,7 +120,7 @@ def main(client, places_email_address, places_access_token):
           customer_feed_operation])['value'][0]
     except suds.WebFault:
       # Wait using exponential backoff policy
-      sleep_seconds = 2**i
+      sleep_seconds = 2 ** i
       print ('Attempt %d to add the CustomerFeed was not successful.'
              'Waiting %d seconds before trying again.\n' % (i, sleep_seconds))
       time.sleep(sleep_seconds)
@@ -137,4 +137,4 @@ def main(client, places_email_address, places_access_token):
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client, PLACES_EMAIL_ADDRESS, PLACES_ACCESS_TOKEN)
+  main(adwords_client, GMB_EMAIL_ADDRESS, GMB_ACCESS_TOKEN)

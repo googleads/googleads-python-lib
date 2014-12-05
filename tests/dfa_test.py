@@ -22,7 +22,6 @@ import unittest
 
 import mock
 import suds.transport
-from suds.cache import NoCache
 
 import googleads.dfa
 import googleads.common
@@ -80,7 +79,7 @@ class DfaClientTest(unittest.TestCase):
     self.application_name = 'application name'
     self.oauth2_client = 'unused'
     self.https_proxy = 'myproxy.com:443'
-    self.cache = NoCache()
+    self.cache = None
     self.dfa_client = googleads.dfa.DfaClient(
         self.username, self.oauth2_client, self.application_name,
         self.https_proxy, self.cache)

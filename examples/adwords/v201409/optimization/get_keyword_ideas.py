@@ -73,7 +73,8 @@ def main(client):
       for result in page['entries']:
         attributes = {}
         for attribute in result['data']:
-          attributes[attribute['key']] = attribute['value']
+          attributes[attribute['key']] = getattr(attribute['value'], 'value',
+                                                 '0')
         print ('Keyword with \'%s\' text and average monthly search volume '
                '\'%s\' was found with Products and Services categories: %s.'
                % (attributes['KEYWORD_TEXT'],

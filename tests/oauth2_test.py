@@ -50,12 +50,15 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
     self.client_secret = 'itsasecret'
     self.refresh_token = 'refreshing'
     self.https_proxy = 'my.proxy.com:443'
-    with mock.patch('oauthlib.oauth2.BackendApplicationClient'
-                   ) as mock_oauthlib_client:
-      self.oauthlib_client = mock_oauthlib_client.return_value
-      self.googleads_client = googleads.oauth2.GoogleRefreshTokenClient(
-          self.client_id, self.client_secret, self.refresh_token,
-          self.https_proxy)
+    self.opener = mock.Mock()
+    with mock.patch(
+        'oauthlib.oauth2.BackendApplicationClient') as mock_oauthlib_client:
+      with mock.patch(URL_REQUEST_PATH + '.OpenerDirector') as mock_opener:
+        self.oauthlib_client = mock_oauthlib_client.return_value
+        mock_opener.return_value = self.opener
+        self.googleads_client = googleads.oauth2.GoogleRefreshTokenClient(
+            self.client_id, self.client_secret, self.refresh_token,
+            self.https_proxy)
 
   def testCreateHttpHeader_noRefresh(self):
     header = {'Authorization': 'b'}
@@ -73,16 +76,16 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
                                                   ('unused', header, 'unusued')]
     self.oauthlib_client.prepare_refresh_body.return_value = post_body
 
-    with mock.patch(URL_REQUEST_PATH + '.build_opener') as mock_opener:
-      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        mock_opener.return_value.open.return_value = fake_request
-        returned_header = self.googleads_client.CreateHttpHeader()
+    with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+      self.opener.open.return_value = fake_request
+      returned_header = self.googleads_client.CreateHttpHeader()
 
-        mock_request.assert_called_once_with(
-            mock.ANY, post_body if PYTHON2 else bytes(post_body, 'utf-8'),
-            mock.ANY)
-        mock_opener.return_value.open.assert_called_once_with(
-            mock_request.return_value)
+      mock_request.assert_called_once_with(
+          mock.ANY, post_body if PYTHON2 else bytes(post_body, 'utf-8'),
+          mock.ANY)
+      self.opener.open.assert_called_once_with(
+          mock_request.return_value)
+
     self.assertEqual(header, returned_header)
     self.oauthlib_client.parse_request_body_response.assert_called_once_with(
         content)
@@ -93,21 +96,23 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
     post_body = 'post_body'
     error = urllib2.HTTPError('', 400, 'Bad Request', {}, None)
 
-    self.oauthlib_client.add_token.side_effect = oauth2.TokenExpiredError()
+    self.oauthlib_client.add_token.side_effect = [oauth2.TokenExpiredError(),
+                                                  ('unused', {}, 'unusued')]
     self.oauthlib_client.prepare_refresh_body.return_value = post_body
 
-    with mock.patch(URL_REQUEST_PATH + '.build_opener') as mock_opener:
-      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        mock_opener.return_value.open.side_effect = error
-        self.assertEqual({}, self.googleads_client.CreateHttpHeader())
+    with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+      self.opener.open.side_effect = error
+      self.assertEqual({}, self.googleads_client.CreateHttpHeader())
 
-        mock_request.assert_called_once_with(
-            mock.ANY, post_body if PYTHON2 else bytes(post_body, 'utf-8'),
-            mock.ANY)
-        mock_opener.return_value.open.assert_called_once_with(
-            mock_request.return_value)
+      mock_request.assert_called_once_with(
+          mock.ANY, post_body if PYTHON2 else bytes(post_body, 'utf-8'),
+          mock.ANY)
+      self.opener.open.assert_called_once_with(
+          mock_request.return_value)
+
     self.assertFalse(self.oauthlib_client.parse_request_body_response.called)
-    self.oauthlib_client.add_token.assert_called_once_with(mock.ANY)
+    self.oauthlib_client.add_token.assert_has_calls([mock.call(mock.ANY),
+                                                     mock.call(mock.ANY)])
 
 
 if __name__ == '__main__':
