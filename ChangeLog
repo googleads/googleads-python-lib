@@ -1,3 +1,6 @@
+3.0.1 - 1/21/2015
+* Push with updated PyDocs.
+
 3.0.0 - 1/5/2015
 * Three new dependencies have been added: httplib2, oauth2client, and pysocks.
 * One dependency has been removed: oauthlib

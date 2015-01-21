@@ -28,7 +28,7 @@ import yaml
 import googleads.errors
 import googleads.oauth2
 
-VERSION = '3.0.0'
+VERSION = '3.0.1'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _PROXY_YAML_KEY = 'proxy_info'
 _PYTHON_VERSION = 'Python/%d.%d' % (sys.version_info[0], sys.version_info[1])
