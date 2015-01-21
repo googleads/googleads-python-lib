@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2015 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,40 +14,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This code example gets all proposals that are currently 'PENDING_APPROVAL.'
+"""This example gets all base rates.
 
-To create proposals, run create_proposals.py."""
+To create product base rates, run create_product_base_rates.py
+To create product template base rates, run
+create_product_template_base_rates.py.
+
+Tags: BaseRateService.getBaseRatesByStatement
+"""
 
 __author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp
 
+RATE_CARD_ID = 'INSERT_RATE_CARD_ID_HERE'
 
-def main(client):
+
+def main(client, rate_card_id):
   # Initialize appropriate service.
-  proposal_service = client.GetService('ProposalService', version='v201411')
+  base_rate_service = client.GetService('BaseRateService', version='v201411')
 
-  # Create statement object to select a single proposal by an ID.
+  # Create a filter statement for base rates for a single rate card.
   values = [{
-      'key': 'status',
+      'key': 'rateCardId',
       'value': {
-          'xsi_type': 'TextValue',
-          'value': 'PENDING_APPROVAL'
+          'xsi_type': 'NumberValue',
+          'value': rate_card_id
       }
   }]
-  query = 'WHERE status = :status ORDER BY id ASC'
-
+  query = 'where rateCardId = :rateCardId ORDER BY id ASC'
   statement = dfp.FilterStatement(query, values)
 
-  # Get proposals by statement.
+  # Get base rates by statement.
   while True:
-    response = proposal_service.getProposalsByStatement(statement.ToStatement())
+    response = base_rate_service.getBaseRatesByStatement(
+        statement.ToStatement())
     if 'results' in response:
       # Display results.
-      for proposal in response['results']:
-        print ('Proposal with id \'%s\' name \'%s\' was found.'
-               % (proposal['id'], proposal['name']))
+      for base_rate in response['results']:
+        print ('Base rate with ID \'%s\' and type \'%s\' belonging to '
+               'rate card ID \'%s\' was found.' % (
+                   base_rate['id'], base_rate['BaseRate.Type'],
+                   base_rate['rateCardId']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break
@@ -58,4 +67,4 @@ def main(client):
 if __name__ == '__main__':
   # Initialize client object.
   dfp_client = dfp.DfpClient.LoadFromStorage()
-  main(dfp_client)
+  main(dfp_client, RATE_CARD_ID)

@@ -1,3 +1,22 @@
+3.0.0 - 1/5/2015
+* Three new dependencies have been added: httplib2, oauth2client, and pysocks.
+* One dependency has been removed: oauthlib
+* BREAKING CHANGE: Python3 versions < 3.3 are no longer supported.
+* BREAKING CHANGE: The https_proxy argument for the GoogleRefreshTokenClient has
+  been deprecated. It has been replaced by proxy_info, which is an optional
+  argument taking an httplib2.ProxyInfo instance.
+* PYTHON2 ONLY: You may now authorize with Service Accounts using the new
+  GoogleServiceAccountClient. As of this release, it will only work with
+  Python2.
+* Added new Service Account authorization examples for AdWords, DFA, and DFP.
+* The googleads.yaml file has been refactored to reflect the changes to proxy
+  support.
+* WARNING: As of this release, you must set disable_ssl_certificate_validation
+  to False when using Python3.
+* Added new examples for DFP Sales Manager: PremiumRateService, BaseRateService,
+  ExchangeRateService, RateCardService, WorkflowRequestService, ProductService,
+  ProductTemplateService.
+
 2.3.0 - 12/05/2014
 * Removed v201402 support.
 * The return_money_in_micros argument has been removed from the AdWords

@@ -46,7 +46,7 @@ class DfaClient(object):
   # A list of values which must be provided to use DFA.
   _REQUIRED_INIT_VALUES = ('application_name', 'username')
   # A list of values which may optionally be provided when using DFA.
-  _OPTIONAL_INIT_VALUES = ('https_proxy',)
+  _OPTIONAL_INIT_VALUES = ()
   # The format of SOAP service WSDLs. A server, version, and service name need
   # to be formatted in.
   _SOAP_SERVICE_FORMAT = '%s/%s/api/dfa-api/%s?wsdl'
@@ -100,8 +100,8 @@ class DfaClient(object):
       application_name: An arbitrary string which will be used to identify your
           application
       [optional]
-      https_proxy: A string identifying the URL of a proxy that all HTTPS
-          requests should be routed through.
+      https_proxy: A string identifying the proxy that all HTTPS requests
+          should be routed through.
       cache: A subclass of suds.cache.Cache; defaults to None.
     """
     self.username = username

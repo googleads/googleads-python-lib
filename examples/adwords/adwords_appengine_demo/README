@@ -60,30 +60,33 @@ prepared your OAuth2 Credentials via the Google Developers Console.
 6. Copy the httplib2 package from your Python installation's dist-packages
    directory into this project.
 
-7. Copy the oauthlib package from your Python installation's dist-packages
+7. Copy the oauth2client package from your Python installation's dist-packages
    directory into this project.
 
 8. Copy the pytz package from your Python installation's dist-packages
    directory into this project.
 
-9. Copy the suds package from your Python installation's dist-packages
+9. Copy socks.py from the PySocks tarball found in your Python installation's
+   dist-packages directory into this project.
+
+10. Copy the suds package from your Python installation's dist-packages
    directory into this project.
 
-10. Create an App Engine application in the
+11. Create an App Engine application in the
    [Google App Engine Console](https://appengine.google.com/).
 
-11. Go to this project's app.yaml, and enter in your application name for the
+12. Go to this project's app.yaml, and enter in your application name for the
    "application" field.
 
-12. You can now deploy this project by running the following command:
+13. You can now deploy this project by running the following command:
 
     `python $APPENGINE_SDK_DIR/appcfg --oauth2 update .`
 
-12. When you go to your App for the first time, you will need to log in and
+14. When you go to your App for the first time, you will need to log in and
     provide OAuth2 and AdWords API credentials. You can use credentials
     generated via the generate_refresh_token.py example.
 
-13. With all information entered, you can now use the UI to view and modify
+15. With all information entered, you can now use the UI to view and modify
     your account details.
 
 
@@ -97,7 +100,8 @@ Submit bug reports or feature requests to our
 
 * [Python v2.7](https://www.python.org/downloads/)
 * [httplib2 v0.9+](https://pypi.python.org/pypi/httplib2)
-* [oauthlib v0.6.3+](https://pypi.python.org/pypi/oauthlib)
+* [oauth2client v1.4.5+](https://pypi.python.org/pypi/oauth2client/)
+* [pysocks v1.5.0+](https://pypi.python.org/pypi/PySocks/)
 * [pytz 2014.7+](https://pypi.python.org/pypi/pytz)
 * [suds-jurko 0.6+](https://pypi.python.org/pypi/suds-jurko)
 * [App Engine SDK v1.9.11+](https://developers.google.com/appengine/downloads)

@@ -69,7 +69,7 @@ class DfpClientTest(unittest.TestCase):
     self.network_code = '12345'
     self.application_name = 'application name'
     self.oauth2_client = 'unused'
-    self.https_proxy = 'myproxy.com:443'
+    self.https_proxy = 'myproxy:443'
     self.cache = None
     self.version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
     self.dfp_client = googleads.dfp.DfpClient(
@@ -143,9 +143,9 @@ class DataDownloaderTest(unittest.TestCase):
     network_code = '12345'
     application_name = 'application name'
     oauth2_client = 'unused'
-    https_proxy = 'myproxy.com:443'
+    self.https_proxy = 'myproxy.com:443'
     dfp_client = googleads.dfp.DfpClient(
-        oauth2_client, application_name, network_code, https_proxy)
+        oauth2_client, application_name, network_code, self.https_proxy)
     self.version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
     self.report_downloader = dfp_client.GetDataDownloader()
     self.pql_service = mock.Mock()

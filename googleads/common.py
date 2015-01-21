@@ -20,19 +20,26 @@ import os
 import sys
 import warnings
 
+import httplib2
+import socks
 import suds
 import yaml
 
 import googleads.errors
 import googleads.oauth2
 
-VERSION = '2.3.0'
+VERSION = '3.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
+_PROXY_YAML_KEY = 'proxy_info'
 _PYTHON_VERSION = 'Python/%d.%d' % (sys.version_info[0], sys.version_info[1])
 
 # The keys in the authentication dictionary that are used to construct OAuth 2.0
 # credentials.
 _OAUTH_2_AUTH_KEYS = ('client_id', 'client_secret', 'refresh_token')
+
+# The keys in the proxy dictionary that are used to construct a ProxyInfo
+# instance.
+_PROXY_KEYS = ('host', 'port')
 
 
 def GenerateLibSig(short_name):
@@ -46,20 +53,22 @@ def GenerateLibSig(short_name):
   return ' (%s, %s, %s)' % (short_name, _COMMON_LIB_SIG, _PYTHON_VERSION)
 
 
-def LoadFromStorage(path, yaml_key, required_values, optional_values):
+def LoadFromStorage(path, product_yaml_key, required_client_values,
+                    optional_product_values):
   """Loads the data necessary for instantiating a client from file storage.
 
-  In addition to the required_values argument, the yaml file must supply the
-  keys used to create OAuth 2.0 credentials.
+  In addition to the required_client_values argument, the yaml file must supply
+  the keys used to create OAuth 2.0 credentials. It may also optionally provide
+  proxy_info in order to configure a proxy.
 
   Args:
     path: A path string to the yaml document whose keys should be used.
-    yaml_key: The key to read in the yaml as a string.
-    required_values: A tuple of strings representing values which must be in the
-        yaml file. If one of these keys is not in the yaml file, an error will
-        be raised.
-    optional_values: A tuple of strings representing optional values which may
-        be in the yaml file.
+    product_yaml_key: The key to read in the yaml as a string.
+    required_client_values: A tuple of strings representing values which must
+      be in the yaml file for a supported API. If one of these keys is not in
+      the yaml file, an error will  be raised.
+    optional_product_values: A tuple of strings representing optional values
+      which may be in the yaml file.
 
   Returns:
     A dictionary map of the keys in the yaml file to their values. This will not
@@ -69,49 +78,72 @@ def LoadFromStorage(path, yaml_key, required_values, optional_values):
   Raises:
     A GoogleAdsValueError if the given yaml file does not contain the
     information necessary to instantiate a client object - either a
-    required_values key was missing or an OAuth 2.0 key was missing.
+    required_client_values key was missing or an OAuth 2.0 key was missing.
   """
   if not os.path.isabs(path):
     path = os.path.expanduser(path)
   try:
     with open(path, 'r') as handle:
-      data = yaml.safe_load(handle.read()).get(yaml_key) or {}
+      data = yaml.safe_load(handle.read())
+      product_data = data.get(product_yaml_key) or {}
+      proxy_data = data.get(_PROXY_YAML_KEY) or {}
   except IOError:
     raise googleads.errors.GoogleAdsValueError(
         'Given yaml file, %s, could not be opened.' % path)
 
-  original_keys = list(data.keys())
+  original_keys = list(product_data.keys())
+  original_proxy_keys = list(proxy_data.keys())
   client_kwargs = {}
   try:
-    for key in required_values:
-      client_kwargs[key] = data[key]
-      del data[key]
+    for key in required_client_values:
+      client_kwargs[key] = product_data[key]
+      del product_data[key]
   except KeyError:
     raise googleads.errors.GoogleAdsValueError(
         'Your yaml file, %s, is missing some of the required values. Required '
         'values are: %s, actual values are %s'
-        % (path, required_values, original_keys))
+        % (path, required_client_values, original_keys))
 
   try:
-    client_kwargs['oauth2_client'] = googleads.oauth2.GoogleRefreshTokenClient(
-        data['client_id'], data['client_secret'], data['refresh_token'],
-        data.get('https_proxy') or client_kwargs.get('https_proxy'))
+    proxy_info = (httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, proxy_data['host'],
+                                     proxy_data['port'])
+                  if proxy_data else None)
+    client_kwargs['https_proxy'] = ('%s:%s' % (proxy_info.proxy_host,
+                                               proxy_info.proxy_port)
+                                    if proxy_info else None)
+  except KeyError:
+    raise googleads.errors.GoogleAdsValueError(
+        'Your yaml file, %s, is missing some of the required proxy values.'
+        'Required values are: %s, actual values are %s'
+        % (path, _PROXY_KEYS, original_proxy_keys))
+
+  ca_certs = proxy_data.get('ca_certs', None)
+  disable_ssl_certificate_validation = proxy_data.get(
+      'disable_ssl_certificate_validation', True)
+
+  try:
+    client_kwargs['oauth2_client'] = (
+        googleads.oauth2.GoogleRefreshTokenClient(
+            product_data['client_id'], product_data['client_secret'],
+            product_data['refresh_token'], proxy_info,
+            disable_ssl_certificate_validation, ca_certs))
     for auth_key in _OAUTH_2_AUTH_KEYS:
-      del data[auth_key]
+      del product_data[auth_key]
   except KeyError:
     raise googleads.errors.GoogleAdsValueError(
         'Your yaml file, %s, is missing some of the required OAuth 2.0 '
         'values. Required values are: %s, actual values are %s'
         % (path, _OAUTH_2_AUTH_KEYS, original_keys))
 
-  for value in optional_values:
-    if value in data:
-      client_kwargs[value] = data[value]
-      del data[value]
+  for value in optional_product_values:
+    if value in product_data:
+      client_kwargs[value] = product_data[value]
+      del product_data[value]
 
-  if data:
-    warnings.warn('Your yaml file, %s, contains the following unrecognized '
-                  'keys: %s. They were ignored.' % (path, data), stacklevel=3)
+  if product_data:
+    warnings.warn(
+        'Your yaml file, %s, contains the following unrecognized '
+        'keys: %s. They were ignored.' % (path, product_data), stacklevel=3)
 
   return client_kwargs
 

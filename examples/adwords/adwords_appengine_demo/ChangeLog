@@ -1,2 +1,6 @@
+1.0.1 - 1/5/2015
+- Updated dependencies listed in README, for the changes introduced in googleads
+  3.0.0.
+
 1.0.0:
 - Initial release of the demo.

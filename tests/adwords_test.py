@@ -118,7 +118,7 @@ class AdWordsClientTest(unittest.TestCase):
     self.user_agent = 'users users user'
     self.oauth2_client = mock.Mock()
     self.oauth2_client.CreateHttpHeader.return_value = dict(oauth_header)
-    self.https_proxy = 'my.proxy:443'
+    self.https_proxy = 'myproxy:443'
     self.adwords_client = googleads.adwords.AdWordsClient(
         self.dev_token, self.oauth2_client, self.user_agent,
         client_customer_id=self.client_customer_id,

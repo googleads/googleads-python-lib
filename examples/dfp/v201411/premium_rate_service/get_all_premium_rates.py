@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2015 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This code example gets all proposals.
+"""This code example gets all premium rates.
 
-To create proposals, run create_proposals.py.
+To create premium rates, run create_premium_rates.py.
+
+Tags: PremiumRateService.getPremiumRatesByStatement
 """
 
 __author__ = 'Nicholas Chen'
@@ -27,19 +29,24 @@ from googleads import dfp
 
 def main(client):
   # Initialize appropriate service.
-  proposal_service = client.GetService('ProposalService', version='v201411')
+  premium_rate_service = client.GetService('PremiumRateService',
+                                           version='v201411')
 
   # Create a filter statement.
   statement = dfp.FilterStatement('ORDER BY id ASC')
 
-  # Get proposals by statement.
+  # Get premium rates by statement.
   while True:
-    response = proposal_service.getProposalsByStatement(statement.ToStatement())
+    response = premium_rate_service.getPremiumRatesByStatement(
+        statement.ToStatement())
     if 'results' in response:
       # Display results.
-      for proposal in response['results']:
-        print ('Proposal with id \'%s\' and name \'%s\' was found.' % (
-            proposal['id'], proposal['name']))
+      for premium_rate in response['results']:
+        print ('Premium rate with ID \'%s\' of type \'%s\' assigned to '
+               ' rate card with ID \'%s\' was found.\n' % (
+                   premium_rate['id'],
+                   premium_rate['premiumFeature']['PremiumFeature.Type'],
+                   premium_rate['rateCardId']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break

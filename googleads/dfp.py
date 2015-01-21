@@ -181,8 +181,8 @@ class DfpClient(object):
       network_code: A string identifying the network code of the network you are
           accessing. All requests other than getAllNetworks and getCurrentUser
           calls require this header to be set.
-      https_proxy: A string identifying the URL of a proxy that all HTTPS
-          requests should be routed through.
+      https_proxy: A string identifying the proxy that all HTTPS requests
+          should be routed through.
       cache: A subclass of suds.cache.Cache; defaults to None.
     """
     self.oauth2_client = oauth2_client

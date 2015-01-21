@@ -150,7 +150,7 @@ class AdWordsClient(object):
   _REQUIRED_INIT_VALUES = ('user_agent', 'developer_token')
   # A list of values which may optionally be provided when using AdWords.
   _OPTIONAL_INIT_VALUES = ('validate_only', 'partial_failure',
-                           'client_customer_id', 'https_proxy')
+                           'client_customer_id')
   # The format of SOAP service WSDLs. A server, namespace, version, and service
   # name need to be formatted in.
   _SOAP_SERVICE_FORMAT = '%s/api/adwords/%s/%s/%s?wsdl'
@@ -205,8 +205,8 @@ class AdWordsClient(object):
           succeed, to result in a complete failure with no changes made or a
           partial failure with some changes made. Only certain services respect
           this header.
-      https_proxy: A string identifying the URL of a proxy that all HTTPS
-          requests should be routed through.
+      https_proxy: A string identifying the proxy that all HTTPS requests
+          should be routed through.
       cache: A subclass of suds.cache.Cache; defaults to None.
     """
     self.developer_token = developer_token
@@ -400,7 +400,7 @@ class ReportDownloader(object):
     proxy_option = None
     if self._adwords_client.https_proxy:
       proxy_option = {'https': self._adwords_client.https_proxy}
-      # Create an Opener to handle requests when downloading reports.
+    # Create an Opener to handle requests when downloading reports.
       self.url_opener = urllib2.build_opener(
           urllib2.ProxyHandler({'https': self._adwords_client.https_proxy}))
     else:

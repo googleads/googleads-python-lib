@@ -14,9 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This code example gets all proposals.
+"""This example gets workflow approval requests.
 
-To create proposals, run create_proposals.py.
+Workflow approval requests must be approved or rejected for a workflow to
+finish.
+
+Tags: WorkflowRequestService.getWorkflowRequestsByStatement
 """
 
 __author__ = 'Nicholas Chen'
@@ -27,19 +30,32 @@ from googleads import dfp
 
 def main(client):
   # Initialize appropriate service.
-  proposal_service = client.GetService('ProposalService', version='v201411')
+  workflow_request_service = client.GetService('WorkflowRequestService',
+                                               version='v201411')
 
-  # Create a filter statement.
-  statement = dfp.FilterStatement('ORDER BY id ASC')
+  # Create statement object to select all workflow approval requests.
+  values = [{
+      'key': 'type',
+      'value': {
+          'xsi_type': 'TextValue',
+          'value': 'WORKFLOW_APPROVAL_REQUEST'
+      }
+  }]
+  query = 'WHERE type = :type'
+
+  statement = dfp.FilterStatement(query, values)
 
   # Get proposals by statement.
   while True:
-    response = proposal_service.getProposalsByStatement(statement.ToStatement())
+    response = workflow_request_service.getWorkflowRequestsByStatement(
+        statement.ToStatement())
     if 'results' in response:
       # Display results.
-      for proposal in response['results']:
-        print ('Proposal with id \'%s\' and name \'%s\' was found.' % (
-            proposal['id'], proposal['name']))
+      for workflow_request in response['results']:
+        print ('Workflow approval request with id \'%s\' for %s with id \'%s\' '
+               'was found.' % (workflow_request['id'],
+                               workflow_request['entityType'],
+                               workflow_request['entityId']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break

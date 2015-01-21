@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This code example gets all proposals.
+"""This example gets all products created from a product template.
 
-To create proposals, run create_proposals.py.
+Tags: ProductService.getProductsByStatement
 """
 
 __author__ = 'Nicholas Chen'
@@ -24,22 +24,33 @@ __author__ = 'Nicholas Chen'
 # Import appropriate modules from the client library.
 from googleads import dfp
 
+PRODUCT_TEMPLATE_ID = 'INSERT_PRODUCT_TEMPLATE_ID_HERE'
 
-def main(client):
+
+def main(client, product_template_id):
   # Initialize appropriate service.
-  proposal_service = client.GetService('ProposalService', version='v201411')
+  product_service = client.GetService('ProductService', version='v201411')
 
-  # Create a filter statement.
-  statement = dfp.FilterStatement('ORDER BY id ASC')
+  # Create a filter statement to select only products created from a single
+  # a product template.
+  values = [{
+      'key': 'productTemplateId',
+      'value': {
+          'xsi_type': 'NumberValue',
+          'value': product_template_id
+      }
+  }]
+  query = 'WHERE productTemplateId = :productTemplateId ORDER BY id ASC'
+  statement = dfp.FilterStatement(query, values)
 
-  # Get proposals by statement.
+  # Get products by statement.
   while True:
-    response = proposal_service.getProposalsByStatement(statement.ToStatement())
+    response = product_service.getProductsByStatement(statement.ToStatement())
     if 'results' in response:
       # Display results.
-      for proposal in response['results']:
-        print ('Proposal with id \'%s\' and name \'%s\' was found.' % (
-            proposal['id'], proposal['name']))
+      for product in response['results']:
+        print ('Product with id \'%s\' and name \'%s\' was found.' % (
+            product['id'], product['name']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break
@@ -50,4 +61,4 @@ def main(client):
 if __name__ == '__main__':
   # Initialize client object.
   dfp_client = dfp.DfpClient.LoadFromStorage()
-  main(dfp_client)
+  main(dfp_client, PRODUCT_TEMPLATE_ID)

@@ -25,7 +25,8 @@ from setuptools import setup
 
 PACKAGES = ['googleads']
 
-DEPENDENCIES = ['oauthlib', 'suds-jurko', 'pytz', 'PyYAML']
+DEPENDENCIES = ['httplib2', 'oauth2client', 'suds-jurko', 'pysocks', 'pytz',
+                'PyYAML']
 
 
 def GetVersion():

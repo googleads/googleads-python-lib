@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This code example gets all proposals.
+"""This code example gets all rate cards.
 
-To create proposals, run create_proposals.py.
+Tags: RateCardService.getRateCardsByStatement
 """
 
 __author__ = 'Nicholas Chen'
@@ -27,19 +27,21 @@ from googleads import dfp
 
 def main(client):
   # Initialize appropriate service.
-  proposal_service = client.GetService('ProposalService', version='v201411')
+  rate_card_service = client.GetService('RateCardService', version='v201411')
 
   # Create a filter statement.
   statement = dfp.FilterStatement('ORDER BY id ASC')
 
-  # Get proposals by statement.
+  # Get rate cards by statement.
   while True:
-    response = proposal_service.getProposalsByStatement(statement.ToStatement())
+    response = rate_card_service.getRateCardsByStatement(
+        statement.ToStatement())
     if 'results' in response:
       # Display results.
-      for proposal in response['results']:
-        print ('Proposal with id \'%s\' and name \'%s\' was found.' % (
-            proposal['id'], proposal['name']))
+      for rate_card in response['results']:
+        print ('Rate card with id \'%s,\' name \'%s,\' and currency \'%s\' '
+               'was found.' % (rate_card['id'], rate_card['name'],
+                               rate_card['currencyCode']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break

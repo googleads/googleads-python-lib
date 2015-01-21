@@ -14,9 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This code example gets all proposals.
+"""This code example gets all exchange rates.
 
-To create proposals, run create_proposals.py.
+To create exchange rates, run create_exchange_rates.py.
+
+Tags: ExchangeRateService.getExchangeRatesByStatement
 """
 
 __author__ = 'Nicholas Chen'
@@ -27,19 +29,26 @@ from googleads import dfp
 
 def main(client):
   # Initialize appropriate service.
-  proposal_service = client.GetService('ProposalService', version='v201411')
+  exchange_rate_service = client.GetService('ExchangeRateService',
+                                            version='v201411')
 
   # Create a filter statement.
   statement = dfp.FilterStatement('ORDER BY id ASC')
 
-  # Get proposals by statement.
+  # Get all exchange rates by statement.
   while True:
-    response = proposal_service.getProposalsByStatement(statement.ToStatement())
+    response = exchange_rate_service.getExchangeRatesByStatement(
+        statement.ToStatement())
     if 'results' in response:
       # Display results.
-      for proposal in response['results']:
-        print ('Proposal with id \'%s\' and name \'%s\' was found.' % (
-            proposal['id'], proposal['name']))
+      for exchange_rate in response['results']:
+        print ('Exchange rate with id \'%s,\' currency code \'%s,\' '
+               'direction \'%s,\' and exchange rate \'%.2f\' '
+               'was found.' % (exchange_rate['id'],
+                               exchange_rate['currencyCode'],
+                               exchange_rate['direction'],
+                               (float(exchange_rate['exchangeRate']) /
+                                10000000000)))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break

@@ -14,9 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This code example gets all proposals.
+"""This code example gets all products.
 
-To create proposals, run create_proposals.py.
+Products are created automatically from product templates.
+
+Tags: ProductService.getProductsByStatement
 """
 
 __author__ = 'Nicholas Chen'
@@ -27,19 +29,19 @@ from googleads import dfp
 
 def main(client):
   # Initialize appropriate service.
-  proposal_service = client.GetService('ProposalService', version='v201411')
+  product_service = client.GetService('ProductService', version='v201411')
 
   # Create a filter statement.
   statement = dfp.FilterStatement('ORDER BY id ASC')
 
-  # Get proposals by statement.
+  # Get products by statement.
   while True:
-    response = proposal_service.getProposalsByStatement(statement.ToStatement())
+    response = product_service.getProductsByStatement(statement.ToStatement())
     if 'results' in response:
       # Display results.
-      for proposal in response['results']:
-        print ('Proposal with id \'%s\' and name \'%s\' was found.' % (
-            proposal['id'], proposal['name']))
+      for product in response['results']:
+        print ('Product with id \'%s\' and name \'%s\' was found.' % (
+            product['id'], product['name']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break
