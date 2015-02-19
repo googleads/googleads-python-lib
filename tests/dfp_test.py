@@ -30,6 +30,82 @@ import googleads.common
 import googleads.errors
 
 
+class BaseValue(object):
+
+  def __init__(self, original_object):
+    self.original_object = original_object
+
+  def __getitem__(self, key):
+    return self.original_object[key]
+
+  def __contains__(self, key):
+    if key in self.original_object:
+      return True
+    return False
+
+
+class TextValue(BaseValue):
+
+  def __init__(self, original_object):
+    BaseValue.__init__(self, original_object)
+
+
+class NumberValue(BaseValue):
+
+  def __init__(self, original_object):
+    BaseValue.__init__(self, original_object)
+
+
+class DateValue(BaseValue):
+
+  def __init__(self, original_object):
+    BaseValue.__init__(self, original_object)
+
+
+class DateTimeValue(BaseValue):
+
+  def __init__(self, original_object):
+    BaseValue.__init__(self, original_object)
+
+
+class BooleanValue(BaseValue):
+
+  def __init__(self, original_object):
+    BaseValue.__init__(self, original_object)
+
+
+class SetValue(object):
+
+  def __init__(self, original_object):
+    packed_objects = [DecideValue(obj_to_pack) for obj_to_pack
+                      in original_object['values']]
+    self.original_object = {'values': packed_objects}
+
+  def __getitem__(self, key):
+    return self.original_object[key]
+
+  def __contains__(self, key):
+    if key in self.original_object:
+      return True
+    return False
+
+
+def DecideValue(original_object):
+  class_type = original_object['xsi_type']
+  if class_type == 'TextValue':
+    return TextValue(original_object)
+  elif class_type == 'NumberValue':
+    return NumberValue(original_object)
+  elif class_type == 'DateValue':
+    return DateValue(original_object)
+  elif class_type == 'DateTimeValue':
+    return DateTimeValue(original_object)
+  elif class_type == 'SetValue':
+    return SetValue(original_object)
+  else:
+    return BooleanValue(original_object)
+
+
 class DfpHeaderHandlerTest(unittest.TestCase):
   """Tests for the googleads.dfp._DfpHeaderHandler class."""
 
@@ -154,57 +230,117 @@ class DataDownloaderTest(unittest.TestCase):
     self.report_downloader._report_service = self.report_service
     self.generic_header = [{'labelName': 'Some random header...'},
                            {'labelName': 'Another header...'}]
-    self.generic_rval = [{'values': [{
+
+    row1_field1 = {
         'value': 'Some random PQL response...',
-        'Value.Type': 'TextValue'}, {'value': {'date': {
-            'year': '1999', 'month': '04', 'day': '03'}},
-                                     'Value.Type': 'DateValue'},
-                                     {'value': '123',
-                                      'Value.Type': 'NumberValue'},
-                                     {'value': {'date': {'year': '2012',
-                                                         'month': '11',
-                                                         'day': '05'},
-                                                'hour': '12',
-                                                'minute': '12',
-                                                'second': '12',
-                                                'timeZoneID': 'PST8PDT'},
-                                      'Value.Type': 'DateTimeValue'},
-                                     {'value': None,
-                                      'Value.Type': 'NumberValue'},
-                                     {'values': [{
-                                         'value': 'Whatcha thinkin about?',
-                                         'Value.Type': 'TextValue'}, {
-                                             'value': 'Oh nothing, just '
-                                                      'String stuff...',
-                                             'Value.Type': 'TextValue'}],
-                                      'Value.Type': 'SetValue'}]},
-                         {'values': [{'value': 'A second row of PQL response!',
-                                      'Value.Type': 'TextValue'},
-                                     {'value': {'date': {
-                                         'year': '2009',
-                                         'month': '02',
-                                         'day': '05'}},
-                                      'Value.Type': 'DateValue'},
-                                     {'value': '345',
-                                      'Value.Type': 'NumberValue'},
-                                     {'value': {'date': {'year': '2013',
-                                                         'month': '01',
-                                                         'day': '03'},
-                                                'hour': '02',
-                                                'minute': '02',
-                                                'second': '02',
-                                                'timeZoneID': 'GMT'},
-                                      'Value.Type': 'DateTimeValue'},
-                                     {'value': '123456',
-                                      'Value.Type': 'NumberValue'},
-                                     {'values': [{
-                                         'value': 'Look at how many commas '
-                                                  'and "s there are',
-                                         'Value.Type': 'TextValue'}, {
-                                             'value': 'this,is...how,Chris'
-                                                      'topher Walken, talks',
-                                             'Value.Type': 'TextValue'}],
-                                      'Value.Type': 'SetValue'}]}]
+        'xsi_type': 'TextValue'
+    }
+
+    row1_field2 = {
+        'value': {
+            'date': {
+                'year': '1999', 'month': '04', 'day': '03'}
+            },
+        'xsi_type': 'DateValue'
+    }
+
+    row1_field3 = {
+        'value': '123',
+        'xsi_type': 'NumberValue'
+    }
+
+    row1_field4 = {
+        'value': {
+            'date': {
+                'year': '2012',
+                'month': '11',
+                'day': '05'
+            },
+            'hour': '12',
+            'minute': '12',
+            'second': '12',
+            'timeZoneID': 'PST8PDT'},
+        'xsi_type': 'DateTimeValue'
+    }
+
+    row1_field5 = {
+        'value': None,
+        'xsi_type': 'NumberValue'
+    }
+
+    row1_field6 = {
+        'values': [{
+            'value': 'Whatcha thinkin about?',
+            'xsi_type': 'TextValue'
+        }, {
+            'value': 'Oh nothing, just String stuff...',
+            'xsi_type': 'TextValue'
+        }],
+        'xsi_type': 'SetValue'
+    }
+
+    row2_field1 = {
+        'value': 'A second row of PQL response!',
+        'xsi_type': 'TextValue'
+    }
+
+    row2_field2 = {
+        'value': {
+            'date': {
+                'year': '2009',
+                'month': '02',
+                'day': '05'
+            }
+        },
+        'xsi_type': 'DateValue'
+    }
+
+    row2_field3 = {
+        'value': '345',
+        'xsi_type': 'NumberValue'
+    }
+
+    row2_field4 = {
+        'value': {
+            'date': {
+                'year': '2013',
+                'month': '01',
+                'day': '03'
+            },
+            'hour': '02',
+            'minute': '02',
+            'second': '02',
+            'timeZoneID': 'GMT'
+        },
+        'xsi_type': 'DateTimeValue'
+    }
+
+    row2_field5 = {
+        'value': '123456',
+        'xsi_type': 'NumberValue'
+    }
+
+    row2_field6 = {
+        'values': [{
+            'value': 'Look at how many commas and "s there are',
+            'xsi_type': 'TextValue'
+        }, {
+            'value': 'this,is...how,Christopher Walken, talks',
+            'xsi_type': 'TextValue'
+        }],
+        'xsi_type': 'SetValue'
+    }
+
+    row1 = [row1_field1, row1_field2, row1_field3, row1_field4, row1_field5,
+            row1_field6]
+    row2 = [row2_field1, row2_field2, row2_field3, row2_field4, row2_field5,
+            row2_field6]
+
+    self.generic_rval = [{
+        'values': [DecideValue(value) for value in row1]
+    }, {
+        'values': [DecideValue(value) for value in row2]
+    }]
 
   def testDownloadPqlResultSetToCsv(self):
     csv_file = StringIO.StringIO()

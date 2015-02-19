@@ -1,3 +1,11 @@
+3.1.0 - 2/17/2015
+* Added support for v201502 for the DoubleClick for Publishers Client Library.
+* Removing support for v201311, v201308, and v201306.
+* Removed examples for v201403.
+* Updated ForecastService examples.
+* Added PackageService, ProductPackageService, and ProductPackageItemService.
+* Fixed comments and settings for targetAll in add_ad_groups.py examples.
+
 3.0.1 - 1/21/2015
 * Push with updated PyDocs.
 

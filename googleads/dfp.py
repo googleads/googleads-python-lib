@@ -112,6 +112,26 @@ _SERVICE_MAP = {
          'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
          'SuggestedAdUnitService', 'TeamService', 'UserService',
          'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201502':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CompanyService', 'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
+         'OrderService', 'PackageService', 'PlacementService',
+         'PremiumRateService', 'ProductService', 'ProductPackageService',
+         'ProductPackageItemService', 'ProductTemplateService',
+         'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
 }
 
 
@@ -443,7 +463,7 @@ class DataDownloader(object):
 
     if field:
       if isinstance(field, list):
-        if all(single_field['Value.Type'] == field[0]['Value.Type']
+        if all(DfpClassType(single_field) == DfpClassType(field[0])
                for single_field in field):
           return ','.join([
               '"%s"' % str(self._ConvertValueForCsv(single_field))
@@ -451,13 +471,16 @@ class DataDownloader(object):
         else:
           raise googleads.errors.GoogleAdsValueError(
               'The set value returned contains unsupported mix value types')
-      if pql_value['Value.Type'] == 'TextValue':
+
+      class_type = DfpClassType(pql_value)
+
+      if class_type == 'TextValue':
         return field.replace('"', '""').encode('UTF8')
-      elif pql_value['Value.Type'] == 'NumberValue':
+      elif class_type == 'NumberValue':
         return float(field) if '.' in field else int(field)
-      elif pql_value['Value.Type'] == 'DateTimeValue':
+      elif class_type == 'DateTimeValue':
         return self._ConvertDateTimeToOffset(field)
-      elif pql_value['Value.Type'] == 'DateValue':
+      elif class_type == 'DateValue':
         return datetime.date(int(field['date']['year']),
                              int(field['date']['month']),
                              int(field['date']['day'])).isoformat()
@@ -511,8 +534,8 @@ class DataDownloader(object):
       date_time_value: dict The date time value from the PQL response.
 
     Returns:
-      str A string representation of the date time value uniform to
-          ReportService.
+      str: A string representation of the date time value uniform to
+           ReportService.
     """
     date_time_obj = datetime.datetime(int(date_time_value['date']['year']),
                                       int(date_time_value['date']['month']),
@@ -527,3 +550,15 @@ class DataDownloader(object):
       return date_time_str[:-6] + 'Z'
     else:
       return date_time_str
+
+
+def DfpClassType(value):
+  """Returns the class type for the Suds object.
+
+  Args:
+    value: generic Suds object to return type for.
+
+  Returns:
+    str: A string representation of the value response type.
+  """
+  return value.__class__.__name__
