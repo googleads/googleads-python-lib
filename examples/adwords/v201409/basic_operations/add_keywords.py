@@ -52,7 +52,9 @@ def main(client, ad_group_id):
       },
       # These fields are optional.
       'userStatus': 'PAUSED',
-      'destinationUrl': 'http://example.com/mars'
+      'finalUrls': {
+          'urls': ['http://example.com/mars']
+      }
   }
 
   keyword2 = {

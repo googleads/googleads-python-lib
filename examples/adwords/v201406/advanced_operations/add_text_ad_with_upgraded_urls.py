@@ -16,9 +16,6 @@
 
 """This examples adds a text add that uses upgraded URLs.
 
-This will only work if your account is a test account or is whitelisted for this
-feature.
-
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
@@ -49,7 +46,7 @@ def main(client, adgroup_id):
       'displayUrl': 'www.example.com',
       # Specify a tracking URL for 3rd party tracking provider. You may specify
       # one at customer, campaign, ad group, ad, criterion or feed item levels.
-      'trackingUrlTemplate': ('http://tracker.example.com/?cid={_season}'
+      'trackingUrlTemplate': ('http://tracker.example.com/?season={_season}'
                               '&promocode={_promocode}&u={lpurl}'),
       'urlCustomParameters': {
           'parameters': [

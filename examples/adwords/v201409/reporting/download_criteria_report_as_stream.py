@@ -50,7 +50,7 @@ def main(client):
       'downloadFormat': 'CSV',
       'selector': {
           'fields': ['CampaignId', 'AdGroupId', 'Id', 'CriteriaType',
-                     'Criteria', 'Impressions', 'Clicks', 'Cost']
+                     'Criteria', 'FinalUrls', 'Impressions', 'Clicks', 'Cost']
       },
       # Enable to get rows with zero impressions.
       'includeZeroImpressions': 'false'

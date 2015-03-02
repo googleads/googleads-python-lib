@@ -80,8 +80,9 @@ def main(client, ad_group_id):
       'xsi_type': 'TemplateAd',
       'name': 'Ad for demo game',
       'templateId': '353',
-      'url': ('http://play.google.com/store/apps/details?'
-              'id=com.example.demogame'),
+      'finalUrls': [
+          'http://play.google.com/store/apps/details?id=com.example.demogame'
+      ],
       'displayUrl': 'play.google.com',
       'templateElements': [ad_data]
   }
@@ -102,7 +103,7 @@ def main(client, ad_group_id):
   if 'value' in ads:
     for ad in ads['value']:
       print ('Added new click-to-download ad to ad group ID \'%s\' '
-             'with URL \'%s\'.' % (ad['ad']['id'], ad['ad']['url']))
+             'with URL \'%s\'.' % (ad['ad']['id'], ad['ad']['finalUrls'][0]))
   else:
     print 'No ads were added.'
 

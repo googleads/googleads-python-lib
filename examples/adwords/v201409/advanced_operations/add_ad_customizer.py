@@ -216,7 +216,7 @@ def main(client, adgroups):
       'headline': 'Luxury Cruise to {=%s.Name}' % FEEDNAME,
       'description1': 'Only {=%s.Price}' % FEEDNAME,
       'description2': 'Offer ends in {=countdown(%s.Date)}!' % FEEDNAME,
-      'url': 'http://www.example.com',
+      'finalUrls': ['http://www.example.com'],
       'displayUrl': 'www.example.com'
   }
 

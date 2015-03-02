@@ -38,7 +38,7 @@ from googleads import errors
 # https://developers.google.com/adwords/api/docs/appendix/placeholders.html
 PLACEHOLDER_SITELINKS = '1'
 PLACEHOLDER_FIELD_SITELINK_LINK_TEXT = '1'
-PLACEHOLDER_FIELD_SITELINK_LINK_URL = '2'
+PLACEHOLDER_FIELD_SITELINK_FINAL_URL = '5'
 PLACEHOLDER_FIELD_LINE_1_TEXT = '3'
 PLACEHOLDER_FIELD_LINE_2_TEXT = '4'
 
@@ -61,7 +61,7 @@ def main(client, campaign_id):
       'name': 'Feed For Site Links #%s' % uuid.uuid4(),
       'attributes': [
           {'type': 'STRING', 'name': 'Link Text'},
-          {'type': 'URL', 'name': 'Link URL'},
+          {'type': 'URL_LIST', 'name': 'Link Final URLs'},
           {'type': 'STRING', 'name': 'Line 1 Description'},
           {'type': 'STRING', 'name': 'Line 2 Description'}
       ]
@@ -70,21 +70,22 @@ def main(client, campaign_id):
   response = feed_service.mutate([
       {'operator': 'ADD', 'operand': site_links_feed}
   ])
+
   if 'value' in response:
     feed = response['value'][0]
     link_text_feed_attribute_id = feed['attributes'][0]['id']
-    link_url_feed_attribute_id = feed['attributes'][1]['id']
+    final_url_feed_attribute_id = feed['attributes'][1]['id']
     line_1_feed_attribute_id = feed['attributes'][2]['id']
     line_2_feed_attribute_id = feed['attributes'][3]['id']
     print ('Feed with name \'%s\' and ID \'%s\' was added with' %
            (feed['name'], feed['id']))
-    print ('\tText attribute ID \'%s\' and URL attribute ID \'%s\'.' %
-           (link_text_feed_attribute_id, link_url_feed_attribute_id))
+    print ('\tText attribute ID \'%s\' and Final URL attribute ID \'%s\'.' %
+           (link_text_feed_attribute_id, final_url_feed_attribute_id))
     print ('\tLine 1 attribute ID \'%s\' and Line 2 attribute ID \'%s\'.' %
            (line_1_feed_attribute_id, line_2_feed_attribute_id))
     sitelinks_data['feedId'] = feed['id']
     sitelinks_data['linkTextFeedId'] = link_text_feed_attribute_id
-    sitelinks_data['linkUrlFeedId'] = link_url_feed_attribute_id
+    sitelinks_data['finalUrlFeedId'] = final_url_feed_attribute_id
     sitelinks_data['line1FeedId'] = line_1_feed_attribute_id
     sitelinks_data['line2FeedId'] = line_2_feed_attribute_id
   else:
@@ -116,7 +117,7 @@ def main(client, campaign_id):
                 'stringValue': item['text']
             },
             {
-                'feedAttributeId': sitelinks_data['linkUrlFeedId'],
+                'feedAttributeId': sitelinks_data['finalUrlFeedId'],
                 'stringValue': item['url']
             },
             {
@@ -164,10 +165,10 @@ def main(client, campaign_id):
               'feedAttributeId': sitelinks_data['linkTextFeedId'],
               'fieldId': PLACEHOLDER_FIELD_SITELINK_LINK_TEXT
           },
-          {
-              'feedAttributeId': sitelinks_data['linkUrlFeedId'],
-              'fieldId': PLACEHOLDER_FIELD_SITELINK_LINK_URL
-          },
+          #{
+          #    'feedAttributeId': sitelinks_data['finalUrlFeedId'],
+          #    'fieldId': PLACEHOLDER_FIELD_SITELINK_FINAL_URL
+          #},
           {
               'feedAttributeId': sitelinks_data['line1FeedId'],
               'fieldId': PLACEHOLDER_FIELD_LINE_1_TEXT

@@ -53,7 +53,7 @@ def main(client, ad_group_id):
               'headline': 'Mars Cruise!!!',
               'description1': 'Visit the Red Planet in style.',
               'description2': 'Low-gravity fun for everyone!',
-              'url': 'http://www.example.com',
+              'finalUrls': ['http://www.example.com'],
               'displayUrl': 'www.example.com',
           }
       }

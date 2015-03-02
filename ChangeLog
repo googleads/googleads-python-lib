@@ -1,3 +1,7 @@
+3.1.1 - 2/25/2015
+* Added new example for migrating to Upgraded URLS.
+* Updated examples to reference final URLs.
+
 3.1.0 - 2/17/2015
 * Added support for v201502 for the DoubleClick for Publishers Client Library.
 * Removing support for v201311, v201308, and v201306.

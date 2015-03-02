@@ -51,7 +51,9 @@ def main(client, ad_group_id, criterion_id):
           'adGroupId': ad_group_id,
           'ad': {
               'xsi_type': 'TextAd',
-              'url': 'http://www.example.com',
+              'finalUrls': {
+                  'urls': ['http://www.example.com']
+              },
               'displayUrl': 'example.com',
               'description1': 'Low-gravity fun for {param1:cheap}.',
               'description2': 'Only {param2:a few} seats left!',

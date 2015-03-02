@@ -51,7 +51,7 @@ def main(client):
 
   # Create report query.
   report_query = ('SELECT CampaignId, AdGroupId, Id, Criteria, CriteriaType, '
-                  'Impressions, Clicks, Cost '
+                  'FinalUrls', 'Impressions, Clicks, Cost '
                   'FROM CRITERIA_PERFORMANCE_REPORT '
                   'WHERE Status IN [ENABLED, PAUSED] '
                   'DURING LAST_7_DAYS')
