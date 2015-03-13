@@ -16,6 +16,9 @@
 
 """This example adds a sitelinks feed and associates it with a campaign.
 
+To add sitelinks using the simpler ExtensionSetting services, see:
+add_sitelinks.py.
+
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
@@ -165,10 +168,10 @@ def main(client, campaign_id):
               'feedAttributeId': sitelinks_data['linkTextFeedId'],
               'fieldId': PLACEHOLDER_FIELD_SITELINK_LINK_TEXT
           },
-          #{
-          #    'feedAttributeId': sitelinks_data['finalUrlFeedId'],
-          #    'fieldId': PLACEHOLDER_FIELD_SITELINK_FINAL_URL
-          #},
+          {
+              'feedAttributeId': sitelinks_data['finalUrlFeedId'],
+              'fieldId': PLACEHOLDER_FIELD_SITELINK_FINAL_URL
+          },
           {
               'feedAttributeId': sitelinks_data['line1FeedId'],
               'fieldId': PLACEHOLDER_FIELD_LINE_1_TEXT

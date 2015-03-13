@@ -162,6 +162,15 @@ class DfpClientTest(unittest.TestCase):
       self.assertIsInstance(googleads.dfp.DfpClient.LoadFromStorage(),
                             googleads.dfp.DfpClient)
 
+  def testInitializeWithDefaultApplicationName(self):
+    self.application_name = 'INSERT_APPLICATION_NAME_HERE'
+    self.assertRaises(
+        googleads.errors.GoogleAdsValueError, googleads.dfp.DfpClient,
+        self.oauth2_client, self.application_name, self.network_code,
+        self.https_proxy, self.cache,
+        'Application name must be set and not be the default [%s]' %
+        googleads.dfp.DEFAULT_APPLICATION_NAME)
+
   def testGetService_success(self):
     service = googleads.dfp._SERVICE_MAP[self.version][0]
 

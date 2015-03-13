@@ -16,7 +16,7 @@
 
 """This example illustrates how to create an account.
 
-Note by default this account will only be accessible via parent MCC.
+By default this account will only be accessible via parent MCC.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home

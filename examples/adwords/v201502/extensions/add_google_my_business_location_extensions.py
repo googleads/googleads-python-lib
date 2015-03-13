@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2015 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,6 +45,14 @@ GMB_EMAIL_ADDRESS = 'INSERT_GMB_EMAIL_ADDRESS_HERE'
 # "https://www.google.com/local/add".
 GMB_ACCESS_TOKEN = 'INSERT_GMB_OAUTH_ACCESS_TOKEN_HERE'
 
+# If the gmb_email_address above is for a GMB manager instead of
+# the GMB account owner, then set business_account_identifier to the
+# +Page ID of a location for which the manager has access. See the
+# location extensions guide at
+# https://developers.google.com/adwords/api/docs/guides/feed-services-locations
+# for details.
+BUSINESS_ACCOUNT_IDENTIFIER = None
+
 # The placeholder type for location extensions.
 # See the Placeholder reference page for a list of all the placeholder types
 # and fields:
@@ -56,18 +64,19 @@ PLACEHOLDER_LOCATION = 7
 MAX_CUSTOMER_FEED_ADD_ATTEMPTS = 10
 
 
-def main(client, gmb_email_address, gmb_access_token):
+def main(client, gmb_email_address, gmb_access_token,
+         business_account_identifier=None):
   # Create a feed that will sync to the Google Places account specified by
   # gmb_email_address. Do not add FeedAttributes to this object,
   # as AdWords will add them automatically because this will be a
   # system generated feed.
   feed = {
-      'name': 'Places feed #%s' % uuid.uuid4(),
+      'name': 'GMB feed #%s' % uuid.uuid4(),
       'systemFeedGenerationData': {
           'xsi_type': 'PlacesLocationFeedData',
           'oAuthInfo': {
               'httpMethod': 'GET',
-              'httpRequestUrl': 'https://www.google.com/local/add',
+              'httpRequestUrl': 'https://www.googleapis.com/auth/adwords',
               'httpAuthorizationHeader': 'Bearer %s' % gmb_access_token
           },
           'emailAddress': gmb_email_address,
@@ -77,13 +86,19 @@ def main(client, gmb_email_address, gmb_access_token):
       'origin': 'ADWORDS'
   }
 
+  # Only include the business_account_identifier if it's specified.
+  if business_account_identifier:
+    feed['systemFeedGenerationData']['businessAccountIdentifier'] = (
+        business_account_identifier
+    )
+
   # Create an operation to add the feed.
   gmb_operations = [{
       'operator': 'ADD',
       'operand': feed
   }]
 
-  gmb_response = client.GetService('FeedService', version='v201409').mutate(
+  gmb_response = client.GetService('FeedService', version='v201502').mutate(
       gmb_operations)
   added_feed = gmb_response['value'][0]
   print 'Added GMB feed with ID: %d\n' % added_feed['id']
@@ -93,10 +108,11 @@ def main(client, gmb_email_address, gmb_access_token):
   customer_feed = {
       'feedId': added_feed['id'],
       'placeholderTypes': [PLACEHOLDER_LOCATION],
+      # Create a matching function that will always evaluate to True.
       'matchingFunction': {
           'operator': 'IDENTITY',
           'lhsOperand': {
-              'xsi_type': 'FunctionArgumentOperand',
+              'xsi_type': 'ConstantOperand',
               'type': 'BOOLEAN',
               'booleanValue': True
           }
@@ -110,7 +126,7 @@ def main(client, gmb_email_address, gmb_access_token):
   }
 
   customer_feed_service = client.GetService(
-      'CustomerFeedService', version='v201409')
+      'CustomerFeedService', version='v201502')
   added_customer_feed = None
 
   i = 0
@@ -123,6 +139,7 @@ def main(client, gmb_email_address, gmb_access_token):
       sleep_seconds = 2 ** i
       print ('Attempt %d to add the CustomerFeed was not successful.'
              'Waiting %d seconds before trying again.\n' % (i, sleep_seconds))
+
       time.sleep(sleep_seconds)
     i += 1
 
@@ -137,4 +154,5 @@ def main(client, gmb_email_address, gmb_access_token):
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client, GMB_EMAIL_ADDRESS, GMB_ACCESS_TOKEN)
+  main(adwords_client, GMB_EMAIL_ADDRESS, GMB_ACCESS_TOKEN,
+       BUSINESS_ACCOUNT_IDENTIFIER)

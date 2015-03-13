@@ -51,7 +51,7 @@ def main(client):
 
   # Create report query.
   report_query = ('SELECT CampaignId, AdGroupId, Id, Criteria, CriteriaType, '
-                  'FinalUrls', 'Impressions, Clicks, Cost '
+                  'FinalUrls, Impressions, Clicks, Cost '
                   'FROM CRITERIA_PERFORMANCE_REPORT '
                   'WHERE Status IN [ENABLED, PAUSED] '
                   'DURING LAST_7_DAYS')
@@ -65,7 +65,7 @@ def main(client):
 
   try:
     while True:
-      chunk = stream_data.read(adwords._CHUNK_SIZE)
+      chunk = stream_data.read(adwords.CHUNK_SIZE)
       if not chunk: break
       report_data.write(chunk.decode() if sys.version_info[0] == 3
                         and getattr(report_data, 'mode', 'w') == 'w' else chunk)

@@ -1,3 +1,13 @@
+3.2.0 - 3/12/2015
+* Added support for v201502 of the AdWords Client Library.
+* Removed CampaignAdExtensionService (from v201502).
+* Added AccountLabelService (to v201502)
+* Added hard feed types examples, moved to new "extensions" examples.
+* Added example for shared sets.
+* Minor fixes to reporting examples.
+* Updated some existing samples for new API version.
+* DFP clients now require you to set an application name.
+
 3.1.1 - 2/25/2015
 * Added new example for migrating to Upgraded URLS.
 * Updated examples to reference final URLs.

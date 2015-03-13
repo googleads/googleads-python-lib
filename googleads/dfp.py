@@ -30,6 +30,8 @@ import suds.transport
 import googleads.common
 import googleads.errors
 
+# The default application name.
+DEFAULT_APPLICATION_NAME = 'INSERT_APPLICATION_NAME_HERE'
 # The endpoint server for DFP.
 DEFAULT_ENDPOINT = 'https://ads.google.com'
 # The suggested page limit per page fetched from the API.
@@ -205,6 +207,11 @@ class DfpClient(object):
           should be routed through.
       cache: A subclass of suds.cache.Cache; defaults to None.
     """
+    if application_name is DEFAULT_APPLICATION_NAME:
+      raise googleads.errors.GoogleAdsValueError(
+          'Application name must be set and not be the default [%s]' %
+          DEFAULT_APPLICATION_NAME)
+
     self.oauth2_client = oauth2_client
     self.application_name = application_name
     self.network_code = network_code
