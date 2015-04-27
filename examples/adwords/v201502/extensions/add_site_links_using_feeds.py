@@ -31,6 +31,7 @@ Api: AdWordsOnly
 
 __author__ = 'Joseph DiLallo'
 
+import re
 import uuid
 
 from googleads import adwords
@@ -41,7 +42,7 @@ from googleads import errors
 # https://developers.google.com/adwords/api/docs/appendix/placeholders.html
 PLACEHOLDER_SITELINKS = '1'
 PLACEHOLDER_FIELD_SITELINK_LINK_TEXT = '1'
-PLACEHOLDER_FIELD_SITELINK_FINAL_URL = '5'
+PLACEHOLDER_FIELD_SITELINK_FINAL_URLS = '5'
 PLACEHOLDER_FIELD_LINE_1_TEXT = '3'
 PLACEHOLDER_FIELD_LINE_2_TEXT = '4'
 
@@ -96,17 +97,17 @@ def main(client, campaign_id):
 
   # Create site links feed items.
   items_data = [
-      {'text': 'Home', 'url': 'http://www.example.com',
+      {'text': 'Home', 'finalUrls': 'http://www.example.com',
        'line1': 'Home line 1', 'line2': 'Home line 2'},
-      {'text': 'Stores', 'url': 'http://www.example.com/stores',
+      {'text': 'Stores', 'finalUrls': 'http://www.example.com/stores',
        'line1': 'Stores line 1', 'line2': 'Stores line 2'},
-      {'text': 'On Sale', 'url': 'http://www.example.com/sale',
+      {'text': 'On Sale', 'finalUrls': 'http://www.example.com/sale',
        'line1': 'On Sale line 1', 'line2': 'On Sale line 2'},
-      {'text': 'Support', 'url': 'http://www.example.com/support',
+      {'text': 'Support', 'finalUrls': 'http://www.example.com/support',
        'line1': 'Support line 1', 'line2': 'Support line 2'},
-      {'text': 'Products', 'url': 'http://www.example.com/products',
+      {'text': 'Products', 'finalUrls': 'http://www.example.com/products',
        'line1': 'Products line 1', 'line2': 'Products line 2'},
-      {'text': 'About', 'url': 'http://www.example.com/about',
+      {'text': 'About', 'finalUrls': 'http://www.example.com/about',
        'line1': 'About line 1', 'line2': 'About line 2'}
   ]
 
@@ -121,7 +122,7 @@ def main(client, campaign_id):
             },
             {
                 'feedAttributeId': sitelinks_data['finalUrlFeedId'],
-                'stringValue': item['url']
+                'stringValue': item['finalUrls']
             },
             {
                 'feedAttributeId': sitelinks_data['line1FeedId'],
@@ -170,7 +171,7 @@ def main(client, campaign_id):
           },
           {
               'feedAttributeId': sitelinks_data['finalUrlFeedId'],
-              'fieldId': PLACEHOLDER_FIELD_SITELINK_FINAL_URL
+              'fieldId': PLACEHOLDER_FIELD_SITELINK_FINAL_URLS
           },
           {
               'feedAttributeId': sitelinks_data['line1FeedId'],
@@ -195,53 +196,18 @@ def main(client, campaign_id):
   else:
     raise errors.GoogleAdsError('No feed mappings were added.')
 
-  # Create site links campaign feed.
-  operands = []
-  for feed_item_id in sitelinks_data['feedItemIds']:
-    operands.append({
-        'xsi_type': 'ConstantOperand',
-        'type': 'LONG',
-        'longValue': feed_item_id
-    })
-
-  feed_item_function = {
-      'operator': 'IN',
-      'lhsOperand': [
-          {'xsi_type': 'RequestContextOperand', 'contextType': 'FEED_ITEM_ID'}
-      ],
-      'rhsOperand': operands
-  }
-
-  # Optional: to target to a platform, define a function and 'AND' it with the
-  #           feed item ID link:
-  platform_function = {
-      'operator': 'EQUALS',
-      'lhsOperand': [
-          {
-              'xsi_type': 'RequestContextOperand',
-              'contextType': 'DEVICE_PLATFORM'
-          }
-      ],
-      'rhsOperand': [
-          {
-              'xsi_type': 'ConstantOperand',
-              'type': 'STRING',
-              'stringValue': 'Mobile'
-          }
-      ]
-  }
-  combined_function = {
-      'operator': 'AND',
-      'lhsOperand': [
-          {'xsi_type': 'FunctionOperand', 'value': feed_item_function},
-          {'xsi_type': 'FunctionOperand', 'value': platform_function}
-      ]
-  }
+  # Construct a matching function that associates the sitelink feeditems to the
+  # campaign, and set the device preference to Mobile. For more details, see the
+  # matching function guide:
+  # https://developers.google.com/adwords/api/docs/guides/feed-matching-functions
+  matching_function_string = (
+      'AND(IN(FEED_ITEM_ID, {%s}), EQUALS(CONTEXT.DEVICE, \'Mobile\'))' %
+      re.sub(r'\[|\]|L', '', str(sitelinks_data['feedItemIds'])))
 
   campaign_feed = {
       'feedId': sitelinks_data['feedId'],
       'campaignId': campaign_id,
-      'matchingFunction': combined_function,
+      'matchingFunction': {'functionString': matching_function_string},
       # Specifying placeholder types on the CampaignFeed allows the same feed
       # to be used for different placeholders in different Campaigns.
       'placeholderTypes': [PLACEHOLDER_SITELINKS]

@@ -76,7 +76,7 @@ def main(client, campaign_id):
 
   while page['totalNumEntries'] > offset:
     page = campaign_shared_set_service.get(selector)
-    if page['entries']:
+    if 'entries' in page:
       for shared_set in page['entries']:
         print 'Campaign shared set ID %d and name "%s"' % (
             shared_set['sharedSetId'], shared_set['sharedSetName']

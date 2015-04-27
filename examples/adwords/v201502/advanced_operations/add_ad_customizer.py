@@ -16,206 +16,49 @@
 
 """Adds an ad customizer feed.
 
-Associates the feed with customer and adds an ad that
-uses the feed to populate dynamic data.
+Associates the feed with customer and adds an ad that uses the feed to populate
+dynamic data.
 
-Tags: CustomerFeedService.mutate, FeedItemService.mutate
-Tags: FeedMappingService.mutate, FeedService.mutate
-Tags: AdGroupAdService.mutate
+Tags: AdCustomizerFeedService.mutate, AdGroupAdService.mutate
+Tags: FeedItemService.mutate
 """
 
-__author__ = ('api.msaniscalchi@gmail.com (Mark Saniscalchi)',
-              'yufeng.dev@gmail.com (Yufeng Guo)')
+__author__ = 'api.msaniscalchi@gmail.com (Mark Saniscalchi)'
+
+from datetime import datetime
+from uuid import uuid4
 
 # Import appropriate classes from the client library.
 from googleads import adwords
+from googleads import errors
 
-# See the Placeholder reference page for a list of all the placeholder types
-# and fields:
-# https://developers.google.com/adwords/api/docs/appendix/placeholders
-PLACEHOLDER_AD_CUSTOMIZER = '10'
-PLACEHOLDER_FIELD_INTEGER = '1'
-PLACEHOLDER_FIELD_FLOAT = '2'
-PLACEHOLDER_FIELD_PRICE = '3'
-PLACEHOLDER_FIELD_DATE = '4'
-PLACEHOLDER_FIELD_STRING = '5'
 
+FEED_NAME = 'Interplanetary Feed Name %s' % uuid4()
 ADGROUPS = [
-    'INSERT_ADGROUP_ID_HERE',
-    'INSERT_ADGROUP_ID_HERE'
+    'INSERT_ADGROUP_ID_1_HERE',
+    'INSERT_ADGROUP_ID_2_HERE'
 ]
 
-FEEDNAME = 'INSERT_FEED_NAME_HERE'
 
+def CreateAdsWithCustomizations(client, adgroup_ids, feed_name):
+  """Creates TextAds that use ad customizations for the specified AdGroups.
 
-def main(client, adgroups):
-  # Initialize appropriate services.
-  ad_group_ad_service = client.GetService('AdGroupAdService', version='v201502')
-  customer_feed_service = client.GetService(
-      'CustomerFeedService', version='v201502')
-  feed_item_service = client.GetService('FeedItemService', version='v201502')
-  feed_mapping_service = client.GetService(
-      'FeedMappingService', version='v201502')
-  feed_service = client.GetService('FeedService', version='v201502')
+  Args:
+    client: an AdWordsClient instance.
+    adgroup_ids: a list containing the AdGroup ids to add TextAds to.
+    feed_name: the name of the feed used to apply customizations.
 
-  # First, create a customizer feed. One feed per account can be used for all
-  # ads.
-  customizer_feed = {
-      'name': FEEDNAME,
-      'attributes': [
-          {'type': 'STRING', 'name': 'Name'},
-          {'type': 'STRING', 'name': 'Price'},
-          {'type': 'DATE_TIME', 'name': 'Date'}
-      ]
-  }
+  Raises:
+    GoogleAdsError: if no TextAds were added.
+  """
+  # Get the AdGroupAdService
+  adgroup_ad_service = client.GetService('AdGroupAdService')
 
-  feed_service_operation = {
-      'operator': 'ADD',
-      'operand': customizer_feed
-  }
-
-  response = feed_service.mutate([feed_service_operation])
-
-  if response and 'value' in response:
-    feed = response['value'][0]
-    feed_data = {
-        'feedId': feed['id'],
-        'nameId': feed['attributes'][0]['id'],
-        'priceId': feed['attributes'][1]['id'],
-        'dateId': feed['attributes'][2]['id']
-    }
-    print ('Feed with name \'%s\' and ID %s was added with:'
-           '\tName attribute ID %s and price attribute ID %s and date attribute'
-           'ID %s') % (feed['name'], feed['id'], feed_data['nameId'],
-                       feed_data['priceId'], feed_data['dateId'])
-  else:
-    raise Exception('No feeds were added')
-
-  # Creating feed mapping to map the fields with customizer IDs.
-  feed_mapping = {
-      'placeholderType': PLACEHOLDER_AD_CUSTOMIZER,
-      'feedId': feed_data['feedId'],
-      'attributeFieldMappings': [
-          {
-              'feedAttributeId': feed_data['nameId'],
-              'fieldId': PLACEHOLDER_FIELD_STRING
-          },
-          {
-              'feedAttributeId': feed_data['priceId'],
-              'fieldId': PLACEHOLDER_FIELD_PRICE
-          },
-          {
-              'feedAttributeId': feed_data['dateId'],
-              'fieldId': PLACEHOLDER_FIELD_DATE
-          }
-      ]
-  }
-
-  feed_mapping_operation = {
-      'operator': 'ADD',
-      'operand': feed_mapping
-  }
-
-  response = feed_mapping_service.mutate([feed_mapping_operation])
-
-  if response and 'value' in response:
-    feed_mapping = response['value'][0]
-    print ('Feed mapping with ID %s and placeholder type %s was saved for feed'
-           ' with ID %s.') % (feed_mapping['feedMappingId'],
-                              feed_mapping['placeholderType'],
-                              feed_mapping['feedId'])
-  else:
-    raise Exception('No feed mappings were added.')
-
-  # Now adding feed items -- the values we'd like to place.
-  items_data = [
-      {
-          'name': 'Mars',
-          'price': '$1234.56',
-          'date': '20140601 000000',
-          'adGroupId': adgroups[0]
-      },
-      {
-          'name': 'Venus',
-          'price': '$1450.00',
-          'date': '20140615 120000',
-          'adGroupId': adgroups[1]
-      }
-  ]
-
-  feed_items = [{'feedId': feed_data['feedId'],
-                 'adGroupTargeting': {
-                     'TargetingAdGroupId': item['adGroupId']
-                 },
-                 'attributeValues': [
-                     {
-                         'feedAttributeId': feed_data['nameId'],
-                         'stringValue': item['name']
-                     },
-                     {
-                         'feedAttributeId': feed_data['priceId'],
-                         'stringValue': item['price']
-                     },
-                     {
-                         'feedAttributeId': feed_data['dateId'],
-                         'stringValue': item['date']
-                     }
-                 ]} for item in items_data]
-
-  feed_item_operations = [{
-      'operator': 'ADD',
-      'operand': feed_item
-  } for feed_item in feed_items]
-
-  response = feed_item_service.mutate(feed_item_operations)
-
-  if response and 'value' in response:
-    for feed_item in response['value']:
-      print 'Feed item with ID %s was added.' % feed_item['feedItemId']
-  else:
-    raise Exception('No feed items were added.')
-
-  # Finally, creating a customer (account-level) feed with a matching function
-  # that determines when to use this feed. For this case we use the "IDENTITY"
-  # matching function that is always 'true' just to associate this feed with
-  # the customer. The targeting is done within the feed items using the
-  # :campaign_targeting, :ad_group_targeting, or :keyword_targeting attributes.
-  matching_function = {
-      'operator': 'IDENTITY',
-      'lhsOperand': [
-          {
-              'xsi_type': 'ConstantOperand',
-              'type': 'BOOLEAN',
-              'booleanValue': 'true'
-          }
-      ]
-  }
-
-  customer_feed = {
-      'feedId': feed_data['feedId'],
-      'matchingFunction': matching_function,
-      'placeholderTypes': [PLACEHOLDER_AD_CUSTOMIZER]
-  }
-
-  customer_feed_operation = {
-      'operator': 'ADD',
-      'operand': customer_feed
-  }
-
-  response = customer_feed_service.mutate([customer_feed_operation])
-
-  if response and 'value' in response:
-    feed = response['value'][0]
-    print 'Customer feed with ID %s was added.' % feed['feedId']
-  else:
-    raise Exception('No customer feeds were added.')
-
-  # All set! We can now create ads with customizations.
   text_ad = {
       'xsi_type': 'TextAd',
-      'headline': 'Luxury Cruise to {=%s.Name}' % FEEDNAME,
-      'description1': 'Only {=%s.Price}' % FEEDNAME,
-      'description2': 'Offer ends in {=countdown(%s.Date)}!' % FEEDNAME,
+      'headline': 'Luxury Cruise to {=%s.Name}' % feed_name,
+      'description1': 'Only {=%s.Price}' % feed_name,
+      'description2': 'Offer ends in {=countdown(%s.Date)}!' % feed_name,
       'finalUrls': ['http://www.example.com'],
       'displayUrl': 'www.example.com'
   }
@@ -228,21 +71,152 @@ def main(client, adgroups):
           'adGroupId': adgroup,
           'ad': text_ad
       }
-  } for adgroup in adgroups]
+  } for adgroup in adgroup_ids]
 
-  print operations
-
-  response = ad_group_ad_service.mutate(operations)
-
-  print '===ad group ad service==='
-  print response
+  response = adgroup_ad_service.mutate(operations)
 
   if response and 'value' in response:
     for ad in response['value']:
-      print ('\tCreated an ad with ID \'%s\', type \'%s\', and status \'%s\'.'
+      print ('Created an ad with ID \'%s\', type \'%s\', and status \'%s\'.'
              % (ad['ad']['id'], ad['ad']['Ad.Type'], ad['status']))
   else:
-    raise Exception('No ads were added.')
+    raise errors.GoogleAdsError('No ads were added.')
+
+
+def CreateCustomizerFeed(client, feed_name):
+  """Creates a new AdCustomizerFeed.
+
+  Args:
+    client: an AdWordsClient instance.
+    feed_name: the name for the new AdCustomizerFeed.
+
+  Returns:
+    The new AdCustomizerFeed.
+  """
+  # Get the AdCustomizerFeedService
+  ad_customizer_feed_service = client.GetService('AdCustomizerFeedService')
+
+  customizer_feed = {
+      'feedName': feed_name,
+      'feedAttributes': [
+          {'type': 'STRING', 'name': 'Name'},
+          {'type': 'STRING', 'name': 'Price'},
+          {'type': 'DATE_TIME', 'name': 'Date'}
+      ]
+  }
+
+  feed_service_operation = {
+      'operator': 'ADD',
+      'operand': customizer_feed
+  }
+
+  response = ad_customizer_feed_service.mutate([feed_service_operation])
+
+  if response and 'value' in response:
+    feed = response['value'][0]
+    feed_data = {
+        'feedId': feed['feedId'],
+        'nameId': feed['feedAttributes'][0]['id'],
+        'priceId': feed['feedAttributes'][1]['id'],
+        'dateId': feed['feedAttributes'][2]['id']
+    }
+    print ('Feed with name \'%s\' and ID %s was added with:\n'
+           '\tName attribute ID %s and price attribute ID %s and date attribute'
+           'ID %s') % (feed['feedName'], feed['feedId'], feed_data['nameId'],
+                       feed_data['priceId'], feed_data['dateId'])
+    return feed
+  else:
+    raise errors.GoogleAdsError('No feeds were added')
+
+
+def CreateCustomizerFeedItems(client, adgroup_ids, ad_customizer_feed):
+  """Creates FeedItems for the specified AdGroups.
+
+  These FeedItems contain values to use in ad customizations for the AdGroups.
+
+  Args:
+    client: an AdWordsClient instance.
+    adgroup_ids: a list containing two AdGroup Ids.
+    ad_customizer_feed: the AdCustomizerFeed we're associating the FeedItems
+        with.
+
+  Raises:
+    GoogleAdsError: if no FeedItems were added.
+  """
+  # Get the FeedItemService
+  feed_item_service = client.GetService('FeedItemService')
+  now = datetime.now()
+  mars_date = datetime(now.year, now.month, 1, 0, 0)
+  venus_date = datetime(now.year, now.month, 15, 0, 0)
+  time_format = '%Y%m%d %H%M%S'
+
+  feed_item_operations = [
+      CreateFeedItemAddOperation(
+          'Mars', '$1234.56', mars_date.strftime(time_format), adgroup_ids[0],
+          ad_customizer_feed),
+      CreateFeedItemAddOperation(
+          'Venus', '$1450.00', venus_date.strftime(time_format),
+          adgroup_ids[1], ad_customizer_feed)
+  ]
+
+  response = feed_item_service.mutate(feed_item_operations)
+
+  if 'value' in response:
+    for feed_item in response['value']:
+      print 'Added FeedItem with ID %d.' % feed_item['feedItemId']
+  else:
+    raise errors.GoogleAdsError('No FeedItems were added.')
+
+
+def CreateFeedItemAddOperation(name, price, date, adgroup_id,
+                               ad_customizer_feed):
+  """Creates a FeedItemOperation.
+
+  The generated FeedItemOperation will create a FeedItem with the specified
+  values and AdGroupTargeting when sent to FeedItemService.mutate.
+
+  Args:
+    name: the value for the name attribute of the FeedItem.
+    price: the value for the price attribute of the FeedItem.
+    date: the value for the date attribute of the FeedItem.
+    adgroup_id: the ID of the ad_group to target with the FeedItem.
+    ad_customizer_feed: the AdCustomizerFeed we're associating the FeedItems
+        with.
+
+  Returns:
+    A new FeedItemOperation for adding a FeedItem.
+  """
+  feed_item = {
+      'feedId': ad_customizer_feed['feedId'],
+      'adGroupTargeting': {
+          'TargetingAdGroupId': adgroup_id
+      },
+      'attributeValues': [
+          {
+              'feedAttributeId': ad_customizer_feed['feedAttributes'][0]['id'],
+              'stringValue': name
+          },
+          {
+              'feedAttributeId': ad_customizer_feed['feedAttributes'][1]['id'],
+              'stringValue': price
+          },
+          {
+              'feedAttributeId': ad_customizer_feed['feedAttributes'][2]['id'],
+              'stringValue': date
+          }
+      ]
+  }
+
+  return {'operator': 'ADD', 'operand': feed_item}
+
+
+def main(client, adgroup_ids, feed_name=FEED_NAME):
+  # Create a customizer feed. One feed per account can be used for all ads.
+  ad_customizer_feed = CreateCustomizerFeed(client, feed_name)
+  # Add feed items containing the values we'd like to place in ads.
+  CreateCustomizerFeedItems(client, adgroup_ids, ad_customizer_feed)
+  # All set! We can now create ads with customizations.
+  CreateAdsWithCustomizations(client, adgroup_ids, feed_name)
 
 
 if __name__ == '__main__':

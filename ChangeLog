@@ -1,3 +1,8 @@
+3.3.0 - 3/25/2015
+* Fixed issue #47.
+* Removed support for AdWords v201406.
+* Removed examples for AdWords v201406.
+
 3.2.0 - 3/12/2015
 * Added support for v201502 of the AdWords Client Library.
 * Removed CampaignAdExtensionService (from v201502).

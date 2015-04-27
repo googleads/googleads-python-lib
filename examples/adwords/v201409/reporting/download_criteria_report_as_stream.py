@@ -38,6 +38,9 @@ import StringIO
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 
+# The chunk size used for the report download.
+CHUNK_SIZE = 16 * 1024
+
 
 def main(client):
   report_downloader = client.GetReportDownloader(version='v201409')
@@ -62,7 +65,7 @@ def main(client):
 
   try:
     while True:
-      chunk = stream_data.read(adwords.CHUNK_SIZE)
+      chunk = stream_data.read(CHUNK_SIZE)
       if not chunk: break
       report_data.write(chunk.decode() if sys.version_info[0] == 3
                         and getattr(report_data, 'mode', 'w') == 'w' else chunk)

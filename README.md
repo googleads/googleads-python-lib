@@ -127,5 +127,4 @@ suds_client.service.mutate([operation])
 
 
 ##Authors:
-    Nicholas Chen
-    Mark Saniscalchi
+    jdilallo@google.com (Joseph DiLallo)

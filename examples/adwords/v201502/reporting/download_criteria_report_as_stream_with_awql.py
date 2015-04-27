@@ -43,6 +43,8 @@ logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 
 # Specify where to download the file here.
 PATH = '/tmp/report_download.csv'
+# The chunk size used for the report download.
+CHUNK_SIZE = 16 * 1024
 
 
 def main(client):
@@ -65,7 +67,7 @@ def main(client):
 
   try:
     while True:
-      chunk = stream_data.read(adwords.CHUNK_SIZE)
+      chunk = stream_data.read(CHUNK_SIZE)
       if not chunk: break
       report_data.write(chunk.decode() if sys.version_info[0] == 3
                         and getattr(report_data, 'mode', 'w') == 'w' else chunk)

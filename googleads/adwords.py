@@ -18,7 +18,6 @@ __author__ = 'Joseph DiLallo'
 
 import io
 import os
-import StringIO
 import sys
 import urllib
 import urllib2
@@ -31,51 +30,9 @@ import suds.xsd.doctor
 import googleads.common
 import googleads.errors
 
-# The chunk size used for report downloads.
-CHUNK_SIZE = 16 * 1024
 # A giant dictionary of AdWords versions, the services they support, and which
 # namespace those services are in.
 _SERVICE_MAP = {
-    'v201406': {
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'AlertService': 'mcm',
-        'BiddingStrategyService': 'cm',
-        'BudgetOrderService': 'billing',
-        'BudgetService': 'cm',
-        'CampaignAdExtensionService': 'cm',
-        'CampaignCriterionService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerFeedService': 'cm',
-        'CustomerService': 'mcm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'ExperimentService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'GeoLocationService': 'cm',
-        'LabelService': 'cm',
-        'LocationCriterionService': 'cm',
-        'ManagedCustomerService': 'mcm',
-        'MediaService': 'cm',
-        'MutateJobService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-    },
     'v201409': {
         'AdCustomizerFeedService': 'cm',
         'AdGroupAdService': 'cm',
@@ -378,6 +335,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
         headers=self._adwords_client.oauth2_client.CreateHttpHeader())
 
   def GetReportDownloadHeaders(self, skip_report_header=None,
+                               skip_column_header=None,
                                skip_report_summary=None):
     """Returns a dictionary of headers for a report download request.
 
@@ -385,6 +343,9 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
       skip_report_header: A boolean indicating whether to include a header row
           containing the report name and date range. If false or not specified,
           report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
@@ -403,6 +364,9 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
 
     if skip_report_header:
       headers.update({'skipReportHeader': str(skip_report_header)})
+
+    if skip_column_header:
+      headers.update({'skipColumnHeader': str(skip_column_header)})
 
     if skip_report_summary:
       headers.update({'skipReportSummary': str(skip_report_summary)})
@@ -471,7 +435,8 @@ class ReportDownloader(object):
                                                  ' output for GZIPPED formats.')
 
   def DownloadReport(self, report_definition, output=sys.stdout,
-                     skip_report_header=None, skip_report_summary=None):
+                     skip_report_header=None, skip_column_header=None,
+                     skip_report_summary=None):
     """Downloads an AdWords report using a report definition.
 
     The report contents will be written to the given output.
@@ -487,6 +452,9 @@ class ReportDownloader(object):
       skip_report_header: A boolean indicating whether to include a header row
           containing the report name and date range. If false or not specified,
           report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
@@ -501,10 +469,11 @@ class ReportDownloader(object):
     """
     self._DownloadReportCheckFormat(report_definition['downloadFormat'], output)
     self._DownloadReport(self._SerializeReportDefinition(report_definition),
-                         output, skip_report_header, skip_report_summary)
+                         output, skip_report_header, skip_column_header,
+                         skip_report_summary)
 
   def DownloadReportAsStream(self, report_definition, skip_report_header=None,
-                             skip_report_summary=None):
+                             skip_column_header=None, skip_report_summary=None):
     """Downloads an AdWords report using a report definition.
 
     This will return a stream, allowing you to retrieve the report contents.
@@ -517,6 +486,9 @@ class ReportDownloader(object):
       skip_report_header: A boolean indicating whether to include a header row
           containing the report name and date range. If false or not specified,
           report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
@@ -534,10 +506,11 @@ class ReportDownloader(object):
     """
     return self._DownloadReportAsStream(
         self._SerializeReportDefinition(report_definition), skip_report_header,
-        skip_report_summary)
+        skip_column_header, skip_report_summary)
 
   def DownloadReportAsStreamWithAwql(self, query, file_format,
                                      skip_report_header=None,
+                                     skip_column_header=None,
                                      skip_report_summary=None):
     """Downloads an AdWords report using an AWQL query.
 
@@ -553,6 +526,9 @@ class ReportDownloader(object):
       skip_report_header: A boolean indicating whether to include a header row
           containing the report name and date range. If false or not specified,
           report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
@@ -569,10 +545,12 @@ class ReportDownloader(object):
           network error.
     """
     return self._DownloadReportAsStream(self._SerializeAwql(query, file_format),
-                                        skip_report_header, skip_report_summary)
+                                        skip_report_header, skip_column_header,
+                                        skip_report_summary)
 
   def DownloadReportAsString(self, report_definition,
-                             skip_report_header=None, skip_report_summary=None):
+                             skip_report_header=None, skip_column_header=None,
+                             skip_report_summary=None):
     """Downloads an AdWords report using a report definition.
 
     The report contents will be returned as a string.
@@ -585,6 +563,9 @@ class ReportDownloader(object):
       skip_report_header: A boolean indicating whether to include a header row
           containing the report name and date range. If false or not specified,
           report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
@@ -600,16 +581,19 @@ class ReportDownloader(object):
       AdWordsReportError: if the request fails for any other reason; e.g. a
           network error.
     """
+    response = None
     try:
-      response = StringIO.StringIO()
-      self._DownloadReport(self._SerializeReportDefinition(report_definition),
-                           response, skip_report_header, skip_report_summary)
-      return response.getvalue()
+      response = self._DownloadReportAsStream(
+          self._SerializeReportDefinition(report_definition),
+          skip_report_header, skip_column_header, skip_report_summary)
+      return response.read().decode()
     finally:
-      response.close()
+      if response:
+        response.close()
 
   def DownloadReportAsStringWithAwql(self, query, file_format,
                                      skip_report_header=None,
+                                     skip_column_header=None,
                                      skip_report_summary=None):
     """Downloads an AdWords report using an AWQL query.
 
@@ -625,6 +609,9 @@ class ReportDownloader(object):
       skip_report_header: A boolean indicating whether to include a header row
           containing the report name and date range. If false or not specified,
           report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
@@ -640,16 +627,19 @@ class ReportDownloader(object):
       AdWordsReportError: if the request fails for any other reason; e.g. a
           network error.
     """
+    response = None
     try:
-      response = StringIO.StringIO()
-      self._DownloadReport(self._SerializeAwql(query, file_format), response,
-                           skip_report_header, skip_report_summary)
-      return response.getvalue()
+      response = self.DownloadReportAsStreamWithAwql(
+          query, file_format, skip_report_header, skip_column_header,
+          skip_report_summary)
+      return response.read().decode()
     finally:
-      response.close()
+      if response:
+        response.close()
 
   def DownloadReportWithAwql(self, query, file_format, output=sys.stdout,
-                             skip_report_header=None, skip_report_summary=None):
+                             skip_report_header=None, skip_column_header=None,
+                             skip_report_summary=None):
     """Downloads an AdWords report using an AWQL query.
 
     The report contents will be written to the given output.
@@ -667,6 +657,9 @@ class ReportDownloader(object):
       skip_report_header: A boolean indicating whether to include a header row
           containing the report name and date range. If false or not specified,
           report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
@@ -681,10 +674,11 @@ class ReportDownloader(object):
     """
     self._DownloadReportCheckFormat(file_format, output)
     self._DownloadReport(self._SerializeAwql(query, file_format), output,
-                         skip_report_header, skip_report_summary)
+                         skip_report_header, skip_column_header,
+                         skip_report_summary)
 
   def _DownloadReport(self, post_body, output, skip_report_header,
-                      skip_report_summary):
+                      skip_column_header, skip_report_summary):
     """Downloads an AdWords report, writing the contents to the given file.
 
     Args:
@@ -695,6 +689,9 @@ class ReportDownloader(object):
       skip_report_header: A boolean indicating whether to include a header row
           containing the report name and date range. If false or not specified,
           report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
@@ -707,20 +704,21 @@ class ReportDownloader(object):
       AdWordsReportError: if the request fails for any other reason; e.g. a
           network error.
     """
-    response = self._DownloadReportAsStream(post_body, skip_report_header,
-                                            skip_report_summary)
-
-    while True:
-      chunk = response.read(CHUNK_SIZE)
-      if not chunk:
-        break
-      output.write(chunk.decode() if sys.version_info[0] == 3
+    response = None
+    try:
+      response = self._DownloadReportAsStream(post_body, skip_report_header,
+                                              skip_column_header,
+                                              skip_report_summary)
+      output.write(response.read().decode() if sys.version_info[0] == 3
                    and (getattr(output, 'mode', 'w') == 'w'
                         and type(output) is not io.BytesIO)
-                   else chunk)
+                   else response.read())
+    finally:
+      if response:
+        response.close()
 
   def _DownloadReportAsStream(self, post_body, skip_report_header,
-                              skip_report_summary):
+                              skip_column_header, skip_report_summary):
     """Downloads an AdWords report, returning a stream.
 
     Args:
@@ -729,6 +727,9 @@ class ReportDownloader(object):
       skip_report_header: A boolean indicating whether to include a header row
           containing the report name and date range. If false or not specified,
           report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
@@ -749,6 +750,7 @@ class ReportDownloader(object):
     request = urllib2.Request(
         self._end_point, post_body,
         self._header_handler.GetReportDownloadHeaders(skip_report_header,
+                                                      skip_column_header,
                                                       skip_report_summary))
     try:
       return self.url_opener.open(request)
