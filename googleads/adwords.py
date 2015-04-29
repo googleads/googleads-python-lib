@@ -713,6 +713,7 @@ class ReportDownloader(object):
                    and (getattr(output, 'mode', 'w') == 'w'
                         and type(output) is not io.BytesIO)
                    else response.read())
+      output.flush()
     finally:
       if response:
         response.close()
