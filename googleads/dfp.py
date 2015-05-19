@@ -134,6 +134,26 @@ _SERVICE_MAP = {
          'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
          'SuggestedAdUnitService', 'TeamService', 'UserService',
          'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201505':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CompanyService', 'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
+         'OrderService', 'PackageService', 'PlacementService',
+         'PremiumRateService', 'ProductService', 'ProductPackageService',
+         'ProductPackageItemService', 'ProductTemplateService',
+         'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
 }
 
 
@@ -390,11 +410,19 @@ class DataDownloader(object):
     """
     service = self._GetReportService()
     report_job_id = service.runReportJob(report_job)['id']
-    status = service.getReportJob(report_job_id)['reportJobStatus']
+
+    if self._version > 'v201502':
+      status = service.getReportJobStatus(report_job_id)
+    else:
+      status = service.getReportJob(report_job_id)['reportJobStatus']
+
     while status != 'COMPLETED' and status != 'FAILED':
       logging.debug('Report job status: %s', status)
       time.sleep(30)
-      status = service.getReportJob(report_job_id)['reportJobStatus']
+      if self._version > 'v201502':
+        status = service.getReportJobStatus(report_job_id)
+      else:
+        status = service.getReportJob(report_job_id)['reportJobStatus']
 
     if status == 'FAILED':
       raise googleads.errors.DfpReportError(report_job_id)

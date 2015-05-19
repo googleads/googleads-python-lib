@@ -1,3 +1,7 @@
+3.4.0 - 5/19/2015
+* Added support for v201505.
+* Removed examples for v201405.
+
 3.3.0 - 3/25/2015
 * Fixed issue #47.
 * Removed support for AdWords v201406.
