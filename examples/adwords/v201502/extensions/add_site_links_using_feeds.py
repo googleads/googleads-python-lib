@@ -122,7 +122,7 @@ def main(client, campaign_id):
             },
             {
                 'feedAttributeId': sitelinks_data['finalUrlFeedId'],
-                'stringValue': item['finalUrls']
+                'stringValues': [item['finalUrls']]
             },
             {
                 'feedAttributeId': sitelinks_data['line1FeedId'],
