@@ -586,7 +586,7 @@ class ReportDownloader(object):
       response = self._DownloadReportAsStream(
           self._SerializeReportDefinition(report_definition),
           skip_report_header, skip_column_header, skip_report_summary)
-      return response.read().decode()
+      return response.read().decode('utf-8')
     finally:
       if response:
         response.close()
@@ -632,7 +632,7 @@ class ReportDownloader(object):
       response = self.DownloadReportAsStreamWithAwql(
           query, file_format, skip_report_header, skip_column_header,
           skip_report_summary)
-      return response.read().decode()
+      return response.read().decode('utf-8')
     finally:
       if response:
         response.close()

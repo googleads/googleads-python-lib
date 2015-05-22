@@ -279,6 +279,61 @@ class ReportDownloaderTest(unittest.TestCase):
         self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
             None, None, None)
 
+  def testDownloadReportAsString(self):
+    report_definition = {'table': 'campaigns',
+                         'downloadFormat': 'CSV'}
+    serialized_report = 'nuinbwuign'
+    post_body = urllib.urlencode({'__rdxml': serialized_report})
+    if not PYTHON2:
+      post_body = bytes(post_body, 'utf-8')
+    headers = {'Authorization': 'ya29.something'}
+    self.header_handler.GetReportDownloadHeaders.return_value = headers
+    content = u'CONTENT STRING アングリーバード'
+    fake_request = io.BytesIO()
+    fake_request.write(content.encode('utf-8') if PYTHON2
+                       else bytes(content, 'utf-8'))
+    fake_request.seek(0)
+    self.marshaller.process.return_value = serialized_report
+
+    with mock.patch('suds.mx.Content') as mock_content:
+      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+        self.opener.open.return_value = fake_request
+        s = self.report_downloader.DownloadReportAsString(report_definition)
+        mock_request.assert_called_once_with(
+            ('https://adwords.google.com/api/adwords/reportdownload/%s'
+             % self.version), post_body, headers)
+        self.opener.open.assert_called_once_with(mock_request.return_value)
+        self.marshaller.process.assert_called_once_with(
+            mock_content.return_value)
+        self.assertEqual(content, s)
+        self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+            None, None, None)
+
+  def testDownloadReportAsStringWithAwql(self):
+    query = 'SELECT Id FROM Campaign WHERE NAME LIKE \'%Test%\''
+    file_format = 'CSV'
+    post_body = urllib.urlencode({'__fmt': file_format, '__rdquery': query})
+    if not PYTHON2:
+      post_body = bytes(post_body, 'utf-8')
+    headers = {'Authorization': 'ya29.something'}
+    self.header_handler.GetReportDownloadHeaders.return_value = headers
+    content = u'CONTENT STRING アングリーバード'
+    fake_request = io.BytesIO()
+    fake_request.write(content.encode('utf-8') if PYTHON2
+                       else bytes(content, 'utf-8'))
+    fake_request.seek(0)
+    with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+      self.opener.open.return_value = fake_request
+      s = self.report_downloader.DownloadReportAsStringWithAwql(query,
+                                                                file_format)
+      mock_request.assert_called_once_with(
+          ('https://adwords.google.com/api/adwords/reportdownload/%s'
+           % self.version), post_body, headers)
+      self.opener.open.assert_called_once_with(mock_request.return_value)
+    self.assertEqual(content, s)
+    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+        None, None, None)
+
   def testDownloadReportCheckFormat_CSVStringSuccess(self):
     output_file = io.StringIO()
 
@@ -359,7 +414,7 @@ class ReportDownloaderTest(unittest.TestCase):
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
-    content = u'CONTENT STRING'
+    content = u'CONTENT STRING 广告客户'
     fake_request = io.StringIO() if PYTHON2 else io.BytesIO()
     fake_request.write(content if PYTHON2 else bytes(content, 'utf-8'))
     fake_request.seek(0)

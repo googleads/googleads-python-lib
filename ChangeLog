@@ -1,6 +1,10 @@
+3.4.1 - 5/22/2015
+* Fixed issue #55
+* Fixed issue #57
+
 3.4.0 - 5/19/2015
-* Added support for v201505.
-* Removed examples for v201405.
+* Added support for DFP v201505.
+* Removed examples for DFP v201405.
 
 3.3.0 - 3/25/2015
 * Fixed issue #47.
