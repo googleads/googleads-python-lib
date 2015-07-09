@@ -52,7 +52,7 @@ def main(client):
 
     # Create statement to get all targeting values.
     query = ('WHERE customTargetingKeyId IN (%s)'
-             % ', '.join([key['id'] for key in all_keys]))
+             % ', '.join([str(key['id']) for key in all_keys]))
     targeting_value_statement = dfp.FilterStatement(query)
 
     # Get custom targeting values by statement.

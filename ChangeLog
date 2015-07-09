@@ -1,3 +1,9 @@
+3.5.0 - 6/26/2015
+* Added support for v201506 of the AdWords Client Library.
+* Reporting parameters in ReportDownloader utility now in **kwargs.
+* Added new "include_zero_impressions" reporting parameter as keyword argument
+  for ReportDownloader utility methods.
+
 3.4.1 - 5/22/2015
 * Fixed issue #55
 * Fixed issue #57

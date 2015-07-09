@@ -16,7 +16,7 @@
 
 """Setup script for the Google Ads Python Client Library."""
 
-__author__ = 'Joseph Dilallo'
+__author__ = 'Mark Saniscalchi'
 
 import os
 import re
@@ -27,6 +27,13 @@ PACKAGES = ['googleads']
 
 DEPENDENCIES = ['httplib2', 'oauth2client', 'suds-jurko', 'pysocks', 'pytz',
                 'PyYAML']
+
+CLASSIFIERS = [
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: Apache Software License',
+    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3.4'
+]
 
 
 def GetVersion():
@@ -56,6 +63,14 @@ The googleads Python Client Libraries support the following products:
 
 You can find more information about the Google Ads Python Client Libraries
 `here <https://github.com/googleads/googleads-python-lib>`_.
+
+Supported Python Versions
+=========================
+
+This library is supported for Python 2 and 3, for versions 2.7+ and 3.4+
+respectively. It is recommended that Python 2 users use python 2.7.9+ to take
+advantage of the SSL Certificate Validation feature that is not included in
+earlier versions.
 
 Installation
 ============
@@ -92,13 +107,14 @@ if sys.version_info[0] == 3:
 setup(name='googleads',
       version=GetVersion(),
       description='Google Ads Python Client Library',
-      author='Joseph DiLallo',
-      author_email='jdilallo@google.com',
+      author='Mark Saniscalchi',
+      author_email='msaniscalchi@google.com',
       url='https://github.com/googleads/googleads-python-lib',
       license='Apache License 2.0',
       long_description=long_description,
       packages=PACKAGES,
       platforms='any',
       keywords='adwords adxbuyer dfp dfa google',
+      classifiers=CLASSIFIERS,
       install_requires=DEPENDENCIES,
       **extra_params)
