@@ -1,3 +1,7 @@
+3.6.0 - 7/31/2015
+* Removed support for AdWords v201409.
+* Removed examples for AdWords v201409.
+
 3.5.0 - 6/26/2015
 * Added support for v201506 of the AdWords Client Library.
 * Reporting parameters in ReportDownloader utility now in **kwargs.
