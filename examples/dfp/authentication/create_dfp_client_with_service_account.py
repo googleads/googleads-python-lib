@@ -16,7 +16,6 @@
 
 """Initializes a DfpClient using a Service Account."""
 
-__author__ = 'Mark Saniscalchi'
 
 from googleads import dfp
 from googleads import oauth2

@@ -16,7 +16,6 @@
 
 """Unit tests to cover the common module."""
 
-__author__ = 'Joseph DiLallo'
 
 import unittest
 import warnings

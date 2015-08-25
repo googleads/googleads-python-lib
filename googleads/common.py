@@ -14,7 +14,6 @@
 
 """Common client library functions and classes used by all products."""
 
-__author__ = 'Joseph DiLallo'
 
 import os
 import sys
@@ -28,7 +27,7 @@ import yaml
 import googleads.errors
 import googleads.oauth2
 
-VERSION = '3.6.0'
+VERSION = '3.7.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _PROXY_YAML_KEY = 'proxy_info'
 _PYTHON_VERSION = 'Python/%d.%d.%d' % (sys.version_info[0], sys.version_info[1],

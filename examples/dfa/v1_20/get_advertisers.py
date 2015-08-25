@@ -24,10 +24,8 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: advertiser.getAdvertisers
 """
 
-__author__ = 'Joseph DiLallo'
 
 import googleads.dfa
 

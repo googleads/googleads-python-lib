@@ -14,7 +14,6 @@
 
 """Client library for the AdWords API."""
 
-__author__ = 'Joseph DiLallo'
 
 import io
 import os

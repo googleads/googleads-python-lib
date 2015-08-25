@@ -19,10 +19,8 @@
 Workflow approval requests must be approved or rejected for a workflow to
 finish.
 
-Tags: WorkflowRequestService.getWorkflowRequestsByStatement
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

@@ -14,13 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This code example gets all line items that need creatives for the given
-order.
+"""This code example gets all line items that need creatives for an order.
 
-To create line items, run create_line_items.py."""
+To create line items, run create_line_items.py.
+"""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp
@@ -48,8 +46,8 @@ def main(client, order_id):
           'value': 'true'
       }
   }]
-  query = 'WHERE orderId = :orderId AND '
-          'isMissingCreatives = :isMissingCreatives'
+  query = ('WHERE orderId = :orderId AND '
+           'isMissingCreatives = :isMissingCreatives')
   statement = dfp.FilterStatement(query, values)
 
   while True:

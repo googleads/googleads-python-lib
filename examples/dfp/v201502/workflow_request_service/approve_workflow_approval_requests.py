@@ -19,11 +19,8 @@
 To determine which workflow approval requests exist, run
 get_all_workflow_approval_requests.py.
 
-Tags: WorkflowRequestService.getWorkflowRequestsByStatement
-Tags: WorkflowRequestService.performWorkflowRequestAction
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

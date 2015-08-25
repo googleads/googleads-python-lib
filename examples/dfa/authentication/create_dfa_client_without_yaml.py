@@ -22,7 +22,6 @@ may need to swap out users. This example shows you how to create an OAuth 2.0
 client and a DfaClient without relying on a yaml file.
 """
 
-__author__ = 'Joseph DiLallo'
 
 from googleads import dfa
 from googleads import oauth2

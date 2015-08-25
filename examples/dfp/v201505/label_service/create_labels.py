@@ -19,8 +19,6 @@
 To determine which labels exist, run get_all_labels.py.  This feature is only
 available to DFP premium solution networks."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import uuid
 

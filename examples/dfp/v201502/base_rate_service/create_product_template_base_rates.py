@@ -18,10 +18,8 @@
 
 To determine which base rates exist, run get_all_base_rates.py.
 
-Tags: BaseRateService.createBaseRates
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

@@ -21,11 +21,9 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignExtensionSettingService.mutate, CustomerService.get
 Api: AdWordsOnly
 """
 
-__author__ = 'Mark Saniscalchi'
 
 from datetime import datetime
 

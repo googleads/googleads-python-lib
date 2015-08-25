@@ -16,7 +16,6 @@
 
 """Initializes a DfaClient via impersonation using a Service Account."""
 
-__author__ = 'Mark Saniscalchi'
 
 from googleads import dfa
 from googleads import oauth2

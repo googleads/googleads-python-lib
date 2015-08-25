@@ -16,7 +16,6 @@
 
 """Handles request to view Campaigns associated with a given client account."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 

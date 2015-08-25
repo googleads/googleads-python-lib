@@ -7,6 +7,14 @@ Publishers. The library provides easy ways to store your authentication and
 create SOAP web service clients. It also contains example code to help you get
 started integrating with our APIs.
 
+####Important Note Regarding DFP
+If you are using v201502 and newer in the DFP API, then performing actions on
+objects will fail with an 'args NULL' error due to a bug in the underlying SOAP
+client, more details here: https://github.com/googleads/googleads-python-lib/issues/58.
+
+While the fix has been accepted and merged into the source, you will need to download
+the source files yourself and install them directly. The source can be located here:
+https://bitbucket.org/jurko/suds/downloads
 
 ##How do I get started?
 ####Installing the library
@@ -56,13 +64,19 @@ adwords_client.SetClientCustomerId('my_client_customer_id')
 
 ##Where do I submit bug reports and/or feature requests?
 
-Use the issue tracker at:
-  https://github.com/googleads/googleads-python-lib/issues
+If you have issues directly related to the client library, use the [issue
+tracker](https://github.com/googleads/googleads-python-lib/issues).
 
-Make sure to subscribe to our Google Plus page for API change announcements and
-other news:
 
-  https://plus.google.com/+GoogleAdsDevelopers
+If you have issues pertaining to a specific product, use the product support forums:
+
+* [AdWords](https://groups.google.com/forum/#!forum/adwords-api)
+* [DoubleClick Ad Exchange](https://groups.google.com/forum/#!forum/google-doubleclick-ad-exchange-buyer-api)
+* [DoubleClick for Advertisers](https://groups.google.com/forum/#!forum/google-doubleclick-for-advertisers-api)
+* [DoubleClick for Publishers](https://groups.google.com/forum/#!forum/google-doubleclick-for-publishers-api)
+
+Make sure to subscribe to our [Google Plus page](https://plus.google.com/+GoogleAdsDevelopers)
+for API change announcements and other news.
 
 
 ##How do I log SOAP interactions?
@@ -127,4 +141,4 @@ suds_client.service.mutate([operation])
 
 
 ##Authors:
-    msaniscalchi@google.com (Mark Saniscalchi)
+    Mark Saniscalchi

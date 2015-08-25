@@ -18,7 +18,6 @@
 Configures the web application that will display the AdWords UI.
 """
 
-__author__ = 'Mark Saniscalchi'
 
 from demo import DEBUG
 from views import AddAdGroup

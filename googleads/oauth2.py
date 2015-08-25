@@ -22,7 +22,6 @@ server and/or centralize refreshing credentials to prevent every Python process
 from independently refreshing the credentials.
 """
 
-__author__ = 'Mark Saniscalchi'
 
 import datetime
 
@@ -205,7 +204,7 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
       GoogleAdsValueError: If the given key file does not exist.
     """
     try:
-      with open(key_file) as f:
+      with open(key_file, 'rb') as f:
         private_key = f.read()
     except IOError:
       raise googleads.errors.GoogleAdsValueError('The specified key file (%s)'

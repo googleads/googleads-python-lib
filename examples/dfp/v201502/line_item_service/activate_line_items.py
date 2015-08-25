@@ -22,8 +22,6 @@ which they belong by running approve_orders.py. To create LICAs, run
 create_licas.py. To determine which line items exist, run
 get_all_line_items.py."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

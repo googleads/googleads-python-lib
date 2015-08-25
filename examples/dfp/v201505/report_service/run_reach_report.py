@@ -16,8 +16,6 @@
 
 """This code example runs a reach report."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 import tempfile
 
 # Import appropriate modules from the client library.

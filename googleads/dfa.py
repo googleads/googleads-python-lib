@@ -14,7 +14,6 @@
 
 """Client library for the DoubleClick for Advertisers API."""
 
-__author__ = 'Joseph DiLallo'
 
 import os
 

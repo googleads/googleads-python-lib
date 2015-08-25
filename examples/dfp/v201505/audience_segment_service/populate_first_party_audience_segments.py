@@ -20,8 +20,6 @@ To determine which first party audience segments exist, run
 get_first_party_audience_segments.py.
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

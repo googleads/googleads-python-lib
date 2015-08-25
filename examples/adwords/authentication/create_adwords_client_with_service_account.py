@@ -16,7 +16,6 @@
 
 """Initializes an AdWordsClient via impersonation using a Service Account."""
 
-__author__ = 'Mark Saniscalchi'
 
 from googleads import adwords
 from googleads import oauth2

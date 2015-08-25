@@ -21,7 +21,6 @@ get_all_proposal_line_items.py. To determine which proposals exist, run
 get_all_proposals.py.
 """
 
-__author__ = 'Nicholas Chen'
 
 from datetime import date
 import uuid

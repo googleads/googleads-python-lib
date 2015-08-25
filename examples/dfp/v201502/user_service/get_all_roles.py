@@ -19,8 +19,6 @@
 This sample can be used to determine which role id is needed when getting and
 creating users."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

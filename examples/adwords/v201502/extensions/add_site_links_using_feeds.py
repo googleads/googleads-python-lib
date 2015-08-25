@@ -24,12 +24,9 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CampaignFeedService.mutate, FeedItemService.mutate
-Tags: FeedMappingService.mutate, FeedService.mutate
 Api: AdWordsOnly
 """
 
-__author__ = 'Joseph DiLallo'
 
 import re
 import uuid

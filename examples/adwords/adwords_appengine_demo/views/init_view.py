@@ -16,7 +16,6 @@
 
 """View at the root directory of the application."""
 
-__author__ = 'Mark Saniscalchi'
 
 import logging
 

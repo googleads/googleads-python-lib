@@ -20,8 +20,6 @@ Deactivated users can no longer make requests to the API. The user making the
 request cannot deactivate itself. To determine which users exist, run
 get_all_users.py."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

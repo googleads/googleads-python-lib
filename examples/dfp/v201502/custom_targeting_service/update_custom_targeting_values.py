@@ -20,8 +20,6 @@ belonging to a custom targeting key.
 To determine which custom targeting keys exist, run
 get_all_custom_targeting_keys_and_values.py."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

@@ -18,11 +18,8 @@
 
 To determine which product templates exist, run get_all_product_templates.py.
 
-Tags: ProductTemplateService.createProductTemplates
-Tags: NetworkService.getCurrentNetwork
 """
 
-__author__ = 'Nicholas Chen'
 
 import uuid
 

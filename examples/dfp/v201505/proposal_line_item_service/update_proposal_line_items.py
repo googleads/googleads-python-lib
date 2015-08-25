@@ -20,7 +20,6 @@ To determine which proposal line items exist,
 run get_all_proposal_line_items.py.
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

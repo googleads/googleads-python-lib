@@ -18,11 +18,8 @@
 
 To determine which product templates exist, run get_all_product_templates.py.
 
-Tags: ProductTemplateService.getProductTemplatesByStatement
-Tags: ProductTemplateService.updateProductTemplates
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

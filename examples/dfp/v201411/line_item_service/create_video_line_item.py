@@ -22,8 +22,6 @@ exist, run get_all_orders.py. To create a video ad unit, run
 create_video_ad_unit.py. To create criteria for categories, run
 create_custom_targeting_keys_and_values.py"""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 from datetime import date
 import uuid

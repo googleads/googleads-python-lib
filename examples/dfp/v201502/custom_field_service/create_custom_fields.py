@@ -23,11 +23,8 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CustomFieldService.createCustomFields
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import uuid
 

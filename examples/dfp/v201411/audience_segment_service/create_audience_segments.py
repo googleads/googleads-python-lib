@@ -16,8 +16,6 @@
 
 """This example creates a new rule based first party audience segment."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import uuid
 

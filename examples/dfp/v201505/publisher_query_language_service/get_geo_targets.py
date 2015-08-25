@@ -23,8 +23,6 @@ A full list of available geo target types can be found at
 https://developers.google.com/doubleclick-publishers/docs/reference/v201505/PublisherQueryLanguageService
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import tempfile
 

@@ -16,8 +16,6 @@
 
 """This example fetches data from PQL tables and creates match table files."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import tempfile
 

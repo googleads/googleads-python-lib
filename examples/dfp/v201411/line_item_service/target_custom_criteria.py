@@ -20,8 +20,6 @@ To determine which line items exist, run get_all_line_items.py. To determine
 which custom targeting keys and values exist, run
 get_all_custom_targeting_keys_and_values.py."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import pprint
 

@@ -18,10 +18,8 @@
 
 Products are created automatically from product templates.
 
-Tags: ProductService.getProductsByStatement
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

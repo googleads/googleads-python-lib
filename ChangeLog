@@ -1,3 +1,8 @@
+3.7.0 - 8/20/2015
+* Update ServiceAccount constructor to open p12 file in binary mode.
+* Added support for v201508 for the Doubleclick for Publishers Client Library.
+* Removed support for v201403 for the Doubleclick for Publishers Client Library.
+
 3.6.0 - 7/31/2015
 * Removed support for AdWords v201409.
 * Removed examples for AdWords v201409.

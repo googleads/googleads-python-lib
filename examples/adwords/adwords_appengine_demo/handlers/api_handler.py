@@ -15,7 +15,6 @@
 # limitations under the License.
 """Handler to make calls against the AdWords API."""
 
-__author__ = 'Mark Saniscalchi'
 
 import time
 

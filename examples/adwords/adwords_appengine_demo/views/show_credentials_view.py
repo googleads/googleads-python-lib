@@ -15,7 +15,6 @@
 # limitations under the License.
 """Handles requests to view the user's credentials."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 

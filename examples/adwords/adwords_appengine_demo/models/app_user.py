@@ -16,7 +16,6 @@
 
 """Model representing a user of the application."""
 
-__author__ = 'Mark Saniscalchi'
 
 from google.appengine.ext import ndb
 

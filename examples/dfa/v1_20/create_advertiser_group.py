@@ -21,10 +21,8 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: advertisergroup.saveAdvertiserGroup
 """
 
-__author__ = 'Joseph DiLallo'
 
 import uuid
 

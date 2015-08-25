@@ -16,10 +16,8 @@
 
 """This example gets all rate cards that have a currency in US dollars.
 
-Tags: RateCardService.getRateCardsByStatement
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

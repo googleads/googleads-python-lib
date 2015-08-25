@@ -18,11 +18,8 @@
 
 To determine which premium rates exist, run get_all_premium_rates.py.
 
-Tags: PremiumRateService.getPremiumRatesByStatement
-Tags: PremiumRateService.updatePremiumRates
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

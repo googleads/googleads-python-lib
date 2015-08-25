@@ -16,10 +16,8 @@
 
 """This code example gets all rate cards.
 
-Tags: RateCardService.getRateCardsByStatement
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

@@ -18,10 +18,8 @@
 
 To determine which line items exist, run get_all_line_items.py.
 
-Tags: ForecastService.getAvailabilityForecastById
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

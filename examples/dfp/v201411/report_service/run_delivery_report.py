@@ -18,8 +18,6 @@
 website with additional attributes and can filter to include just one order.
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 import tempfile
 
 # Import appropriate modules from the client library.

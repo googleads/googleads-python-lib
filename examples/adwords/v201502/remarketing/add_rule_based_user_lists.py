@@ -25,10 +25,8 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: AdwordsUserListService.mutate
 """
 
-__author__ = 'Mark Saniscalchi'
 
 import calendar
 from datetime import date

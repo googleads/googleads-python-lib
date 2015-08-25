@@ -15,8 +15,5 @@
 # limitations under the License.
 """AdWords App Engine demo web application."""
 
-__author__ = 'Mark Saniscalchi'
-
-
 DEBUG = False  # Enable to see debug logs in the App Engine console.
 VERSION = '1.0.0'

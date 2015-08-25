@@ -16,7 +16,6 @@
 
 """Unit tests to cover the oauth2 module."""
 
-__author__ = 'Mark Saniscalchi'
 
 import datetime
 import unittest

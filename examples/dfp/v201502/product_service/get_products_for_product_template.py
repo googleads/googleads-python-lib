@@ -16,10 +16,8 @@
 
 """This example gets all products created from a product template.
 
-Tags: ProductService.getProductsByStatement
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

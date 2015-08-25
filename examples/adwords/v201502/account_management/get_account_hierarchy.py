@@ -24,12 +24,9 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: ServicedAccountService.get
 Api: AdWordsOnly
 """
 
-__author__ = ('api.kwinter@gmail.com (Kevin Winter)'
-              'Joseph DiLallo')
 
 from googleads import adwords
 

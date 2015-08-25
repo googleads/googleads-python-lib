@@ -25,11 +25,8 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CreativeService.createCreative
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import base64
 import os
@@ -90,7 +87,7 @@ def main(client, advertiser_id):
   }
 
   # Call service to create the creative.
-  creative = creative_service.createCreative(creative)
+  creative = creative_service.createCreatives([creative])[0]
 
   # Display results.
   print ('Template creative with id \'%s\', name \'%s\', and type \'%s\' was '

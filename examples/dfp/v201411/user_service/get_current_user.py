@@ -16,8 +16,6 @@
 
 """This code example gets the current user."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

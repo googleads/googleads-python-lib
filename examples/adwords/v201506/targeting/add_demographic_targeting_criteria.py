@@ -23,10 +23,8 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: AdGroupCriterionService.mutate
 """
 
-__author__ = 'Joseph Dilallo'
 
 from googleads import adwords
 

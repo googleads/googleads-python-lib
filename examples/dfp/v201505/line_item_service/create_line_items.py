@@ -20,8 +20,6 @@ To determine which line items exist, run get_all_line_items.py. To determine
 which orders exist, run get_all_orders.py. To determine which placements exist,
 run get_all_placements.py."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 from datetime import date
 import uuid

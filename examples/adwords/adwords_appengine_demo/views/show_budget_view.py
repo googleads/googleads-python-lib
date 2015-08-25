@@ -16,7 +16,6 @@
 
 """Handles request to view a Campaign's budget."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 

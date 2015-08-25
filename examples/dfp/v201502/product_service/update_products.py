@@ -18,11 +18,8 @@
 
 To determine which products exist, run get_all_products.py.
 
-Tags: ProductService.getProductsByStatement
-Tags: ProductService.updateProducts
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

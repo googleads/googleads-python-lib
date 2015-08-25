@@ -19,8 +19,6 @@ existing line item and a set of creative ids.
 
 To determine which LICAs exist, run get_all_licas.py."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

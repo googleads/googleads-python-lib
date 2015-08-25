@@ -16,7 +16,6 @@
 
 """Handler for ndb transactions."""
 
-__author__ = 'Mark Saniscalchi'
 
 from models.app_user import AppUser
 

@@ -19,8 +19,6 @@
 To determine which audience segments exist, run get_all_audience_segments.py.
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

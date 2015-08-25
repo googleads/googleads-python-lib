@@ -17,8 +17,6 @@
 """This code example runs a report equal to the "Sales by salespersons report."
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 import tempfile
 
 # Import appropriate modules from the client library.

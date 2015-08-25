@@ -16,7 +16,6 @@
 
 """Generates a refresh token for use with DFP."""
 
-__author__ = 'Mark Saniscalchi'
 
 import sys
 

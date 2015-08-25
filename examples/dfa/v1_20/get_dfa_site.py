@@ -23,10 +23,8 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: site.getDfaSites
 """
 
-__author__ = 'Joseph DiLallo'
 
 # Import appropriate modules from the client library.
 from googleads import dfa

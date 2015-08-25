@@ -19,7 +19,6 @@
 To create proposal line items, run create_proposal_line_items.py.
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

@@ -16,7 +16,6 @@
 
 """Handles requests to update the current user's credentials."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 

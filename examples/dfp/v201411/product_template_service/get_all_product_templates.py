@@ -18,10 +18,8 @@
 
 To create product templates, run create_product_template_templates.py.
 
-Tags: ProductTemplateService.getProductTemplatesByStatement
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

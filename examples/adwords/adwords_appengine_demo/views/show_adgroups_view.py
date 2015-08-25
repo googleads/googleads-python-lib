@@ -16,7 +16,6 @@
 
 """Handles request to view the AdGroups associated with a given Campaign."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 

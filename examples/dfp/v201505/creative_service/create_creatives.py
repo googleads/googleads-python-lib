@@ -24,11 +24,8 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CreativeService.createCreatives
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import base64
 import os

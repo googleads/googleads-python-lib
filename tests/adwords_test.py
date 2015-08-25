@@ -17,7 +17,6 @@
 
 """Unit tests to cover the adwords module."""
 
-__author__ = 'Joseph DiLallo'
 
 import io
 import sys

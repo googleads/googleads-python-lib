@@ -18,7 +18,6 @@
 
 To determine which proposals exist, run get_all_proposals.py."""
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

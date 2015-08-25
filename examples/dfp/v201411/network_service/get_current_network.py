@@ -16,8 +16,6 @@
 
 """This example gets the current network that you can make requests against."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

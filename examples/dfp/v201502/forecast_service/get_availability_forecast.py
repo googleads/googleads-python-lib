@@ -21,11 +21,8 @@ modified to determine forecasts for other criteria such as custom criteria
 targeting (in addition to targeting the whole network). See
 create_line_items.py for an example of how to create more complex targeting.
 
-Tags: ForecastService.getAvailabilityForecast
-Tags: NetworkService.getCurrentNetwork
 """
 
-__author__ = 'Nicholas Chen'
 
 from datetime import date
 

@@ -16,8 +16,6 @@
 
 """This example creates a new rule based first party audience segment."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import uuid
 
@@ -52,8 +50,8 @@ def main(client, custom_targeting_key_id, custom_targeting_value_id):
   custom_criteria = [
       {
           'xsi_type': 'CustomCriteria',
-          'keyId': CUSTOM_TARGETING_KEY_ID,
-          'valueIds': [CUSTOM_TARGETING_VALUE_ID],
+          'keyId': custom_targeting_key_id,
+          'valueIds': [custom_targeting_value_id],
           'operator': 'IS'
       }
   ]

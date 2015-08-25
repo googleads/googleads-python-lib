@@ -19,8 +19,6 @@
 To create LICAs, run create_licas.py or associate_creative_set_to_line_item.py.
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

@@ -18,8 +18,6 @@
 
 To create users, run create_user.py."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

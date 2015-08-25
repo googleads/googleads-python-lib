@@ -16,7 +16,6 @@
 
 """Handles request to add a Campaign to a client account."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 

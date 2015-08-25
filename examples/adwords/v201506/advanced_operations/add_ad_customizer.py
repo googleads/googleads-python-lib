@@ -19,11 +19,8 @@
 Associates the feed with customer and adds an ad that uses the feed to populate
 dynamic data.
 
-Tags: AdCustomizerFeedService.mutate, AdGroupAdService.mutate
-Tags: FeedItemService.mutate
 """
 
-__author__ = 'api.msaniscalchi@gmail.com (Mark Saniscalchi)'
 
 from datetime import datetime
 from uuid import uuid4

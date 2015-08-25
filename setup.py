@@ -16,7 +16,6 @@
 
 """Setup script for the Google Ads Python Client Library."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 import re

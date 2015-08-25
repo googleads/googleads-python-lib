@@ -16,7 +16,6 @@
 
 """Generates refresh token for AdWords using the Installed Application flow."""
 
-__author__ = 'Mark Saniscalchi'
 
 import sys
 

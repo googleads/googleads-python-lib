@@ -19,10 +19,8 @@
 To determine which exchange rates exist, run get_all_exchange_rates.py.
 
 
-Tags: ExchangeRateService.createExchangeRates
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

@@ -19,8 +19,6 @@
 To determine which placements exist, run get_all_placements.py.
 """
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

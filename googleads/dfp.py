@@ -14,7 +14,6 @@
 
 """Client library for the DoubleClick for Publishers API."""
 
-__author__ = 'Joseph DiLallo'
 
 import csv
 import datetime
@@ -40,25 +39,6 @@ SUGGESTED_PAGE_LIMIT = 500
 _CHUNK_SIZE = 16 * 1024
 # A giant dictionary of DFP versions and the services they support.
 _SERVICE_MAP = {
-    'v201403':
-        ('ActivityGroupService', 'ActivityService', 'AdRuleService',
-         'AudienceSegmentService', 'BaseRateService', 'CompanyService',
-         'ContactService', 'ContentBundleService',
-         'ContentMetadataKeyHierarchyService', 'ContentService',
-         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
-         'CreativeWrapperService', 'CustomFieldService',
-         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
-         'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
-         'OrderService', 'PlacementService', 'ProductService',
-         'ProductTemplateService', 'ProposalLineItemService', 'ProposalService',
-         'PublisherQueryLanguageService', 'RateCardCustomizationService',
-         'RateCardCustomizationGroupService', 'RateCardService',
-         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
-         'ReconciliationReportService', 'ReportService',
-         'SuggestedAdUnitService', 'TeamService', 'UserService',
-         'UserTeamAssociationService', 'WorkflowRequestService'),
     'v201405':
         ('ActivityGroupService', 'ActivityService', 'AdRuleService',
          'AudienceSegmentService', 'BaseRateService', 'CompanyService',
@@ -151,6 +131,27 @@ _SERVICE_MAP = {
          'ProposalLineItemService', 'ProposalService',
          'PublisherQueryLanguageService', 'RateCardService',
          'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201508':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CompanyService', 'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
+         'OrderService', 'PackageService', 'PlacementService',
+         'PremiumRateService', 'ProductService', 'ProductPackageService',
+         'ProductPackageItemService', 'ProductTemplateService',
+         'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationLineItemReportService',
          'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
          'SuggestedAdUnitService', 'TeamService', 'UserService',
          'UserTeamAssociationService', 'WorkflowRequestService'),

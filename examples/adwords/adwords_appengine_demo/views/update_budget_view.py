@@ -16,7 +16,6 @@
 
 """Handles requests to update a given Budget."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 

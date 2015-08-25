@@ -13,12 +13,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """This code example gets all proposal line items that belong to a proposal.
 
 To create proposal line items, run create_proposal_line_items.py."""
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp
@@ -30,7 +28,8 @@ PROPOSAL_ID = 'INSERT_PROPOSAL_ID_HERE'
 def main(client, proposal_id):
   # Initialize appropriate service.
   proposal_line_item_service = client.GetService(
-      'ProposalLineItemService', version='v201505')
+      'ProposalLineItemService',
+      version='v201505')
 
   # Create statement object to only select proposal line items belonging to a
   # given proposal.
@@ -53,11 +52,11 @@ def main(client, proposal_id):
       # Display results.
       for idx, proposal_line_item in enumerate(response['results'],
                                                start=statement.offset):
-        print ('%s) Line item with id \'%s\', belonging to proposal id \'%s\', '
-               'and named \'%s\' was found.' % (
-                   idx, proposal_line_item['id'],
-                   proposal_line_item['proposalId'],
-                   proposal_line_item['name']))
+        print(
+            '%s) Proposal line item with id \'%s\', belonging to proposal id '
+            '\'%s\', and named \'%s\' was found.' % (
+                idx, proposal_line_item['id'], proposal_line_item['proposalId'],
+                proposal_line_item['name']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break

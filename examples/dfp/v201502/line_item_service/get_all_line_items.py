@@ -18,8 +18,6 @@
 
 To create line items, run create_line_items.py."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 # Import appropriate modules from the client library.
 from googleads import dfp

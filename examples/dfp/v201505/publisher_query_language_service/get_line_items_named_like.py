@@ -16,8 +16,6 @@
 
 """This example gets all line items with names starting with 'line item'."""
 
-__author__ = ('Nicholas Chen',
-              'Joseph DiLallo')
 
 import tempfile
 

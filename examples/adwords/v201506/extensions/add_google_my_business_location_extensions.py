@@ -24,11 +24,8 @@ The LoadFromStorage method is pulling credentials and properties from a
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Tags: CustomerFeedService.mutate, FeedService.mutate
 """
 
-__author__ = ('api.msaniscalchi@gmail.com (Mark Saniscalchi)',
-              'Joseph DiLallo')
 
 import time
 import uuid

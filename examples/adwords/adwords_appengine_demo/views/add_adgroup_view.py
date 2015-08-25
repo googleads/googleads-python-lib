@@ -16,7 +16,6 @@
 
 """Handles request to add an AdGroup to a Campaign."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 

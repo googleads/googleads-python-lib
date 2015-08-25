@@ -20,10 +20,8 @@ To create product base rates, run create_product_base_rates.py
 To create product template base rates, run
 create_product_template_base_rates.py.
 
-Tags: BaseRateService.getBaseRatesByStatement
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

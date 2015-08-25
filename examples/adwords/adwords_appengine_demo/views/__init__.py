@@ -16,7 +16,6 @@
 
 """Views for the web application."""
 
-__author__ = 'Mark Saniscalchi'
 
 from add_adgroup_view import AddAdGroup
 from add_campaign_view import AddCampaign

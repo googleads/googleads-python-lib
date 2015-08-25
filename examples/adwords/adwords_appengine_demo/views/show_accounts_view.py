@@ -16,7 +16,6 @@
 
 """Handles request to view accounts associated with MCC Cluent Customer Id."""
 
-__author__ = 'Mark Saniscalchi'
 
 import os
 

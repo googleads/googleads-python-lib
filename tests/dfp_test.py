@@ -16,7 +16,6 @@
 
 """Unit tests to cover the dfp module."""
 
-__author__ = 'Joseph DiLallo'
 
 import StringIO
 import sys

@@ -18,10 +18,8 @@
 
 To create exchange rates, run create_exchange_rates.py.
 
-Tags: ExchangeRateService.getExchangeRatesByStatement
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

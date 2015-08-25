@@ -19,11 +19,8 @@
 Workflow external condition requests must be triggered or skipped for a workflow
 to finish. To determine which proposals exist, run get_all_proposals.py.
 
-Tags: WorkflowRequestService.getWorkflowRequestsByStatement
-Tags: WorkflowRequestService.performWorkflowRequestAction
 """
 
-__author__ = 'Nicholas Chen'
 
 # Import appropriate modules from the client library.
 from googleads import dfp

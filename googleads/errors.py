@@ -14,8 +14,6 @@
 
 """Errors used by the Google Ads Client Library."""
 
-__author__ = 'Joseph DiLallo'
-
 
 class GoogleAdsError(Exception):
   """Parent class of all errors raised by this library."""
