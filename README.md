@@ -140,5 +140,19 @@ suds_client.service.mutate([operation])
                               (only needed to run unit tests)
 
 
+##Running The Test Suite
+
+You can run test modules one by one:
+
+    $ cd tests
+    $ ./adwords_test.py
+    ...
+
+To make things simpler, you can also use `nose` for test discovery:
+
+    $ pip install nose
+    $ nosetests tests/*.py
+
+
 ##Authors:
     Mark Saniscalchi
