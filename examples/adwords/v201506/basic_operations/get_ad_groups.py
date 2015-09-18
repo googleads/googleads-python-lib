@@ -30,7 +30,6 @@ from googleads import adwords
 
 
 PAGE_SIZE = 500
-CAMPAIGN_ID = 'INSERT_CAMPAIGN_ID_HERE'
 
 
 def main(client, campaign_id):
@@ -74,4 +73,4 @@ if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
 
-  main(adwords_client, CAMPAIGN_ID)
+  main(adwords_client, raw_input("Enter campaign ID: "))
