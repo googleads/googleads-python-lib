@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Handles request to view accounts associated with MCC Cluent Customer Id."""
+"""Handles request to view accounts associated with manager account Id."""
 
 
 import os
@@ -28,7 +28,7 @@ from google.appengine.ext.webapp import template
 
 
 class ShowAccounts(webapp2.RequestHandler):
-  """View showing the client accounts for a given MCC Client Customer Id."""
+  """View showing the client accounts for a given manager account Id."""
 
   def get(self):
     """Handle get request."""
@@ -46,7 +46,7 @@ class ShowAccounts(webapp2.RequestHandler):
         handler = APIHandler(app_user.client_id,
                              app_user.client_secret,
                              app_user.refresh_token,
-                             app_user.mcc_cid,
+                             app_user.adwords_manager_cid,
                              app_user.developer_token)
 
         # Fetch account info for each client account and place in template.

@@ -32,8 +32,10 @@ from googleads import adwords
 
 PAGE_SIZE = 500
 
+ADGROUP_ID = 'INSERT_ADGROUP_ID_HERE'
 
-def main(client):
+
+def main(client, adgroup_id):
   # Initialize appropriate service.
   ad_group_criterion_service = client.GetService(
       'AdGroupCriterionService', version='v201506')
@@ -41,16 +43,24 @@ def main(client):
   # Construct selector and get all ad group criteria.
   offset = 0
   selector = {
-      'fields': ['AdGroupId', 'Id', 'Text', 'KeywordMatchType', 'PlacementUrl'],
-      'predicates': [{
-          'field': 'CriteriaType',
-          'operator': 'EQUALS',
-          'values': ['KEYWORD']
-      }],
+      'fields': ['Id', 'CriteriaType', 'KeywordMatchType', 'KeywordText'],
+      'predicates': [
+          {
+              'field': 'AdGroupId',
+              'operator': 'EQUALS',
+              'values': [adgroup_id]
+          },
+          {
+              'field': 'CriteriaType',
+              'operator': 'EQUALS',
+              'values': ['KEYWORD']
+          }
+      ],
       'paging': {
           'startIndex': str(offset),
           'numberResults': str(PAGE_SIZE)
-      }
+      },
+      'ordering': [{'field': 'Id', 'sortOrder': 'ASCENDING'}]
   }
   more_pages = True
   while more_pages:
@@ -58,12 +68,13 @@ def main(client):
 
     # Display results.
     if 'entries' in page:
-      for criterion in page['entries']:
-        print ('Keyword ad group criterion with ad group id \'%s\', criterion '
-               'id \'%s\', text \'%s\', and match type \'%s\' was found.'
-               % (criterion['adGroupId'], criterion['criterion']['id'],
-                  criterion['criterion']['text'],
-                  criterion['criterion']['matchType']))
+      for keyword in page['entries']:
+        print ('Keyword ID \'%d\', type \'%s\', text \'%s\', and match type '
+               '\'%s\'' % (
+                   keyword['criterion']['id'],
+                   keyword['criterion']['type'],
+                   keyword['criterion']['text'],
+                   keyword['criterion']['matchType']))
     else:
       print 'No keywords were found.'
     offset += PAGE_SIZE
@@ -75,4 +86,4 @@ if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
 
-  main(adwords_client)
+  main(adwords_client, ADGROUP_ID)

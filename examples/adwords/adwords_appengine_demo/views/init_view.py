@@ -32,7 +32,7 @@ class InitView(webapp2.RequestHandler):
       app_user = InitUser()
 
       if (app_user.client_id and app_user.client_secret and
-          app_user.mcc_cid and app_user.developer_token and
+          app_user.adwords_manager_cid and app_user.developer_token and
           app_user.refresh_token):
         self.redirect('/showAccounts')
       else:

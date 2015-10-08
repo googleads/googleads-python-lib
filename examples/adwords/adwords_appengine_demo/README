@@ -11,7 +11,7 @@ to build and host web applications.
 In order for the web application to communicate with AdWords API, we will use
 the [Google Ads Python Client Library](https://github.com/googleads/googleads-python-lib).
 
-In this demo, a user signs in and provides their MCC Client Customer Id and
+In this demo, a user signs in and provides their AdWords manager account id and
 other credentials that are used to access the AdWords API and provide the
 following functionality:
 

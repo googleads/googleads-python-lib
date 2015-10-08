@@ -66,7 +66,6 @@ def main(client, advertiser_id):
       'creativeTemplateId': creative_template_id,
       'destinationUrl': ('https://play.google.com/store/apps/details?id='
                          'com.google.fpl.pie_noon'),
-      'isNativeEligible': True,
       'creativeTemplateVariableValues': [
           {
               'xsi_type': 'AssetCreativeTemplateVariableValue',
@@ -104,12 +103,6 @@ def main(client, advertiser_id):
               'xsi_type': 'UrlCreativeTemplateVariableValue',
               'uniqueName': 'DeeplinkclickactionURL',
               'value': 'market://details?id=com.google.fpl.pie_noon'
-          },
-          {
-              'xsi_type': 'UrlCreativeTemplateVariableValue',
-              'uniqueName': 'FallbackclickactionURL',
-              'value': ('https://play.google.com/store/apps/details?id='
-                        'com.google.fpl.pie_noon'),
           },
           {
               'xsi_type': 'StringCreativeTemplateVariableValue',

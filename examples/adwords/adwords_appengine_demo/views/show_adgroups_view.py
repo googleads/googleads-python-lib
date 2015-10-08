@@ -50,7 +50,7 @@ class ShowAdGroups(webapp2.RequestHandler):
         handler = APIHandler(app_user.client_id,
                              app_user.client_secret,
                              app_user.refresh_token,
-                             app_user.mcc_cid,
+                             app_user.adwords_manager_cid,
                              app_user.developer_token)
 
         adgroups = handler.GetAdGroups(client_customer_id, campaign_id)

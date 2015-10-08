@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +18,7 @@
 import StringIO
 import sys
 import unittest
+
 
 import mock
 import suds.transport
@@ -166,9 +165,7 @@ class DfpClientTest(unittest.TestCase):
     self.assertRaises(
         googleads.errors.GoogleAdsValueError, googleads.dfp.DfpClient,
         self.oauth2_client, self.application_name, self.network_code,
-        self.https_proxy, self.cache,
-        'Application name must be set and not be the default [%s]' %
-        googleads.dfp.DEFAULT_APPLICATION_NAME)
+        self.https_proxy, self.cache)
 
   def testGetService_success(self):
     service = googleads.dfp._SERVICE_MAP[self.version][0]

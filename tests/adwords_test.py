@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: UTF-8 -*-
 #
 # Copyright 2013 Google Inc. All Rights Reserved.
@@ -24,6 +23,7 @@ import tempfile
 import unittest
 import urllib
 import urllib2
+
 
 import mock
 

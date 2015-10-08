@@ -47,8 +47,9 @@ class ShowCredentials(webapp2.RequestHandler):
                                             app_user.client_secret else '')
         template_values['refresh_token'] = (app_user.refresh_token if
                                             app_user.refresh_token else '')
-        template_values['mcc_cid'] = (app_user.mcc_cid if app_user.mcc_cid
-                                      else '')
+        template_values['adwords_manager_cid'] = (
+            app_user.adwords_manager_cid if app_user.adwords_manager_cid else ''
+        )
         template_values['dev_token'] = (app_user.developer_token if
                                         app_user.developer_token else '')
       except Exception, e:

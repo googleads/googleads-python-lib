@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +16,7 @@
 
 
 import unittest
+
 
 import mock
 import suds.transport
@@ -147,3 +146,4 @@ class DfaClientTest(unittest.TestCase):
 
 if __name__ == '__main__':
   unittest.main()
+

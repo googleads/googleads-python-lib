@@ -1,3 +1,15 @@
+3.8.0 - 10/7/2015
+* Added support for AdWords v201509.
+* Replaced references to MCC accounts with AdWords manager accounts.
+* Added upload_media_bundle as a new misc example for AdWords v201509.
+* Added add_html5_ad as a new advanced_operations example for AdWords v201509.
+* Added add_crm_based_user_list as a new remarketing example for AdWords
+  v201509.
+
+3.7.1 - 9/4/2015
+* Fixed issue #68.
+* Updated the get_keywords AdWords sample.
+
 3.7.0 - 8/20/2015
 * Update ServiceAccount constructor to open p12 file in binary mode.
 * Added support for v201508 for the Doubleclick for Publishers Client Library.

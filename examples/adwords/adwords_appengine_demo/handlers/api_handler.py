@@ -31,21 +31,21 @@ class APIHandler(object):
   # The user-agent sent in requests from this demo.
   _USER_AGENT = 'AppEngine Googleads Demo v%s' % VERSION
 
-  def __init__(self, client_id, client_secret, refresh_token, mcc_cid,
-               dev_token):
+  def __init__(self, client_id, client_secret, refresh_token,
+               manager_account_id, dev_token):
     """Initializes an APIHandler.
 
     Args:
       client_id: The client customer id retrieved from the Developers Console.
       client_secret: The client secret retrieved from the Developers Console.
       refresh_token: The refresh token retrieved with generate_refresh_token.py.
-      mcc_cid: The AdWords MCC Account Client Customer Id.
+      manager_account_id: The AdWords manager account Id.
       dev_token: The AdWords Developer Token.
     """
     credentials = GoogleRefreshTokenClient(client_id, client_secret,
                                            refresh_token)
     self.client = AdWordsClient(dev_token, credentials, self._USER_AGENT,
-                                mcc_cid)
+                                manager_account_id)
 
   def AddAdGroup(self, client_customer_id, campaign_id, name, status):
     """Create a new ad group.
@@ -133,7 +133,7 @@ class APIHandler(object):
     campaign_service.mutate(operations)
 
   def GetAccounts(self):
-    """Return the client accounts associated with the user's MCC account.
+    """Return the client accounts associated with the user's manager account.
 
     Returns:
       list List of ManagedCustomer data objects.

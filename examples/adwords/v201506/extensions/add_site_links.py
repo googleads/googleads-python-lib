@@ -48,14 +48,14 @@ def main(client, campaign_id):
   sitelink1 = {
       'xsi_type': 'SitelinkFeedItem',
       'sitelinkText': 'Store Hours',
-      'sitelinkUrl': 'http://www.example.com/storehours'
+      'sitelinkFinalUrls': {'urls': ['http://www.example.com/storehours']}
   }
 
   # Show the Thanksgiving specials link only from 20 - 27 Nov.
   sitelink2 = {
       'xsi_type': 'SitelinkFeedItem',
       'sitelinkText': 'Thanksgiving Specials',
-      'sitelinkUrl': 'http://www.example.com/thanksgiving',
+      'sitelinkFinalUrls': {'urls': ['http://www.example.com/thanksgiving']},
       # The time zone of the start and end date/times must match the time zone
       # of the customer.
       'startTime': datetime(datetime.now().year, 11, 20, 0, 0, 0, 0,
@@ -68,7 +68,7 @@ def main(client, campaign_id):
   sitelink3 = {
       'xsi_type': 'SitelinkFeedItem',
       'sitelinkText': 'Wifi Available',
-      'sitelinkUrl': 'http://www.example.com/mobile/wifi',
+      'sitelinkFinalUrls': {'urls': ['http://www.example.com/mobile/wifi']},
       # See https://developers.google.com/adwords/api/docs/appendix/platforms
       # for device criteria IDs.
       'devicePreference': {'devicePreference': '30001'}
@@ -78,7 +78,7 @@ def main(client, campaign_id):
   sitelink4 = {
       'xsi_type': 'SitelinkFeedItem',
       'sitelinkText': 'Happy hours',
-      'sitelinkUrl': 'http://www.example.com/happyhours',
+      'sitelinkFinalUrls': {'urls': ['http://www.example.com/happyhours']},
       'scheduling': {
           'feedItemSchedules': [
               {

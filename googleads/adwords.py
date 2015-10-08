@@ -117,6 +117,50 @@ _SERVICE_MAP = {
         'SharedSetService': 'cm',
         'TargetingIdeaService': 'o',
         'TrafficEstimatorService': 'o',
+    },
+    'v201509': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'BatchJobService': 'cm',
+        'BudgetOrderService': 'billing',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'ExperimentService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'GeoLocationService': 'cm',
+        'LocationCriterionService': 'cm',
+        'MediaService': 'cm',
+        'MutateJobService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'ManagedCustomerService': 'mcm',
+        'CustomerService': 'mcm',
+        'CustomerFeedService': 'cm',
+        'BudgetService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'LabelService': 'cm',
     }
 }
 
@@ -205,8 +249,8 @@ class AdWordsClient(object):
       [optional]
       client_customer_id: A string identifying which AdWords customer you want
           to act as. You do not have to provide this if you are using a client
-          account. You probably want to provide this if you're using an MCC
-          account.
+          account. You probably want to provide this if you're using an AdWords
+          manager account.
       validate_only: A boolean indicating if you want your request to be
           validated but not actually executed.
       partial_failure: A boolean indicating if you want your mutate calls

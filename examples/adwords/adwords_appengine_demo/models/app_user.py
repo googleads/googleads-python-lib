@@ -32,5 +32,5 @@ class AppUser(ndb.Model):
   client_id = ndb.StringProperty(required=False)
   client_secret = ndb.StringProperty(required=False)
   refresh_token = ndb.StringProperty(required=False)
-  mcc_cid = ndb.StringProperty(required=False)
+  adwords_manager_cid = ndb.StringProperty(required=False)
   developer_token = ndb.StringProperty(required=False)
