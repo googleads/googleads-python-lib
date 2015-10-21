@@ -18,12 +18,6 @@ dfp:
 # unless the network code is set directly on the DfpClient object:
 #  network_code: INSERT_NETWORK_CODE_HERE
 
-dfa:
-  username: INSERT_DFA_USERNAME_HERE
-  application_name: INSERT_APPLICATION_NAME_HERE
-  client_id: INSERT_OAUTH_2_CLIENT_ID_HERE
-  client_secret: INSERT_CLIENT_SECRET_HERE
-  refresh_token: INSERT_REFRESH_TOKEN_HERE
 # The following values are optional:
 
 # The following are optional settings for using a proxy.

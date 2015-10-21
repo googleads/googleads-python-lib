@@ -113,7 +113,7 @@ setup(name='googleads',
       long_description=long_description,
       packages=PACKAGES,
       platforms='any',
-      keywords='adwords adxbuyer dfp dfa google',
+      keywords='adwords adxbuyer dfp google',
       classifiers=CLASSIFIERS,
       install_requires=DEPENDENCIES,
       **extra_params)

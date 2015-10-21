@@ -1,4 +1,10 @@
+3.8.1 - 10/19/13
+* Added BatchJobService example for AdWords v201509.
+* Removed GeoLocationService from AdWords v201509 because it isn't available
+  in this version.
+
 3.8.0 - 10/7/2015
+* Removed DFA from GoogleAds SOAP Client Library.
 * Added support for AdWords v201509.
 * Replaced references to MCC accounts with AdWords manager accounts.
 * Added upload_media_bundle as a new misc example for AdWords v201509.

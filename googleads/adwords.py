@@ -144,7 +144,6 @@ _SERVICE_MAP = {
         'FeedItemService': 'cm',
         'FeedMappingService': 'cm',
         'FeedService': 'cm',
-        'GeoLocationService': 'cm',
         'LocationCriterionService': 'cm',
         'MediaService': 'cm',
         'MutateJobService': 'cm',

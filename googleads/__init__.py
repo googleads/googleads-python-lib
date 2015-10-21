@@ -15,5 +15,4 @@
 """A client library for Google's SOAP Ads APIs."""
 
 from adwords import AdWordsClient
-from dfa import DfaClient
 from dfp import DfpClient
