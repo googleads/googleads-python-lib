@@ -27,7 +27,7 @@ import yaml
 import googleads.errors
 import googleads.oauth2
 
-VERSION = '3.8.0'
+VERSION = '3.10.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _PROXY_YAML_KEY = 'proxy_info'
 _PYTHON_VERSION = 'Python/%d.%d.%d' % (sys.version_info[0], sys.version_info[1],
@@ -261,8 +261,8 @@ class SudsServiceProxy(object):
 
     Args:
       suds_client: The suds.client.Client whose service will be wrapped. Note
-          that this is the client itself, not the client's embedded service
-          object.
+        that this is the client itself, not the client's embedded service
+        object.
       header_handler: A HeaderHandler responsible for setting the SOAP and HTTP
           headers on the service client.
     """

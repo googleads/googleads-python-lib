@@ -29,12 +29,10 @@ import urllib2
 import uuid
 
 
-from batch_job_util import BatchJobHelper
-from batch_job_util import BatchJobServiceIdGenerator
 from googleads import adwords
 
 
-# Set logging configuration
+# Set logging configuration.
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 
@@ -47,22 +45,36 @@ PENDING_STATUSES = ('ACTIVE', 'AWAITING_FILE')
 
 
 def main(client, number_of_campaigns, number_of_adgroups, number_of_keywords):
-  # Initialize BatchJobHelper
-  batch_job_helper = BatchJobHelper(client)
+  # Initialize BatchJobHelper.
+  batch_job_helper = client.GetBatchJobHelper()
 
+  # Create a BatchJob.
   batch_job = AddBatchJob(client)
+  # Retrieve the URL used to upload the BatchJob operations.
   upload_url = batch_job['uploadUrl']['url']
   batch_job_id = batch_job['id']
-
   logging.info('Created BatchJob with ID "%d", status "%s", and upload URL '
                '"%s"', batch_job['id'], batch_job['status'], upload_url)
 
-  operations = BuildUploadUrlOperations(batch_job_helper, number_of_campaigns,
-                                        number_of_adgroups, number_of_keywords)
+  # Generate operations to upload.
+  budget_operations = BuildBudgetOperations(batch_job_helper)
+  campaign_operations = BuildCampaignOperations(
+      batch_job_helper, budget_operations, number_of_campaigns)
+  campaign_criterion_operations = BuildCampaignCriterionOperations(
+      campaign_operations)
+  adgroup_operations = BuildAdGroupOperations(
+      batch_job_helper, campaign_operations, number_of_adgroups)
+  adgroup_criterion_operations = BuildAdGroupCriterionOperations(
+      adgroup_operations, number_of_keywords)
+  adgroup_ad_operations = BuildAdGroupAdOperations(adgroup_operations)
 
+  # Upload operations.
   batch_job_helper.UploadBatchJobOperations(
-      upload_url, *operations)
+      upload_url, budget_operations, campaign_operations,
+      campaign_criterion_operations, adgroup_operations,
+      adgroup_criterion_operations, adgroup_ad_operations)
 
+  # Download and display results.
   download_url = GetBatchJobDownloadUrlWhenReady(client, batch_job_id)
   response = urllib2.urlopen(download_url)
   logging.info('Downloaded following response:\n%s', response.read())
@@ -79,7 +91,7 @@ def AddBatchJob(client):
   """
   # Initialize appropriate service.
   batch_job_service = client.GetService('BatchJobService', version='v201509')
-  # Create a BatchJob
+  # Create a BatchJob.
   batch_job_operations = [{
       'operand': {},
       'operator': 'ADD'
@@ -160,7 +172,7 @@ def BuildAdGroupCriterionOperations(adgroup_operations, number_of_keywords=1):
   return criterion_operations
 
 
-def BuildAdGroupOperations(batch_id_generator,
+def BuildAdGroupOperations(batch_job_helper,
                            campaign_operations, number_of_adgroups=1):
   """Builds the operations adding desired number of AdGroups to given Campaigns.
 
@@ -169,7 +181,7 @@ def BuildAdGroupOperations(batch_id_generator,
   BatchJobService.
 
   Args:
-    batch_id_generator: a BatchJobServiceIdGenerator instance.
+    batch_job_helper: a BatchJobHelper instance.
     campaign_operations: a list containing the operations that will add
       Campaigns.
     number_of_adgroups: an int defining the number of AdGroups to be created per
@@ -189,7 +201,7 @@ def BuildAdGroupOperations(batch_id_generator,
           'xsi_type': 'AdGroupOperation',
           'operand': {
               'campaignId': campaign_operation['operand']['id'],
-              'id': batch_id_generator.GetId(),
+              'id': batch_job_helper.GetId(),
               'name': 'Batch Ad Group #%s' % uuid.uuid4(),
               'biddingStrategyConfiguration': {
                   'bids': [
@@ -210,7 +222,7 @@ def BuildAdGroupOperations(batch_id_generator,
   return adgroup_operations
 
 
-def BuildBudgetOperations(batch_id_generator):
+def BuildBudgetOperations(batch_job_helper):
   """Builds the operations needed to create a new Budget.
 
   Note: When the Budget is created, it will have a different Id than the one
@@ -218,7 +230,7 @@ def BuildBudgetOperations(batch_id_generator):
   BatchJobService.
 
   Args:
-    batch_id_generator: a BatchJobServiceIdGenerator instance.
+    batch_job_helper: a BatchJobHelper instance.
 
   Returns:
     a list containing the operation that will create a new Budget.
@@ -234,7 +246,7 @@ def BuildBudgetOperations(batch_id_generator):
           'name': 'Batch budget #%s' % uuid.uuid4(),
           # This is a temporary Id used by the BatchJobService to identify the
           # Budget for operations that require a budgetId.
-          'budgetId': batch_id_generator.GetId(),
+          'budgetId': batch_job_helper.GetId(),
           'amount': {
               'microAmount': '50000000'
           },
@@ -282,7 +294,7 @@ def BuildCampaignCriterionOperations(campaign_operations):
   return criterion_operations
 
 
-def BuildCampaignOperations(batch_id_generator,
+def BuildCampaignOperations(batch_job_helper,
                             budget_operations, number_of_campaigns=1):
   """Builds the operations needed to create a new Campaign.
 
@@ -291,7 +303,7 @@ def BuildCampaignOperations(batch_id_generator,
   BatchJobService.
 
   Args:
-    batch_id_generator: a BatchJobServiceIdGenerator instance.
+    batch_job_helper: a BatchJobHelper instance.
     budget_operations: a list containing the operation that will add the budget
       used by these Campaigns.
     number_of_campaigns: an int number defining the number of campaigns to be
@@ -316,7 +328,7 @@ def BuildCampaignOperations(batch_id_generator,
               'status': 'PAUSED',
               # This is a temporary Id used by the BatchJobService to identify
               # the Campaigns for operations that require a campaignId.
-              'id': batch_id_generator.GetId(),
+              'id': batch_job_helper.GetId(),
               'advertisingChannelType': 'SEARCH',
               # Note that only the budgetId is required
               'budget': {
@@ -331,70 +343,6 @@ def BuildCampaignOperations(batch_id_generator,
       for _ in range(number_of_campaigns)]
 
   return campaign_operations
-
-
-def BuildUploadUrlOperations(batch_job_helper, number_of_campaigns,
-                             number_of_adgroups, number_of_keywords):
-  """Builds a list of operations that will be uploaded to the BatchJobService.
-
-  Args:
-    batch_job_helper: a BatchJobHelper instance used to construct operations.
-    number_of_campaigns: an int defining the number of Campaigns to be created.
-    number_of_adgroups: an int defining the number of AdGroups to be created.
-    number_of_keywords: an int defining the number of Keywords to be created.
-
-  Returns:
-    A tuple of str, where each is a set of operations for distinct services.
-  """
-  # Initialize BatchJobServiceIdGenerator.
-  batch_id_generator = BatchJobServiceIdGenerator()
-
-  # Build BudgetOperations and retrieve in XML form.
-  budget_operations = BuildBudgetOperations(batch_id_generator)
-  budget_request_xml = batch_job_helper.GenerateRawRequestXML(
-      budget_operations, 'BudgetService')
-  budget_operations_xml = batch_job_helper.ExtractOperations(
-      budget_request_xml)
-  # Build CampaignOperations and retrieve in XML form.
-  campaign_operations = BuildCampaignOperations(
-      batch_id_generator, budget_operations, number_of_campaigns)
-  campaign_request_xml = batch_job_helper.GenerateRawRequestXML(
-      campaign_operations, 'CampaignService')
-  campaign_operations_xml = batch_job_helper.ExtractOperations(
-      campaign_request_xml)
-  # Build CampaignCriterionOperations and retrieve in XML form.
-  campaign_criterion_operations = BuildCampaignCriterionOperations(
-      campaign_operations)
-  campaign_criterion_request_xml = batch_job_helper.GenerateRawRequestXML(
-      campaign_criterion_operations, 'CampaignCriterionService')
-  campaign_criterion_operations_xml = (
-      batch_job_helper.ExtractOperations(
-          campaign_criterion_request_xml))
-  # Build AdGroupOperations and retrieve in XML form.
-  adgroup_operations = BuildAdGroupOperations(
-      batch_id_generator, campaign_operations, number_of_adgroups)
-  adgroup_request_xml = batch_job_helper.GenerateRawRequestXML(
-      adgroup_operations, 'AdGroupService')
-  adgroup_operations_xml = batch_job_helper.ExtractOperations(
-      adgroup_request_xml)
-  # Build AdGroupCriterionOperations and retrieve in XML form.
-  adgroup_criterion_operations = BuildAdGroupCriterionOperations(
-      adgroup_operations, number_of_keywords)
-  adgroup_criterion_request_xml = batch_job_helper.GenerateRawRequestXML(
-      adgroup_criterion_operations, 'AdGroupCriterionService')
-  adgroup_criterion_operations_xml = (
-      batch_job_helper.ExtractOperations(
-          adgroup_criterion_request_xml))
-  # Build AdGroupAdOperations and retrieve in XML form.
-  adgroup_ad_operations = BuildAdGroupAdOperations(adgroup_operations)
-  adgroup_ad_request_xml = batch_job_helper.GenerateRawRequestXML(
-      adgroup_ad_operations, 'AdGroupAdService')
-  adgroup_ad_operations_xml = batch_job_helper.ExtractOperations(
-      adgroup_ad_request_xml)
-
-  return (budget_operations_xml, campaign_operations_xml,
-          campaign_criterion_operations_xml, adgroup_operations_xml,
-          adgroup_criterion_operations_xml, adgroup_ad_operations_xml)
 
 
 def GetBatchJob(client, batch_job_id):

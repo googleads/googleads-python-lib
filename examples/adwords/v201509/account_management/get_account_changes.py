@@ -70,23 +70,30 @@ def main(client):
                % (data['campaignId'], data['campaignChangeStatus']))
         if (data['campaignChangeStatus'] != 'NEW' and
             data['campaignChangeStatus'] != 'FIELDS_UNCHANGED'):
-          print '  Added ad extensions: %s' % data.get('addedAdExtensions')
-          print '  Removed ad extensions: %s' % data.get('deletedAdExtensions')
-          print ('  Added campaign criteria: %s'
-                 % data.get('addedCampaignCriteria'))
-          print ('  Removed campaign criteria: %s'
-                 % data.get('deletedCampaignCriteria'))
-          if data.get('changedAdGroups'):
+          if 'addedAdExtensions' in data:
+            print '  Added ad extensions: %s' % data['addedAdExtensions']
+          if 'removedAdExtensions' in data:
+            print '  Removed ad extensions: %s' % data['removedAdExtensions']
+          if 'addedCampaignCriteria' in data:
+            print ('  Added campaign criteria: %s' %
+                   data['addedCampaignCriteria'])
+          if 'removedCampaignCriteria' in data:
+            print ('  Removed campaign criteria: %s' %
+                   data['removedCampaignCriteria'])
+          if 'changedAdGroups' in data:
             for ad_group_data in data['changedAdGroups']:
               print ('  Ad group with id \'%s\' has change status \'%s\'.'
                      % (ad_group_data['adGroupId'],
                         ad_group_data['adGroupChangeStatus']))
               if ad_group_data['adGroupChangeStatus'] != 'NEW':
-                print '    Changed ads: %s' % ad_group_data['changedAds']
-                print ('    Changed criteria: %s'
-                       % ad_group_data['changedCriteria'])
-                print ('    Removed criteria: %s'
-                       % ad_group_data['deletedCriteria'])
+                if 'changedAds' in ad_group_data:
+                  print '    Changed ads: %s' % ad_group_data['changedAds']
+                if 'changedCriteria' in ad_group_data:
+                  print ('    Changed criteria: %s' %
+                         ad_group_data['changedCriteria'])
+                if 'removedCriteria' in ad_group_data:
+                  print ('    Removed criteria: %s' %
+                         ad_group_data['removedCriteria'])
   else:
     print 'No changes were found.'
 

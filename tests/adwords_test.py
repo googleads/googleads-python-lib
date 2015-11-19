@@ -16,13 +16,14 @@
 
 """Unit tests to cover the adwords module."""
 
-
 import io
+import os
 import sys
 import tempfile
 import unittest
 import urllib
 import urllib2
+from xml.etree import ElementTree
 
 
 import mock
@@ -227,6 +228,12 @@ class AdWordsClientTest(unittest.TestCase):
         googleads.errors.GoogleAdsValueError, self.adwords_client.GetService,
         'CampaignService', '11111')
 
+  def testGetBatchJobHelper(self):
+    with mock.patch('googleads.adwords.BatchJobHelper') as mock_helper:
+      self.assertEqual(
+          mock_helper.return_value,
+          self.adwords_client.GetBatchJobHelper())
+
   def testGetReportDownloader(self):
     with mock.patch('googleads.adwords.ReportDownloader') as mock_downloader:
       self.assertEqual(
@@ -243,6 +250,408 @@ class AdWordsClientTest(unittest.TestCase):
     self.header_handler.SetHeaders(suds_client)
     soap_header = suds_client.factory.create.return_value
     self.assertEqual(ccid, soap_header.clientCustomerId)
+
+
+class BatchJobHelperTest(unittest.TestCase):
+
+  """Test suite for BatchJobHelper utility."""
+
+  ENVELOPE_NS = 'http://schemas.xmlsoap.org/soap/envelope/'
+
+  def GenerateBudgetOperations(self, operations):
+    """Generates request containing given number of BudgetOperations.
+
+    Args:
+      operations: a positive int defining the number of BudgetOperations to be
+        generated.
+    Returns:
+      A list of dictionaries containing distinct BudgetOperations.
+    """
+    return [{
+        'operator': 'ADD',
+        'xsi_type': 'BudgetOperation',
+        'operand': {
+            'budgetId': str(i),
+            'name': 'Batch budget #%s' % i,
+            'period': 'DAILY',
+            'amount': {'microAmount': str(3333333 * i)},
+            'deliveryMethod': 'STANDARD'}
+    } for i in range(1, operations + 1)]
+
+  def GenerateCampaignCriterionOperations(self, operations):
+    """Generates request containing given number of CampaignCriterionOperations.
+
+    Args:
+      operations: a positive int defining the number of
+      CampaignCriterionOperations to be generated.
+    Returns:
+      A list of dictionaries containing distinct CampaignCriterionOperations.
+    """
+    return [{
+        'operator': 'ADD',
+        'xsi_type': 'CampaignCriterionOperation',
+        'operand': {
+            'xsi_type': 'NegativeCampaignCriterion',
+            'campaignId': str(100 * i),
+            'criterion': {
+                'xsi_type': 'Keyword',
+                'text': 'venus %s' % i,
+                'matchType': 'BROAD'
+            }
+        }
+    } for i in range(1, operations + 1)]
+
+  def GenerateValidRequest(self, operations):
+    """Generates a valid API request containing the given number of operations.
+
+    Args:
+      operations: a positive int defining the number of BudgetOperations to be
+        generated.
+
+    Returns:
+      A tuple containing the operations used to construct str containing a valid
+      API request.
+    """
+    ops = self.GenerateBudgetOperations(operations)
+    ops_xml = ''.join([self.RAW_OPERATION_TEMPLATE % (
+        op['operator'], op['xsi_type'], op['operand']['budgetId'],
+        op['operand']['name'], op['operand']['period'],
+        op['operand']['amount']['microAmount'],
+        op['operand']['deliveryMethod']
+    ) for op in ops])
+    request = self.RAW_API_REQUEST_TEMPLATE % (ops_xml)
+    return (ops, request)
+
+  def setUp(self):
+    """Prepare tests."""
+    oauth_header = {'Authorization': 'header'}
+    client_customer_id = 'client customer id'
+    dev_token = '4W1NN3R15Y0U'
+    user_agent = 'users gonna use'
+    oauth2_client = mock.Mock()
+    oauth2_client.CreateHttpHeader.return_value = dict(oauth_header)
+    self.client = googleads.adwords.AdWordsClient(
+        dev_token, oauth2_client, user_agent,
+        client_customer_id=client_customer_id)
+    self.batch_job_helper = self.client.GetBatchJobHelper()
+
+  @classmethod
+  def setUpClass(cls):
+    test_dir = os.path.dirname(__file__)
+    with open(os.path.join(
+        test_dir, 'data/batch_job_util_invalid_request.txt')) as handler:
+      cls.INVALID_API_REQUEST = handler.read()
+    with open(os.path.join(
+        test_dir, 'data/batch_job_util_not_request.txt')) as handler:
+      cls.NOT_API_REQUEST = handler.read()
+    with open(os.path.join(
+        test_dir, 'data/batch_job_util_raw_request_template.txt')) as handler:
+      cls.RAW_API_REQUEST_TEMPLATE = handler.read()
+    with open(os.path.join(
+        test_dir, 'data/batch_job_util_raw_operation_template.txt')) as handler:
+      cls.RAW_OPERATION_TEMPLATE = handler.read()
+    with open(os.path.join(
+        test_dir, 'data/batch_job_util_upload_template.txt')) as handler:
+      cls.UPLOAD_OPERATIONS_TEMPLATE = handler.read()
+
+  def testExtractOperations(self):
+    """Tests whether operations XML was extracted and formatted correctly.
+
+    Verifies that the xsi_type has been properly assigned.
+    """
+    operations = self.GenerateCampaignCriterionOperations(1)
+    raw_xml = self.batch_job_helper._GenerateRawRequestXML(operations)
+    operations_xml = self.batch_job_helper._ExtractOperations(raw_xml)
+    # Put operations in a format that allows us to easily verify the behavior.
+    ops_element = ElementTree.fromstring(operations_xml)
+    self.assertTrue(ops_element.tag == 'operations')
+    # Check that the xsi_type has been set correctly.
+    self.assertTrue(ops_element.attrib[
+        '{http://www.w3.org/2001/XMLSchema-instance}type'] ==
+                    'CampaignCriterionOperation')
+    operand = ops_element.find('operand')
+    self.assertTrue(operand.attrib[
+        '{http://www.w3.org/2001/XMLSchema-instance}type'] ==
+                    'NegativeCampaignCriterion')
+    criterion = operand.find('criterion')
+    self.assertTrue(criterion.attrib[
+        '{http://www.w3.org/2001/XMLSchema-instance}type'] ==
+                    'Keyword')
+
+  def testFormatForBatchJobService(self):
+    """Tests whether namespaces have been removed."""
+    operations_amount = 5
+    ops = self.GenerateCampaignCriterionOperations(operations_amount)
+    root = ElementTree.fromstring(self.batch_job_helper._GenerateRawRequestXML(
+        ops))
+    body = root.find('{%s}Body' % self.ENVELOPE_NS)
+    mutate = body.find('{%s}mutate' % self.batch_job_helper._adwords_endpoint)
+    self.batch_job_helper._FormatForBatchJobService(mutate)
+    self.assertTrue(self.batch_job_helper._adwords_endpoint not in mutate.tag)
+    self.assertTrue(len(mutate) == operations_amount)
+
+    for ops in mutate:
+      self.assertTrue(self.batch_job_helper._adwords_endpoint not in ops.tag)
+      for child in ops:
+        self.assertTrue(self.batch_job_helper._adwords_endpoint not in
+                        child.tag)
+      operand = ops.find('operand')
+      self.assertTrue(len(operand.attrib) == 1)
+      self.assertTrue(
+          'ns' not in
+          operand.attrib['{http://www.w3.org/2001/XMLSchema-instance}type'])
+      for child in operand:
+        self.assertTrue(self.batch_job_helper._adwords_endpoint not in
+                        child.tag)
+      criterion = operand.find('criterion')
+      self.assertTrue(
+          'ns' not in
+          criterion.attrib['{http://www.w3.org/2001/XMLSchema-instance}type'])
+      for child in criterion:
+        self.assertTrue(self.batch_job_helper._adwords_endpoint not in
+                        child.tag)
+
+  def testGenerateOperationsXMLNoXsiType(self):
+    """Tests whether _GenerateOperationsXML raises ValueError if no xsi_type.
+    """
+    operations = self.GenerateCampaignCriterionOperations(1)
+    del operations[0]['xsi_type']
+    self.assertRaises(ValueError, self.batch_job_helper._GenerateOperationsXML,
+                      operations)
+
+  def testGenerateOperationsXMLWithNoOperations(self):
+    """Tests whether _GenerateOperationsXML produces empty str if no operations.
+    """
+    operations = self.GenerateCampaignCriterionOperations(0)
+    raw_xml = self.batch_job_helper._GenerateOperationsXML(
+        operations)
+    self.assertTrue(raw_xml is '')
+
+  def testGenerateRawRequestXMLFromSingleOperation(self):
+    """Tests whether raw request xml can be produced from a single operation."""
+    operations_amount = 1
+    ops = self.GenerateBudgetOperations(operations_amount)
+
+    root = ElementTree.fromstring(
+        self.batch_job_helper._GenerateRawRequestXML(ops))
+    self.assertTrue(len(root) == 2)
+    body = root.find('{%s}Body' % self.ENVELOPE_NS)
+    self.assertTrue(len(body) == 1)
+    mutate = body.find('{%s}mutate' % self.batch_job_helper._adwords_endpoint)
+    self.assertTrue(len(mutate) == operations_amount)
+
+    for i in range(0, operations_amount):
+      operations = mutate[i]
+      self.assertEqual(operations.tag, '{%s}operations' %
+                       self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertEqual(operations.find(
+          '{%s}operator' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operator'])
+      self.assertEqual(
+          operations.find(
+              '{%s}Operation.Type' %
+              self.batch_job_helper._adwords_endpoint).text,
+          ops[i]['xsi_type'])
+      operand = operations.find(
+          '{%s}operand' % self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertEqual(operand.find(
+          '{%s}budgetId' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['budgetId'])
+      self.assertEqual(operand.find(
+          '{%s}name' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['name'])
+      self.assertEqual(
+          operand.find(
+              '{%s}period' %
+              self.batch_job_helper._adwords_endpoint).text,
+          ops[i]['operand']['period'])
+      amount = operand.find('{%s}amount' %
+                            self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(amount._children) ==
+                      len(ops[i]['operand']['amount'].keys()))
+      self.assertEqual(amount.find(
+          '{%s}microAmount' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['amount']['microAmount'])
+      self.assertEqual(operand.find(
+          '{%s}deliveryMethod' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['deliveryMethod'])
+
+  def testGenerateRawRequestXMLFromMultipleOperations(self):
+    """Tests whether raw request xml can be produced for multiple operations."""
+    operations_amount = 5
+    ops = self.GenerateBudgetOperations(operations_amount)
+
+    root = ElementTree.fromstring(
+        self.batch_job_helper._GenerateRawRequestXML(ops))
+    self.assertTrue(len(root) == 2)
+    body = root.find('{%s}Body' % self.ENVELOPE_NS)
+    self.assertTrue(len(body) == 1)
+    mutate = body.find('{%s}mutate' % self.batch_job_helper._adwords_endpoint)
+    self.assertTrue(len(mutate) == operations_amount)
+
+    for i in range(0, operations_amount):
+      operations = mutate[i]
+      self.assertEqual(
+          operations.tag,
+          '{%s}operations' % self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertEqual(operations.find(
+          '{%s}operator' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operator'])
+      self.assertEqual(operations.find(
+          '{%s}Operation.Type' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['xsi_type'])
+      operand = operations.find(
+          '{%s}operand' % self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertEqual(operand.find(
+          '{%s}budgetId' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['budgetId'])
+      self.assertEqual(operand.find(
+          '{%s}name' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['name'])
+      self.assertEqual(operand.find(
+          '{%s}period' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['period'])
+      amount = operand.find(
+          '{%s}amount' % self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(amount._children) ==
+                      len(ops[i]['operand']['amount'].keys()))
+      self.assertEqual(amount.find(
+          '{%s}microAmount' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['amount']['microAmount'])
+      self.assertEqual(operand.find(
+          '{%s}deliveryMethod' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['deliveryMethod'])
+
+  def testGetId(self):
+    """Test whether the Ids generated are decreasing sequentially."""
+    expected = [-x for x in range(1, 101)]
+
+    for value in expected:
+      self.assertEqual(value, self.batch_job_helper.GetId())
+
+  def testGetRawOperationsFromValidSingleOperationRequest(self):
+    """Test whether operations XML can be retrieved for a single-op request.
+
+    Also verifies that the contents of generated XML are correct.
+    """
+    operations_amount = 1
+    ops, request = self.GenerateValidRequest(operations_amount)
+
+    mutate = self.batch_job_helper._GetRawOperationsFromXML(request)
+    self.assertEqual(mutate.tag,
+                     '{%s}mutate' % self.batch_job_helper._adwords_endpoint)
+    self.assertTrue(len(mutate._children) == operations_amount)
+
+    for i in range(0, operations_amount):
+      operations = mutate[i]
+      self.assertEqual(
+          operations.tag,
+          '{%s}operations' % self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertEqual(operations.find(
+          '{%s}operator' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operator'])
+      self.assertEqual(operations.find(
+          '{%s}Operation.Type' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['xsi_type'])
+      operand = operations.find(
+          '{%s}operand' % self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertEqual(operand.find(
+          '{%s}budgetId' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['budgetId'])
+      self.assertEqual(operand.find(
+          '{%s}name' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['name'])
+      self.assertEqual(operand.find(
+          '{%s}period' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['period'])
+      amount = operand.find(
+          '{%s}amount' % self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(amount._children) ==
+                      len(ops[i]['operand']['amount'].keys()))
+      self.assertEqual(amount.find(
+          '{%s}microAmount' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['amount']['microAmount'])
+      self.assertEqual(operand.find(
+          '{%s}deliveryMethod' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['deliveryMethod'])
+
+  def testGetRawOperationsFromValidMultipleOperationRequest(self):
+    """Test whether operations XML can be retrieved for a multi-op request.
+
+    Also verifies that the contents of generated XML are correct.
+    """
+    operations_amount = 5
+    ops, request = self.GenerateValidRequest(operations_amount)
+
+    mutate = self.batch_job_helper._GetRawOperationsFromXML(request)
+    self.assertEqual(
+        mutate.tag,
+        '{%s}mutate' % self.batch_job_helper._adwords_endpoint)
+    self.assertTrue(len(mutate._children) == operations_amount)
+
+    for i in range(0, operations_amount):
+      operations = mutate[i]
+      self.assertEqual(
+          operations.tag,
+          '{%s}operations' % self.batch_job_helper._adwords_endpoint)
+      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertEqual(operations.find(
+          '{%s}operator' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operator'])
+      self.assertEqual(operations.find(
+          '{%s}Operation.Type' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['xsi_type'])
+      operand = (operations.find(
+          '{%s}operand' % self.batch_job_helper._adwords_endpoint))
+      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertEqual(operand.find(
+          '{%s}budgetId' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['budgetId'])
+      self.assertEqual(operand.find(
+          '{%s}name' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['name'])
+      self.assertEqual(operand.find(
+          '{%s}period' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['period'])
+      amount = (operand.find(
+          '{%s}amount' % self.batch_job_helper._adwords_endpoint))
+      self.assertTrue(len(amount._children) ==
+                      len(ops[i]['operand']['amount'].keys()))
+      self.assertEqual(amount.find(
+          '{%s}microAmount' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['amount']['microAmount'])
+      self.assertEqual(operand.find(
+          '{%s}deliveryMethod' % self.batch_job_helper._adwords_endpoint).text,
+                       ops[i]['operand']['deliveryMethod'])
+
+  def testGetRawOperationsFromValidZeroOperationRequest(self):
+    """Test verifying empty request generated if no operations provided."""
+    operations_amount = 0
+    _, request = self.GenerateValidRequest(operations_amount)
+
+    mutate = self.batch_job_helper._GetRawOperationsFromXML(request)
+    self.assertEqual(
+        mutate.tag,
+        '{%s}mutate' % self.batch_job_helper._adwords_endpoint)
+    self.assertTrue(len(mutate._children) == operations_amount)
+
+  def testGetRawOperationsFromInvalidRequest(self):
+    """Test whether an invalid API request raises an Exception."""
+    self.assertRaises(AttributeError,
+                      self.batch_job_helper._GetRawOperationsFromXML,
+                      self.INVALID_API_REQUEST)
+
+  def testGetRawOperationsFromNotXMLRequest(self):
+    """Test whether non-XML input raises an Exception."""
+    self.assertRaises(ElementTree.ParseError,
+                      self.batch_job_helper._GetRawOperationsFromXML,
+                      self.NOT_API_REQUEST)
 
 
 class ReportDownloaderTest(unittest.TestCase):

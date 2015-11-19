@@ -14,9 +14,9 @@
 
 """Client library for the AdWords API."""
 
-
 import io
 import os
+import re
 import sys
 import urllib
 import urllib2
@@ -317,12 +317,23 @@ class AdWordsClient(object):
     return googleads.common.SudsServiceProxy(
         client, _AdWordsHeaderHandler(self, version))
 
+  def GetBatchJobHelper(self):
+    """Returns a BatchJobHelper to work with the BatchJobService.
+
+      This is a convenience method. It is functionally identical to calling
+      BatchJobHelper(adwords_client, version).
+
+      Returns:
+        An initialized BatchJobHelper tied to this client.
+    """
+    return BatchJobHelper(self)
+
   def GetReportDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
                           server=_DEFAULT_ENDPOINT):
     """Creates a downloader for AdWords reports.
 
     This is a convenience method. It is functionally identical to calling
-    ReportDownloader(adwords_client, version, server)
+    ReportDownloader(adwords_client, version, server).
 
     Args:
       [optional]
@@ -340,7 +351,7 @@ class AdWordsClient(object):
     """Change the client customer id used by the AdWordsClient instance.
 
     Args:
-      client_customer_id: str New Client Customer Id to use.
+      client_customer_id: str New Client Customer ID to use.
     """
     self.client_customer_id = client_customer_id
 
@@ -423,6 +434,175 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
             % (kw, _REPORT_HEADER_KWARGS.keys()))
 
     return headers
+
+
+class BatchJobHelper(object):
+  """A utility that simplifies working with the BatchJobService."""
+  # Used to remove namespace from xsi:type Element attributes.
+  _ATTRIB_NAMESPACE_SUB = re.compile('ns[0-1]:')
+  _UPLOAD_REQUEST_BODY_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
+<mutate xmlns="%s" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">%s
+</mutate>"""
+
+  def __init__(self, adwords_client, version=sorted(_SERVICE_MAP.keys())[-1]):
+    """Initializes the BatchJobHelper.
+
+    Args:
+      adwords_client: an initialized AdWordsClient.
+      version: a str indicating version of the AdWords API you intend to use.
+        This will be set to the latest version of AdWords by default.
+    """
+    self.client = adwords_client
+    self._temporary_id = 0  # Used for temporary IDs in BatchJobService.
+    self._version = version
+    self._adwords_endpoint = ('https://adwords.google.com/api/adwords/cm/%s' %
+                              self._version)
+    self._adwords_namespace = ('{%s}' % self._adwords_endpoint)
+    # Used to remove the AdWords namespace from Element tags.
+    self._tag_namespace_sub = re.compile(self._adwords_namespace)
+
+  def GetId(self):
+    """Produces a distinct sequential ID for the BatchJobService.
+
+    Returns:
+      A negative number that will be the temporary ID for an API resource.
+    """
+    self._temporary_id -= 1
+    return self._temporary_id
+
+  def UploadBatchJobOperations(self, upload_url, *operations):
+    """Uploads operations to the given uploadUrl.
+
+    Note: Each list of operations is expected to contain operations of the same
+    type, similar to how one would normally send operations in an AdWords API
+    Service request.
+
+    Args:
+      upload_url: a string url that the given operations will be uploaded to.
+      *operations: one or more lists of operations as would be sent to the
+        AdWords API for the associated service.
+    """
+    operations_xml = ''.join([
+        self._GenerateOperationsXML(operations_list)
+        for operations_list in operations])
+
+    request_body = (self._UPLOAD_REQUEST_BODY_TEMPLATE %
+                    (self._adwords_endpoint, operations_xml))
+
+    req = urllib2.Request(upload_url)
+    req.add_header('Content-Type', 'application/xml')
+    urllib2.urlopen(req, data=request_body)
+
+  def _GenerateOperationsXML(self, operations):
+    """Generates XML for the given list of operations.
+
+    Args:
+      operations: a list of operations for single AdWords Service.
+    Returns:
+      A str containing the XML for only the operations, formatted to work
+      with the BatchJobService.
+    Raises:
+      ValueError: if no xsi_type is specified for the operations.
+    """
+    if operations:
+      # Verify that all operations included specify an xsi_type.
+      for operation in operations:
+        if 'xsi_type' not in operation:
+          raise ValueError('Operations have no xsi_type specified.')
+      return self._ExtractOperations(self._GenerateRawRequestXML(operations))
+    else:
+      return ''
+
+  def _GenerateRawRequestXML(self, operations):
+    """Generates the raw XML for the operations sent to the given service.
+
+    Args:
+      operations: a list containing operations that could be run by the given
+        service.
+
+    Returns:
+      A str containing the raw XML of the request to the given service that
+      would execute the given operations.
+    """
+    service_name = operations[0]['xsi_type'].replace('Operation', 'Service')
+    service = self.client.GetService(service_name, self._version)
+    service.suds_client.set_options(nosend=True)
+    service_request = service.mutate(operations).envelope
+    service.suds_client.set_options(nosend=False)
+    return service_request
+
+  def _ExtractOperations(self, full_soap_xml):
+    """Extracts operations from API Request XML for use with BatchJobService.
+
+    Args:
+      full_soap_xml: The full XML for the desired operation, as generated by
+        suds.
+
+    Returns:
+      A string containing only the operations portion of the full XML request,
+      formatted for use with the BatchJobService. If no operations are found,
+      returns an empty string.
+
+    Raises:
+      ValueError: If no Operation.Type element is found in the operations. This
+        ordinarily happens if no xsi_type is specified for the operations.
+    """
+    # Extract mutate element from XML, this contains the operations.
+    mutate = BatchJobHelper._GetRawOperationsFromXML(self, full_soap_xml)
+    # Ensure operations are formatted correctly for BatchJobService.
+    for operations in mutate:
+      self._FormatForBatchJobService(operations)
+      # Extract the operation type, ensure xsi:type is set for
+      # BatchJobService. Even if xsi_type is set earlier, suds will end up
+      # removing it when it sets Operation.Type.
+      operation_type = operations.find('Operation.Type')
+      if operation_type is None:
+        raise ValueError('No xsi_type specified for the operations.')
+      operations.attrib['xsi:type'] = operation_type.text
+    operations_xml = ''.join([ElementTree.tostring(operations)
+                              for operations in mutate])
+    return operations_xml
+
+  def _FormatForBatchJobService(self, element):
+    """Formats contents of all operations for use with the BatchJobService.
+
+    This will recursively remove unnecessary namespaces generated by suds that
+    would prevent the operations from executing via the BatchJobService. It will
+    also remove namespaces appended to the xsi:type in some cases that also
+    cause issues for the BatchJobService.
+
+    Args:
+      element: a starting Element to be modified to the correct format.
+    """
+    # Remove any unnecessary AdWords namespace from the tag.
+    element.tag = self._tag_namespace_sub.sub('', element.tag)
+    xsi_type = element.attrib.get(
+        '{http://www.w3.org/2001/XMLSchema-instance}type')
+    # If an xsi_type attribute exists, ensure that the namespace is removed from
+    # the type.
+    if xsi_type:
+      element.attrib['{http://www.w3.org/2001/XMLSchema-instance}type'] = (
+          self._ATTRIB_NAMESPACE_SUB.sub('', xsi_type))
+    for child in element:
+      self._FormatForBatchJobService(child)
+
+  def _GetRawOperationsFromXML(self, raw_request_xml):
+    """Retrieve the raw set of operations from the request XML.
+
+    Args:
+      raw_request_xml: The full XML for the desired operation, as generated by
+        suds.
+
+    Returns:
+      An unmodified mutate Element containing the operations from the raw
+      request xml.
+
+    Raises:
+      AttributeError: if the provided XML isn't from AdWords.
+    """
+    root = ElementTree.fromstring(raw_request_xml)
+    return root.find('{http://schemas.xmlsoap.org/soap/envelope/}Body').find(
+        '%smutate' % self._adwords_namespace)
 
 
 class ReportDownloader(object):
