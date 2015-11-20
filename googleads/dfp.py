@@ -193,7 +193,7 @@ class DfpClient(object):
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, oauth2_client, application_name, network_code=None,
-               https_proxy=None, cache=None):
+               https_proxy=None, cache=None, transport_factory=None):
     """Initializes a DfpClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -217,11 +217,16 @@ class DfpClient(object):
           'Application name must be set and not be the default [%s]' %
           DEFAULT_APPLICATION_NAME)
 
+    if transport_factory and not callable(transport_factory):
+        raise googleads.errors.GoogleAdsValueError(
+            "The transport_factory argument must refer to a callable.")
+
     self.oauth2_client = oauth2_client
     self.application_name = application_name
     self.network_code = network_code
     self.https_proxy = https_proxy
     self.cache = cache
+    self.transport_factory = transport_factory
     self._header_handler = _DfpHeaderHandler(self)
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
@@ -245,16 +250,13 @@ class DfpClient(object):
       A GoogleAdsValueError if the service or version provided do not exist.
     """
     server = server[:-1] if server[-1] == '/' else server
+    transport = self.transport_factory() if self.transport_factory else None
+    proxy_option = {'https': self.https_proxy} if self.https_proxy else None
     try:
-      proxy_option = None
-      if self.https_proxy:
-        proxy_option = {
-            'https': self.https_proxy
-        }
-
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT % (server, version, service_name),
-          proxy=proxy_option, cache=self.cache, timeout=3600)
+          proxy=proxy_option, cache=self.cache, timeout=3600,
+          transport=transport)
     except suds.transport.TransportError:
       if version in _SERVICE_MAP:
         if service_name in _SERVICE_MAP[version]:
@@ -343,7 +345,7 @@ class FilterStatement(object):
             'values': self.values}
 
 
-class DataDownloader(object):
+class DataDownloaderBase(object):
   """A utility that can be used to download reports and PQL result sets."""
 
   def __init__(self, dfp_client, version=sorted(_SERVICE_MAP.keys())[-1],
@@ -416,22 +418,7 @@ class DataDownloader(object):
       return report_job_id
 
   def DownloadReportToFile(self, report_job_id, export_format, outfile):
-    """Downloads report data and writes it to a file.
-
-    The report job must be completed before calling this function.
-
-    Args:
-      report_job_id: The ID of the report job to wait for, as a string.
-      export_format: The export format for the report file, as a string.
-      outfile: A writeable, file-like object to write to.
-    """
-    service = self._GetReportService()
-    report_url = service.getReportDownloadURL(report_job_id, export_format)
-    response = urllib2.urlopen(report_url)
-    while True:
-      chunk = response.read(_CHUNK_SIZE)
-      if not chunk: break
-      outfile.write(chunk)
+    raise NotImplemented("This method needs to be implemented by subclasses.")
 
   def DownloadPqlResultToList(self, pql_query, values=None):
     """Downloads the results of a PQL query to a list.
@@ -570,6 +557,26 @@ class DataDownloader(object):
       return date_time_str[:-6] + 'Z'
     else:
       return date_time_str
+
+
+class DataDownloader(DataDownloaderBase):
+  def DownloadReportToFile(self, report_job_id, export_format, outfile):
+    """Downloads report data and writes it to a file.
+
+    The report job must be completed before calling this function.
+
+    Args:
+      report_job_id: The ID of the report job to wait for, as a string.
+      export_format: The export format for the report file, as a string.
+      outfile: A writeable, file-like object to write to.
+    """
+    service = self._GetReportService()
+    report_url = service.getReportDownloadURL(report_job_id, export_format)
+    response = urllib2.urlopen(report_url)
+    while True:
+      chunk = response.read(_CHUNK_SIZE)
+      if not chunk: break
+      outfile.write(chunk)
 
 
 def DfpClassType(value):

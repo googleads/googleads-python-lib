@@ -180,7 +180,7 @@ class DfpClientTest(unittest.TestCase):
       mock_client.assert_called_once_with(
           'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
           % (self.version, service), proxy=https_proxy, cache=self.cache,
-          timeout=3600)
+          timeout=3600, transport=None)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
     # Use the default server and https proxy.
@@ -191,7 +191,7 @@ class DfpClientTest(unittest.TestCase):
       mock_client.assert_called_once_with(
           'https://ads.google.com/apis/ads/publisher/%s/%s?wsdl'
           % (self.version, service), proxy=None, cache=self.cache,
-          timeout=3600)
+          timeout=3600, transport=None)
       self.assertFalse(mock_client.return_value.set_options.called)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 

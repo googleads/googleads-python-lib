@@ -233,7 +233,7 @@ class AdWordsClient(object):
   def __init__(
       self, developer_token, oauth2_client, user_agent,
       client_customer_id=None, validate_only=False, partial_failure=False,
-      https_proxy=None, cache=None):
+      https_proxy=None, cache=None, transport_factory=None):
     """Initializes an AdWordsClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -260,7 +260,13 @@ class AdWordsClient(object):
       https_proxy: A string identifying the proxy that all HTTPS requests
           should be routed through.
       cache: A subclass of suds.cache.Cache; defaults to None.
+      transport_factory: Callable (e.g. class) to construct alternative
+          transports for the Suds client.
     """
+    if transport_factory and not callable(transport_factory):
+        raise googleads.errors.GoogleAdsValueError(
+            "The transport_factory argument must refer to a callable.")
+
     self.developer_token = developer_token
     self.oauth2_client = oauth2_client
     self.oauth2_client.Refresh()
@@ -270,6 +276,7 @@ class AdWordsClient(object):
     self.partial_failure = partial_failure
     self.https_proxy = https_proxy
     self.cache = cache
+    self.transport_factory = transport_factory
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
                  server=_DEFAULT_ENDPOINT):
@@ -292,17 +299,14 @@ class AdWordsClient(object):
       A GoogleAdsValueError if the service or version provided do not exist.
     """
     if server[-1] == '/': server = server[:-1]
+    transport = self.transport_factory() if self.transport_factory else None
+    proxy_option = {'https': self.https_proxy} if self.https_proxy else None
     try:
-      proxy_option = None
-      if self.https_proxy:
-        proxy_option = {
-            'https': self.https_proxy
-        }
-
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT %
           (server, _SERVICE_MAP[version][service_name], version, service_name),
-          proxy=proxy_option, cache=self.cache, timeout=3600)
+          proxy=proxy_option, cache=self.cache, timeout=3600,
+          transport=transport)
     except KeyError:
       if version in _SERVICE_MAP:
         raise googleads.errors.GoogleAdsValueError(
@@ -436,7 +440,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     return headers
 
 
-class BatchJobHelper(object):
+class BatchJobHelperBase(object):
   """A utility that simplifies working with the BatchJobService."""
   # Used to remove namespace from xsi:type Element attributes.
   _ATTRIB_NAMESPACE_SUB = re.compile('ns[0-1]:')
@@ -605,7 +609,32 @@ class BatchJobHelper(object):
         '%smutate' % self._adwords_namespace)
 
 
-class ReportDownloader(object):
+class BatchJobHelper(BatchJobHelperBase):
+  def UploadBatchJobOperations(self, upload_url, *operations):
+    """Uploads operations to the given uploadUrl.
+
+    Note: Each list of operations is expected to contain operations of the same
+    type, similar to how one would normally send operations in an AdWords API
+    Service request.
+
+    Args:
+      upload_url: a string url that the given operations will be uploaded to.
+      *operations: one or more lists of operations as would be sent to the
+        AdWords API for the associated service.
+    """
+    operations_xml = ''.join([
+        self._GenerateOperationsXML(operations_list)
+        for operations_list in operations])
+
+    request_body = (self._UPLOAD_REQUEST_BODY_TEMPLATE %
+                    (self._adwords_endpoint, operations_xml))
+
+    req = urllib2.Request(upload_url)
+    req.add_header('Content-Type', 'application/xml')
+    urllib2.urlopen(req, data=request_body)
+
+
+class ReportDownloaderBase(object):
   """A utility that can be used to download reports from AdWords."""
 
   # The namespace format for report download requests. A version needs to be
@@ -637,23 +666,24 @@ class ReportDownloader(object):
     self._adwords_client = adwords_client
     self._namespace = self._NAMESPACE_FORMAT % version
     self._end_point = self._END_POINT_FORMAT % (server, version)
-    self._header_handler = _AdWordsHeaderHandler(adwords_client, version)
-
-    proxy_option = None
     if self._adwords_client.https_proxy:
       proxy_option = {'https': self._adwords_client.https_proxy}
-    # Create an Opener to handle requests when downloading reports.
-      self.url_opener = urllib2.build_opener(
-          urllib2.ProxyHandler({'https': self._adwords_client.https_proxy}))
     else:
-      self.url_opener = urllib2.build_opener()
+      proxy_option = None
 
     schema_url = self._SCHEMA_FORMAT % (server, version)
-    schema = suds.client.Client(
+    if self._adwords_client.transport_factory:
+        transport = self._adwords_client.transport_factory()
+    else:
+        transport = None
+    schema_client = suds.client.Client(
         schema_url,
         doctor=suds.xsd.doctor.ImportDoctor(suds.xsd.doctor.Import(
             self._namespace, schema_url)),
-        proxy=proxy_option, cache=self._adwords_client.cache).wsdl.schema
+        proxy=proxy_option,
+        cache=self._adwords_client.cache,
+        transport=transport)
+    schema = schema_client.wsdl.schema
     self._report_definition_type = schema.elements[
         (self._REPORT_DEFINITION_NAME, self._namespace)]
     self._marshaller = suds.mx.literal.Literal(schema)
@@ -818,14 +848,8 @@ class ReportDownloader(object):
       AdWordsReportError: if the request fails for any other reason; e.g. a
           network error.
     """
-    response = None
-    try:
-      response = self._DownloadReportAsStream(
-          self._SerializeReportDefinition(report_definition), kwargs)
-      return response.read().decode('utf-8')
-    finally:
-      if response:
-        response.close()
+    return self._DownloadReportAsString(
+        self._SerializeReportDefinition(report_definition), kwargs)
 
   def DownloadReportAsStringWithAwql(self, query, file_format, **kwargs):
     """Downloads an AdWords report using an AWQL query.
@@ -864,14 +888,8 @@ class ReportDownloader(object):
       AdWordsReportError: if the request fails for any other reason; e.g. a
           network error.
     """
-    response = None
-    try:
-      response = self._DownloadReportAsStream(
-          self._SerializeAwql(query, file_format), kwargs)
-      return response.read().decode('utf-8')
-    finally:
-      if response:
-        response.close()
+    return self._DownloadReportAsString(
+        self._SerializeAwql(query, file_format), kwargs)
 
   def DownloadReportWithAwql(self, query, file_format, output=sys.stdout,
                              **kwargs):
@@ -917,6 +935,71 @@ class ReportDownloader(object):
                          kwargs)
 
   def _DownloadReport(self, post_body, output, kwargs):
+    raise NotImplemented("This method needs to be implemented by subclasses.")
+
+  def _DownloadReportAsString(self, post_body, kwargs):
+    raise NotImplemented("This method needs to be implemented by subclasses.")
+
+  def _DownloadReportAsStream(self, post_body, kwargs):
+    raise NotImplemented("This method needs to be implemented by subclasses.")
+
+  def _SerializeAwql(self, query, file_format):
+    """Serializes an AWQL query and file format for transport.
+
+    Args:
+      query: A string representing the AWQL query used in the report.
+      file_format: A string representing the file format of the generated
+          report.
+
+    Returns:
+      The given query and format URL encoded into the format needed for an
+      AdWords report request as a string. This is intended to be a POST body.
+    """
+    return {'__fmt': file_format, '__rdquery': query}
+
+  def _SerializeReportDefinition(self, report_definition):
+    """Serializes a report definition for transport.
+
+    Args:
+      report_definition: A dictionary or ReportDefinition object to be
+          serialized.
+
+    Returns:
+      The given report definition serialized into XML and then URL encoded into
+      the format needed for an AdWords report request as a string. This is
+      intended to be a POST body.
+    """
+    content = suds.mx.Content(
+        tag=self._REPORT_DEFINITION_NAME, value=report_definition,
+        name=self._REPORT_DEFINITION_NAME, type=self._report_definition_type)
+    return {'__rdxml': self._marshaller.process(content).plain()}
+
+
+class ReportDownloader(ReportDownloaderBase):
+  def __init__(self, adwords_client, version=sorted(_SERVICE_MAP.keys())[-1],
+               server=_DEFAULT_ENDPOINT):
+    """Initializes a ReportDownloader.
+
+    Args:
+      adwords_client: The AdwordsClient whose attributes will be used to
+          authorize your report download requests.
+      [optional]
+      version: A string identifying the AdWords version to connect to. This
+          defaults to what is currently the latest version. This will be updated
+          in future releases to point to what is then the latest version.
+      server: A string identifying the webserver hosting the AdWords API.
+    """
+    super(ReportDownloader, self).__init__(adwords_client, version=version, server=server)
+    self._header_handler = _AdWordsHeaderHandler(adwords_client, version)
+
+    if self._adwords_client.https_proxy:
+    # Create an Opener to handle requests when downloading reports.
+      self.url_opener = urllib2.build_opener(
+          urllib2.ProxyHandler({'https': self._adwords_client.https_proxy}))
+    else:
+      self.url_opener = urllib2.build_opener()
+
+  def _DownloadReport(self, post_body, output, kwargs):
     """Downloads an AdWords report, writing the contents to the given file.
 
     Args:
@@ -954,6 +1037,46 @@ class ReportDownloader(object):
                    and (getattr(output, 'mode', 'w') == 'w'
                         and type(output) is not io.BytesIO)
                    else response.read())
+    finally:
+      if response:
+        response.close()
+
+  def _DownloadReportAsString(self, post_body, kwargs):
+    """Downloads an AdWords report, returning a string.
+
+    Args:
+      post_body: The contents of the POST request's body as a URL encoded
+          string.
+      kwargs: A dictionary containing optional keyword arguments.
+
+    Keyword Arguments:
+      include_zero_impressions: A boolean indicating whether the report should
+        show rows with zero impressions.
+      skip_report_header: A boolean indicating whether to include a header row
+          containing the report name and date range. If false or not specified,
+          report output will include the header row.
+      skip_column_header: A boolean indicating whether to include column names
+          in reports. If false or not specified, report output will include the
+          column names.
+      skip_report_summary: A boolean indicating whether to include a summary row
+          containing the report totals. If false or not specified, report output
+          will include the summary row.
+
+    Returns:
+      A stream to be used in retrieving the report contents.
+
+    Raises:
+      AdWordsReportBadRequestError: if the report download fails due to
+        improper input. In the event of certain other failures, a
+        urllib2.URLError (Python 2) or urllib.error.URLError (Python 3) will be
+        raised.
+      AdWordsReportError: if the request fails for any other reason; e.g. a
+          network error.
+    """
+    response = None
+    try:
+      response = self._DownloadReportAsStream(post_body, kwargs)
+      return response.read().decode('utf-8')
     finally:
       if response:
         response.close()
@@ -1012,7 +1135,7 @@ class ReportDownloader(object):
       The given query and format URL encoded into the format needed for an
       AdWords report request as a string. This is intended to be a POST body.
     """
-    return urllib.urlencode({'__fmt': file_format, '__rdquery': query})
+    return urllib.urlencode(super(ReportDownloader, self)._SerializeAwql(query, file_format))
 
   def _SerializeReportDefinition(self, report_definition):
     """Serializes a report definition for transport.
@@ -1026,10 +1149,7 @@ class ReportDownloader(object):
       the format needed for an AdWords report request as a string. This is
       intended to be a POST body.
     """
-    content = suds.mx.Content(
-        tag=self._REPORT_DEFINITION_NAME, value=report_definition,
-        name=self._REPORT_DEFINITION_NAME, type=self._report_definition_type)
-    return urllib.urlencode({'__rdxml': self._marshaller.process(content)})
+    return urllib.urlencode(super(ReportDownloader, self)._SerializeReportDefinition(report_definition))
 
   def _ExtractError(self, error):
     """Attempts to extract information from a report download error XML message.
