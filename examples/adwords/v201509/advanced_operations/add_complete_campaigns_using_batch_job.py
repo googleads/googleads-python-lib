@@ -22,7 +22,6 @@ KeyWords.
 Api: AdWordsOnly
 """
 
-import logging
 import random
 import time
 import urllib2
@@ -30,11 +29,6 @@ import uuid
 
 
 from googleads import adwords
-
-
-# Set logging configuration.
-logging.basicConfig(level=logging.INFO)
-logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 
 
 NUMBER_OF_CAMPAIGNS_TO_ADD = 2
@@ -53,8 +47,8 @@ def main(client, number_of_campaigns, number_of_adgroups, number_of_keywords):
   # Retrieve the URL used to upload the BatchJob operations.
   upload_url = batch_job['uploadUrl']['url']
   batch_job_id = batch_job['id']
-  logging.info('Created BatchJob with ID "%d", status "%s", and upload URL '
-               '"%s"', batch_job['id'], batch_job['status'], upload_url)
+  print 'Created BatchJob with ID "%d", status "%s", and upload URL "%s"' % (
+      batch_job['id'], batch_job['status'], upload_url)
 
   # Generate operations to upload.
   budget_operations = BuildBudgetOperations(batch_job_helper)
@@ -69,15 +63,15 @@ def main(client, number_of_campaigns, number_of_adgroups, number_of_keywords):
   adgroup_ad_operations = BuildAdGroupAdOperations(adgroup_operations)
 
   # Upload operations.
-  batch_job_helper.UploadBatchJobOperations(
+  batch_job_helper.UploadOperations(
       upload_url, budget_operations, campaign_operations,
       campaign_criterion_operations, adgroup_operations,
       adgroup_criterion_operations, adgroup_ad_operations)
 
   # Download and display results.
   download_url = GetBatchJobDownloadUrlWhenReady(client, batch_job_id)
-  response = urllib2.urlopen(download_url)
-  logging.info('Downloaded following response:\n%s', response.read())
+  response = urllib2.urlopen(download_url).read()
+  PrintResponse(batch_job_helper, response)
 
 
 def AddBatchJob(client):
@@ -393,19 +387,39 @@ def GetBatchJobDownloadUrlWhenReady(client, batch_job_id,
          batch_job['status'] in PENDING_STATUSES):
     sleep_interval = (30 * (2 ** poll_attempt) +
                       (random.randint(0, 10000) / 1000))
-    logging.info('Batch Job not ready, sleeping for %s seconds.',
-                 sleep_interval)
+    print 'Batch Job not ready, sleeping for %s seconds.' % sleep_interval
     time.sleep(sleep_interval)
     batch_job = GetBatchJob(client, batch_job_id)
     poll_attempt += 1
 
     if 'downloadUrl' in batch_job:
       url = batch_job['downloadUrl']['url']
-      logging.info(
-          'Batch Job with Id "%s", Status "%s", and DownloadUrl "%s" ready.',
-          batch_job['id'], batch_job['status'], url)
+      print ('Batch Job with Id "%s", Status "%s", and DownloadUrl "%s" ready.'
+             % (batch_job['id'], batch_job['status'], url))
       return url
   raise Exception('Batch Job not finished downloading. Try checking later.')
+
+
+def PrintResponse(batch_job_helper, response_xml):
+  """Prints the BatchJobService response.
+
+  Args:
+    batch_job_helper: a BatchJobHelper instance.
+    response_xml: a string containing a response from the BatchJobService.
+  """
+  response = batch_job_helper.ParseResponse(response_xml)
+
+  if 'rval' in response['mutateResponse']:
+    for data in response['mutateResponse']['rval']:
+      if 'errorList' in data:
+        print 'Operation %s - FAILURE:' % data['index']
+        print '\terrorType=%s' % data['errorList']['errors']['ApiError.Type']
+        print '\ttrigger=%s' % data['errorList']['errors']['trigger']
+        print '\terrorString=%s' % data['errorList']['errors']['errorString']
+        print '\tfieldPath=%s' % data['errorList']['errors']['fieldPath']
+        print '\treason=%s' % data['errorList']['errors']['reason']
+      if 'result' in data:
+        print 'Operation %s - SUCCESS.' % data['index']
 
 
 if __name__ == '__main__':

@@ -25,7 +25,7 @@ from setuptools import setup
 PACKAGES = ['googleads']
 
 DEPENDENCIES = ['httplib2', 'oauth2client', 'suds-jurko', 'pysocks', 'pytz',
-                'PyYAML']
+                'PyYAML', 'xmltodict']
 
 CLASSIFIERS = [
     'Intended Audience :: Developers',

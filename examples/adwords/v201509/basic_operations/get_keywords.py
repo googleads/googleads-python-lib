@@ -60,7 +60,7 @@ def main(client, adgroup_id):
           'startIndex': str(offset),
           'numberResults': str(PAGE_SIZE)
       },
-      'ordering': [{'field': 'Id', 'sortOrder': 'ASCENDING'}]
+      'ordering': [{'field': 'KeywordText', 'sortOrder': 'ASCENDING'}]
   }
   more_pages = True
   while more_pages:
@@ -70,7 +70,7 @@ def main(client, adgroup_id):
     if 'entries' in page:
       for keyword in page['entries']:
         print ('Keyword ID \'%d\', type \'%s\', text \'%s\', and match type '
-               '\'%s\'' % (
+               '\'%s\' was found.' % (
                    keyword['criterion']['id'],
                    keyword['criterion']['type'],
                    keyword['criterion']['text'],
