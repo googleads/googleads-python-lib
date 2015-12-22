@@ -52,7 +52,7 @@ def main(client):
   root_statement = dfp.FilterStatement(query)
   response = inventory_service.getAdUnitsByStatement(
       root_statement.ToStatement())
-  root_ad_unit = response['results']
+  root_ad_unit = response['results'][0]
 
   if root_ad_unit:
     BuildAndDisplayAdUnitTree(root_ad_unit, all_ad_units)
