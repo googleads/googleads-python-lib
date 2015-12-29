@@ -24,8 +24,8 @@ from oauth2client import client
 
 # Your OAuth 2.0 Client ID and Secret. If you do not have an ID and Secret yet,
 # please go to https://console.developers.google.com and create a set.
-CLIENT_ID = 'INSERT_CLIENT_ID_HERE'
-CLIENT_SECRET = 'INSERT_CLIENT_SECRET_HERE'
+CLIENT_ID = ''
+CLIENT_SECRET = ''
 
 # The AdWords API OAuth 2.0 scope.
 SCOPE = u'https://www.googleapis.com/auth/adwords'
@@ -72,7 +72,7 @@ def main(client_id, client_secret, scopes):
 if __name__ == '__main__':
   args = parser.parse_args()
   configured_scopes = [SCOPE]
-  if args.client_id == CLIENT_ID or args.client_secret == CLIENT_SECRET:
+  if not args.client_id or not args.client_secret:
     raise AttributeError('No client_id or client_secret specified.')
   if args.additional_scopes:
     configured_scopes.extend(args.additional_scopes.replace(' ', '').split(','))
