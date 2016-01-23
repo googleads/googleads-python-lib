@@ -540,7 +540,7 @@ class BatchJobHelper(object):
             new_content_length - 1,
             new_content_length if is_last else '*'
         ))
-      req.data = request_body
+      req.data = request_body.encode('utf-8')
       return req
 
     def _BuildUploadRequestBody(self, operations, has_prefix=True,
@@ -597,7 +597,7 @@ class BatchJobHelper(object):
           raise googleads.errors.GoogleAdsValueError('No xsi_type specified '
                                                      'for the operations.')
         operations.attrib['xsi:type'] = operation_type.text
-      operations_xml = ''.join([ElementTree.tostring(operations)
+      operations_xml = ''.join([ElementTree.tostring(operations).decode('utf-8')
                                 for operations in mutate])
       # Force removal of this line, which suds produces.
       operations_xml = operations_xml.replace(
@@ -695,7 +695,7 @@ class BatchJobHelper(object):
       Raises:
         AttributeError: if the provided XML isn't from AdWords.
       """
-      root = ElementTree.fromstring(raw_request_xml.encode('utf-8'))
+      root = ElementTree.fromstring(raw_request_xml)
       return root.find('{http://schemas.xmlsoap.org/soap/envelope/}Body').find(
           '%smutate' % self._adwords_namespace)
 
