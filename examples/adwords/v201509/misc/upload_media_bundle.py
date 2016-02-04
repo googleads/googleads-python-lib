@@ -16,7 +16,6 @@
 
 """This example uploads an HTML5 zip file.
 
-Api: AdWordsOnly
 """
 
 import base64

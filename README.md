@@ -2,10 +2,9 @@
 
 
 This client library simplifies accessing Google's SOAP Ads APIs - AdWords,
-DoubleClick Ad Exchange SOAP, DoubleClick for Advertisers, and DoubleClick for
-Publishers. The library provides easy ways to store your authentication and
-create SOAP web service clients. It also contains example code to help you get
-started integrating with our APIs.
+and DoubleClick for Publishers. The library provides easy ways to store your
+authentication and create SOAP web service clients. It also contains example
+code to help you get started integrating with our APIs.
 
 ####Important Note Regarding DFP
 If you are using v201502 and newer in the DFP API, then performing actions on
@@ -71,8 +70,6 @@ tracker](https://github.com/googleads/googleads-python-lib/issues).
 If you have issues pertaining to a specific product, use the product support forums:
 
 * [AdWords](https://groups.google.com/forum/#!forum/adwords-api)
-* [DoubleClick Ad Exchange](https://groups.google.com/forum/#!forum/google-doubleclick-ad-exchange-buyer-api)
-* [DoubleClick for Advertisers](https://groups.google.com/forum/#!forum/google-doubleclick-for-advertisers-api)
 * [DoubleClick for Publishers](https://groups.google.com/forum/#!forum/google-doubleclick-for-publishers-api)
 
 Make sure to subscribe to our [Google Plus page](https://plus.google.com/+GoogleAdsDevelopers)

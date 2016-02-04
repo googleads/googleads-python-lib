@@ -19,7 +19,6 @@
 The complete Campaign created by this example also includes AdGroups and
 KeyWords.
 
-Api: AdWordsOnly
 """
 
 import random

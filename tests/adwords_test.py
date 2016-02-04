@@ -18,6 +18,7 @@
 
 import io
 import os
+import StringIO
 import sys
 import tempfile
 import unittest
@@ -279,7 +280,10 @@ class BatchJobHelperTest(unittest.TestCase):
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
       with mock.patch('urllib2.urlopen') as mock_urlopen:
-        self.batch_job_helper.UploadOperations([[]])
+        with mock.patch('googleads.adwords.IncrementalUploadHelper'
+                        '._InitializeURL') as mock_init:
+          mock_init.return_value = 'https://www.google.com'
+          self.batch_job_helper.UploadOperations([[]])
         mock_urlopen.assert_called_with(mock_request)
 
 
@@ -293,9 +297,11 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
     """Prepare tests."""
     self.client = GetAdWordsClient()
     self.request_builder = self.client.GetBatchJobHelper()._request_builder
+    self.version = self.request_builder._version
     self.upload_url = 'https://goo.gl/IaQQsJ'
     self.sample_xml = ('<operations><id>!n3vERg0Nn4Run4r0und4NDd35Er7Y0u!~</id>'
                        '</operations>')
+    sample_xml_length = len(self.sample_xml)
     self.complete_request_body = '%s%s%s' % (
         self.request_builder._UPLOAD_PREFIX_TEMPLATE % (
             self.request_builder._adwords_endpoint),
@@ -312,7 +318,14 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
     self.request_body_end = '%s%s' % (
         self.sample_xml,
         self.request_builder._UPLOAD_SUFFIX)
-    self.single_upload_headers = {'Content-type': 'application/xml'}
+    self.single_upload_headers = {
+        'Content-type': 'application/xml',
+        'Content-range': 'bytes %s-%s/%s' % (
+            0,
+            self.request_builder._BATCH_JOB_INCREMENT - 1,
+            self.request_builder._BATCH_JOB_INCREMENT),
+        'Content-length': self.request_builder._BATCH_JOB_INCREMENT
+        }
     self.incremental_upload_headers = {
         'Content-type': 'application/xml',
         'Content-range': 'bytes %s-%s/*' % (
@@ -402,7 +415,8 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
         op['operand']['amount']['microAmount'],
         op['operand']['deliveryMethod']
     ) for op in ops])
-    request = self.RAW_API_REQUEST_TEMPLATE % (ops_xml)
+    request = self.RAW_API_REQUEST_TEMPLATE % (self.version, self.version,
+                                               ops_xml)
     return (ops, request)
 
   def GenerateValidUnicodeRequest(self, operations):
@@ -423,7 +437,9 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
         op[u'operand'][u'amount'][u'microAmount'],
         op[u'operand'][u'deliveryMethod']
     ) for op in ops])
-    request = self.RAW_API_REQUEST_TEMPLATE.decode('utf-8') % (ops_xml)
+    request = self.RAW_API_REQUEST_TEMPLATE.decode('utf-8') % (self.version,
+                                                               self.version,
+                                                               ops_xml)
     return (ops, request)
 
   def GenerateUnicodeBudgetOperations(self, operations):
@@ -834,6 +850,7 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
     _, request = self.GenerateValidRequest(operations_amount)
 
     mutate = self.request_builder._GetRawOperationsFromXML(request)
+
     self.assertEqual(
         mutate.tag,
         '{%s}mutate' % self.request_builder._adwords_endpoint)
@@ -857,9 +874,10 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
                     '_SudsUploadRequestBuilder.'
                     '_BuildUploadRequestBody') as mock_request_body_builder:
       mock_request_body_builder.return_value = self.sample_xml
-      req = self.request_builder.BuildUploadRequest(self.upload_url, [[]])
+      req = self.request_builder.BuildUploadRequest(self.upload_url, [[]],
+                                                    is_last=True)
       self.assertEqual(req.headers, self.single_upload_headers)
-      self.assertEqual(req.get_method(), 'POST')
+      self.assertEqual(req.get_method(), 'PUT')
 
   def testBuildRequestForIncrementalUpload(self):
     """Test whether an incremental upload request is built correctly."""
@@ -937,9 +955,51 @@ class IncrementalUploadHelperTest(unittest.TestCase):
     """Prepare tests."""
     self.client = GetAdWordsClient()
     self.batch_job_helper = self.client.GetBatchJobHelper()
-    self.incremental_uploader = (
-        self.batch_job_helper.GetIncrementalUploadHelper(
-            'https://goo.gl/Xtaq83'))
+    self.original_url = 'https://goo.gl/w8tkpK'
+    self.initialized_url = 'https://goo.gl/Xtaq83'
+
+    with mock.patch('urllib2.urlopen') as mock_open:
+      mock_open.return_value.headers = {
+          'location': self.initialized_url
+      }
+      self.incremental_uploader = (
+          self.batch_job_helper.GetIncrementalUploadHelper(
+              self.original_url))
+
+    self.incremental_uploader_dump = (
+        '{current_content_length: 0, is_last: false, '
+        'upload_url: \'https://goo.gl/Xtaq83\', version: v201601}\n')
+
+  def testDump(self):
+    expected = self.incremental_uploader_dump
+
+    with tempfile.NamedTemporaryFile(delete=False, mode='w') as t:
+      name = t.name
+      self.incremental_uploader.Dump(t)
+
+    with open(name, mode='r') as handler:
+      dump_data = handler.read()
+
+    self.assertEqual(expected, dump_data)
+
+  def testLoad(self):
+    s = StringIO.StringIO(self.incremental_uploader_dump)
+
+    with mock.patch('urllib2.urlopen') as mock_open:
+      mock_open.return_value.headers = {
+          'location': self.initialized_url
+      }
+      restored_uploader = googleads.adwords.IncrementalUploadHelper.Load(
+          s, client=self.client)
+
+    self.assertEquals(restored_uploader._current_content_length,
+                      self.incremental_uploader._current_content_length)
+    self.assertEquals(restored_uploader._is_last,
+                      self.incremental_uploader._is_last)
+    self.assertEquals(restored_uploader._request_builder._version,
+                      self.incremental_uploader._request_builder._version)
+    self.assertEquals(restored_uploader._upload_url,
+                      self.incremental_uploader._upload_url)
 
   def testUploadOperations(self):
     with mock.patch('googleads.adwords.BatchJobHelper.'

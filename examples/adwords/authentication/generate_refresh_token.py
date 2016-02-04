@@ -24,17 +24,17 @@ from oauth2client import client
 
 # Your OAuth 2.0 Client ID and Secret. If you do not have an ID and Secret yet,
 # please go to https://console.developers.google.com and create a set.
-CLIENT_ID = 'INSERT_CLIENT_ID_HERE'
-CLIENT_SECRET = 'INSERT_CLIENT_SECRET_HERE'
+DEFAULT_CLIENT_ID = None
+DEFAULT_CLIENT_SECRET = None
 
 # The AdWords API OAuth 2.0 scope.
 SCOPE = u'https://www.googleapis.com/auth/adwords'
 
 parser = argparse.ArgumentParser(description='Generates a refresh token with '
                                  'the provided credentials.')
-parser.add_argument('--client_id', default=CLIENT_ID,
+parser.add_argument('--client_id', default=DEFAULT_CLIENT_ID,
                     help='Client Id retrieved from the Developer\'s Console.')
-parser.add_argument('--client_secret', default=CLIENT_SECRET,
+parser.add_argument('--client_secret', default=DEFAULT_CLIENT_SECRET,
                     help='Client Secret retrieved from the Developer\'s '
                     'Console.')
 parser.add_argument('--additional_scopes', default=None,
@@ -72,7 +72,8 @@ def main(client_id, client_secret, scopes):
 if __name__ == '__main__':
   args = parser.parse_args()
   configured_scopes = [SCOPE]
-  if args.client_id == CLIENT_ID or args.client_secret == CLIENT_SECRET:
+  if not (any([args.client_id, DEFAULT_CLIENT_ID]) and
+          any([args.client_secret, DEFAULT_CLIENT_SECRET])):
     raise AttributeError('No client_id or client_secret specified.')
   if args.additional_scopes:
     configured_scopes.extend(args.additional_scopes.replace(' ', '').split(','))
