@@ -57,8 +57,11 @@ def main(client, campaign_id):
           },
           'settings': [
               {
-                  # Targeting restriction settings - these settings only affect
-                  # serving for the Display Network.
+                  # Targeting restriction settings. Depending on the
+                  # criterionTypeGroup value, most TargetingSettingDetail only
+                  # affect Display campaigns. However, the
+                  # USER_INTEREST_AND_LIST value works for RLSA campaigns -
+                  # Search campaigns targeting using a remarketing list.
                   'xsi_type': 'TargetingSetting',
                   'details': [
                       # Restricting to serve ads that match your ad group

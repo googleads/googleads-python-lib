@@ -17,25 +17,37 @@
 """Generates a refresh token for use with DFP."""
 
 
+import argparse
 import sys
 
 from oauth2client import client
 
 # Your OAuth 2.0 Client ID and Secret. If you do not have an ID and Secret yet,
 # please go to https://console.developers.google.com and create a set.
-CLIENT_ID = 'INSERT_CLIENT_ID_HERE'
-CLIENT_SECRET = 'INSERT_CLIENT_SECRET_HERE'
+DEFAULT_CLIENT_ID = None
+DEFAULT_CLIENT_SECRET = None
 
 # The DFP API OAuth 2.0 scope.
 SCOPE = u'https://www.googleapis.com/auth/dfp'
 
+parser = argparse.ArgumentParser(description='Generates a refresh token with '
+                                 'the provided credentials.')
+parser.add_argument('--client_id', default=DEFAULT_CLIENT_ID,
+                    help='Client Id retrieved from the Developer\'s Console.')
+parser.add_argument('--client_secret', default=DEFAULT_CLIENT_SECRET,
+                    help='Client Secret retrieved from the Developer\'s '
+                    'Console.')
+parser.add_argument('--additional_scopes', default=None,
+                    help='Additional scopes to apply when generating the '
+                    'refresh token. Each scope should be separated by a comma.')
 
-def main():
+
+def main(client_id, client_secret, scopes):
   """Retrieve and display the access and refresh token."""
   flow = client.OAuth2WebServerFlow(
-      client_id=CLIENT_ID,
-      client_secret=CLIENT_SECRET,
-      scope=[SCOPE],
+      client_id=client_id,
+      client_secret=client_secret,
+      scope=scopes,
       user_agent='Ads Python Client Library',
       redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
@@ -58,4 +70,11 @@ def main():
 
 
 if __name__ == '__main__':
-  main()
+  args = parser.parse_args()
+  configured_scopes = [SCOPE]
+  if not (any([args.client_id, DEFAULT_CLIENT_ID]) and
+          any([args.client_secret, DEFAULT_CLIENT_SECRET])):
+    raise AttributeError('No client_id or client_secret specified.')
+  if args.additional_scopes:
+    configured_scopes.extend(args.additional_scopes.replace(' ', '').split(','))
+  main(args.client_id, args.client_secret, configured_scopes)

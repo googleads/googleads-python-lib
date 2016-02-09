@@ -25,7 +25,7 @@ from setuptools import setup
 PACKAGES = ['googleads']
 
 DEPENDENCIES = ['httplib2', 'oauth2client', 'suds-jurko', 'pysocks', 'pytz',
-                'PyYAML']
+                'PyYAML', 'xmltodict']
 
 CLASSIFIERS = [
     'Intended Audience :: Developers',
@@ -57,7 +57,6 @@ The googleads Python Client Libraries
 The googleads Python Client Libraries support the following products:
 
 * AdWords API
-* DoubleClick for Advertisers API
 * DoubleClick for Publishers API
 
 You can find more information about the Google Ads Python Client Libraries
@@ -113,7 +112,7 @@ setup(name='googleads',
       long_description=long_description,
       packages=PACKAGES,
       platforms='any',
-      keywords='adwords adxbuyer dfp google',
+      keywords='adwords dfp google',
       classifiers=CLASSIFIERS,
       install_requires=DEPENDENCIES,
       **extra_params)

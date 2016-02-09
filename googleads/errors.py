@@ -89,6 +89,11 @@ class AdWordsReportBadRequestError(AdWordsReportError):
     self.field_path = field_path
 
 
+class AdWordsBatchJobServiceInvalidOperationError(GoogleAdsError):
+  """Error indicating that an upload operation is malformed."""
+  pass
+
+
 class DfpReportError(GoogleAdsError):
   """Error indicating that a DFP report download request failed.
 

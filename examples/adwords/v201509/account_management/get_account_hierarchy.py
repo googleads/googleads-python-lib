@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,19 +16,17 @@
 
 """This example gets the account hierarchy under the current account.
 
-Note: this code example won't work with test accounts. See
-https://developers.google.com/adwords/api/docs/test-accounts
-
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
 
-Api: AdWordsOnly
 """
 
-
 from googleads import adwords
+
+
+PAGE_SIZE = 500
 
 
 def DisplayAccountTree(account, accounts, links, depth=0):
@@ -54,38 +52,51 @@ def main(client):
       'ManagedCustomerService', version='v201509')
 
   # Construct selector to get all accounts.
+  offset = 0
   selector = {
-      'fields': ['CustomerId', 'Name']
+      'fields': ['CustomerId', 'Name'],
+      'paging': {
+          'startIndex': str(offset),
+          'numberResults': str(PAGE_SIZE)
+      }
   }
-  # Get serviced account graph.
-  graph = managed_customer_service.get(selector)
-  if 'entries' in graph and graph['entries']:
-    # Create map from customerId to parent and child links.
-    child_links = {}
-    parent_links = {}
-    if 'links' in graph:
-      for link in graph['links']:
-        if link['managerCustomerId'] not in child_links:
-          child_links[link['managerCustomerId']] = []
-        child_links[link['managerCustomerId']].append(link)
-        if link['clientCustomerId'] not in parent_links:
-          parent_links[link['clientCustomerId']] = []
-        parent_links[link['clientCustomerId']].append(link)
-    # Create map from customerID to account and find root account.
-    accounts = {}
-    root_account = None
-    for account in graph['entries']:
-      accounts[account['customerId']] = account
-      if account['customerId'] not in parent_links:
-        root_account = account
-    # Display account tree.
-    if root_account:
-      print 'CustomerId, Name'
-      DisplayAccountTree(root_account, accounts, child_links, 0)
-    else:
-      print 'Unable to determine a root account'
+  more_pages = True
+  accounts = {}
+  child_links = {}
+  parent_links = {}
+  root_account = None
+
+  while more_pages:
+    # Get serviced account graph.
+    page = managed_customer_service.get(selector)
+    if 'entries' in page and page['entries']:
+      # Create map from customerId to parent and child links.
+      if 'links' in page:
+        for link in page['links']:
+          if link['managerCustomerId'] not in child_links:
+            child_links[link['managerCustomerId']] = []
+          child_links[link['managerCustomerId']].append(link)
+          if link['clientCustomerId'] not in parent_links:
+            parent_links[link['clientCustomerId']] = []
+          parent_links[link['clientCustomerId']].append(link)
+      # Map from customerID to account.
+      for account in page['entries']:
+        accounts[account['customerId']] = account
+    offset += PAGE_SIZE
+    selector['paging']['startIndex'] = str(offset)
+    more_pages = offset < int(page['totalNumEntries'])
+
+  # Find the root account.
+  for customer_id in accounts:
+    if customer_id not in parent_links:
+      root_account = accounts[customer_id]
+
+  # Display account tree.
+  if root_account:
+    print 'CustomerId, Name'
+    DisplayAccountTree(root_account, accounts, child_links, 0)
   else:
-    print 'No serviced accounts were found'
+    print 'Unable to determine a root account'
 
 
 if __name__ == '__main__':
