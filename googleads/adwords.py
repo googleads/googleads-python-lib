@@ -455,7 +455,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     return headers
 
 
-class BatchJobHelperBase(object):
+class BatchJobHelper(object):
   """A utility that simplifies working with the BatchJobService."""
 
   class AbstractResponseParser(object):
@@ -973,31 +973,6 @@ class IncrementalUploadHelper(object):
     # Update upload status.
     self._current_content_length += len(req.data)
     self._is_last = is_last
-
-
-class BatchJobHelper(BatchJobHelperBase):
-  def UploadBatchJobOperations(self, upload_url, *operations):
-    """Uploads operations to the given uploadUrl.
-
-    Note: Each list of operations is expected to contain operations of the same
-    type, similar to how one would normally send operations in an AdWords API
-    Service request.
-
-    Args:
-      upload_url: a string url that the given operations will be uploaded to.
-      *operations: one or more lists of operations as would be sent to the
-        AdWords API for the associated service.
-    """
-    operations_xml = ''.join([
-        self._GenerateOperationsXML(operations_list)
-        for operations_list in operations])
-
-    request_body = (self._UPLOAD_REQUEST_BODY_TEMPLATE %
-                    (self._adwords_endpoint, operations_xml))
-
-    req = urllib2.Request(upload_url)
-    req.add_header('Content-Type', 'application/xml')
-    urllib2.urlopen(req, data=request_body)
 
 
 class ReportDownloaderBase(object):
