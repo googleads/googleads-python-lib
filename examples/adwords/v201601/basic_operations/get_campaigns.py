@@ -16,7 +16,7 @@
 
 """This example gets all campaigns.
 
-To add a campaign, run add_campaign.py.
+To get all campaigns, run get_campaigns.py
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
