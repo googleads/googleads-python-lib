@@ -41,10 +41,8 @@ def main(client, emails):
       'description': 'A list of customers that originated from email addresses',
       # Maximum lifespan is 180 days.
       'membershipLifeSpan': 180,
-      # This field is required. It links to a service you created that allows
-      # members of this list to remove themselves. It will be shown in the
-      # "Why this Ad?" of an ad and so it needs to be verified. Read more about
-      # "Why this Ad?" here: https://support.google.com/ads/answer/2662850.
+      # This field is optional. It links to a service you created that allows
+      # members of this list to remove themselves.
       'optOutLink': 'http://endpoint1.example.com/optout'
   }
 

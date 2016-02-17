@@ -27,6 +27,7 @@ import suds.client
 import suds.mx.literal
 import suds.xsd.doctor
 import xmltodict
+import yaml
 
 import googleads.common
 import googleads.errors
@@ -78,6 +79,49 @@ _SERVICE_MAP = {
         'TrafficEstimatorService': 'o',
     },
     'v201509': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'BatchJobService': 'cm',
+        'BudgetOrderService': 'billing',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'ExperimentService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'LocationCriterionService': 'cm',
+        'MediaService': 'cm',
+        'MutateJobService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'ManagedCustomerService': 'mcm',
+        'CustomerService': 'mcm',
+        'CustomerFeedService': 'cm',
+        'BudgetService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'LabelService': 'cm',
+    },
+    'v201601': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
         'AdGroupAdService': 'cm',
@@ -297,7 +341,7 @@ class AdWordsClient(object):
         client=self, version=version, server=server)
     response_parser = BatchJobHelper.GetResponseParser()
 
-    return BatchJobHelper(request_builder, response_parser)
+    return BatchJobHelper(request_builder, response_parser, version=version)
 
   def GetReportDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
                           server=_DEFAULT_ENDPOINT):
@@ -485,8 +529,8 @@ class BatchJobHelper(object):
       if 'client' not in kwargs:
         raise AttributeError('No client specified for Request Builder.')
 
-      self._client = kwargs['client']
       self._version = kwargs.get('version', sorted(_SERVICE_MAP.keys())[-1])
+      self._client = kwargs['client']
       server = kwargs.get('server', _DEFAULT_ENDPOINT)
       self._adwords_endpoint = ('%s/api/adwords/cm/%s' %
                                 (server, self._version))
@@ -514,9 +558,8 @@ class BatchJobHelper(object):
         A urllib2.Request instance with the correct method, headers, and
         padding (if required) for the batch job upload.
       """
-      is_incremental = 'current_content_length' in kwargs
       current_content_length = kwargs.get('current_content_length', 0)
-      is_last = kwargs.get('is_last') if is_incremental else True
+      is_last = kwargs.get('is_last')
       # Generate an unpadded request body
       request_body = self._BuildUploadRequestBody(
           operations,
@@ -524,23 +567,21 @@ class BatchJobHelper(object):
           has_suffix=is_last)
       req = urllib2.Request(upload_url)
       req.add_header('Content-Type', 'application/xml')
-      # Add padding, headers, and modify request method for incremental upload.
-      if is_incremental:
-        # Determine length of this message and the required padding.
-        new_content_length = current_content_length
-        request_length = len(request_body.encode('utf-8'))
-        padding_length = self._GetPaddingLength(request_length)
-        padded_request_length = request_length + padding_length
-        new_content_length += padded_request_length
-        request_body += ' ' * padding_length
-        req.get_method = lambda: 'PUT'  # Modify this into a PUT request.
-        req.add_header('Content-Length', padded_request_length)
-        req.add_header('Content-Range', 'bytes %s-%s/%s' % (
-            current_content_length,
-            new_content_length - 1,
-            new_content_length if is_last else '*'
-        ))
-      req.data = request_body.encode('utf-8')
+      # Determine length of this message and the required padding.
+      new_content_length = current_content_length
+      request_length = len(request_body.encode('utf-8'))
+      padding_length = self._GetPaddingLength(request_length)
+      padded_request_length = request_length + padding_length
+      new_content_length += padded_request_length
+      request_body += ' ' * padding_length
+      req.get_method = lambda: 'PUT'  # Modify this into a PUT request.
+      req.add_header('Content-Length', padded_request_length)
+      req.add_header('Content-Range', 'bytes %s-%s/%s' % (
+          current_content_length,
+          new_content_length - 1,
+          new_content_length if is_last else '*'
+      ))
+      req.data = request_body
       return req
 
     def _BuildUploadRequestBody(self, operations, has_prefix=True,
@@ -699,7 +740,8 @@ class BatchJobHelper(object):
       return root.find('{http://schemas.xmlsoap.org/soap/envelope/}Body').find(
           '%smutate' % self._adwords_namespace)
 
-  def __init__(self, request_builder, response_parser):
+  def __init__(self, request_builder, response_parser,
+               version=sorted(_SERVICE_MAP.keys())[-1]):
     """Initializes the BatchJobHelper.
 
     For general use, consider using AdWordsClient's GetBatchJobHelper method to
@@ -709,10 +751,14 @@ class BatchJobHelper(object):
     Args:
       request_builder: an AbstractUploadRequestBuilder instance.
       response_parser: an AbstractResponseParser instance.
+      version: A string identifying the AdWords version to connect to. This
+        defaults to what is currently the latest version. This will be updated
+        in future releases to point to what is then the latest version.
     """
     self._temporary_id = 0  # Used for temporary IDs in BatchJobService.
     self._request_builder = request_builder
     self._response_parser = response_parser
+    self._version = version
 
   def GetId(self):
     """Produces a distinct sequential ID for the BatchJobService.
@@ -723,8 +769,10 @@ class BatchJobHelper(object):
     self._temporary_id -= 1
     return self._temporary_id
 
-  def GetIncrementalUploadHelper(self, upload_url):
-    return IncrementalUploadHelper(self._request_builder, upload_url)
+  def GetIncrementalUploadHelper(self, upload_url, current_content_length=0):
+    return IncrementalUploadHelper(self._request_builder, upload_url,
+                                   current_content_length,
+                                   version=self._version)
 
   @classmethod
   def GetRequestBuilder(cls, **kwargs):
@@ -763,33 +811,133 @@ class BatchJobHelper(object):
       *operations: one or more lists of operations as would be sent to the
         AdWords API for the associated service.
     """
-    req = self._request_builder.BuildUploadRequest(upload_url, operations)
-    urllib2.urlopen(req)
+    uploader = IncrementalUploadHelper(self._request_builder, upload_url,
+                                       version=self._version)
+    uploader.UploadOperations(operations, is_last=True)
 
 
 class IncrementalUploadHelper(object):
   """A utility for uploading operations for a BatchJob incrementally."""
 
+  @classmethod
+  def Load(cls, file_input, client=None):
+    """Loads an IncrementalUploadHelper from the given file-like object.
+
+    Args:
+      file_input: a file-like object containing a serialized
+        IncrementalUploadHelper.
+      client: an AdWordsClient instance.
+
+    Returns:
+      An IncrementalUploadHelper instance initialized using the contents of the
+      serialized input file.
+
+    Raises:
+      GoogleAdsError: If there is an error reading the input file containing the
+        serialized IncrementalUploadHelper.
+      GoogleAdsValueError: If the contents of the input file can't be parsed to
+        produce an IncrementalUploadHelper.
+    """
+    if client is None:
+      client = AdWordsClient.LoadFromStorage()
+
+    try:
+      data = yaml.safe_load(file_input)
+    except yaml.YAMLError:
+      raise googleads.errors.GoogleAdsError(
+          'Error loading IncrementalUploadHelper from file.')
+
+    batch_job_helper = client.GetBatchJobHelper(version=data['version'])
+    request_builder = batch_job_helper.GetRequestBuilder(
+        client=client, version=data['version'])
+
+    try:
+      return cls(request_builder, data['upload_url'],
+                 current_content_length=data['current_content_length'],
+                 is_last=data['is_last'], version=data['version'])
+    except KeyError:
+      raise googleads.errors.GoogleAdsValueError(
+          'Can\'t parse IncrementalUploadHelper from file.')
+
   def __init__(self, request_builder, upload_url, current_content_length=0,
-               is_last=False):
+               is_last=False, version=sorted(_SERVICE_MAP.keys())[-1]):
     """Initializes the IncrementalUpload.
 
     Args:
       request_builder: an AbstractUploadRequestBuilder instance.
-      upload_url: a string url that the given operations will be uploaded to.
+      upload_url: a string url provided by the BatchJobService.
       current_content_length: an integer identifying the current content length
         of data uploaded to the Batch Job.
       is_last: a boolean indicating whether this is the final increment.
+      version: A string identifying the AdWords version to connect to. This
+        defaults to what is currently the latest version. This will be updated
+        in future releases to point to what is then the latest version.
     Raises:
       GoogleAdsValueError: if the content length is lower than 0.
     """
+    self._version = version
     self._request_builder = request_builder
-    self._upload_url = upload_url
     if current_content_length < 0:
       raise googleads.errors.GoogleAdsValueError(
           'Current content length %s is < 0.' % current_content_length)
     self._current_content_length = current_content_length
+    self._upload_url = self._InitializeURL(upload_url, current_content_length)
     self._is_last = is_last
+
+  def _InitializeURL(self, upload_url, current_content_length):
+    """Ensures that the URL used to upload operations is properly initialized.
+
+    Initialization is only necessary in v201601 or higher when the
+    current_content_length is 0.
+
+    Args:
+      upload_url: a string url.
+      current_content_length: an integer identifying the current content length
+        of data uploaded to the Batch Job.
+
+    Returns:
+      An initialized string URL, or the provided string URL if the URL has
+      already been initialized or the version is below v201601.
+    """
+    # If initialization is not necessary, return the provided upload_url.
+    if (self._version < 'v201601'
+        or current_content_length != 0):
+      return upload_url
+
+    headers = {
+        'Content-Type': 'application/xml',
+        'Content-Length': 0,
+        'x-goog-resumable': 'start'
+    }
+
+    # Send an HTTP POST request to the given upload_url
+    req = urllib2.Request(upload_url, data={}, headers=headers)
+    resp = urllib2.urlopen(req)
+
+    return resp.headers['location']
+
+  def Dump(self, output):
+    """Serialize the IncrementalUploadHelper and store in file-like object.
+
+    Args:
+      output: a file-like object where the status of the IncrementalUploadHelper
+        will be written.
+
+    Raises:
+      GoogleAdsError: If a YAMLError occurs while writing to the file.
+    """
+    data = {
+        'current_content_length': self._current_content_length,
+        'is_last': self._is_last,
+        'upload_url': self._upload_url,
+        'version': self._version
+    }
+
+    try:
+      yaml.dump(data, output)
+    except yaml.YAMLError:
+      raise googleads.errors.GoogleAdsError(
+          'Error dumping IncrementalUploadHelper to file.')
 
   def UploadOperations(self, operations, is_last=False):
     """Uploads operations to the given uploadUrl in incremental steps.
@@ -803,10 +951,6 @@ class IncrementalUploadHelper(object):
         AdWords API for the associated service.
       is_last: a boolean indicating whether this is the final increment to be
         added to the batch job.
-
-    Returns:
-      A BatchJobHelper.BatchJobUploadStatus instance that should be provided in
-      requests to upload additional increments.
     """
     if self._is_last is True:
       raise googleads.errors.AdWordsBatchJobServiceInvalidOperationError(

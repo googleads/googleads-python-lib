@@ -1,3 +1,17 @@
+3.12.0 -- 02/01/2016
+* Removed DoubleClick Ad Exchange content. This API has been sunset.
+* Added support for AdWords v201601.
+* Updated the AdWords account_management get_account_hierarchy.py example to
+  properly handle the case where ManagedCustomerService.get returns multiple
+  pages of results.
+* Refactored AdWords upload_offline_conversions.py example, moved to
+  remarketing.
+* Refactored AdWords add_complete_campaigns_using_batch_job.py example, moved to
+  campaign_management.
+* The AdWords BatchJobHelper and IncrementalUploadHelper utilities now
+  initialize URLs for v201601 and up.
+* The AdWords IncrementalUploadHelper is now serializable.
+
 3.11.0 -- 11/24/2015
 * Removed support for AdWords v201502.
 * Added incremental upload support to BatchJobHelper.
