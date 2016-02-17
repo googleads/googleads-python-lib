@@ -564,16 +564,17 @@ class BatchJobHelper(object):
       request_body = self._BuildUploadRequestBody(
           operations,
           has_prefix=current_content_length == 0,
-          has_suffix=is_last)
-      req = urllib2.Request(upload_url)
+          has_suffix=is_last).encode('utf-8')
+
+      req = urllib.request.Request(upload_url)
       req.add_header('Content-Type', 'application/xml')
       # Determine length of this message and the required padding.
       new_content_length = current_content_length
-      request_length = len(request_body.encode('utf-8'))
+      request_length = len(request_body)
       padding_length = self._GetPaddingLength(request_length)
       padded_request_length = request_length + padding_length
       new_content_length += padded_request_length
-      request_body += ' ' * padding_length
+      request_body += b' ' * padding_length
       req.get_method = lambda: 'PUT'  # Modify this into a PUT request.
       req.add_header('Content-Length', padded_request_length)
       req.add_header('Content-Range', 'bytes %s-%s/%s' % (
