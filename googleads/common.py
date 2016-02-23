@@ -26,8 +26,9 @@ import yaml
 
 import googleads.errors
 import googleads.oauth2
+import googleads.patches
 
-VERSION = '3.12.0'
+VERSION = '3.13.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _PROXY_YAML_KEY = 'proxy_info'
 _PYTHON_VERSION = 'Python/%d.%d.%d' % (sys.version_info[0], sys.version_info[1],
@@ -35,11 +36,16 @@ _PYTHON_VERSION = 'Python/%d.%d.%d' % (sys.version_info[0], sys.version_info[1],
 
 # The keys in the authentication dictionary that are used to construct OAuth 2.0
 # credentials.
-_OAUTH_2_AUTH_KEYS = ('client_id', 'client_secret', 'refresh_token')
+_OAUTH2_INSTALLED_APP_KEYS = ('client_id', 'client_secret', 'refresh_token')
+_OAUTH2_SERVICE_ACCT_KEYS = ('service_account_email',
+                             'path_to_private_key_file')
 
 # The keys in the proxy dictionary that are used to construct a ProxyInfo
 # instance.
 _PROXY_KEYS = ('host', 'port')
+
+# Apply any necessary patches to dependency libraries.
+googleads.patches.Apply()
 
 
 def GenerateLibSig(short_name):
@@ -83,13 +89,17 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
   if not os.path.isabs(path):
     path = os.path.expanduser(path)
   try:
-    with open(path, 'r') as handle:
+    with open(path, 'rb') as handle:
       data = yaml.safe_load(handle.read())
-      product_data = data.get(product_yaml_key) or {}
+      product_data = data[product_yaml_key]
       proxy_data = data.get(_PROXY_YAML_KEY) or {}
   except IOError:
     raise googleads.errors.GoogleAdsValueError(
         'Given yaml file, %s, could not be opened.' % path)
+  except KeyError:
+    raise googleads.errors.GoogleAdsValueError(
+        'Given yaml file, %s, does not contain a "%s" configuration.'
+        % (path, product_yaml_key))
 
   original_keys = list(product_data.keys())
   original_proxy_keys = list(proxy_data.keys())
@@ -121,19 +131,36 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
   disable_ssl_certificate_validation = proxy_data.get(
       'disable_ssl_certificate_validation', True)
 
-  try:
+  if all(config in product_data for config in _OAUTH2_INSTALLED_APP_KEYS):
+    # Use provided configurations for the installed application flow.
     client_kwargs['oauth2_client'] = (
         googleads.oauth2.GoogleRefreshTokenClient(
             product_data['client_id'], product_data['client_secret'],
-            product_data['refresh_token'], proxy_info,
-            disable_ssl_certificate_validation, ca_certs))
-    for auth_key in _OAUTH_2_AUTH_KEYS:
-      del product_data[auth_key]
-  except KeyError:
+            product_data['refresh_token'], proxy_info=proxy_info,
+            disable_ssl_certificate_validation=(
+                disable_ssl_certificate_validation),
+            ca_certs=ca_certs))
+    for key in _OAUTH2_INSTALLED_APP_KEYS:
+      del product_data[key]
+  elif all(config in product_data for config in _OAUTH2_SERVICE_ACCT_KEYS):
+    # Use provided configurations for the service account flow.
+    client_kwargs['oauth2_client'] = (
+        googleads.oauth2.GoogleServiceAccountClient(
+            googleads.oauth2.GetAPIScope(product_yaml_key),
+            product_data['service_account_email'],
+            product_data['path_to_private_key_file'], proxy_info=proxy_info,
+            disable_ssl_certificate_validation=(
+                disable_ssl_certificate_validation),
+            ca_certs=ca_certs))
+    for key in _OAUTH2_SERVICE_ACCT_KEYS:
+      del product_data[key]
+  else:
     raise googleads.errors.GoogleAdsValueError(
-        'Your yaml file, %s, is missing some of the required OAuth 2.0 '
-        'values. Required values are: %s, actual values are %s'
-        % (path, _OAUTH_2_AUTH_KEYS, original_keys))
+        'Your yaml file, %s, is incorrectly configured for OAuth 2.0. You '
+        'need to specify credentials for either the installed application '
+        'flow (%s) or service account flow (%s). Actual values provided are: '
+        '%s' % (path, _OAUTH2_INSTALLED_APP_KEYS, _OAUTH2_SERVICE_ACCT_KEYS,
+                original_keys))
 
   for value in optional_product_values:
     if value in product_data:

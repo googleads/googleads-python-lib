@@ -14,6 +14,7 @@
 
 """Client library for the AdWords API."""
 
+from collections import namedtuple
 import io
 import os
 import re
@@ -511,6 +512,29 @@ class BatchJobHelper(object):
     _UPLOAD_SUFFIX = '</mutate>'
     # Incremental uploads must have a content-length that is a multiple of this.
     _BATCH_JOB_INCREMENT = 262144
+    # Generate a mapping of Operations to their service and methods.
+    _OPERATION_MAP = {
+        op[0]: namedtuple('Operation', ['operation_type', 'service', 'method'])
+               (op[0], op[1], op[2])
+        for op in (
+            ('AdGroupAdOperation', 'AdGroupAdService', 'mutate'),
+            ('AdGroupAdLabelOperation', 'AdGroupAdService', 'mutateLabel'),
+            ('AdGroupBidModifierOperation', 'AdGroupBidModifierService',
+             'mutate'),
+            ('AdGroupCriterionOperation', 'AdGroupCriterionService',
+             'mutate'),
+            ('AdGroupCriterionLabelOperation', 'AdGroupCriterionServce',
+             'mutateLabel'),
+            ('AdGroupOperation', 'AdGroupService', 'mutate'),
+            ('AdGroupLabelOperation', 'AdGroupService', 'mutateLabel'),
+            ('BudgetOperation', 'BudgetService', 'mutate'),
+            ('CampaignCriterionOperation', 'CampaignCriterionService',
+             'mutate'),
+            ('CampaignOperation', 'CampaignService', 'mutate'),
+            ('CampaignLabelOperation', 'CampaignService', 'mutateLabel'),
+            ('FeedItemOperation', 'FeedItemService', 'mutate')
+        )
+    }
 
     def __init__(self, **kwargs):
       """Initializes a _SudsUploadRequestBuilder.
@@ -702,10 +726,15 @@ class BatchJobHelper(object):
         A str containing the raw XML of the request to the given service that
         would execute the given operations.
       """
-      service_name = operations[0]['xsi_type'].replace('Operation', 'Service')
-      service = self._client.GetService(service_name, self._version)
+      try:
+        operation = self._OPERATION_MAP[operations[0]['xsi_type']]
+      except KeyError, e:
+        raise googleads.errors.GoogleAdsValueError('"%s" is an unsupported '
+                                                   'operation.' % e.message)
+      service = self._client.GetService(operation.service, self._version)
       service.suds_client.set_options(nosend=True)
-      service_request = service.mutate(operations).envelope
+      service_request = (getattr(service, operation.method)
+                         (operations).envelope)
       service.suds_client.set_options(nosend=False)
       return service_request
 

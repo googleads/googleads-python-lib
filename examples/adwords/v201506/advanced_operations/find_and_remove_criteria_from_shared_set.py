@@ -106,7 +106,7 @@ def main(client, campaign_id):
 
   while page['totalNumEntries'] > offset:
     page = shared_criterion_service.get(selector)
-    if page['entries']:
+    if 'entries' in page:
       for shared_criterion in page['entries']:
         if shared_criterion['criterion']['type'] == 'KEYWORD':
           print ('Shared negative keyword with ID %d and text "%s" was'
@@ -129,21 +129,22 @@ def main(client, campaign_id):
     selector['paging']['startIndex'] = offset
 
   # Finally, remove the criteria.
-  operations = [
-      {
-          'operator': 'REMOVE',
-          'operand': {
-              'criterion': {'id': criterion['criterionId']},
-              'sharedSetId': criterion['sharedSetId']
-          }
-      } for criterion in criterion_ids
-  ]
+  if criterion_ids:
+    operations = [
+        {
+            'operator': 'REMOVE',
+            'operand': {
+                'criterion': {'id': criterion['criterionId']},
+                'sharedSetId': criterion['sharedSetId']
+            }
+        } for criterion in criterion_ids
+    ]
 
-  response = shared_criterion_service.mutate(operations)
-  if 'value' in response:
-    for criterion in response['value']:
-      print ('Criterion ID %d was successfully removed from shared set ID'
-             '%d.' % (criterion['criterion']['id'], criterion['sharedSetId']))
+    response = shared_criterion_service.mutate(operations)
+    if 'value' in response:
+      for criterion in response['value']:
+        print ('Criterion ID %d was successfully removed from shared set ID'
+               '%d.' % (criterion['criterion']['id'], criterion['sharedSetId']))
   else:
     print 'No shared criteria were removed.'
 

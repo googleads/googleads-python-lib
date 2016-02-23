@@ -27,13 +27,17 @@ import yaml
 
 import googleads.common
 import googleads.errors
+import googleads.oauth2
 
 
 class CommonTest(unittest.TestCase):
   """Tests for the googleads.common module."""
 
-  # A dictionary with all the required OAuth 2.0 keys
-  _OAUTH_DICT = {'client_id': 'a', 'client_secret': 'b', 'refresh_token': 'c'}
+  # Dictionaries with all the required OAuth 2.0 keys
+  _OAUTH_INSTALLED_APP_DICT = {'client_id': 'a', 'client_secret': 'b',
+                               'refresh_token': 'c'}
+  _OAUTH_SERVICE_ACCT_DICT = {'service_account_email': 'test@test.com',
+                              'path_to_private_key_file': '/test/test.p12'}
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem()
@@ -44,14 +48,14 @@ class CommonTest(unittest.TestCase):
     self.fake_proxy.return_value.proxy_host = 'ahost'
     self.fake_proxy.return_value.proxy_port = 'aport'
 
-  def _CreateYamlFile(self, data, insert_oauth2_key=None):
+  def _CreateYamlFile(self, data, insert_oauth2_key=None, oauth_dict=None):
     """Return the filename of a yaml file created for testing."""
     yaml_file = self.tempfile.NamedTemporaryFile(delete=False)
 
     with self.fake_open(yaml_file.name, 'w') as yaml_handle:
       for key in data:
         if key is insert_oauth2_key:
-          data[key].update(self._OAUTH_DICT)
+          data[key].update(oauth_dict)
         yaml_handle.write(yaml.dump({key: data[key]}))
 
     return yaml_file.name
@@ -71,12 +75,32 @@ class CommonTest(unittest.TestCase):
           googleads.common.LoadFromStorage,
           yaml_fname, 'woo', [], [])
 
+  def testLoadFromStorage_missingPartialInstalledAppOAuthCredential(self):
+    yaml_fname = self._CreateYamlFile({'woo': {}}, 'woo', {'client_id': 'abc'})
+    with mock.patch('googleads.common.open', self.fake_open, create=True):
+      self.assertRaises(
+          googleads.errors.GoogleAdsValueError,
+          googleads.common.LoadFromStorage,
+          yaml_fname, 'woo', [], [])
+
+  def testLoadFromStorage_missingPartialServiceAcctOAuthCredential(self):
+    yaml_fname = self._CreateYamlFile({'woo': {}}, 'woo', {
+        'service_account_email': 'abc@xyz.com'})
+    with mock.patch('googleads.common.open', self.fake_open, create=True):
+      self.assertRaises(
+          googleads.errors.GoogleAdsValueError,
+          googleads.common.LoadFromStorage,
+          yaml_fname, 'woo', [], [])
+
   def testLoadFromStorage_passesWithNoRequiredKeys(self):
-    yaml_fname = self._CreateYamlFile({'woo': {}}, 'woo')
+    yaml_fname = self._CreateYamlFile({'woo': {}}, 'woo',
+                                      self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         rval = googleads.common.LoadFromStorage(yaml_fname, 'woo', [], [])
-        mock_client.assert_called_once_with('a', 'b', 'c', None, True, None)
+        mock_client.assert_called_once_with(
+            'a', 'b', 'c', proxy_info=None, ca_certs=None,
+            disable_ssl_certificate_validation=True)
         self.assertEqual({'oauth2_client': mock_client.return_value,
                           'https_proxy': None}, rval)
 
@@ -85,21 +109,22 @@ class CommonTest(unittest.TestCase):
                                        'proxy_info': {
                                            'host': 'ahost',
                                            'port': 'aport'
-                                       }}, 'adwords')
+                                       }}, 'adwords',
+                                      self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('httplib2.ProxyInfo', self.fake_proxy):
           rval = googleads.common.LoadFromStorage(yaml_fname, 'adwords', [], [])
-          mock_client.assert_called_once_with('a', 'b', 'c',
-                                              self.fake_proxy.return_value,
-                                              True, None)
+          mock_client.assert_called_once_with(
+              'a', 'b', 'c', proxy_info=self.fake_proxy.return_value,
+              ca_certs=None, disable_ssl_certificate_validation=True)
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'https_proxy': 'ahost:aport'}, rval)
 
   def testLoadFromStorage_failsWithMisconfiguredProxy(self):
     yaml_fname = self._CreateYamlFile({'adwords': {},
                                        'proxy_info': {'host': 'ahost'}},
-                                      'adwords')
+                                      'adwords', self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient'):
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('httplib2.ProxyInfo', self.fake_proxy):
@@ -110,14 +135,16 @@ class CommonTest(unittest.TestCase):
   def testLoadFromStorage_missingRequiredKey(self):
     with mock.patch('googleads.common.open', self.fake_open, create=True):
       # Both keys are missing.
-      yaml_fname = self._CreateYamlFile({'two': {}}, 'two')
+      yaml_fname = self._CreateYamlFile({'two': {}}, 'two',
+                                        self._OAUTH_INSTALLED_APP_DICT)
       self.assertRaises(
           googleads.errors.GoogleAdsValueError,
           googleads.common.LoadFromStorage,
           yaml_fname, 'two', ['needed', 'keys'], [])
 
       # One key is missing.
-      yaml_fname = self._CreateYamlFile({'three': {'needed': 'd'}}, 'three')
+      yaml_fname = self._CreateYamlFile({'three': {'needed': 'd'}}, 'three',
+                                        self._OAUTH_INSTALLED_APP_DICT)
       self.assertRaises(
           googleads.errors.GoogleAdsValueError,
           googleads.common.LoadFromStorage,
@@ -126,24 +153,29 @@ class CommonTest(unittest.TestCase):
   def testLoadFromStorage(self):
     # No optional keys present.
     yaml_fname = self._CreateYamlFile({'one': {'needed': 'd', 'keys': 'e'}},
-                                      'one')
+                                      'one', self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         rval = googleads.common.LoadFromStorage(
             yaml_fname, 'one', ['needed', 'keys'], ['other'])
-        mock_client.assert_called_once_with('a', 'b', 'c', None, True, None)
+        mock_client.assert_called_once_with(
+            'a', 'b', 'c', proxy_info=None, ca_certs=None,
+            disable_ssl_certificate_validation=True)
         self.assertEqual({'oauth2_client': mock_client.return_value,
                           'needed': 'd', 'keys': 'e',
                           'https_proxy': None}, rval)
 
     # The optional key is present.
     yaml_fname = self._CreateYamlFile({'one': {'needed': 'd', 'keys': 'e',
-                                               'other': 'f'}}, 'one')
+                                               'other': 'f'}}, 'one',
+                                      self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         rval = googleads.common.LoadFromStorage(
             yaml_fname, 'one', ['needed', 'keys'], ['other'])
-        mock_client.assert_called_once_with('a', 'b', 'c', None, True, None)
+        mock_client.assert_called_once_with(
+            'a', 'b', 'c', proxy_info=None, ca_certs=None,
+            disable_ssl_certificate_validation=True)
         self.assertEqual({'oauth2_client': mock_client.return_value,
                           'needed': 'd', 'keys': 'e', 'other': 'f',
                           'https_proxy': None}, rval)
@@ -151,7 +183,7 @@ class CommonTest(unittest.TestCase):
   def testLoadFromStorage_relativePath(self):
     fake_os = fake_filesystem.FakeOsModule(self.filesystem)
     yaml_contents = {'one': {'needed': 'd', 'keys': 'e'}}
-    yaml_contents['one'].update(self._OAUTH_DICT)
+    yaml_contents['one'].update(self._OAUTH_INSTALLED_APP_DICT)
     self.filesystem.CreateFile('/home/test/yaml/googleads.yaml',
                                contents=yaml.dump(yaml_contents))
     fake_os.chdir('/home/test')
@@ -161,23 +193,61 @@ class CommonTest(unittest.TestCase):
         with mock.patch('googleads.common.open', self.fake_open, create=True):
           rval = googleads.common.LoadFromStorage(
               'yaml/googleads.yaml', 'one', ['needed', 'keys'], ['other'])
-          mock_client.assert_called_once_with('a', 'b', 'c', None, True, None)
-          self.assertEqual({'oauth2_client': mock_client.return_value,
-                            'needed': 'd', 'keys': 'e',
-                            'https_proxy': None}, rval)
+        mock_client.assert_called_once_with(
+            'a', 'b', 'c', proxy_info=None, ca_certs=None,
+            disable_ssl_certificate_validation=True)
+        self.assertEqual({'oauth2_client': mock_client.return_value,
+                          'needed': 'd', 'keys': 'e',
+                          'https_proxy': None}, rval)
+
+  def testLoadFromStorage_serviceAccount(self):
+    dfp_scope = googleads.oauth2.GetAPIScope('dfp')
+    # No optional keys present.
+    yaml_fname = self._CreateYamlFile({'dfp': {'needed': 'd', 'keys': 'e'}},
+                                      'dfp', self._OAUTH_SERVICE_ACCT_DICT)
+    with mock.patch(
+        'googleads.oauth2.GoogleServiceAccountClient') as mock_client:
+      with mock.patch('googleads.common.open', self.fake_open, create=True):
+        rval = googleads.common.LoadFromStorage(
+            yaml_fname, 'dfp', ['needed', 'keys'], ['other'])
+        mock_client.assert_called_once_with(
+            dfp_scope, 'test@test.com', '/test/test.p12', proxy_info=None,
+            ca_certs=None, disable_ssl_certificate_validation=True)
+        self.assertEqual({'oauth2_client': mock_client.return_value,
+                          'needed': 'd', 'keys': 'e',
+                          'https_proxy': None}, rval)
+
+    # The optional key is present.
+    yaml_fname = self._CreateYamlFile({'dfp': {'needed': 'd', 'keys': 'e',
+                                               'other': 'f'}}, 'dfp',
+                                      self._OAUTH_SERVICE_ACCT_DICT)
+    with mock.patch(
+        'googleads.oauth2.GoogleServiceAccountClient') as mock_client:
+      with mock.patch('googleads.common.open', self.fake_open, create=True):
+        rval = googleads.common.LoadFromStorage(
+            yaml_fname, 'dfp', ['needed', 'keys'], ['other'])
+        mock_client.assert_called_once_with(
+            dfp_scope, 'test@test.com', '/test/test.p12', proxy_info=None,
+            ca_certs=None, disable_ssl_certificate_validation=True)
+        self.assertEqual({'oauth2_client': mock_client.return_value,
+                          'needed': 'd', 'keys': 'e', 'other': 'f',
+                          'https_proxy': None}, rval)
 
   def testLoadFromStorage_warningWithUnrecognizedKey(self):
     yaml_fname = self._CreateYamlFile(
-        {'kval': {'Im': 'here', 'whats': 'this?'}}, 'kval')
+        {'kval': {'Im': 'here', 'whats': 'this?'}}, 'kval',
+        self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with warnings.catch_warnings(record=True) as captured_warnings:
         with mock.patch('googleads.common.open', self.fake_open, create=True):
           rval = googleads.common.LoadFromStorage(
               yaml_fname, 'kval', ['Im'], ['other'])
-          mock_client.assert_called_once_with('a', 'b', 'c', None, True, None)
-          self.assertEqual({'oauth2_client': mock_client.return_value,
-                            'Im': 'here', 'https_proxy': None}, rval)
-          self.assertEqual(len(captured_warnings), 1)
+        mock_client.assert_called_once_with(
+            'a', 'b', 'c', proxy_info=None, ca_certs=None,
+            disable_ssl_certificate_validation=True)
+        self.assertEqual({'oauth2_client': mock_client.return_value,
+                          'Im': 'here', 'https_proxy': None}, rval)
+        self.assertEqual(len(captured_warnings), 1)
 
   def testGenerateLibSig(self):
     my_name = 'Joseph'

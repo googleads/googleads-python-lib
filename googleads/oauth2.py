@@ -210,8 +210,9 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
                                                  ' does not exist.' % key_file)
 
     self.oauth2credentials = oauth2client.client.SignedJwtAssertionCredentials(
-        client_email, private_key, scope, private_key_password,
-        self._USER_AGENT, sub=sub)
+        client_email, private_key, scope,
+        private_key_password=private_key_password,
+        user_agent=self._USER_AGENT, sub=sub)
     self.proxy_info = proxy_info
     self.disable_ssl_certificate_validation = disable_ssl_certificate_validation
     self.ca_certs = ca_certs

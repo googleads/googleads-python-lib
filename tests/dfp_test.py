@@ -142,7 +142,8 @@ class DfpClientTest(unittest.TestCase):
   def setUp(self):
     self.network_code = '12345'
     self.application_name = 'application name'
-    self.oauth2_client = 'unused'
+    self.oauth2_client = mock.Mock()
+    self.oauth2_client.CreateHttpHeader.return_value = {}
     self.https_proxy = 'myproxy:443'
     self.cache = None
     self.version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]

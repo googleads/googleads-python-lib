@@ -548,6 +548,36 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
         operations)
     self.assertTrue(raw_xml is '')
 
+  def testGenerateRawRequestXMLFromBogusOperation(self):
+    """Tests whether an invalid operation raises an Exception."""
+    bogus_operations = [{
+        'operator': 'ADD',
+        'xsi_type': 'BogusOperation',
+        'operand': {
+            'bogusProperty': 'bogusValue'}
+    }]
+
+    self.assertRaises(googleads.errors.GoogleAdsValueError,
+                      self.request_builder._GenerateRawRequestXML,
+                      bogus_operations)
+
+  def testGenerateRawRequestXMLFromCampaignLabelOperation(self):
+    """Tests whether raw request xml can be produced from a label operation."""
+    ops = [{
+        'operator': 'ADD',
+        'xsi_type': 'CampaignLabelOperation',
+        'operand': {'campaignId': 0, 'labelId': 0}
+    }]
+
+    root = ElementTree.fromstring(
+        self.request_builder._GenerateRawRequestXML(ops))
+    self.assertTrue(len(root) == 2)
+    body = root.find('{%s}Body' % self.ENVELOPE_NS)
+    self.assertTrue(len(body) == 1)
+    mutate_label = body.find('{%s}mutateLabel'
+                             % self.request_builder._adwords_endpoint)
+    self.assertTrue(len(mutate_label) == len(ops))
+
   def testGenerateRawRequestXMLFromSingleOperation(self):
     """Tests whether raw request xml can be produced from a single operation."""
     operations_amount = 1

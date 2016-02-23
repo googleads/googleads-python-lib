@@ -1,3 +1,22 @@
+3.13.0 -- 2/23/2016
+* Added support for DFP v201602.
+* Removed support for DFP v201411.
+* Removed examples for DFP v201502.
+* The library now applies a temporary patch to the suds-jurko dependency that
+  resolves multiple issues. This patch will be removed when the suds-jurko
+  library publicly exposes its 0.7 release. Thanks to GitHub user adiharush for
+  suggesting the patch!
+* The LoadFromStorage function can now load credentials for either the
+  installed application or service account (.p12 files only) OAuth 2.0 flows.
+* The googleads.yaml configuration file has been updated to reflect the changes
+  to the LoadFromStorage function.
+* Resolved Issues:
+  Issue #58: https://github.com/googleads/googleads-python-lib/issues/58
+  Issue #62: https://github.com/googleads/googleads-python-lib/issues/62
+  Issue #63: https://github.com/googleads/googleads-python-lib/issues/63
+  Issue #68: https://github.com/googleads/googleads-python-lib/issues/68
+  Issue #78: https://github.com/googleads/googleads-python-lib/issues/78
+
 3.12.0 -- 02/01/2016
 * Removed DoubleClick Ad Exchange content. This API has been sunset.
 * Added support for AdWords v201601.
@@ -11,6 +30,7 @@
 * The AdWords BatchJobHelper and IncrementalUploadHelper utilities now
   initialize URLs for v201601 and up.
 * The AdWords IncrementalUploadHelper is now serializable.
+>>>>>>> a4bf1f889e4cecee17f2e27a10d593452904cb8b
 
 3.11.0 -- 11/24/2015
 * Removed support for AdWords v201502.

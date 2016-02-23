@@ -6,15 +6,6 @@ and DoubleClick for Publishers. The library provides easy ways to store your
 authentication and create SOAP web service clients. It also contains example
 code to help you get started integrating with our APIs.
 
-####Important Note Regarding DFP
-If you are using v201502 and newer in the DFP API, then performing actions on
-objects will fail with an 'args NULL' error due to a bug in the underlying SOAP
-client, more details here: https://github.com/googleads/googleads-python-lib/issues/58.
-
-While the fix has been accepted and merged into the source, you will need to download
-the source files yourself and install them directly. The source can be located here:
-https://bitbucket.org/jurko/suds/downloads
-
 ##How do I get started?
 ####Installing the library
 Install or update the library from PyPI. If you're using pip, this is as easy
