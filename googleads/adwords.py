@@ -588,16 +588,17 @@ class BatchJobHelper(object):
       request_body = self._BuildUploadRequestBody(
           operations,
           has_prefix=current_content_length == 0,
-          has_suffix=is_last)
-      req = urllib2.Request(upload_url)
+          has_suffix=is_last).encode('utf-8')
+
+      req = urllib.request.Request(upload_url)
       req.add_header('Content-Type', 'application/xml')
       # Determine length of this message and the required padding.
       new_content_length = current_content_length
-      request_length = len(request_body.encode('utf-8'))
+      request_length = len(request_body)
       padding_length = self._GetPaddingLength(request_length)
       padded_request_length = request_length + padding_length
       new_content_length += padded_request_length
-      request_body += ' ' * padding_length
+      request_body += b' ' * padding_length
       req.get_method = lambda: 'PUT'  # Modify this into a PUT request.
       req.add_header('Content-Length', padded_request_length)
       req.add_header('Content-Range', 'bytes %s-%s/%s' % (
@@ -662,7 +663,7 @@ class BatchJobHelper(object):
           raise googleads.errors.GoogleAdsValueError('No xsi_type specified '
                                                      'for the operations.')
         operations.attrib['xsi:type'] = operation_type.text
-      operations_xml = ''.join([ElementTree.tostring(operations)
+      operations_xml = ''.join([ElementTree.tostring(operations).decode('utf-8')
                                 for operations in mutate])
       # Force removal of this line, which suds produces.
       operations_xml = operations_xml.replace(
@@ -765,7 +766,7 @@ class BatchJobHelper(object):
       Raises:
         AttributeError: if the provided XML isn't from AdWords.
       """
-      root = ElementTree.fromstring(raw_request_xml.encode('utf-8'))
+      root = ElementTree.fromstring(raw_request_xml)
       return root.find('{http://schemas.xmlsoap.org/soap/envelope/}Body').find(
           '%smutate' % self._adwords_namespace)
 
