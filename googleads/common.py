@@ -28,13 +28,13 @@ import googleads.errors
 import googleads.oauth2
 import googleads.patches
 
-VERSION = '3.13.0'
+VERSION = '3.14.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _PROXY_YAML_KEY = 'proxy_info'
 _PYTHON_VERSION = 'Python/%d.%d.%d' % (sys.version_info[0], sys.version_info[1],
                                        sys.version_info[2])
 
-# The keys in the authentication dictionary that are used to construct OAuth 2.0
+# The keys in the authentication dictionary that are used to construct OAuth2
 # credentials.
 _OAUTH2_INSTALLED_APP_KEYS = ('client_id', 'client_secret', 'refresh_token')
 _OAUTH2_SERVICE_ACCT_KEYS = ('service_account_email',
@@ -64,7 +64,7 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
   """Loads the data necessary for instantiating a client from file storage.
 
   In addition to the required_client_values argument, the yaml file must supply
-  the keys used to create OAuth 2.0 credentials. It may also optionally provide
+  the keys used to create OAuth2 credentials. It may also optionally provide
   proxy_info in order to configure a proxy.
 
   Args:
@@ -78,13 +78,13 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
 
   Returns:
     A dictionary map of the keys in the yaml file to their values. This will not
-    contain the keys used for OAuth 2.0 client creation and instead will have a
+    contain the keys used for OAuth2 client creation and instead will have a
     GoogleOAuth2Client object stored in the 'oauth2_client' field.
 
   Raises:
     A GoogleAdsValueError if the given yaml file does not contain the
     information necessary to instantiate a client object - either a
-    required_client_values key was missing or an OAuth 2.0 key was missing.
+    required_client_values key was missing or an OAuth2 key was missing.
   """
   if not os.path.isabs(path):
     path = os.path.expanduser(path)
@@ -156,7 +156,7 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
       del product_data[key]
   else:
     raise googleads.errors.GoogleAdsValueError(
-        'Your yaml file, %s, is incorrectly configured for OAuth 2.0. You '
+        'Your yaml file, %s, is incorrectly configured for OAuth2. You '
         'need to specify credentials for either the installed application '
         'flow (%s) or service account flow (%s). Actual values provided are: '
         '%s' % (path, _OAUTH2_INSTALLED_APP_KEYS, _OAUTH2_SERVICE_ACCT_KEYS,

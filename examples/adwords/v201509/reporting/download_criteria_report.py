@@ -28,7 +28,6 @@ section of our README.
 
 import logging
 import sys
-
 from googleads import adwords
 
 logging.basicConfig(level=logging.INFO)

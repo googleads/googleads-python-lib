@@ -29,7 +29,6 @@ section of our README.
 
 import re
 import uuid
-
 from googleads import adwords
 from googleads import errors
 

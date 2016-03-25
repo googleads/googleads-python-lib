@@ -27,7 +27,6 @@ section of our README.
 import random
 import re
 import time
-
 from googleads import adwords
 from googleads import errors
 

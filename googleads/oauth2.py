@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""OAuth 2.0 integration for the googleads library.
+"""OAuth2 integration for the googleads library.
 
 This module provides a basic interface which the googleads library uses to
 authorize API requests and some simple implementations built on oauth2client. If
-our OAuth 2.0 workflows doesn't meet your requirements, you can implement this
+our OAuth2 workflows doesn't meet your requirements, you can implement this
 interface in your own way. For example, you could pull credentials from a shared
 server and/or centralize refreshing credentials to prevent every Python process
 from independently refreshing the credentials.
@@ -58,19 +58,19 @@ def GetAPIScope(api_name):
 
 
 class GoogleOAuth2Client(object):
-  """An OAuth 2.0 client for use with Google APIs.
+  """An OAuth2 client for use with Google APIs.
 
   This interface assumes all responsibilty for refreshing credentials when
   necessary.
   """
 
   def CreateHttpHeader(self):
-    """Creates an OAuth 2.0 HTTP header.
+    """Creates an OAuth2 HTTP header.
 
-    The OAuth 2.0 credentials will be refreshed as necessary.
+    The OAuth2 credentials will be refreshed as necessary.
 
     Returns:
-      A dictionary containing one entry: the OAuth 2.0 Bearer header under the
+      A dictionary containing one entry: the OAuth2 Bearer header under the
       'Authorization' key.
     """
     raise NotImplementedError('You must subclass GoogleOAuth2Client.')
@@ -81,19 +81,19 @@ class GoogleOAuth2Client(object):
 
 
 class GoogleRefreshTokenClient(GoogleOAuth2Client):
-  """A simple client for using OAuth 2.0 for Google APIs with a refresh token.
+  """A simple client for using OAuth2 for Google APIs with a refresh token.
 
   This class is not capable of supporting any flows other than taking an
   existing, active refresh token and generating credentials from it. It does not
-  matter which of Google's OAuth 2.0 flows you used to generate the refresh
+  matter which of Google's OAuth2 flows you used to generate the refresh
   token (installed application, web flow, etc.).
 
   Attributes:
     proxy_info: A ProxyInfo instance used for refresh requests.
   """
-  # The web address for generating OAuth 2.0 credentials at Google.
+  # The web address for generating OAuth2 credentials at Google.
   _GOOGLE_OAUTH2_ENDPOINT = 'https://accounts.google.com/o/oauth2/token'
-  # We will refresh an OAuth 2.0 credential _OAUTH2_REFRESH_MINUTES_IN_ADVANCE
+  # We will refresh an OAuth2 credential _OAUTH2_REFRESH_MINUTES_IN_ADVANCE
   # minutes in advance of its expiration.
   _OAUTH2_REFRESH_MINUTES_IN_ADVANCE = 5
   # The placeholder URL is used when adding the access token to our request. A
@@ -127,14 +127,14 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
     self.ca_certs = ca_certs
 
   def CreateHttpHeader(self):
-    """Creates an OAuth 2.0 HTTP header.
+    """Creates an OAuth2 HTTP header.
 
-    The OAuth 2.0 credentials will be refreshed as necessary. In the event that
+    The OAuth2 credentials will be refreshed as necessary. In the event that
     the credentials fail to refresh, a message is logged but no exception is
     raised.
 
     Returns:
-      A dictionary containing one entry: the OAuth 2.0 Bearer header under the
+      A dictionary containing one entry: the OAuth2 Bearer header under the
       'Authorization' key.
 
     Raises:
@@ -165,7 +165,7 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
 
 
 class GoogleServiceAccountClient(GoogleOAuth2Client):
-  """A simple client for using OAuth 2.0 for Google APIs with a service account.
+  """A simple client for using OAuth2 for Google APIs with a service account.
 
   This class is not capable of supporting any flows other than generating
   credentials from a service account email and key file. This is incompatible
@@ -174,7 +174,7 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
   Attributes:
     proxy_info: A ProxyInfo instance used for refresh requests.
   """
-  # We will refresh an OAuth 2.0 credential _OAUTH2_REFRESH_MINUTES_IN_ADVANCE
+  # We will refresh an OAuth2 credential _OAUTH2_REFRESH_MINUTES_IN_ADVANCE
   # minutes in advance of its expiration.
   _OAUTH2_REFRESH_MINUTES_IN_ADVANCE = 5
   _USER_AGENT = 'Google Ads Python Client Library'
@@ -219,14 +219,14 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
     self.Refresh()
 
   def CreateHttpHeader(self):
-    """Creates an OAuth 2.0 HTTP header.
+    """Creates an OAuth2 HTTP header.
 
-    The OAuth 2.0 credentials will be refreshed as necessary. In the event that
+    The OAuth2 credentials will be refreshed as necessary. In the event that
     the credentials fail to refresh, a message is logged but no exception is
     raised.
 
     Returns:
-      A dictionary containing one entry: the OAuth 2.0 Bearer header under the
+      A dictionary containing one entry: the OAuth2 Bearer header under the
       'Authorization' key.
 
     Raises:

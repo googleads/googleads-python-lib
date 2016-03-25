@@ -164,6 +164,52 @@ _SERVICE_MAP = {
         'BiddingStrategyService': 'cm',
         'AdwordsUserListService': 'rm',
         'LabelService': 'cm',
+    },
+    'v201603': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'BatchJobService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'CustomerFeedService': 'cm',
+        'DataService': 'cm',
+        'DraftAsyncErrorService': 'cm',
+        'DraftService': 'cm',
+        'ExperimentService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'TrialAsyncErrorService': 'cm',
+        'TrialService': 'cm'
     }
 }
 
@@ -225,7 +271,7 @@ class AdWordsClient(object):
     Raises:
       A GoogleAdsValueError if the given yaml file does not contain the
       information necessary to instantiate a client object - either a
-      required key was missing or an OAuth 2.0 key was missing.
+      required key was missing or an OAuth2 key was missing.
     """
     if path is None:
       path = os.path.join(os.path.expanduser('~'), 'googleads.yaml')
@@ -523,7 +569,7 @@ class BatchJobHelper(object):
              'mutate'),
             ('AdGroupCriterionOperation', 'AdGroupCriterionService',
              'mutate'),
-            ('AdGroupCriterionLabelOperation', 'AdGroupCriterionServce',
+            ('AdGroupCriterionLabelOperation', 'AdGroupCriterionService',
              'mutateLabel'),
             ('AdGroupOperation', 'AdGroupService', 'mutate'),
             ('AdGroupLabelOperation', 'AdGroupService', 'mutateLabel'),
@@ -649,10 +695,11 @@ class BatchJobHelper(object):
         operations. This ordinarily happens if no xsi_type is specified for the
         operations.
       """
-      # Extract mutate element from XML, this contains the operations.
-      mutate = self._GetRawOperationsFromXML(full_soap_xml)
+      # Extract method element (e.g. mutate, mutateLabel, etc...) from XML, this
+      # contains the operations.
+      method = self._GetRawOperationsFromXML(full_soap_xml)
       # Ensure operations are formatted correctly for BatchJobService.
-      for operations in mutate:
+      for operations in method:
         self._FormatForBatchJobService(operations)
         # Extract the operation type, ensure xsi:type is set for
         # BatchJobService. Even if xsi_type is set earlier, suds will end up
@@ -662,8 +709,8 @@ class BatchJobHelper(object):
           raise googleads.errors.GoogleAdsValueError('No xsi_type specified '
                                                      'for the operations.')
         operations.attrib['xsi:type'] = operation_type.text
-      operations_xml = ''.join([ElementTree.tostring(operations)
-                                for operations in mutate])
+      operations_xml = ''.join([ElementTree.tostring(operation)
+                                for operation in method])
       # Force removal of this line, which suds produces.
       operations_xml = operations_xml.replace(
           'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"', '')
@@ -759,15 +806,15 @@ class BatchJobHelper(object):
           suds.
 
       Returns:
-        An unmodified mutate Element containing the operations from the raw
-        request xml.
+        An unmodified Element containing the operations from the raw request
+        xml.
 
       Raises:
         AttributeError: if the provided XML isn't from AdWords.
       """
       root = ElementTree.fromstring(raw_request_xml.encode('utf-8'))
       return root.find('{http://schemas.xmlsoap.org/soap/envelope/}Body').find(
-          '%smutate' % self._adwords_namespace)
+          './/')
 
   def __init__(self, request_builder, response_parser,
                version=sorted(_SERVICE_MAP.keys())[-1]):

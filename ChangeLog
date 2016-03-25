@@ -1,3 +1,9 @@
+3.14.0 -- 3/25/2016
+* Added support for AdWords v201603.
+* Resolved Issues:
+  Issue #105: https://github.com/googleads/googleads-python-lib/issues/105
+  Issue #106: https://github.com/googleads/googleads-python-lib/issues/106
+
 3.13.0 -- 2/23/2016
 * Added support for DFP v201602.
 * Removed support for DFP v201411.
@@ -7,7 +13,7 @@
   library publicly exposes its 0.7 release. Thanks to GitHub user adiharush for
   suggesting the patch!
 * The LoadFromStorage function can now load credentials for either the
-  installed application or service account (.p12 files only) OAuth 2.0 flows.
+  installed application or service account (.p12 files only) OAuth2 flows.
 * The googleads.yaml configuration file has been updated to reflect the changes
   to the LoadFromStorage function.
 * Resolved Issues:
@@ -30,7 +36,6 @@
 * The AdWords BatchJobHelper and IncrementalUploadHelper utilities now
   initialize URLs for v201601 and up.
 * The AdWords IncrementalUploadHelper is now serializable.
->>>>>>> a4bf1f889e4cecee17f2e27a10d593452904cb8b
 
 3.11.0 -- 11/24/2015
 * Removed support for AdWords v201502.
@@ -196,7 +201,7 @@
   Library.
 * Added CampaignSharedSetService, LabelService, SharedCriterionService, and
   SharedSetService for AdWords.
-* Updated AdWords OAuth 2.0 scope.
+* Updated AdWords OAuth2 scope.
   See: https://developers.google.com/adwords/api/docs/guides/authentication.
 
 1.0.6 - 05/29/2014

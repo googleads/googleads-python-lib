@@ -33,7 +33,7 @@ import googleads.oauth2
 class CommonTest(unittest.TestCase):
   """Tests for the googleads.common module."""
 
-  # Dictionaries with all the required OAuth 2.0 keys
+  # Dictionaries with all the required OAuth2 keys
   _OAUTH_INSTALLED_APP_DICT = {'client_id': 'a', 'client_secret': 'b',
                                'refresh_token': 'c'}
   _OAUTH_SERVICE_ACCT_DICT = {'service_account_email': 'test@test.com',

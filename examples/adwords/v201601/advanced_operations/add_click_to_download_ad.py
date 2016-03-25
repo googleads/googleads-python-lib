@@ -25,7 +25,6 @@ directory. For more information, see the "Caching authentication information"
 section of our README.
 
 """
-
 from googleads import adwords
 
 

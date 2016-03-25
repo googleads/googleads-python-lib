@@ -26,19 +26,18 @@ import time
 import urllib2
 import uuid
 
-
 from googleads import adwords
 
 
 ADGROUP_ID = 'INSERT_ADGROUP_ID_HERE'
 KEYWORD_COUNT = 100
 MAX_POLL_ATTEMPTS = 5
-PENDING_STATUSES = ('ACTIVE', 'AWAITING_FILE')
+PENDING_STATUSES = ('ACTIVE', 'AWAITING_FILE', 'CANCELING')
 
 
 def main(client, adgroup_id):
   # Initialize BatchJobHelper.
-  batch_job_helper = client.GetBatchJobHelper()
+  batch_job_helper = client.GetBatchJobHelper(version='v201601')
   # Create a BatchJob.
   batch_job = AddBatchJob(client)
 
@@ -123,6 +122,46 @@ def BuildAdGroupCriterionOperations(adgroup_id):
   return criterion_operations
 
 
+def CancelBatchJob(client, batch_job, max_poll_attempts=MAX_POLL_ATTEMPTS):
+  """Cancels the given BatchJob.
+
+  Args:
+    client: an instantiated AdWordsClient used to cancel the BatchJob.
+    batch_job: a BatchJob to be canceled.
+    max_poll_attempts: an int defining the number of times the the BatchJob will
+      be checked to determine whether it has been canceled.
+  """
+  batch_job_service = client.GetService('BatchJobService', 'v201601')
+  batch_job['status'] = 'CANCELING'
+
+  operation = {
+      'operator': 'SET',
+      'operand': batch_job
+  }
+
+  batch_job_service.mutate([operation])
+
+  # Verify that the Batch Job cancels.
+  poll_attempt = 0
+
+  while (poll_attempt in range(max_poll_attempts) and
+         batch_job['status'] != 'CANCELED'):
+    sleep_interval = (30 * (2 ** poll_attempt) +
+                      (random.randint(0, 10000) / 1000))
+    print ('Batch Job not finished canceling, sleeping for %s seconds.'
+           % sleep_interval)
+    time.sleep(sleep_interval)
+    batch_job = GetBatchJob(client, batch_job['id'])
+    poll_attempt += 1
+
+  if batch_job['status'] == 'CANCELED':
+    print ('Batch Job with ID "%d" has been successfully canceled.' %
+           batch_job['id'])
+  else:
+    print ('Batch Job with ID "%d" failed to cancel after polling %d times.'
+           % (batch_job['id'], max_poll_attempts))
+
+
 def GetBatchJob(client, batch_job_id):
   """Retrieves the BatchJob with the given id.
 
@@ -132,7 +171,7 @@ def GetBatchJob(client, batch_job_id):
   Returns:
     The BatchJob associated with the given id.
   """
-  batch_job_service = client.GetService('BatchJobService')
+  batch_job_service = client.GetService('BatchJobService', 'v201601')
 
   selector = {
       'fields': ['Id', 'Status', 'DownloadUrl'],
@@ -166,6 +205,10 @@ def GetBatchJobDownloadUrlWhenReady(client, batch_job_id,
       have been made.
   """
   batch_job = GetBatchJob(client, batch_job_id)
+  if batch_job['status'] == 'CANCELED':
+    raise Exception('Batch Job with ID "%s" was canceled before completing.'
+                    % batch_job_id)
+
   poll_attempt = 0
 
   while (poll_attempt in range(max_poll_attempts) and
@@ -182,8 +225,10 @@ def GetBatchJobDownloadUrlWhenReady(client, batch_job_id,
       print ('Batch Job with Id "%s", Status "%s", and DownloadUrl "%s" ready.'
              % (batch_job['id'], batch_job['status'], url))
       return url
-  raise Exception('Batch Job with ID "%s" not finished downloading. Try '
-                  'checking later.' % batch_job_id)
+
+  print ('BatchJob with ID "%s" is being canceled because it was in a pending '
+         'state after polling %d times.' % (batch_job_id, max_poll_attempts))
+  CancelBatchJob(client, batch_job)
 
 
 def PrintResponse(batch_job_helper, response_xml):

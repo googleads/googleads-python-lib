@@ -26,7 +26,6 @@ import time
 import urllib2
 import uuid
 
-
 from googleads import adwords
 
 
@@ -34,12 +33,12 @@ NUMBER_OF_CAMPAIGNS_TO_ADD = 2
 NUMBER_OF_ADGROUPS_TO_ADD = 2
 NUMBER_OF_KEYWORDS_TO_ADD = 5
 MAX_POLL_ATTEMPTS = 5
-PENDING_STATUSES = ('ACTIVE', 'AWAITING_FILE')
+PENDING_STATUSES = ('ACTIVE', 'AWAITING_FILE', 'CANCELING')
 
 
 def main(client, number_of_campaigns, number_of_adgroups, number_of_keywords):
   # Initialize BatchJobHelper.
-  batch_job_helper = client.GetBatchJobHelper()
+  batch_job_helper = client.GetBatchJobHelper(version='v201509')
 
   # Create a BatchJob.
   batch_job = AddBatchJob(client)
@@ -347,7 +346,7 @@ def GetBatchJob(client, batch_job_id):
   Returns:
     The BatchJob associated with the given id.
   """
-  batch_job_service = client.GetService('BatchJobService')
+  batch_job_service = client.GetService('BatchJobService', version='v201509')
 
   selector = {
       'fields': ['Id', 'Status', 'DownloadUrl'],

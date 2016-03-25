@@ -20,7 +20,7 @@
 from googleads import dfp
 from googleads import oauth2
 
-# OAuth 2.0 credential information. In a real application, you'd probably be
+# OAuth2 credential information. In a real application, you'd probably be
 # pulling these values from a credential storage.
 SERVICE_ACCOUNT_EMAIL = 'INSERT_SERVICE_ACCOUNT_EMAIL'
 KEY_FILE = 'INSERT_KEY_FILE_PATH'

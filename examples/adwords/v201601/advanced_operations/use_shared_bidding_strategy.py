@@ -25,7 +25,6 @@ section of our README.
 
 
 import uuid
-
 from googleads import adwords
 
 

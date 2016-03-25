@@ -18,7 +18,7 @@
 
 While our LoadFromStorage method provides a useful shortcut to instantiate a
 client if you regularly use just one set of credentials, production applications
-may need to swap out users. This example shows you how to create an OAuth 2.0
+may need to swap out users. This example shows you how to create an OAuth2
 client and a DfpClient without relying on a yaml file.
 """
 
@@ -26,7 +26,7 @@ client and a DfpClient without relying on a yaml file.
 from googleads import dfp
 from googleads import oauth2
 
-# OAuth 2.0 credential information. In a real application, you'd probably be
+# OAuth2 credential information. In a real application, you'd probably be
 # pulling these values from a credential storage.
 CLIENT_ID = 'INSERT_CLIENT_ID_HERE'
 CLIENT_SECRET = 'INSERT_CLIENT_SECRET_HERE'

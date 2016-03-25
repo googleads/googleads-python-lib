@@ -12,7 +12,7 @@ adwords:
   # partial_failure: True
   # validate_only: True
   #############################################################################
-  # OAuth 2.0 Configuration                                                   #
+  # OAuth2 Configuration                                                   #
   # Below you may provide credentials for either the installed application or #
   # service account flows. Remove or comment the lines for the flow you're    #
   # not using.                                                                #
@@ -37,7 +37,7 @@ dfp:
   # unless the network code is set directly on the DfpClient object:
   # network_code: INSERT_NETWORK_CODE_HERE
   #############################################################################
-  # OAuth 2.0 Configuration                                                   #
+  # OAuth2 Configuration                                                   #
   # Below you may provide credentials for either the installed application or #
   # service account flows. Remove or comment the lines for the flow you're    #
   # not using.                                                                #

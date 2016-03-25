@@ -22,12 +22,12 @@ import sys
 
 from oauth2client import client
 
-# Your OAuth 2.0 Client ID and Secret. If you do not have an ID and Secret yet,
+# Your OAuth2 Client ID and Secret. If you do not have an ID and Secret yet,
 # please go to https://console.developers.google.com and create a set.
 DEFAULT_CLIENT_ID = None
 DEFAULT_CLIENT_SECRET = None
 
-# The AdWords API OAuth 2.0 scope.
+# The AdWords API OAuth2 scope.
 SCOPE = u'https://www.googleapis.com/auth/adwords'
 
 parser = argparse.ArgumentParser(description='Generates a refresh token with '
@@ -64,7 +64,7 @@ def main(client_id, client_secret, scopes):
     print 'Authentication has failed: %s' % e
     sys.exit(1)
   else:
-    print ('OAuth 2.0 authorization successful!\n\n'
+    print ('OAuth2 authorization successful!\n\n'
            'Your access token is:\n %s\n\nYour refresh token is:\n %s'
            % (credential.access_token, credential.refresh_token))
 

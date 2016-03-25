@@ -30,7 +30,6 @@ section of our README.
 """
 
 
-
 from googleads import adwords
 
 

@@ -32,7 +32,6 @@ section of our README.
 
 import datetime
 import uuid
-
 from googleads import adwords
 
 

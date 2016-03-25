@@ -43,7 +43,7 @@ def main(client, budget_id, merchant_id):
       'name': 'Shopping campaign #%s' % uuid.uuid4(),
       # The advertisingChannelType is what makes this a shopping campaign
       'advertisingChannelType': 'SHOPPING',
-      # Set shared budget (required)
+      # Set portfolio budget (required)
       'budget': {
           'budgetId': budget_id
       },

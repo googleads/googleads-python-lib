@@ -26,7 +26,6 @@ section of our README.
 
 from datetime import datetime
 
-
 from googleads import adwords
 from googleads import errors
 from pytz import timezone

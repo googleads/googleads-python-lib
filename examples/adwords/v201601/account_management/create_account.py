@@ -28,7 +28,6 @@ section of our README.
 
 
 from datetime import datetime
-
 from googleads import adwords
 
 

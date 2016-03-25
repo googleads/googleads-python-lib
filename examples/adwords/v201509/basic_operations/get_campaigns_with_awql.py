@@ -27,7 +27,6 @@ section of our README.
 
 
 import time
-
 from googleads import adwords
 
 

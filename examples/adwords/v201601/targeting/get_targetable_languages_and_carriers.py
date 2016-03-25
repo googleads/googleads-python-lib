@@ -23,7 +23,6 @@ section of our README.
 
 """
 
-
 from googleads import adwords
 
 
@@ -46,7 +45,9 @@ def main(client):
   # Display results.
   for carrier in carriers:
     print ('Carrier with name \'%s\', ID \'%s\', and country code \'%s\' was '
-           'found.' % (carrier['name'], carrier['id'], carrier['countryCode']))
+           'found.' % (
+               carrier['name'], carrier['id'],
+               getattr(carrier, 'countryCode', 'N/A')))
 
 
 if __name__ == '__main__':

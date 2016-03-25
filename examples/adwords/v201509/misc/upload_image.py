@@ -27,7 +27,6 @@ section of our README.
 
 
 import base64
-
 from googleads import adwords
 
 

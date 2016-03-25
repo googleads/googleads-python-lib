@@ -20,7 +20,6 @@
 
 import base64
 import urllib2
-
 from googleads import adwords
 
 

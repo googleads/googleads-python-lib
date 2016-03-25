@@ -27,7 +27,6 @@ section of our README.
 
 
 import re
-
 import suds
 
 from googleads import adwords

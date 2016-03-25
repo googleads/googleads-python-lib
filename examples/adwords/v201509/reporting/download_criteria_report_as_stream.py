@@ -29,7 +29,6 @@ section of our README.
 import logging
 import StringIO
 import sys
-
 from googleads import adwords
 
 

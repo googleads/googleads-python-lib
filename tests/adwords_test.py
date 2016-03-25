@@ -339,6 +339,17 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
   def setUpClass(cls):
     test_dir = os.path.dirname(__file__)
     with open(os.path.join(
+        test_dir, 'data/batch_job_util_budget_template.txt')) as handler:
+      cls.BUDGET_TEMPLATE = handler.read()
+    with open(os.path.join(
+        test_dir,
+        'data/batch_job_util_campaign_criterion_template.txt')) as handler:
+      cls.CAMPAIGN_CRITERION_TEMPLATE = handler.read()
+    with open(os.path.join(
+        test_dir,
+        'data/batch_job_util_campaign_label_template.txt')) as handler:
+      cls.CAMPAIGN_LABEL_TEMPLATE = handler.read()
+    with open(os.path.join(
         test_dir, 'data/batch_job_util_invalid_request.txt')) as handler:
       cls.INVALID_API_REQUEST = handler.read()
     with open(os.path.join(
@@ -348,75 +359,127 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
         test_dir, 'data/batch_job_util_raw_request_template.txt')) as handler:
       cls.RAW_API_REQUEST_TEMPLATE = handler.read()
     with open(os.path.join(
-        test_dir, 'data/batch_job_util_raw_operation_template.txt')) as handler:
-      cls.RAW_OPERATION_TEMPLATE = handler.read()
+        test_dir, 'data/batch_job_util_operations_template.txt')) as handler:
+      cls.OPERATIONS_TEMPLATE = handler.read()
     with open(os.path.join(
         test_dir, 'data/batch_job_util_upload_template.txt')) as handler:
       cls.UPLOAD_OPERATIONS_TEMPLATE = handler.read()
 
-  def GenerateBudgetOperations(self, operations):
-    """Generates request containing given number of BudgetOperations.
+  def ExpandOperandTemplate(self, operation_type, operand):
+    """Expands the appropriate operand for the given operation_type.
 
     Args:
-      operations: a positive int defining the number of BudgetOperations to be
+      operation_type: str indicating the type of operation the operand is being
+        expanded for. Accepted types include: "BudgetOperation",
+        "CampaignCriterionOperation", and "CampaignLabelOperation".
+      operand: dict containing fields for the operation_type's operand.
+
+    Returns:
+      A str containing the expanded operand.
+
+    Raises:
+      ValueError: if an unsupported operation_type is specified.
+    """
+    if operation_type == 'BudgetOperation':
+      return self.BUDGET_TEMPLATE % (
+          operand['budgetId'], operand['name'],
+          operand['amount']['microAmount'], operand['deliveryMethod'])
+    elif operation_type == 'CampaignCriterionOperation':
+      return self.CAMPAIGN_CRITERION_TEMPLATE % (
+          operand['CampaignCriterion.Type'], operand['campaignId'],
+          operand['criterion']['Criterion.Type'],
+          operand['criterion']['text'],
+          operand['criterion']['matchType'])
+    elif operation_type == 'CampaignLabelOperation':
+      return self.CAMPAIGN_LABEL_TEMPLATE % (
+          operand['campaignId'], operand['labelId'])
+    else:
+      raise ValueError('Invalid operation_type "%s" specified.'
+                       % operation_type)
+
+  def GenerateOperations(self, operation_type, num_operations):
+    """Generates a set of operations of the given type.
+
+    Args:
+      operation_type: str indicating the type of operation to be generated.
+        Accepted types include: "BudgetOperation", "CampaignCriterionOperation",
+        and "CampaignLabelOperation".
+      num_operations: a positive int defining the number of operations to be
         generated.
+
     Returns:
-      A list of dictionaries containing distinct BudgetOperations.
+      A tuple where the first item indicates the method to be used in the
+      request and the second is a list of dictionaries containing distinct
+      operations of the given operation_type.
+
+    Raises:
+      ValueError: if an unsupported operation_type is specified.
     """
-    return [{
-        'operator': 'ADD',
-        'xsi_type': 'BudgetOperation',
-        'operand': {
-            'budgetId': str(i),
-            'name': 'Batch budget #%s' % i,
-            'period': 'DAILY',
-            'amount': {'microAmount': str(3333333 * i)},
-            'deliveryMethod': 'STANDARD'}
-    } for i in range(1, operations + 1)]
+    operation_range = range(1, num_operations + 1)
 
-  def GenerateCampaignCriterionOperations(self, operations):
-    """Generates request containing given number of CampaignCriterionOperations.
+    if operation_type == 'BudgetOperation':
+      return ('mutate', [{
+          'operator': 'ADD',
+          'xsi_type': 'BudgetOperation',
+          'operand': {
+              'budgetId': str(i),
+              'name': 'Batch budget #%s' % i,
+              'amount': {'microAmount': str(3333333 * i)},
+              'deliveryMethod': 'STANDARD'}
+      } for i in operation_range])
+    elif operation_type == 'CampaignCriterionOperation':
+      return ('mutate', [{
+          'operator': 'ADD',
+          'xsi_type': 'CampaignCriterionOperation',
+          'operand': {
+              'xsi_type': 'NegativeCampaignCriterion',
+              'campaignId': str(100 * i),
+              'criterion': {
+                  'xsi_type': 'Keyword',
+                  'text': 'venus %s' % i,
+                  'matchType': 'BROAD'
+              }
+          }
+      } for i in operation_range])
+    elif operation_type == 'CampaignLabelOperation':
+      return ('mutateLabel', [{
+          'operator': 'ADD',
+          'xsi_type': 'CampaignLabelOperation',
+          'operand': {
+              'campaignId': 123 * i,
+              'labelId': 321 * i}
+      } for i in operation_range])
+    else:
+      raise ValueError('Invalid operation_type "%s" specified.'
+                       % operation_type)
 
-    Args:
-      operations: a positive int defining the number of
-      CampaignCriterionOperations to be generated.
-    Returns:
-      A list of dictionaries containing distinct CampaignCriterionOperations.
-    """
-    return [{
-        'operator': 'ADD',
-        'xsi_type': 'CampaignCriterionOperation',
-        'operand': {
-            'xsi_type': 'NegativeCampaignCriterion',
-            'campaignId': str(100 * i),
-            'criterion': {
-                'xsi_type': 'Keyword',
-                'text': 'venus %s' % i,
-                'matchType': 'BROAD'
-            }
-        }
-    } for i in range(1, operations + 1)]
-
-  def GenerateValidRequest(self, operations):
+  def GenerateValidRequest(self, operation_type, num_operations=1):
     """Generates a valid API request containing the given number of operations.
 
     Args:
-      operations: a positive int defining the number of BudgetOperations to be
+      operation_type: str indicating the type of operation to be generated.
+        Accepted types include: "BudgetOperation", "CampaignCriterionOperation",
+        and "CampaignLabelOperation".
+      num_operations: a positive int defining the number of operations to be
         generated.
 
     Returns:
       A tuple containing the operations used to construct str containing a valid
       API request.
+
+    Raises:
+      ValueError: if an unsupported operation_type is specified.
     """
-    ops = self.GenerateBudgetOperations(operations)
-    ops_xml = ''.join([self.RAW_OPERATION_TEMPLATE % (
-        op['operator'], op['xsi_type'], op['operand']['budgetId'],
-        op['operand']['name'], op['operand']['period'],
-        op['operand']['amount']['microAmount'],
-        op['operand']['deliveryMethod']
+    method, ops = self.GenerateOperations(operation_type, num_operations)
+
+    ops_xml = ''.join([self.OPERATIONS_TEMPLATE % (
+        op['operator'], op['xsi_type'],
+        self.ExpandOperandTemplate(operation_type, op['operand'])
     ) for op in ops])
-    request = self.RAW_API_REQUEST_TEMPLATE % (self.version, self.version,
-                                               ops_xml)
+
+    request = self.RAW_API_REQUEST_TEMPLATE.decode('utf-8') % (
+        self.version, self.version, method, ops_xml, method)
+
     return (ops, request)
 
   def GenerateValidUnicodeRequest(self, operations):
@@ -431,15 +494,13 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
       valid API request.
     """
     ops = self.GenerateUnicodeBudgetOperations(operations)
-    ops_xml = ''.join([self.RAW_OPERATION_TEMPLATE.decode('utf-8') % (
-        op[u'operator'], op[u'xsi_type'], op[u'operand'][u'budgetId'],
-        op[u'operand'][u'name'], op[u'operand'][u'period'],
-        op[u'operand'][u'amount'][u'microAmount'],
-        op[u'operand'][u'deliveryMethod']
+    method = 'mutate'
+    ops_xml = ''.join([self.OPERATIONS_TEMPLATE.decode('utf-8') % (
+        op[u'operator'], op[u'xsi_type'],
+        self.ExpandOperandTemplate('BudgetOperation', op['operand'])
     ) for op in ops])
-    request = self.RAW_API_REQUEST_TEMPLATE.decode('utf-8') % (self.version,
-                                                               self.version,
-                                                               ops_xml)
+    request = self.RAW_API_REQUEST_TEMPLATE.decode('utf-8') % (
+        self.version, self.version, method, ops_xml, method)
     return (ops, request)
 
   def GenerateUnicodeBudgetOperations(self, operations):
@@ -457,7 +518,6 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
         u'operand': {
             u'budgetId': str(i).decode('utf-8'),
             u'name': u'アングリーバード Batch budget #%s' % i,
-            u'period': u'DAILY',
             u'amount': {u'microAmount': str(3333333 * i).decode('utf-8')},
             u'deliveryMethod': u'STANDARD'}
     } for i in range(1, operations + 1)]
@@ -473,7 +533,7 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
 
     Verifies that the xsi_type has been properly assigned.
     """
-    operations = self.GenerateCampaignCriterionOperations(1)
+    _, operations = self.GenerateOperations('CampaignCriterionOperation', 1)
     raw_xml = self.request_builder._GenerateRawRequestXML(operations)
     operations_xml = self.request_builder._ExtractOperations(raw_xml)
     # Put operations in a format that allows us to easily verify the behavior.
@@ -501,7 +561,8 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
   def testFormatForBatchJobService(self):
     """Tests whether namespaces have been removed."""
     operations_amount = 5
-    ops = self.GenerateCampaignCriterionOperations(operations_amount)
+    _, ops = self.GenerateOperations('CampaignCriterionOperation',
+                                     operations_amount)
     root = ElementTree.fromstring(self.request_builder._GenerateRawRequestXML(
         ops))
     body = root.find('{%s}Body' % self.ENVELOPE_NS)
@@ -534,7 +595,7 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
   def testGenerateOperationsXMLNoXsiType(self):
     """Tests whether _GenerateOperationsXML raises ValueError if no xsi_type.
     """
-    operations = self.GenerateCampaignCriterionOperations(1)
+    _, operations = self.GenerateOperations('CampaignCriterionOperation', 1)
     del operations[0]['xsi_type']
     self.assertRaises(
         googleads.errors.AdWordsBatchJobServiceInvalidOperationError,
@@ -543,7 +604,7 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
   def testGenerateOperationsXMLWithNoOperations(self):
     """Tests whether _GenerateOperationsXML produces empty str if no operations.
     """
-    operations = self.GenerateCampaignCriterionOperations(0)
+    _, operations = self.GenerateOperations('CampaignCriterionOperation', 0)
     raw_xml = self.request_builder._GenerateOperationsXML(
         operations)
     self.assertTrue(raw_xml is '')
@@ -581,7 +642,7 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
   def testGenerateRawRequestXMLFromSingleOperation(self):
     """Tests whether raw request xml can be produced from a single operation."""
     operations_amount = 1
-    ops = self.GenerateBudgetOperations(operations_amount)
+    _, ops = self.GenerateOperations('BudgetOperation', operations_amount)
 
     root = ElementTree.fromstring(
         self.request_builder._GenerateRawRequestXML(ops))
@@ -613,11 +674,6 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
       self.assertEqual(operand.find(
           '{%s}name' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['name'])
-      self.assertEqual(
-          operand.find(
-              '{%s}period' %
-              self.request_builder._adwords_endpoint).text,
-          ops[i]['operand']['period'])
       amount = operand.find('{%s}amount' %
                             self.request_builder._adwords_endpoint)
       self.assertTrue(len(amount._children) ==
@@ -632,7 +688,7 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
   def testGenerateRawRequestXMLFromMultipleOperations(self):
     """Tests whether raw request xml can be produced for multiple operations."""
     operations_amount = 5
-    ops = self.GenerateBudgetOperations(operations_amount)
+    _, ops = self.GenerateOperations('BudgetOperation', operations_amount)
 
     root = ElementTree.fromstring(
         self.request_builder._GenerateRawRequestXML(ops))
@@ -663,9 +719,6 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
       self.assertEqual(operand.find(
           '{%s}name' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['name'])
-      self.assertEqual(operand.find(
-          '{%s}period' % self.request_builder._adwords_endpoint).text,
-                       ops[i]['operand']['period'])
       amount = operand.find(
           '{%s}amount' % self.request_builder._adwords_endpoint)
       self.assertTrue(len(amount._children) ==
@@ -712,11 +765,6 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
       self.assertEqual(operand.find(
           '{%s}name' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['name'])
-      self.assertEqual(
-          operand.find(
-              '{%s}period' %
-              self.request_builder._adwords_endpoint).text,
-          ops[i]['operand']['period'])
       amount = operand.find('{%s}amount' %
                             self.request_builder._adwords_endpoint)
       self.assertTrue(len(amount._children) ==
@@ -728,13 +776,47 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
           '{%s}deliveryMethod' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['deliveryMethod'])
 
+  def testGetRawOperationsFromValidSingleOperationMutateLabelRequest(self):
+    """Test if operations XML can be retrieved for a single-op label request."""
+    operations_amount = 1
+    ops, request = self.GenerateValidRequest('CampaignLabelOperation',
+                                             operations_amount)
+
+    mutate = self.request_builder._GetRawOperationsFromXML(request)
+    self.assertEqual(mutate.tag,
+                     '{%s}mutateLabel' % self.request_builder._adwords_endpoint)
+    self.assertTrue(len(mutate._children) == operations_amount)
+
+    for i in range(0, operations_amount):
+      operations = mutate[i]
+      self.assertEqual(
+          operations.tag,
+          '{%s}operations' % self.request_builder._adwords_endpoint)
+      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertEqual(operations.find(
+          '{%s}operator' % self.request_builder._adwords_endpoint).text,
+                       ops[i]['operator'])
+      self.assertEqual(operations.find(
+          '{%s}Operation.Type' % self.request_builder._adwords_endpoint).text,
+                       ops[i]['xsi_type'])
+      operand = operations.find(
+          '{%s}operand' % self.request_builder._adwords_endpoint)
+      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertEqual(int(operand.find(
+          '{%s}campaignId' % self.request_builder._adwords_endpoint).text),
+                       ops[i]['operand']['campaignId'])
+      self.assertEqual(int(operand.find(
+          '{%s}labelId' % self.request_builder._adwords_endpoint).text),
+                       ops[i]['operand']['labelId'])
+
   def testGetRawOperationsFromValidSingleOperationRequest(self):
-    """Test whether operations XML can be retrieved for a single-op request.
+    """Test if operations XML can be retrieved for a single-op request.
 
     Also verifies that the contents of generated XML are correct.
     """
     operations_amount = 1
-    ops, request = self.GenerateValidRequest(operations_amount)
+    ops, request = self.GenerateValidRequest('BudgetOperation',
+                                             operations_amount)
 
     mutate = self.request_builder._GetRawOperationsFromXML(request)
     self.assertEqual(mutate.tag,
@@ -762,9 +844,6 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
       self.assertEqual(operand.find(
           '{%s}name' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['name'])
-      self.assertEqual(operand.find(
-          '{%s}period' % self.request_builder._adwords_endpoint).text,
-                       ops[i]['operand']['period'])
       amount = operand.find(
           '{%s}amount' % self.request_builder._adwords_endpoint)
       self.assertTrue(len(amount._children) ==
@@ -782,7 +861,8 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
     Also verifies that the contents of generated XML are correct.
     """
     operations_amount = 5
-    ops, request = self.GenerateValidRequest(operations_amount)
+    ops, request = self.GenerateValidRequest('BudgetOperation',
+                                             operations_amount)
 
     mutate = self.request_builder._GetRawOperationsFromXML(request)
     self.assertEqual(
@@ -811,9 +891,6 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
       self.assertEqual(operand.find(
           '{%s}name' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['name'])
-      self.assertEqual(operand.find(
-          '{%s}period' % self.request_builder._adwords_endpoint).text,
-                       ops[i]['operand']['period'])
       amount = (operand.find(
           '{%s}amount' % self.request_builder._adwords_endpoint))
       self.assertTrue(len(amount._children) ==
@@ -860,9 +937,6 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
       self.assertEqual(operand.find(
           '{%s}name' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['name'])
-      self.assertEqual(operand.find(
-          '{%s}period' % self.request_builder._adwords_endpoint).text,
-                       ops[i]['operand']['period'])
       amount = (operand.find(
           '{%s}amount' % self.request_builder._adwords_endpoint))
       self.assertTrue(len(amount._children) ==
@@ -877,7 +951,8 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
   def testGetRawOperationsFromValidZeroOperationRequest(self):
     """Test verifying empty request generated if no operations provided."""
     operations_amount = 0
-    _, request = self.GenerateValidRequest(operations_amount)
+    _, request = self.GenerateValidRequest('BudgetOperation',
+                                           operations_amount)
 
     mutate = self.request_builder._GetRawOperationsFromXML(request)
 
@@ -985,6 +1060,7 @@ class IncrementalUploadHelperTest(unittest.TestCase):
     """Prepare tests."""
     self.client = GetAdWordsClient()
     self.batch_job_helper = self.client.GetBatchJobHelper()
+    self.version = self.batch_job_helper._version
     self.original_url = 'https://goo.gl/w8tkpK'
     self.initialized_url = 'https://goo.gl/Xtaq83'
 
@@ -998,7 +1074,7 @@ class IncrementalUploadHelperTest(unittest.TestCase):
 
     self.incremental_uploader_dump = (
         '{current_content_length: 0, is_last: false, '
-        'upload_url: \'https://goo.gl/Xtaq83\', version: v201601}\n')
+        'upload_url: \'https://goo.gl/Xtaq83\', version: %s}\n' % self.version)
 
   def testDump(self):
     expected = self.incremental_uploader_dump
@@ -1027,7 +1103,7 @@ class IncrementalUploadHelperTest(unittest.TestCase):
     self.assertEquals(restored_uploader._is_last,
                       self.incremental_uploader._is_last)
     self.assertEquals(restored_uploader._request_builder._version,
-                      self.incremental_uploader._request_builder._version)
+                      self.version)
     self.assertEquals(restored_uploader._upload_url,
                       self.incremental_uploader._upload_url)
 

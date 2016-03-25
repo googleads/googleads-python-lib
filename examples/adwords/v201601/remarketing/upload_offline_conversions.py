@@ -26,7 +26,6 @@ section of our README.
 
 """
 
-
 from googleads import adwords
 
 # Name of the conversion tracker to upload to.

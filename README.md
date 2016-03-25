@@ -6,34 +6,64 @@ and DoubleClick for Publishers. The library provides easy ways to store your
 authentication and create SOAP web service clients. It also contains example
 code to help you get started integrating with our APIs.
 
-##How do I get started?
-####Installing the library
-Install or update the library from PyPI. If you're using pip, this is as easy
-as:
+##Getting started
+1. Download and install the library
 
-`$ pip install [--upgrade] googleads`
+   It is recommended that you install the library and its dependencies from
+   PyPI using [pip](https://pip.pypa.io/en/stable/installing/). This can be
+   accomplished with a single command:
 
-If you don't want to install directly from PyPI, you can download the library
-as a tarball and then install it manually. The download can be found here:
-https://pypi.python.org/pypi/googleads
-Navigate to the directory that contains your downloaded unzipped client
-library and run the "setup.py" script to install the "googleads"
-module.
+   `$ pip install googleads`
 
-`$ python setup.py build install`
+   As an alternative, you can
+   [download the library as a tarball](https://pypi.python.org/pypi/googleads).
+   To start the installation, navigate to the directory that contains your
+   downloaded unzipped client library and run the "setup.py" script as follows:
 
-You can find code examples in the git repo and in the library's releases within
-the examples folder.
+   `$ python setup.py build install`
+
+1. Copy the [googleads.yaml](https://github.com/googleads/googleads-python-lib/blob/master/googleads.yaml)
+   file to your home directory.
+
+   This will be used to store credentials and other settings that can be loaded
+   to initialize a client.
+
+1. Set up your OAuth2 credentials
+
+   The AdWords and DoubleClick for Publishers APIs use
+   [OAuth2](http://oauth.net/2/) as the authentication mechanism. Follow the
+   appropriate guide below based on your use case.
+
+   **If you're accessing an API using your own credentials...**
+
+   * [Using AdWords](https://github.com/googleads/googleads-python-lib/wiki/API-access-using-own-credentials-(installed-application-flow))
+   * [Using DFP](https://github.com/googleads/googleads-python-lib/wiki/API-access-using-own-credentials-(server-to-server-flow))
+
+   **If you're accessing an API on behalf of clients...**
+
+   * [Developing a web application (AdWords or DFP)](https://github.com/googleads/googleads-python-lib/wiki/API-access-on-behalf-of-your-clients-(web-flow))
+
+####Where can I find samples?
+
+You can find code examples for the latest versions of AdWords or DFP on the
+[releases](https://github.com/googleads/googleads-python-lib/releases) page.
+
+Alternatively, you can find [AdWords](https://github.com/googleads/googleads-python-lib/tree/master/examples/adwords)
+or [DFP](https://github.com/googleads/googleads-python-lib/tree/master/examples/dfp)
+samples in the examples directory of this repository.
 
 ####Where can I find the pydocs?
-Our pydocs are hosted at: http://googleads.github.io/googleads-python-lib
+
+Our Pydoc can be found [here](http://googleads.github.io/googleads-python-lib).
 
 ####Caching authentication information
+
 It is possible to cache your API authentication information. The library
 includes a sample file showing how to do this named `googleads.yaml`. Fill
-in the fields for the API you plan to use. The library's `LoadFromStorage`
-methods default to looking for a file with this name in your home directory,
-but you can pass in a path to any file with the correct yaml contents.
+in the fields for the API and features you plan to use. The library's
+`LoadFromStorage` methods default to looking for a file with this name in your
+home directory, but you can pass in a path to any file with the correct yaml
+contents.
 
 ```python
 # Use the default location - your home directory:
@@ -118,11 +148,13 @@ suds_client.service.mutate([operation])
 ##External Dependencies:
 
 
-    - oauthlib             -- http://pypi.python.org/pypi/oauthlib/
-    - suds-jurko           -- http://pypi.python.org/pypi/suds-jurko/
+    - oauth2client         -- https://pypi.python.org/pypi/oauth2client/
+    - suds-jurko           -- https://pypi.python.org/pypi/suds-jurko/
+    - pysocks              -- https://pypi.python.org/pypi/PySocks/
     - pytz                 -- https://pypi.python.org/pypi/pytz
-    - pyYAML               -- http://pypi.python.org/pypi/pyYAML/
-    - mock                 -- http://pypi.python.org/pypi/mock
+    - pyYAML               -- https://pypi.python.org/pypi/pyYAML/
+    - xmltodict            -- https://pypi.python.org/pypi/xmltodict/
+    - mock                 -- https://pypi.python.org/pypi/mock
                               (only needed to run unit tests)
     - pyfakefs             -- https://pypi.python.org/pypi/pyfakefs
                               (only needed to run unit tests)

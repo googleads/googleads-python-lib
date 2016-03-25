@@ -23,7 +23,6 @@ section of our README.
 
 """
 
-
 import suds
 
 from googleads import adwords

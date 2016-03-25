@@ -279,4 +279,3 @@ if __name__ == '__main__':
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
 
   main(adwords_client, ADGROUP_ID)
-

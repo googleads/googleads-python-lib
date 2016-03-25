@@ -186,7 +186,7 @@ class DfpClient(object):
     Raises:
       A GoogleAdsValueError if the given yaml file does not contain the
       information necessary to instantiate a client object - either a
-      required key was missing or an OAuth 2.0 key was missing.
+      required key was missing or an OAuth2 key was missing.
     """
     if path is None:
       path = os.path.join(os.path.expanduser('~'), 'googleads.yaml')
