@@ -70,7 +70,8 @@ def main(client, ad_group_id):
         operation_index = re.findall(r'operations\[(.*)\]\.',
                                      error['fieldPath'])
         if operation_index:
-          operation = operations[int(operation_index[0])]
+          operation_index = int(operation_index[0])
+          operation = operations[operation_index]
           print ('Ad with headline \'%s\' violated %s policy \'%s\'.' %
                  (operation['operand']['ad']['headline'],
                   'exemptable' if error['isExemptable'] else 'non-exemptable',
@@ -85,13 +86,15 @@ def main(client, ad_group_id):
             operation['exemptionRequests'].append({
                 'key': error['key']
             })
-        else:
-          # Remove non-exemptable operation
-          print 'Removing the operation from the request.'
-          operations.delete(operation)
+          else:
+            # Remove non-exemptable operation
+            print 'Removing the operation from the request.'
+            operations[operation_index] = None  # Defer changing the size of the list
       else:
         # Non-policy error returned, re-throw exception.
         raise e
+    # Remove the non-exemptable operations
+    operations = [op for op in operations if op is not None]
 
   # Add these ads. Disable "validate only" so the ads will get created.
   client.validate_only = False
