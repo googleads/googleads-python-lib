@@ -812,7 +812,7 @@ class BatchJobHelper(object):
       Raises:
         AttributeError: if the provided XML isn't from AdWords.
       """
-      root = ElementTree.fromstring(raw_request_xml.encode('utf-8'))
+      root = ElementTree.fromstring(raw_request_xml)
       return root.find('{http://schemas.xmlsoap.org/soap/envelope/}Body').find(
           './/')
 
