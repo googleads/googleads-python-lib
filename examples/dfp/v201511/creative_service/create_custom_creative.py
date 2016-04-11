@@ -74,10 +74,11 @@ def main(client, advertiser_id):
   }
 
   # Call service to create the creative.
-  creative = creative_service.createCreative(creative)
+  creatives = creative_service.createCreatives([creative])
 
   # Display results.
-  if creative:
+  if creatives:
+    creative = creatives[0]
     print ('Template creative with id \'%s\', name \'%s\', and type \'%s\' was '
            'created and can be previewed at %s.'
            % (creative['id'], creative['name'], dfp.DfpClassType(creative),

@@ -36,49 +36,6 @@ import googleads.errors
 # A giant dictionary of AdWords versions, the services they support, and which
 # namespace those services are in.
 _SERVICE_MAP = {
-    'v201506': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'BiddingStrategyService': 'cm',
-        'BudgetOrderService': 'billing',
-        'BudgetService': 'cm',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerFeedService': 'cm',
-        'CustomerService': 'mcm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'ExperimentService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'GeoLocationService': 'cm',
-        'LabelService': 'cm',
-        'LocationCriterionService': 'cm',
-        'ManagedCustomerService': 'mcm',
-        'MediaService': 'cm',
-        'MutateJobService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-    },
     'v201509': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
@@ -651,7 +608,7 @@ class BatchJobHelper(object):
           new_content_length - 1,
           new_content_length if is_last else '*'
       ))
-      req.data = request_body
+      req.data = request_body.encode('utf-8')
       return req
 
     def _BuildUploadRequestBody(self, operations, has_prefix=True,
@@ -709,7 +666,7 @@ class BatchJobHelper(object):
           raise googleads.errors.GoogleAdsValueError('No xsi_type specified '
                                                      'for the operations.')
         operations.attrib['xsi:type'] = operation_type.text
-      operations_xml = ''.join([ElementTree.tostring(operation)
+      operations_xml = ''.join([ElementTree.tostring(operation).decode('utf-8')
                                 for operation in method])
       # Force removal of this line, which suds produces.
       operations_xml = operations_xml.replace(
@@ -812,7 +769,7 @@ class BatchJobHelper(object):
       Raises:
         AttributeError: if the provided XML isn't from AdWords.
       """
-      root = ElementTree.fromstring(raw_request_xml.encode('utf-8'))
+      root = ElementTree.fromstring(raw_request_xml)
       return root.find('{http://schemas.xmlsoap.org/soap/envelope/}Body').find(
           './/')
 

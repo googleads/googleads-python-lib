@@ -495,12 +495,14 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
     """
     ops = self.GenerateUnicodeBudgetOperations(operations)
     method = 'mutate'
-    ops_xml = ''.join([self.OPERATIONS_TEMPLATE.decode('utf-8') % (
-        op[u'operator'], op[u'xsi_type'],
+    ops_xml = ''.join([self.OPERATIONS_TEMPLATE % (
+        op['operator'], op['xsi_type'],
         self.ExpandOperandTemplate('BudgetOperation', op['operand'])
     ) for op in ops])
-    request = self.RAW_API_REQUEST_TEMPLATE.decode('utf-8') % (
-        self.version, self.version, method, ops_xml, method)
+
+    request = (self.RAW_API_REQUEST_TEMPLATE % (
+        self.version, self.version, method, ops_xml, method)).encode('utf-8')
+
     return (ops, request)
 
   def GenerateUnicodeBudgetOperations(self, operations):
@@ -513,13 +515,13 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
       A list of dictionaries containing distinct BudgetOperations.
     """
     return [{
-        u'operator': u'ADD',
-        u'xsi_type': u'BudgetOperation',
-        u'operand': {
-            u'budgetId': str(i).decode('utf-8'),
-            u'name': u'アングリーバード Batch budget #%s' % i,
-            u'amount': {u'microAmount': str(3333333 * i).decode('utf-8')},
-            u'deliveryMethod': u'STANDARD'}
+        'operator': 'ADD',
+        'xsi_type': 'BudgetOperation',
+        'operand': {
+            'budgetId': str(i),
+            'name': u'アングリーバード Batch budget #%d' % i,
+            'amount': {'microAmount': str(3333333 * i)},
+            'deliveryMethod': 'STANDARD'}
     } for i in range(1, operations + 1)]
 
   def testGetPaddingLength(self):
@@ -1154,7 +1156,6 @@ class ResponseParserTest(unittest.TestCase):
     end_date = '20371230'
     budget_id = '2'
     budget_name = 'Test Budget'
-    period = 'DAILY'
     micro_amount = '50000000'
     delivery_method = 'STANDARD'
     is_explicitly_shared = 'true'
@@ -1163,13 +1164,9 @@ class ResponseParserTest(unittest.TestCase):
     response = (
         self.response_parser.ParseResponse(
             self.API_RESPONSE_XML_TEMPLATE %
-            (campaign_id, name, status,
-             serving_status, start_date,
-             end_date, budget_id,
-             budget_name, period,
-             micro_amount, delivery_method,
-             is_explicitly_shared,
-             bidding_strategy_type))
+            (campaign_id, name, status, serving_status, start_date, end_date,
+             budget_id, budget_name, micro_amount, delivery_method,
+             is_explicitly_shared, bidding_strategy_type))
         ['mutateResponse']['rval'])
 
     # Assert that we correct parsed the response (2 results: Budget & Campaign)
@@ -1199,7 +1196,6 @@ class ResponseParserTest(unittest.TestCase):
     end_date = u'20371230'
     budget_id = u'2'
     budget_name = u'Test Budget'
-    period = u'DAILY'
     micro_amount = u'50000000'
     delivery_method = u'STANDARD'
     is_explicitly_shared = u'true'
@@ -1208,13 +1204,9 @@ class ResponseParserTest(unittest.TestCase):
     response = (
         self.response_parser.ParseResponse(
             self.API_RESPONSE_XML_TEMPLATE %
-            (campaign_id, name, status,
-             serving_status, start_date,
-             end_date, budget_id,
-             budget_name, period,
-             micro_amount, delivery_method,
-             is_explicitly_shared,
-             bidding_strategy_type))
+            (campaign_id, name, status, serving_status, start_date, end_date,
+             budget_id, budget_name, micro_amount, delivery_method,
+             is_explicitly_shared, bidding_strategy_type))
         ['mutateResponse']['rval'])
 
     self.assertTrue(len(response) == 2)
