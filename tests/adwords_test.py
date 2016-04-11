@@ -26,6 +26,7 @@ import urllib
 import urllib2
 from xml.etree import ElementTree
 
+from suds.sax.element import Element
 
 import googleads.adwords
 import googleads.common
@@ -209,7 +210,7 @@ class AdWordsClientTest(unittest.TestCase):
       mock_client.assert_called_once_with(
           'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
           % (namespace, version, service), proxy=https_proxy, cache=self.cache,
-          timeout=3600)
+          timeout=3600, transport=None)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
     # Use the default server and https_proxy.
@@ -220,7 +221,7 @@ class AdWordsClientTest(unittest.TestCase):
       mock_client.assert_called_once_with(
           'https://adwords.google.com/api/adwords/%s/%s/%s?wsdl'
           % (namespace, version, service), proxy=None, cache=self.cache,
-          timeout=3600)
+          timeout=3600, transport=None)
       self.assertFalse(mock_client.return_value.set_options.called)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
@@ -1241,7 +1242,7 @@ class ReportDownloaderTest(unittest.TestCase):
     output_file = io.StringIO()
     report_definition = {'table': 'campaigns',
                          'downloadFormat': 'CSV'}
-    serialized_report = 'nuinbwuign'
+    serialized_report = Element('nuinbwuign')
     post_body = urllib.urlencode({'__rdxml': serialized_report})
     if not PYTHON2:
       post_body = bytes(post_body, 'utf-8')
@@ -1269,7 +1270,7 @@ class ReportDownloaderTest(unittest.TestCase):
   def testDownloadReportAsString(self):
     report_definition = {'table': 'campaigns',
                          'downloadFormat': 'CSV'}
-    serialized_report = 'nuinbwuign'
+    serialized_report = Element('nuinbwuign')
     post_body = urllib.urlencode({'__rdxml': serialized_report})
     if not PYTHON2:
       post_body = bytes(post_body, 'utf-8')
@@ -1358,7 +1359,7 @@ class ReportDownloaderTest(unittest.TestCase):
     output_file = io.StringIO()
     report_definition = {'table': 'campaigns',
                          'downloadFormat': 'CSV'}
-    serialized_report = 'hjuibnibguo'
+    serialized_report = Element('hjuibnibguo')
     post_body = urllib.urlencode({'__rdxml': serialized_report})
     if not PYTHON2:
       post_body = bytes(post_body, 'utf-8')
@@ -1420,7 +1421,7 @@ class ReportDownloaderTest(unittest.TestCase):
     output_file = io.BytesIO()
     report_definition = {'table': 'campaigns',
                          'downloadFormat': 'GZIPPED_CSV'}
-    serialized_report = 'nuinbwuign'
+    serialized_report = Element('nuinbwuign')
     post_body = urllib.urlencode({'__rdxml': serialized_report})
     if not PYTHON2:
       post_body = bytes(post_body, 'utf-8')
