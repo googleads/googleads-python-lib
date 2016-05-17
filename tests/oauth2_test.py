@@ -21,8 +21,8 @@ import unittest
 
 import httplib2
 import mock
-import socks
 
+import googleads.common
 import googleads.errors
 import googleads.oauth2
 
@@ -78,19 +78,22 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
     self.client_id = 'client_id'
     self.client_secret = 'itsasecret'
     self.refresh_token = 'refreshing'
-    self.proxy_info = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, 'myproxy.com',
-                                         443)
-    self.https_proxy = '%s:%s' % (self.proxy_info.proxy_host,
-                                  self.proxy_info.proxy_port)
+    https_proxy_host = 'myproxy.com'
+    https_proxy_port = 443
+    self.https_proxy = googleads.common.ProxyConfig.Proxy(https_proxy_host,
+                                                          https_proxy_port)
+    self.proxy_config = googleads.common.ProxyConfig(
+        https_proxy=self.https_proxy)
     self.access_token_unrefreshed = 'a'
     self.access_token_refreshed = 'b'
 
     # Mock out httplib2.Http for testing.
     self.http = mock.Mock(spec=httplib2.Http)
     self.opener = self.http.return_value = mock.Mock()
-    self.opener.proxy_info = self.proxy_info
-    self.opener.ca_certs = None
-    self.opener.disable_ssl_certificate_valiation = True
+    self.opener.proxy_info = self.proxy_config.proxy_info
+    self.opener.ca_certs = self.proxy_config.cafile
+    self.opener.disable_ssl_certificate_valiation = (
+        self.proxy_config.disable_certificate_validation)
 
     # Mock out oauth2client.client.OAuth2Credentials for testing
     self.oauth2_credentials = mock.Mock(spec=OAuth2Credentials)
@@ -114,7 +117,7 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
                     self.oauth2_credentials):
       self.googleads_client = googleads.oauth2.GoogleRefreshTokenClient(
           self.client_id, self.client_secret, self.refresh_token,
-          self.proxy_info)
+          self.proxy_config)
 
   def testCreateHttpHeader_noRefresh(self):
     header = {'Authorization': 'Bearer %s' % self.access_token_unrefreshed}
@@ -127,8 +130,9 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
     with mock.patch('httplib2.Http', self.http):
       self.assertEqual(header, self.googleads_client.CreateHttpHeader())
       self.http.assert_called_once_with(
-          ca_certs=None, proxy_info=self.proxy_info,
-          disable_ssl_certificate_validation=False)
+          ca_certs=None, proxy_info=self.proxy_config.proxy_info,
+          disable_ssl_certificate_validation=(
+              self.proxy_config.disable_certificate_validation))
       self.mock_oauth2_credentials.refresh.assert_called_once_with(
           self.opener)
 
@@ -149,10 +153,12 @@ class GoogleServiceAccountTest(unittest.TestCase):
     self.scope = 'scope'
     self.service_account_email = 'email@email.com'
     self.private_key_password = 'notasecret'
-    self.proxy_info = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, 'myproxy.com',
-                                         443)
-    self.https_proxy = '%s:%s' % (self.proxy_info.proxy_host,
-                                  self.proxy_info.proxy_port)
+    https_proxy_host = 'myproxy.com'
+    https_proxy_port = 443
+    https_proxy = googleads.common.ProxyConfig.Proxy(https_proxy_host,
+                                                     https_proxy_port)
+    self.proxy_config = googleads.common.ProxyConfig(https_proxy=https_proxy)
+    self.https_proxy = '%s:%s' % (https_proxy_host, https_proxy_port)
     self.access_token_unrefreshed = 'a'
     self.access_token_refreshed = 'b'
 
@@ -168,9 +174,10 @@ class GoogleServiceAccountTest(unittest.TestCase):
     # Mock out httplib2.Http for testing.
     self.http = mock.Mock(spec=httplib2.Http)
     self.opener = self.http.return_value = mock.Mock()
-    self.opener.proxy_info = self.proxy_info
-    self.opener.ca_certs = None
-    self.opener.disable_ssl_certificate_valiation = True
+    self.opener.proxy_info = self.proxy_config.proxy_info
+    self.opener.ca_certs = self.proxy_config.cafile
+    self.opener.disable_ssl_certificate_valiation = (
+        self.proxy_config.disable_certificate_validation)
 
     # Mock out oauth2client.client.OAuth2Credentials for testing
     self.oauth2_credentials = mock.Mock(spec=SignedJwtAssertionCredentials)
@@ -198,7 +205,7 @@ class GoogleServiceAccountTest(unittest.TestCase):
                       self.oauth2_credentials):
         self.googleads_client = googleads.oauth2.GoogleServiceAccountClient(
             self.scope, self.service_account_email, key_file_path,
-            self.private_key_password, proxy_info=self.proxy_info)
+            self.private_key_password, proxy_config=self.proxy_config)
       # Undo the call count for the auto-refresh
       self.mock_oauth2_credentials.refresh.reset_mock()
 
@@ -213,8 +220,9 @@ class GoogleServiceAccountTest(unittest.TestCase):
     with mock.patch('httplib2.Http', self.http):
       self.assertEqual(header, self.googleads_client.CreateHttpHeader())
       self.http.assert_called_once_with(
-          ca_certs=None, proxy_info=self.proxy_info,
-          disable_ssl_certificate_validation=False)
+          ca_certs=None, proxy_info=self.proxy_config.proxy_info,
+          disable_ssl_certificate_validation=(
+              self.proxy_config.disable_certificate_validation))
       self.mock_oauth2_credentials.refresh.assert_called_once_with(
           self.opener)
 

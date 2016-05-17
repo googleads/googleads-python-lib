@@ -38,27 +38,69 @@ URL_REQUEST_PATH = ('urllib2' if PYTHON2 else 'urllib.request')
 CURRENT_VERSION = sorted(googleads.adwords._SERVICE_MAP.keys())[-1]
 
 
-def GetAdWordsClient():
-  """Returns an initialized AdwordsClient for use in testing."""
+def GetAdWordsClient(proxy_config=None):
+  """Returns an initialized AdwordsClient for use in testing.
+
+  Args:
+    proxy_config: A googleads.common.ProxyConfig or None if no proxy is being
+        used.
+
+  Returns:
+    An AdWordsClient instance with or without a proxy configured depending on
+      whether a ProxyConfig instance was provided.
+  """
   oauth_header = {'Authorization': 'header'}
   client_customer_id = 'client customer id'
   dev_token = 'N3v3rG0nN4Giv3Y0uUp'
   user_agent = 'N3v3rG0nN4l37y0uDoWN'
   oauth2_client = mock.Mock()
   oauth2_client.CreateHttpHeader.return_value = dict(oauth_header)
+
   client = googleads.adwords.AdWordsClient(
       dev_token, oauth2_client, user_agent,
-      client_customer_id=client_customer_id)
+      client_customer_id=client_customer_id, proxy_config=proxy_config)
+
   return client
+
+
+def GetProxyConfig(http_host=None, http_port=None, https_host=None,
+                   https_port=None, cafile=None,
+                   disable_certificate_validation=None):
+  """Returns an initialized ProxyConfig for use in testing.
+
+  Args:
+    http_host: A str containing the url or IP of an http proxy host.
+    http_port: An int port number for the HTTP proxy host.
+    https_host: A str containing the url or IP of an https proxy host.
+    https_port: An int port number for the HTTPS proxy host.
+    cafile: A str containing the path to a custom ca file.
+    disable_certificate_validation: A boolean indicating whether or not to
+      disable certificate validation.
+
+  Returns:
+    An initialized ProxyConfig using the given configurations.
+  """
+  http_proxy = None
+  https_proxy = None
+
+  if http_host:
+    http_proxy = googleads.common.ProxyConfig.Proxy(http_host, http_port)
+
+  if https_host:
+    https_proxy = googleads.common.ProxyConfig.Proxy(https_host, https_port)
+
+  return googleads.common.ProxyConfig(
+      http_proxy, https_proxy, cafile=cafile,
+      disable_certificate_validation=disable_certificate_validation)
 
 
 class AdWordsHeaderHandlerTest(unittest.TestCase):
   """Tests for the googleads.adwords._AdWordsHeaderHandler class."""
 
   def setUp(self):
-    self.adwords_client = mock.Mock()
+    self.aw_client = mock.Mock()
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
-        self.adwords_client, CURRENT_VERSION)
+        self.aw_client, CURRENT_VERSION)
 
   def testSetHeaders(self):
     suds_client = mock.Mock()
@@ -68,13 +110,12 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     validate_only = True
     partial_failure = False
     oauth_header = {'oauth': 'header'}
-    self.adwords_client.client_customer_id = ccid
-    self.adwords_client.developer_token = dev_token
-    self.adwords_client.user_agent = user_agent
-    self.adwords_client.validate_only = validate_only
-    self.adwords_client.partial_failure = partial_failure
-    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = (
-        oauth_header)
+    self.aw_client.client_customer_id = ccid
+    self.aw_client.developer_token = dev_token
+    self.aw_client.user_agent = user_agent
+    self.aw_client.validate_only = validate_only
+    self.aw_client.partial_failure = partial_failure
+    self.aw_client.oauth2_client.CreateHttpHeader.return_value = (oauth_header)
 
     self.header_handler.SetHeaders(suds_client)
 
@@ -100,10 +141,10 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     dev_token = 'developer token'
     user_agent = 'user agent!'
     oauth_header = {'Authorization': 'header'}
-    self.adwords_client.client_customer_id = ccid
-    self.adwords_client.developer_token = dev_token
-    self.adwords_client.user_agent = user_agent
-    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
+    self.aw_client.client_customer_id = ccid
+    self.aw_client.developer_token = dev_token
+    self.aw_client.user_agent = user_agent
+    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     expected_return_value = {
         'Content-type': 'application/x-www-form-urlencoded',
@@ -118,7 +159,7 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         'skipReportSummary': 'False'
     }
 
-    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
+    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
                      self.header_handler.GetReportDownloadHeaders(
@@ -130,9 +171,9 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     ccid = 'client customer id'
     dev_token = 'developer token'
     user_agent = 'user agent!'
-    self.adwords_client.client_customer_id = ccid
-    self.adwords_client.developer_token = dev_token
-    self.adwords_client.user_agent = user_agent
+    self.aw_client.client_customer_id = ccid
+    self.aw_client.developer_token = dev_token
+    self.aw_client.user_agent = user_agent
 
     self.assertRaises(
         googleads.errors.GoogleAdsValueError,
@@ -144,10 +185,10 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     dev_token = 'developer token'
     user_agent = 'user agent!'
     oauth_header = {'Authorization': 'header'}
-    self.adwords_client.client_customer_id = ccid
-    self.adwords_client.developer_token = dev_token
-    self.adwords_client.user_agent = user_agent
-    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
+    self.aw_client.client_customer_id = ccid
+    self.aw_client.developer_token = dev_token
+    self.aw_client.user_agent = user_agent
+    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     expected_return_value = {
         'Content-type': 'application/x-www-form-urlencoded',
@@ -163,7 +204,7 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         'includeZeroImpressions': 'True'
     }
 
-    self.adwords_client.oauth2_client.CreateHttpHeader.return_value = dict(
+    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
                      self.header_handler.GetReportDownloadHeaders(
@@ -177,10 +218,14 @@ class AdWordsClientTest(unittest.TestCase):
   """Tests for the googleads.adwords.AdWordsClient class."""
 
   def setUp(self):
-    self.https_proxy = 'myproxy:443'
+    self.https_proxy_host = 'myproxy'
+    self.https_proxy_port = 443
+    self.proxy_config = GetProxyConfig(https_host=self.https_proxy_host,
+                                       https_port=self.https_proxy_port)
     self.cache = None
     self.adwords_client = GetAdWordsClient()
-    self.adwords_client.https_proxy = self.https_proxy
+    self.aw_client = GetAdWordsClient(
+        proxy_config=self.proxy_config)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.adwords_client, CURRENT_VERSION)
 
@@ -198,36 +243,43 @@ class AdWordsClientTest(unittest.TestCase):
     version = CURRENT_VERSION
     service = googleads.adwords._SERVICE_MAP[version].keys()[0]
     namespace = googleads.adwords._SERVICE_MAP[version][service]
+    mock_transport_instance = mock.Mock()
 
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
     server = 'https://testing.test.com/'
-    https_proxy = {'https': self.https_proxy}
     with mock.patch('suds.client.Client') as mock_client:
-      suds_service = self.adwords_client.GetService(service, version, server)
+      with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
+                     ) as mock_transport:
+        mock_transport.return_value = mock_transport_instance
+        suds_service = self.aw_client.GetService(
+            service, version, server)
 
-      mock_client.assert_called_once_with(
-          'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
-          % (namespace, version, service), proxy=https_proxy, cache=self.cache,
-          timeout=3600)
+        mock_client.assert_called_once_with(
+            'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
+            % (namespace, version, service), cache=self.cache,
+            transport=mock_transport_instance, timeout=3600)
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
-    # Use the default server and https_proxy.
-    self.adwords_client.https_proxy = None
+    # Use the default server without a proxy.
     with mock.patch('suds.client.Client') as mock_client:
-      suds_service = self.adwords_client.GetService(service, version)
+      with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
+                     ) as mock_transport:
+        mock_transport.return_value = mock_transport_instance
+        suds_service = self.adwords_client.GetService(service, version)
 
-      mock_client.assert_called_once_with(
-          'https://adwords.google.com/api/adwords/%s/%s/%s?wsdl'
-          % (namespace, version, service), proxy=None, cache=self.cache,
-          timeout=3600)
-      self.assertFalse(mock_client.return_value.set_options.called)
-      self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+        mock_client.assert_called_once_with(
+            'https://adwords.google.com/api/adwords/%s/%s/%s?wsdl'
+            % (namespace, version, service), cache=self.cache,
+            transport=mock_transport_instance, timeout=3600)
+        self.assertFalse(mock_client.return_value.set_options.called)
+        self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_badService(self):
     version = CURRENT_VERSION
     self.assertRaises(
-        googleads.errors.GoogleAdsValueError, self.adwords_client.GetService,
+        googleads.errors.GoogleAdsValueError,
+        self.adwords_client.GetService,
         'GYIVyievfyiovslf', version)
 
   def testGetService_badVersion(self):
@@ -277,14 +329,15 @@ class BatchJobHelperTest(unittest.TestCase):
     with mock.patch('googleads.adwords.BatchJobHelper.'
                     '_SudsUploadRequestBuilder.'
                     'BuildUploadRequest') as mock_build_request:
-      mock_request = mock.MagicMock()
+      mock_request = mock.Mock()
+      mock_request.data = 'in disguise.'
       mock_build_request.return_value = mock_request
-      with mock.patch('urllib2.urlopen') as mock_urlopen:
-        with mock.patch('googleads.adwords.IncrementalUploadHelper'
-                        '._InitializeURL') as mock_init:
-          mock_init.return_value = 'https://www.google.com'
+      with mock.patch('googleads.adwords.IncrementalUploadHelper'
+                      '._InitializeURL') as mock_init:
+        mock_init.return_value = 'https://www.google.com'
+        with mock.patch('urllib2.OpenerDirector.open') as mock_open:
           self.batch_job_helper.UploadOperations([[]])
-        mock_urlopen.assert_called_with(mock_request)
+          mock_open.assert_called_with(mock_request)
 
 
 class BatchJobUploadRequestBuilderTest(unittest.TestCase):
@@ -1066,7 +1119,7 @@ class IncrementalUploadHelperTest(unittest.TestCase):
     self.original_url = 'https://goo.gl/w8tkpK'
     self.initialized_url = 'https://goo.gl/Xtaq83'
 
-    with mock.patch('urllib2.urlopen') as mock_open:
+    with mock.patch('urllib2.OpenerDirector.open') as mock_open:
       mock_open.return_value.headers = {
           'location': self.initialized_url
       }
@@ -1097,8 +1150,11 @@ class IncrementalUploadHelperTest(unittest.TestCase):
       mock_open.return_value.headers = {
           'location': self.initialized_url
       }
-      restored_uploader = googleads.adwords.IncrementalUploadHelper.Load(
-          s, client=self.client)
+      with mock.patch('googleads.adwords.IncrementalUploadHelper'
+                      '._InitializeURL') as mock_init:
+        mock_init.return_value = self.initialized_url
+        restored_uploader = googleads.adwords.IncrementalUploadHelper.Load(
+            s, client=self.client)
 
     self.assertEquals(restored_uploader._current_content_length,
                       self.incremental_uploader._current_content_length)
@@ -1115,9 +1171,9 @@ class IncrementalUploadHelperTest(unittest.TestCase):
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch('urllib2.urlopen') as mock_urlopen:
+      with mock.patch('urllib2.OpenerDirector.open') as mock_open:
         self.incremental_uploader.UploadOperations([[]], True)
-        mock_urlopen.assert_called_with(mock_request)
+        mock_open.assert_called_with(mock_request)
 
   def testUploadOperationsAfterFinished(self):
     with mock.patch('googleads.adwords.BatchJobHelper.'
@@ -1125,7 +1181,7 @@ class IncrementalUploadHelperTest(unittest.TestCase):
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch('urllib2.urlopen'):
+      with mock.patch('urllib2.OpenerDirector.open'):
         self.incremental_uploader.UploadOperations([[]], True)
         self.assertRaises(
             googleads.errors.AdWordsBatchJobServiceInvalidOperationError,
@@ -1222,8 +1278,9 @@ class ReportDownloaderTest(unittest.TestCase):
     self.marshaller = mock.Mock()
     self.header_handler = mock.Mock()
     self.adwords_client = mock.Mock()
+    self.adwords_client.proxy_config = GetProxyConfig()
     self.opener = mock.Mock()
-    self.adwords_client.https_proxy = 'my.proxy.gov:443'
+
     with mock.patch('suds.client.Client'):
       with mock.patch('suds.xsd.doctor'):
         with mock.patch('suds.mx.literal.Literal') as mock_literal:

@@ -240,7 +240,7 @@ class AdWordsClient(object):
   def __init__(
       self, developer_token, oauth2_client, user_agent,
       client_customer_id=None, validate_only=False, partial_failure=False,
-      https_proxy=None, cache=None):
+      cache=None, proxy_config=None):
     """Initializes an AdWordsClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -264,9 +264,9 @@ class AdWordsClient(object):
           succeed, to result in a complete failure with no changes made or a
           partial failure with some changes made. Only certain services respect
           this header.
-      https_proxy: A string identifying the proxy that all HTTPS requests
-          should be routed through.
       cache: A subclass of suds.cache.Cache; defaults to None.
+      proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
+        isn't being used.
     """
     self.developer_token = developer_token
     self.oauth2_client = oauth2_client
@@ -275,8 +275,9 @@ class AdWordsClient(object):
     self.client_customer_id = client_customer_id
     self.validate_only = validate_only
     self.partial_failure = partial_failure
-    self.https_proxy = https_proxy
     self.cache = cache
+    self.proxy_config = (proxy_config if proxy_config
+                         else googleads.common.ProxyConfig())
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
                  server=_DEFAULT_ENDPOINT):
@@ -300,16 +301,11 @@ class AdWordsClient(object):
     """
     if server[-1] == '/': server = server[:-1]
     try:
-      proxy_option = None
-      if self.https_proxy:
-        proxy_option = {
-            'https': self.https_proxy
-        }
-
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT %
           (server, _SERVICE_MAP[version][service_name], version, service_name),
-          proxy=proxy_option, cache=self.cache, timeout=3600)
+          cache=self.cache, timeout=3600,
+          transport=self.proxy_config.GetSudsProxyTransport())
     except KeyError:
       if version in _SERVICE_MAP:
         raise googleads.errors.GoogleAdsValueError(
@@ -557,7 +553,7 @@ class BatchJobHelper(object):
         raise AttributeError('No client specified for Request Builder.')
 
       self._version = kwargs.get('version', sorted(_SERVICE_MAP.keys())[-1])
-      self._client = kwargs['client']
+      self.client = kwargs['client']
       server = kwargs.get('server', _DEFAULT_ENDPOINT)
       self._adwords_endpoint = ('%s/api/adwords/cm/%s' %
                                 (server, self._version))
@@ -735,7 +731,7 @@ class BatchJobHelper(object):
       except KeyError, e:
         raise googleads.errors.GoogleAdsValueError('"%s" is an unsupported '
                                                    'operation.' % e.message)
-      service = self._client.GetService(operation.service, self._version)
+      service = self.client.GetService(operation.service, self._version)
       service.suds_client.set_options(nosend=True)
       service_request = (getattr(service, operation.method)
                          (operations).envelope)
@@ -914,8 +910,11 @@ class IncrementalUploadHelper(object):
       raise googleads.errors.GoogleAdsValueError(
           'Current content length %s is < 0.' % current_content_length)
     self._current_content_length = current_content_length
-    self._upload_url = self._InitializeURL(upload_url, current_content_length)
     self._is_last = is_last
+
+    self._url_opener = urllib2.build_opener(
+        *self._request_builder.client.proxy_config.GetHandlers())
+    self._upload_url = self._InitializeURL(upload_url, current_content_length)
 
   def _InitializeURL(self, upload_url, current_content_length):
     """Ensures that the URL used to upload operations is properly initialized.
@@ -945,7 +944,7 @@ class IncrementalUploadHelper(object):
 
     # Send an HTTP POST request to the given upload_url
     req = urllib2.Request(upload_url, data={}, headers=headers)
-    resp = urllib2.urlopen(req)
+    resp = self._url_opener.open(req)
 
     return resp.headers['location']
 
@@ -995,7 +994,7 @@ class IncrementalUploadHelper(object):
     # Make the request, ignoring the urllib2.HTTPError raised due to HTTP status
     # code 308 (for resumable uploads).
     try:
-      urllib2.urlopen(req)
+      self._url_opener.open(req)
     except urllib2.HTTPError, e:
       if e.code != 308:
         raise urllib2.HTTPError(e)
@@ -1037,22 +1036,16 @@ class ReportDownloader(object):
     self._namespace = self._NAMESPACE_FORMAT % version
     self._end_point = self._END_POINT_FORMAT % (server, version)
     self._header_handler = _AdWordsHeaderHandler(adwords_client, version)
-
-    proxy_option = None
-    if self._adwords_client.https_proxy:
-      proxy_option = {'https': self._adwords_client.https_proxy}
-    # Create an Opener to handle requests when downloading reports.
-      self.url_opener = urllib2.build_opener(
-          urllib2.ProxyHandler({'https': self._adwords_client.https_proxy}))
-    else:
-      self.url_opener = urllib2.build_opener()
+    self.proxy_config = self._adwords_client.proxy_config
+    self.url_opener = urllib2.build_opener(*self.proxy_config.GetHandlers())
 
     schema_url = self._SCHEMA_FORMAT % (server, version)
     schema = suds.client.Client(
         schema_url,
         doctor=suds.xsd.doctor.ImportDoctor(suds.xsd.doctor.Import(
             self._namespace, schema_url)),
-        proxy=proxy_option, cache=self._adwords_client.cache).wsdl.schema
+        transport=self.proxy_config.GetSudsProxyTransport(),
+        cache=self._adwords_client.cache).wsdl.schema
     self._report_definition_type = schema.elements[
         (self._REPORT_DEFINITION_NAME, self._namespace)]
     self._marshaller = suds.mx.literal.Literal(schema)

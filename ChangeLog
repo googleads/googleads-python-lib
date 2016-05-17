@@ -1,3 +1,13 @@
+4.0.0 -- 5/17/2016
+* Add support for DFP v201605.
+* Removed examples for DFP v201505.
+* Removed support for DFP v201502.
+* Improved proxy support.
+* BREAKING CHANGE: The googleads.common.LoadFromStorage function has been
+  updated to accommodate the current proxy support. This will break users with
+  a proxy configured. Check out the changes in our sample googleads.yaml file
+  to see the new format.
+
 3.15.0 -- 4/11/2016
 * Removed support for AdWords v201506.
 * Resolved issues:

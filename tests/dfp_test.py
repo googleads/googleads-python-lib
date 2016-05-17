@@ -144,12 +144,17 @@ class DfpClientTest(unittest.TestCase):
     self.application_name = 'application name'
     self.oauth2_client = mock.Mock()
     self.oauth2_client.CreateHttpHeader.return_value = {}
-    self.https_proxy = 'myproxy:443'
+    self.proxy_host = 'myproxy'
+    self.proxy_port = 443
+    self.https_proxy = googleads.common.ProxyConfig.Proxy(host=self.proxy_host,
+                                                          port=self.proxy_port)
+    self.proxy_config = googleads.common.ProxyConfig(
+        https_proxy=self.https_proxy)
     self.cache = None
     self.version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
     self.dfp_client = googleads.dfp.DfpClient(
         self.oauth2_client, self.application_name, self.network_code,
-        self.https_proxy, self.cache)
+        proxy_config=self.proxy_config, cache=self.cache)
 
   def testLoadFromStorage(self):
     with mock.patch('googleads.common.LoadFromStorage') as mock_load:
@@ -174,27 +179,32 @@ class DfpClientTest(unittest.TestCase):
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
     server = 'https://testing.test.com/'
-    https_proxy = {'https': self.https_proxy}
     with mock.patch('suds.client.Client') as mock_client:
-      suds_service = self.dfp_client.GetService(service, self.version, server)
+      with mock.patch('googleads.common.'
+                      'ProxyConfig._SudsProxyTransport') as mock_transport:
+        mock_transport.return_value = mock.Mock()
+        suds_service = self.dfp_client.GetService(service, self.version, server)
 
-      mock_client.assert_called_once_with(
-          'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
-          % (self.version, service), proxy=https_proxy, cache=self.cache,
-          timeout=3600)
-      self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+        mock_client.assert_called_once_with(
+            'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
+            % (self.version, service), cache=self.cache, timeout=3600,
+            transport=mock_transport.return_value)
+        self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
-    # Use the default server and https proxy.
-    self.dfp_client.https_proxy = None
+    # Use the default server without a proxy.
+    self.dfp_client.proxy_option = None
     with mock.patch('suds.client.Client') as mock_client:
-      suds_service = self.dfp_client.GetService(service, self.version)
+      with mock.patch('googleads.common.'
+                      'ProxyConfig._SudsProxyTransport') as mock_transport:
+        mock_transport.return_value = mock.Mock()
+        suds_service = self.dfp_client.GetService(service, self.version)
 
-      mock_client.assert_called_once_with(
-          'https://ads.google.com/apis/ads/publisher/%s/%s?wsdl'
-          % (self.version, service), proxy=None, cache=self.cache,
-          timeout=3600)
-      self.assertFalse(mock_client.return_value.set_options.called)
-      self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+        mock_client.assert_called_once_with(
+            'https://ads.google.com/apis/ads/publisher/%s/%s?wsdl'
+            % (self.version, service), cache=self.cache, timeout=3600,
+            transport=mock_transport.return_value)
+        self.assertFalse(mock_client.return_value.set_options.called)
+        self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_badService(self):
     with mock.patch('suds.client.Client') as mock_client:
@@ -444,12 +454,12 @@ class DataDownloaderTest(unittest.TestCase):
 
     self.report_service.getReportDownloadURL.return_value = report_download_url
 
-    with mock.patch('urllib2.urlopen' if sys.version_info[0] == 2
-                    else 'urllib.request.urlopen') as mock_urlopen:
-      mock_urlopen.return_value = fake_request
+    with mock.patch('urllib2.OpenerDirector.open' if sys.version_info[0] == 2
+                    else 'urllib.request.OpenerDirector.open') as mock_open:
+      mock_open.return_value = fake_request
       self.report_downloader.DownloadReportToFile(
           report_job_id, report_format, outfile)
-      mock_urlopen.assert_called_once_with(report_download_url)
+      mock_open.assert_called_once_with(report_download_url)
       self.assertEqual(report_contents, outfile.getvalue())
 
   def testGetReportService(self):

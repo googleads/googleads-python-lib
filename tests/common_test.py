@@ -16,6 +16,7 @@
 
 
 import unittest
+import urllib2
 import warnings
 
 
@@ -43,10 +44,12 @@ class CommonTest(unittest.TestCase):
     self.filesystem = fake_filesystem.FakeFilesystem()
     self.tempfile = fake_tempfile.FakeTempfileModule(self.filesystem)
     self.fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
-    self.fake_proxy = mock.Mock()
-    self.fake_proxy.return_value = mock.Mock()
-    self.fake_proxy.return_value.proxy_host = 'ahost'
-    self.fake_proxy.return_value.proxy_port = 'aport'
+    self.host1 = 'h1'
+    self.port1 = 'p1'
+    self.host2 = 'h2'
+    self.port2 = 'p2'
+    self.username = 'username'
+    self.password = 'password'
 
   def _CreateYamlFile(self, data, insert_oauth2_key=None, oauth_dict=None):
     """Return the filename of a yaml file created for testing."""
@@ -97,40 +100,170 @@ class CommonTest(unittest.TestCase):
                                       self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
-        rval = googleads.common.LoadFromStorage(yaml_fname, 'woo', [], [])
-        mock_client.assert_called_once_with(
-            'a', 'b', 'c', proxy_info=None, ca_certs=None,
-            disable_ssl_certificate_validation=True)
-        self.assertEqual({'oauth2_client': mock_client.return_value,
-                          'https_proxy': None}, rval)
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          rval = googleads.common.LoadFromStorage(yaml_fname, 'woo', [], [])
 
-  def testLoadFromStorage_passesWithProxy(self):
-    yaml_fname = self._CreateYamlFile({'adwords': {},
-                                       'proxy_info': {
-                                           'host': 'ahost',
-                                           'port': 'aport'
-                                       }}, 'adwords',
-                                      self._OAUTH_INSTALLED_APP_DICT)
+    proxy_config.assert_called_once_with(
+        http_proxy=None, https_proxy=None, cafile=None,
+        disable_certificate_validation=False)
+    mock_client.assert_called_once_with(
+        'a', 'b', 'c', proxy_config=proxy_config.return_value)
+    self.assertEqual({'oauth2_client': mock_client.return_value,
+                      'proxy_config': proxy_config.return_value}, rval)
+
+  def testLoadFromStorage_passesWithHTTPAndHTTPSProxy(self):
+    yaml_fname = self._CreateYamlFile(
+        {'adwords': {},
+         'proxy_config': {
+             'http_proxy': {'host': self.host1, 'port': self.port1},
+             'https_proxy': {'host': self.host2, 'port': self.port2}}},
+        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
-        with mock.patch('httplib2.ProxyInfo', self.fake_proxy):
-          rval = googleads.common.LoadFromStorage(yaml_fname, 'adwords', [], [])
-          mock_client.assert_called_once_with(
-              'a', 'b', 'c', proxy_info=self.fake_proxy.return_value,
-              ca_certs=None, disable_ssl_certificate_validation=True)
-          self.assertEqual({'oauth2_client': mock_client.return_value,
-                            'https_proxy': 'ahost:aport'}, rval)
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
+            proxy.return_value = mock.Mock()
+            rval = googleads.common.LoadFromStorage(
+                yaml_fname, 'adwords', [], [])
+    proxy.assert_has_calls([mock.call(self.host1, self.port1,
+                                      username=None, password=None),
+                            mock.call(self.host2, self.port2,
+                                      username=None, password=None)])
+    proxy_config.assert_called_once_with(
+        http_proxy=proxy.return_value,
+        https_proxy=proxy.return_value, cafile=None,
+        disable_certificate_validation=False)
+    mock_client.assert_called_once_with(
+        'a', 'b', 'c', proxy_config=proxy_config.return_value)
+    self.assertEqual({'oauth2_client': mock_client.return_value,
+                      'proxy_config': proxy_config.return_value}, rval)
+
+  def testLoadFromStorage_passesWithHTTPProxy(self):
+    yaml_fname = self._CreateYamlFile(
+        {'adwords': {},
+         'proxy_config': {
+             'http_proxy': {'host': self.host1, 'port': self.port1}}},
+        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+    with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
+      with mock.patch('googleads.common.open', self.fake_open, create=True):
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
+            proxy.return_value = mock.Mock()
+            rval = googleads.common.LoadFromStorage(
+                yaml_fname, 'adwords', [], [])
+
+    proxy.assert_called_once_with(self.host1, self.port1,
+                                  username=None, password=None)
+    proxy_config.assert_called_once_with(http_proxy=proxy.return_value,
+                                         https_proxy=None, cafile=None,
+                                         disable_certificate_validation=False)
+    mock_client.assert_called_once_with(
+        'a', 'b', 'c', proxy_config=proxy_config.return_value)
+    self.assertEqual({'oauth2_client': mock_client.return_value,
+                      'proxy_config': proxy_config.return_value}, rval)
+
+  def testLoadFromStorage_passesWithHTTPProxyLogin(self):
+    yaml_fname = self._CreateYamlFile(
+        {'adwords': {},
+         'proxy_config': {
+             'http_proxy': {'host': self.host1, 'port': self.port1,
+                            'username': self.username,
+                            'password': self.password}}},
+        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+    with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
+      with mock.patch('googleads.common.open', self.fake_open, create=True):
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
+            proxy.return_value = mock.Mock()
+            rval = googleads.common.LoadFromStorage(
+                yaml_fname, 'adwords', [], [])
+
+    proxy.assert_called_once_with(self.host1, self.port1,
+                                  username=self.username,
+                                  password=self.password)
+    proxy_config.assert_called_once_with(http_proxy=proxy.return_value,
+                                         https_proxy=None, cafile=None,
+                                         disable_certificate_validation=False)
+    mock_client.assert_called_once_with(
+        'a', 'b', 'c', proxy_config=proxy_config.return_value)
+    self.assertEqual({'oauth2_client': mock_client.return_value,
+                      'proxy_config': proxy_config.return_value}, rval)
+
+  def testLoadFromStorage_passesWithHTTPSProxy(self):
+    yaml_fname = self._CreateYamlFile(
+        {'adwords': {},
+         'proxy_config': {
+             'https_proxy': {'host': self.host1, 'port': self.port1}}},
+        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+    with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
+      with mock.patch('googleads.common.open', self.fake_open, create=True):
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
+            proxy.return_value = mock.Mock()
+            rval = googleads.common.LoadFromStorage(
+                yaml_fname, 'adwords', [], [])
+
+    proxy.assert_called_once_with(self.host1, self.port1,
+                                  username=None, password=None)
+    proxy_config.assert_called_once_with(http_proxy=None,
+                                         https_proxy=proxy.return_value,
+                                         cafile=None,
+                                         disable_certificate_validation=False)
+    mock_client.assert_called_once_with(
+        'a', 'b', 'c', proxy_config=proxy_config.return_value)
+    self.assertEqual({'oauth2_client': mock_client.return_value,
+                      'proxy_config': proxy_config.return_value}, rval)
+
+  def testLoadFromStorage_passesWithHTTPSProxyLogin(self):
+    yaml_fname = self._CreateYamlFile(
+        {'adwords': {},
+         'proxy_config': {
+             'https_proxy': {'host': self.host1, 'port': self.port1,
+                             'username': self.username,
+                             'password': self.password}}},
+        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+    with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
+      with mock.patch('googleads.common.open', self.fake_open, create=True):
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
+            proxy.return_value = mock.Mock()
+            rval = googleads.common.LoadFromStorage(
+                yaml_fname, 'adwords', [], [])
+
+    proxy.assert_called_once_with(self.host1, self.port1,
+                                  username=self.username,
+                                  password=self.password)
+    proxy_config.assert_called_once_with(http_proxy=None,
+                                         https_proxy=proxy.return_value,
+                                         cafile=None,
+                                         disable_certificate_validation=False)
+    mock_client.assert_called_once_with(
+        'a', 'b', 'c', proxy_config=proxy_config.return_value)
+    self.assertEqual({'oauth2_client': mock_client.return_value,
+                      'proxy_config': proxy_config.return_value}, rval)
 
   def testLoadFromStorage_failsWithMisconfiguredProxy(self):
-    yaml_fname = self._CreateYamlFile({'adwords': {},
-                                       'proxy_info': {'host': 'ahost'}},
-                                      'adwords', self._OAUTH_INSTALLED_APP_DICT)
+    yaml_fname = self._CreateYamlFile(
+        {'adwords': {},
+         'proxy_config': {
+             'http_proxy': {'host': self.host1}}},
+        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient'):
       with mock.patch('googleads.common.open', self.fake_open, create=True):
-        with mock.patch('httplib2.ProxyInfo', self.fake_proxy):
-          self.assertRaises(googleads.errors.GoogleAdsValueError,
-                            googleads.common.LoadFromStorage,
-                            yaml_fname, 'adwords', [], [])
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
+            proxy.return_value = mock.Mock()
+            self.assertRaises(googleads.errors.GoogleAdsValueError,
+                              googleads.common.LoadFromStorage,
+                              yaml_fname, 'adwords', [], [])
 
   def testLoadFromStorage_missingRequiredKey(self):
     with mock.patch('googleads.common.open', self.fake_open, create=True):
@@ -156,14 +289,18 @@ class CommonTest(unittest.TestCase):
                                       'one', self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
-        rval = googleads.common.LoadFromStorage(
-            yaml_fname, 'one', ['needed', 'keys'], ['other'])
-        mock_client.assert_called_once_with(
-            'a', 'b', 'c', proxy_info=None, ca_certs=None,
-            disable_ssl_certificate_validation=True)
-        self.assertEqual({'oauth2_client': mock_client.return_value,
-                          'needed': 'd', 'keys': 'e',
-                          'https_proxy': None}, rval)
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          rval = googleads.common.LoadFromStorage(
+              yaml_fname, 'one', ['needed', 'keys'], ['other'])
+          proxy_config.assert_called_once_with(
+              http_proxy=None, https_proxy=None, cafile=None,
+              disable_certificate_validation=False)
+          mock_client.assert_called_once_with(
+              'a', 'b', 'c', proxy_config=proxy_config.return_value)
+          self.assertEqual({'oauth2_client': mock_client.return_value,
+                            'needed': 'd', 'keys': 'e',
+                            'proxy_config': proxy_config.return_value}, rval)
 
     # The optional key is present.
     yaml_fname = self._CreateYamlFile({'one': {'needed': 'd', 'keys': 'e',
@@ -171,14 +308,18 @@ class CommonTest(unittest.TestCase):
                                       self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
-        rval = googleads.common.LoadFromStorage(
-            yaml_fname, 'one', ['needed', 'keys'], ['other'])
-        mock_client.assert_called_once_with(
-            'a', 'b', 'c', proxy_info=None, ca_certs=None,
-            disable_ssl_certificate_validation=True)
-        self.assertEqual({'oauth2_client': mock_client.return_value,
-                          'needed': 'd', 'keys': 'e', 'other': 'f',
-                          'https_proxy': None}, rval)
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          rval = googleads.common.LoadFromStorage(
+              yaml_fname, 'one', ['needed', 'keys'], ['other'])
+          proxy_config.assert_called_once_with(
+              http_proxy=None, https_proxy=None, cafile=None,
+              disable_certificate_validation=False)
+          mock_client.assert_called_once_with(
+              'a', 'b', 'c', proxy_config=proxy_config.return_value)
+          self.assertEqual({'oauth2_client': mock_client.return_value,
+                            'needed': 'd', 'keys': 'e', 'other': 'f',
+                            'proxy_config': proxy_config.return_value}, rval)
 
   def testLoadFromStorage_relativePath(self):
     fake_os = fake_filesystem.FakeOsModule(self.filesystem)
@@ -191,47 +332,65 @@ class CommonTest(unittest.TestCase):
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.os', fake_os):
         with mock.patch('googleads.common.open', self.fake_open, create=True):
-          rval = googleads.common.LoadFromStorage(
-              'yaml/googleads.yaml', 'one', ['needed', 'keys'], ['other'])
+          with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+            proxy_config.return_value = mock.Mock()
+            rval = googleads.common.LoadFromStorage(
+                'yaml/googleads.yaml', 'one', ['needed', 'keys'], ['other'])
+
+        proxy_config.assert_called_once_with(
+            http_proxy=None, https_proxy=None, cafile=None,
+            disable_certificate_validation=False)
         mock_client.assert_called_once_with(
-            'a', 'b', 'c', proxy_info=None, ca_certs=None,
-            disable_ssl_certificate_validation=True)
+            'a', 'b', 'c', proxy_config=proxy_config.return_value)
         self.assertEqual({'oauth2_client': mock_client.return_value,
-                          'needed': 'd', 'keys': 'e',
-                          'https_proxy': None}, rval)
+                          'proxy_config': proxy_config.return_value,
+                          'needed': 'd', 'keys': 'e'}, rval)
 
   def testLoadFromStorage_serviceAccount(self):
     dfp_scope = googleads.oauth2.GetAPIScope('dfp')
     # No optional keys present.
-    yaml_fname = self._CreateYamlFile({'dfp': {'needed': 'd', 'keys': 'e'}},
-                                      'dfp', self._OAUTH_SERVICE_ACCT_DICT)
+    yaml_fname = self._CreateYamlFile(
+        {'dfp': {'needed': 'd', 'keys': 'e'}},
+        insert_oauth2_key='dfp', oauth_dict=self._OAUTH_SERVICE_ACCT_DICT)
     with mock.patch(
         'googleads.oauth2.GoogleServiceAccountClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
-        rval = googleads.common.LoadFromStorage(
-            yaml_fname, 'dfp', ['needed', 'keys'], ['other'])
-        mock_client.assert_called_once_with(
-            dfp_scope, 'test@test.com', '/test/test.p12', proxy_info=None,
-            ca_certs=None, disable_ssl_certificate_validation=True)
-        self.assertEqual({'oauth2_client': mock_client.return_value,
-                          'needed': 'd', 'keys': 'e',
-                          'https_proxy': None}, rval)
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          rval = googleads.common.LoadFromStorage(
+              yaml_fname, 'dfp', ['needed', 'keys'], ['other'])
+
+    proxy_config.assert_called_once_with(
+        http_proxy=None, https_proxy=None, cafile=None,
+        disable_certificate_validation=False)
+    mock_client.assert_called_once_with(
+        dfp_scope, 'test@test.com', '/test/test.p12',
+        proxy_config=proxy_config.return_value)
+    self.assertEqual({'oauth2_client': mock_client.return_value,
+                      'proxy_config': proxy_config.return_value,
+                      'needed': 'd', 'keys': 'e'}, rval)
 
     # The optional key is present.
-    yaml_fname = self._CreateYamlFile({'dfp': {'needed': 'd', 'keys': 'e',
-                                               'other': 'f'}}, 'dfp',
-                                      self._OAUTH_SERVICE_ACCT_DICT)
+    yaml_fname = self._CreateYamlFile(
+        {'dfp': {'needed': 'd', 'keys': 'e', 'other': 'f'}}, 'dfp',
+        self._OAUTH_SERVICE_ACCT_DICT)
     with mock.patch(
         'googleads.oauth2.GoogleServiceAccountClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
-        rval = googleads.common.LoadFromStorage(
-            yaml_fname, 'dfp', ['needed', 'keys'], ['other'])
-        mock_client.assert_called_once_with(
-            dfp_scope, 'test@test.com', '/test/test.p12', proxy_info=None,
-            ca_certs=None, disable_ssl_certificate_validation=True)
-        self.assertEqual({'oauth2_client': mock_client.return_value,
-                          'needed': 'd', 'keys': 'e', 'other': 'f',
-                          'https_proxy': None}, rval)
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          rval = googleads.common.LoadFromStorage(
+              yaml_fname, 'dfp', ['needed', 'keys'], ['other'])
+
+    proxy_config.assert_called_once_with(
+        http_proxy=None, https_proxy=None, cafile=None,
+        disable_certificate_validation=False)
+    mock_client.assert_called_once_with(
+        dfp_scope, 'test@test.com', '/test/test.p12',
+        proxy_config=proxy_config.return_value)
+    self.assertEqual({'oauth2_client': mock_client.return_value,
+                      'proxy_config': proxy_config.return_value,
+                      'needed': 'd', 'keys': 'e', 'other': 'f'}, rval)
 
   def testLoadFromStorage_warningWithUnrecognizedKey(self):
     yaml_fname = self._CreateYamlFile(
@@ -240,13 +399,18 @@ class CommonTest(unittest.TestCase):
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with warnings.catch_warnings(record=True) as captured_warnings:
         with mock.patch('googleads.common.open', self.fake_open, create=True):
-          rval = googleads.common.LoadFromStorage(
-              yaml_fname, 'kval', ['Im'], ['other'])
+          with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+            proxy_config.return_value = mock.Mock()
+            rval = googleads.common.LoadFromStorage(
+                yaml_fname, 'kval', ['Im'], ['other'])
         mock_client.assert_called_once_with(
-            'a', 'b', 'c', proxy_info=None, ca_certs=None,
-            disable_ssl_certificate_validation=True)
-        self.assertEqual({'oauth2_client': mock_client.return_value,
-                          'Im': 'here', 'https_proxy': None}, rval)
+            'a', 'b', 'c', proxy_config=proxy_config.return_value)
+        self.assertEqual(
+            {
+                'oauth2_client': mock_client.return_value,
+                'Im': 'here',
+                'proxy_config': proxy_config.return_value
+            }, rval)
         self.assertEqual(len(captured_warnings), 1)
 
   def testGenerateLibSig(self):
@@ -363,6 +527,187 @@ class HeaderHandlerTest(unittest.TestCase):
     self.assertRaises(
         NotImplementedError, googleads.common.HeaderHandler().SetHeaders,
         mock.Mock())
+
+
+class ProxyConfigTest(unittest.TestCase):
+  """Tests fpr the googleads.common.ProxyConfig class."""
+
+  def setUp(self):
+    self.proxy_host1 = 'host1'
+    self.proxy_port1 = 'port1'
+    self.proxy_host2 = 'host2'
+    self.proxy_port2 = 'port2'
+    self.username = 'username'
+    self.password = 'password'
+    self.cafile = '/tmp/file.ca'
+
+    self.proxy_no_credentials = googleads.common.ProxyConfig.Proxy(
+        self.proxy_host1, self.proxy_port1)
+
+    self.proxy_with_credentials = googleads.common.ProxyConfig.Proxy(
+        self.proxy_host2, self.proxy_port2, username=self.username,
+        password=self.password)
+
+  def testProxyToStringWithCredentials(self):
+    proxy = googleads.common.ProxyConfig.Proxy(
+        self.proxy_host1, self.proxy_port1, username=self.username,
+        password=self.password)
+    self.assertEqual(str(proxy),
+                     '%s:%s@%s:%s' % (self.username, self.password,
+                                      self.proxy_host1,
+                                      self.proxy_port1))
+
+  def testProxyToStringWithoutCredentials(self):
+    proxy = googleads.common.ProxyConfig.Proxy(
+        self.proxy_host2, self.proxy_port2)
+    self.assertEqual(str(proxy),
+                     '%s:%s' % (self.proxy_host2, self.proxy_port2))
+
+  def testProxyToStringWithOnlyUsername(self):
+    proxy = googleads.common.ProxyConfig.Proxy(
+        self.proxy_host1, self.proxy_port1, username=self.username)
+    self.assertEqual(str(proxy),
+                     '%s:@%s:%s' % (self.username, self.proxy_host1,
+                                    self.proxy_port1))
+
+  def testProxyConfigGetHandlersWithNoProxyOrSSLContext(self):
+    proxy_config = googleads.common.ProxyConfig()
+    self.assertEqual(proxy_config.GetHandlers(), [])
+
+  def testProxyConfigGetHandlersWithProxy(self):
+    http_proxy = googleads.common.ProxyConfig.Proxy(self.proxy_host1,
+                                                    self.proxy_port1)
+    with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+      proxy_handler.return_value = mock.Mock()
+      proxy_config = googleads.common.ProxyConfig(http_proxy=http_proxy)
+      self.assertEqual(proxy_config.GetHandlers(), [proxy_handler.return_value])
+      proxy_handler.assert_called_once_with(
+          {'http': '%s' % str(http_proxy)})
+
+  def testProxyConfigGetHandlersWithProxyAndSLLContext(self):
+    https_proxy = googleads.common.ProxyConfig.Proxy(self.proxy_host1,
+                                                     self.proxy_port1)
+    # We normally couldn't access HTTPSHandler below Python 2.7.9, but we'll at
+    # least verify that the logic is right.
+    urllib2.HTTPSHandler = mock.Mock()
+    urllib2.HTTPSHandler.return_value = mock.Mock()
+    with mock.patch('googleads.common.ProxyConfig._InitSSLContext') as ssl_ctxt:
+      ssl_ctxt.return_value = 'CONTEXT'
+      with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+        proxy_handler.return_value = mock.Mock()
+        proxy_config = googleads.common.ProxyConfig(https_proxy=https_proxy)
+        self.assertEqual(proxy_config.GetHandlers(),
+                         [urllib2.HTTPSHandler.return_value,
+                          proxy_handler.return_value])
+        proxy_handler.assert_called_once_with(
+            {'https': '%s' % str(https_proxy)})
+        urllib2.HTTPSHandler.assert_called_once_with(ssl_ctxt.return_value)
+
+  def testProxyConfigWithNoProxy(self):
+    proxy_config = googleads.common.ProxyConfig()
+    self.assertEqual(proxy_config.proxy_info, None)
+    self.assertEqual(proxy_config.GetHandlers(), [])
+    # Note: The ssl_context will always be None on incompatible versions of
+    # Python. The version used internally doesn't support this feature. Another
+    # impact is that HTTPSHandler will never be invoked in these tests.
+    self.assertEqual(proxy_config._ssl_context, None)
+
+    with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
+      t.return_value = mock.Mock()
+      transport = proxy_config.GetSudsProxyTransport()
+      t.assert_called_once_with([])
+      self.assertEqual(t.return_value, transport)
+
+  def testProxyConfigWithHTTPProxy(self):
+    with mock.patch('httplib2.ProxyInfo') as proxy_info:
+      proxy_info.return_value = mock.Mock()
+      with mock.patch('socks.PROXY_TYPE_HTTP') as proxy_type:
+        proxy_config = googleads.common.ProxyConfig(
+            http_proxy=self.proxy_no_credentials)
+        proxy_info.assert_called_once_with(
+            proxy_type, self.proxy_host1, self.proxy_port1,
+            proxy_user=None, proxy_pass='')
+        self.assertEqual(proxy_config.proxy_info, proxy_info.return_value)
+    self.assertEqual(proxy_config._proxy_option, {'http': '%s:%s' % (
+        self.proxy_host1, self.proxy_port1)})
+    # Note: The ssl_context will always be None on incompatible versions of
+    # Python. The version used internally doesn't support this feature. Another
+    # impact is that HTTPSHandler will never be invoked in these tests.
+    self.assertEqual(proxy_config._ssl_context, None)
+
+    with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
+      t.return_value = mock.Mock()
+      with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+        proxy_handler.return_value = mock.Mock()
+        self.assertEqual(proxy_config.GetHandlers(),
+                         [proxy_handler.return_value])
+        transport = proxy_config.GetSudsProxyTransport()
+        t.assert_called_once_with([proxy_handler.return_value])
+        self.assertEqual(t.return_value, transport)
+
+  def testProxyConfigWithHTTPSProxy(self):
+    with mock.patch('httplib2.ProxyInfo') as proxy_info:
+      proxy_info.return_value = mock.Mock()
+      with mock.patch('socks.PROXY_TYPE_HTTP') as proxy_type:
+        proxy_config = googleads.common.ProxyConfig(
+            https_proxy=self.proxy_with_credentials,
+            cafile=self.cafile)
+        proxy_info.assert_called_once_with(
+            proxy_type, self.proxy_host2, self.proxy_port2,
+            proxy_user=self.username, proxy_pass=self.password)
+        self.assertEqual(proxy_config.proxy_info, proxy_info.return_value)
+    self.assertEqual(proxy_config._proxy_option, {'https': '%s:%s@%s:%s' % (
+        self.username, self.password, self.proxy_host2,
+        self.proxy_port2)})
+    # Note: The ssl_context will always be None on incompatible versions of
+    # Python. The version used internally doesn't support this feature. Another
+    # impact is that HTTPSHandler will never be invoked in these tests.
+    self.assertEqual(proxy_config._ssl_context, None)
+    self.assertEqual(proxy_config.cafile, self.cafile)
+    self.assertEqual(proxy_config.disable_certificate_validation, False)
+
+    with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
+      t.return_value = mock.Mock()
+      with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+        proxy_handler.return_value = mock.Mock()
+        self.assertEqual(proxy_config.GetHandlers(),
+                         [proxy_handler.return_value])
+        transport = proxy_config.GetSudsProxyTransport()
+        t.assert_called_once_with([proxy_handler.return_value])
+        self.assertEqual(t.return_value, transport)
+
+  def testProxyConfigWithHTTPAndHTTPSProxy(self):
+    with mock.patch('httplib2.ProxyInfo') as proxy_info:
+      proxy_info.return_value = mock.Mock()
+      with mock.patch('socks.PROXY_TYPE_HTTP') as proxy_type:
+        proxy_config = googleads.common.ProxyConfig(
+            http_proxy=self.proxy_with_credentials,
+            https_proxy=self.proxy_no_credentials,
+            disable_certificate_validation=True)
+        proxy_info.assert_called_once_with(
+            proxy_type, self.proxy_host1, self.proxy_port1,
+            proxy_user=None, proxy_pass='')
+        self.assertEqual(proxy_config.proxy_info, proxy_info.return_value)
+    self.assertEqual(proxy_config._proxy_option, {
+        'http': '%s:%s@%s:%s' % (self.username, self.password,
+                                 self.proxy_host2, self.proxy_port2),
+        'https': '%s:%s' % (self.proxy_host1, self.proxy_port1)})
+    # Note: The ssl_context will always be None on incompatible versions of
+    # Python. The version used internally doesn't support this feature. Another
+    # impact is that HTTPSHandler will never be invoked in these tests.
+    self.assertEqual(proxy_config._ssl_context, None)
+    self.assertEqual(proxy_config.cafile, None)
+    self.assertEqual(proxy_config.disable_certificate_validation, True)
+
+    with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
+      t.return_value = mock.Mock()
+      with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+        proxy_handler.return_value = mock.Mock()
+        self.assertEqual(proxy_config.GetHandlers(),
+                         [proxy_handler.return_value])
+        transport = proxy_config.GetSudsProxyTransport()
+        t.assert_called_once_with([proxy_handler.return_value])
+        self.assertEqual(t.return_value, transport)
 
 
 if __name__ == '__main__':

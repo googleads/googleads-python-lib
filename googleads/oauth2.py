@@ -102,8 +102,8 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
   _TOKEN_URL = 'https://www.google.com'
   _USER_AGENT = 'Google Ads Python Client Library'
 
-  def __init__(self, client_id, client_secret, refresh_token, proxy_info=None,
-               disable_ssl_certificate_validation=False, ca_certs=None):
+  def __init__(self, client_id, client_secret, refresh_token,
+               proxy_config=None):
     """Initializes a GoogleRefreshTokenClient.
 
     Args:
@@ -111,20 +111,15 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
       client_secret: A string containing your client secret.
       refresh_token: A string containing your refresh token.
       [optional]
-      proxy_info: A ProxyInfo instance identifying the proxy used for all
-                  requests.
-      disable_ssl_certificate_validation: A boolean indicating whether ssl
-          certificate validation should be disabled while using a proxy.
-      ca_certs: A string identifying the path to a file containing root CA
-          certificates for SSL server certificate validation.
+      proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
+        isn't being used.
     """
     self.oauth2credentials = oauth2client.client.OAuth2Credentials(
         None, client_id, client_secret, refresh_token,
         datetime.datetime(1980, 1, 1, 12), self._GOOGLE_OAUTH2_ENDPOINT,
         self._USER_AGENT)
-    self.proxy_info = proxy_info
-    self.disable_ssl_certificate_validation = disable_ssl_certificate_validation
-    self.ca_certs = ca_certs
+    self.proxy_config = (proxy_config if proxy_config
+                         else googleads.common.ProxyConfig())
 
   def CreateHttpHeader(self):
     """Creates an OAuth2 HTTP header.
@@ -158,10 +153,10 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
     """
     self.oauth2credentials.refresh(
         httplib2.Http(
-            proxy_info=self.proxy_info,
-            ca_certs=self.ca_certs,
+            proxy_info=self.proxy_config.proxy_info,
+            ca_certs=self.proxy_config.cafile,
             disable_ssl_certificate_validation=(
-                self.disable_ssl_certificate_validation)))
+                self.proxy_config.disable_certificate_validation)))
 
 
 class GoogleServiceAccountClient(GoogleOAuth2Client):
@@ -180,8 +175,7 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
   _USER_AGENT = 'Google Ads Python Client Library'
 
   def __init__(self, scope, client_email, key_file,
-               private_key_password='notasecret', sub=None, proxy_info=None,
-               disable_ssl_certificate_validation=False, ca_certs=None):
+               private_key_password='notasecret', sub=None, proxy_config=None):
     """Initializes a GoogleServiceAccountClient.
 
     Args:
@@ -192,12 +186,7 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
       private_key_password: A string containing the password for your key file.
       sub: A string containing the email address of a user account you want to
            impersonate.
-      proxy_info: A ProxyInfo instance identifying the proxy used for all
-                  requests.
-      disable_ssl_certificate_validation: A boolean indicating whether ssl
-          certificate validation should be disabled while using a proxy.
-      ca_certs: A string identifying the path to a file containing root CA
-          certificates for SSL server certificate validation.
+      proxy_config: A googleads.common.ProxyConfig instance.
 
     Raises:
       GoogleAdsValueError: If the given key file does not exist.
@@ -213,9 +202,7 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
         client_email, private_key, scope,
         private_key_password=private_key_password,
         user_agent=self._USER_AGENT, sub=sub)
-    self.proxy_info = proxy_info
-    self.disable_ssl_certificate_validation = disable_ssl_certificate_validation
-    self.ca_certs = ca_certs
+    self.proxy_config = proxy_config
     self.Refresh()
 
   def CreateHttpHeader(self):
@@ -250,7 +237,7 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
     """
     self.oauth2credentials.refresh(
         httplib2.Http(
-            proxy_info=self.proxy_info,
-            ca_certs=self.ca_certs,
+            proxy_info=self.proxy_config.proxy_info,
+            ca_certs=self.proxy_config.cafile,
             disable_ssl_certificate_validation=(
-                self.disable_ssl_certificate_validation)))
+                self.proxy_config.disable_certificate_validation)))

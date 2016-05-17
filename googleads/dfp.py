@@ -39,26 +39,6 @@ SUGGESTED_PAGE_LIMIT = 500
 _CHUNK_SIZE = 16 * 1024
 # A giant dictionary of DFP versions and the services they support.
 _SERVICE_MAP = {
-    'v201502':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
-         'CompanyService', 'ContactService', 'ContentBundleService',
-         'ContentMetadataKeyHierarchyService', 'ContentService',
-         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
-         'CreativeWrapperService', 'CustomFieldService',
-         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
-         'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
-         'OrderService', 'PackageService', 'PlacementService',
-         'PremiumRateService', 'ProductService', 'ProductPackageService',
-         'ProductPackageItemService', 'ProductTemplateService',
-         'ProposalLineItemService', 'ProposalService',
-         'PublisherQueryLanguageService', 'RateCardService',
-         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
-         'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
-         'SuggestedAdUnitService', 'TeamService', 'UserService',
-         'UserTeamAssociationService', 'WorkflowRequestService'),
     'v201505':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
@@ -142,6 +122,27 @@ _SERVICE_MAP = {
          'ReconciliationReportService', 'ReportService',
          'SuggestedAdUnitService', 'TeamService', 'UserService',
          'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201605':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CompanyService', 'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
+         'OrderService', 'PackageService', 'PlacementService',
+         'PremiumRateService', 'ProductService', 'ProductPackageService',
+         'ProductPackageItemService', 'ProductTemplateService',
+         'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationLineItemReportService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
 }
 
 
@@ -196,7 +197,7 @@ class DfpClient(object):
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, oauth2_client, application_name, network_code=None,
-               https_proxy=None, cache=None):
+               cache=None, proxy_config=None):
     """Initializes a DfpClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -211,9 +212,9 @@ class DfpClient(object):
       network_code: A string identifying the network code of the network you are
           accessing. All requests other than getAllNetworks and getCurrentUser
           calls require this header to be set.
-      https_proxy: A string identifying the proxy that all HTTPS requests
-          should be routed through.
       cache: A subclass of suds.cache.Cache; defaults to None.
+      proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
+        isn't being used.
     """
     if application_name is DEFAULT_APPLICATION_NAME:
       raise googleads.errors.GoogleAdsValueError(
@@ -223,9 +224,10 @@ class DfpClient(object):
     self.oauth2_client = oauth2_client
     self.application_name = application_name
     self.network_code = network_code
-    self.https_proxy = https_proxy
     self.cache = cache
     self._header_handler = _DfpHeaderHandler(self)
+    self.proxy_config = (proxy_config if proxy_config
+                         else googleads.common.ProxyConfig())
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
                  server=DEFAULT_ENDPOINT):
@@ -249,15 +251,10 @@ class DfpClient(object):
     """
     server = server[:-1] if server[-1] == '/' else server
     try:
-      proxy_option = None
-      if self.https_proxy:
-        proxy_option = {
-            'https': self.https_proxy
-        }
-
       client = suds.client.Client(
           self._SOAP_SERVICE_FORMAT % (server, version, service_name),
-          proxy=proxy_option, cache=self.cache, timeout=3600)
+          cache=self.cache, timeout=3600,
+          transport=self.proxy_config.GetSudsProxyTransport())
     except suds.transport.TransportError:
       if version in _SERVICE_MAP:
         if service_name in _SERVICE_MAP[version]:
@@ -368,6 +365,8 @@ class DataDownloader(object):
     self._server = server
     self._report_service = None
     self._pql_service = None
+    self.proxy_config = self._dfp_client.proxy_config
+    self.url_opener = urllib2.build_opener(*self.proxy_config.GetHandlers())
 
   def _GetReportService(self):
     """Lazily initializes a report service client."""
@@ -430,7 +429,7 @@ class DataDownloader(object):
     """
     service = self._GetReportService()
     report_url = service.getReportDownloadURL(report_job_id, export_format)
-    response = urllib2.urlopen(report_url)
+    response = self.url_opener.open(report_url)
     while True:
       chunk = response.read(_CHUNK_SIZE)
       if not chunk: break

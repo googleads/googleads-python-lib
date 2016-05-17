@@ -53,9 +53,20 @@ dfp:
 
 
 # Proxy configurations (optional)
-# proxy_info:
-#  host: INSERT_HOST_HERE
-#  port: INSERT_PROXY_PORT_HERE
-# The following values are optional:
-#  disable_ssl_certificate_validation: False
-#  ca_certs: INSERT_PATH_HERE
+# proxy_config:
+  # If specified, the given cafile will only be used if certificate validation
+  # is not disabled.
+  # cafile: INSERT_PATH_HERE
+  # disable_certificate_validation: False
+  # http_proxy:
+    # host: INSERT_HOST_HERE
+    # port: INSERT_PROXY_PORT_HERE
+    # The following values are optional:
+    # username: INSERT_USERNAME_HERE
+    # password: INSERT_PASSWORD_HERE
+  # https_proxy:
+    # host: INSERT_HOST_HERE
+    # port: INSERT_PROXY_PORT_HERE
+    # The following values are optional:
+    # username: INSERT_USERNAME_HERE
+    # password: INSERT_PASSWORD_HERE
