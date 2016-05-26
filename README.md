@@ -54,7 +54,7 @@ samples in the examples directory of this repository.
 
 ####Where can I find the pydocs?
 
-Our Pydoc can be found [here](http://googleads.github.io/googleads-python-lib).
+Our pydocs can be found [here](http://googleads.github.io/googleads-python-lib).
 
 ####Caching authentication information
 
