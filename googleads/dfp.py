@@ -230,7 +230,7 @@ class DfpClient(object):
                          else googleads.common.ProxyConfig())
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
-                 server=DEFAULT_ENDPOINT):
+                 server=None):
     """Creates a service client for the given service.
 
     Args:
@@ -249,6 +249,9 @@ class DfpClient(object):
     Raises:
       A GoogleAdsValueError if the service or version provided do not exist.
     """
+    if not server:
+      server = DEFAULT_ENDPOINT
+
     server = server[:-1] if server[-1] == '/' else server
     try:
       client = suds.client.Client(
@@ -272,7 +275,7 @@ class DfpClient(object):
     return googleads.common.SudsServiceProxy(client, self._header_handler)
 
   def GetDataDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
-                        server=DEFAULT_ENDPOINT):
+                        server=None):
     """Creates a downloader for DFP reports and PQL result sets.
 
     This is a convenience method. It is functionally identical to calling
@@ -288,6 +291,9 @@ class DfpClient(object):
     Returns:
       A DataDownloader tied to this DfpClient, ready to download reports.
     """
+    if not server:
+      server = DEFAULT_ENDPOINT
+
     return DataDownloader(self, version, server)
 
 
@@ -347,7 +353,7 @@ class DataDownloader(object):
   """A utility that can be used to download reports and PQL result sets."""
 
   def __init__(self, dfp_client, version=sorted(_SERVICE_MAP.keys())[-1],
-               server=DEFAULT_ENDPOINT):
+               server=None):
     """Initializes a DataDownloader.
 
     Args:
@@ -359,6 +365,9 @@ class DataDownloader(object):
           future releases to point to what is then the latest version.
       server: A string identifying the webserver hosting the DFP API.
     """
+    if not server:
+      server = DEFAULT_ENDPOINT
+
     if server[-1] == '/': server = server[:-1]
     self._dfp_client = dfp_client
     self._version = version

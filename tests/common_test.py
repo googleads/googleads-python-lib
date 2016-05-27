@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Unit tests to cover the common module."""
 
 
@@ -20,8 +19,8 @@ import urllib2
 import warnings
 
 
-import fake_filesystem
-import fake_tempfile
+from pyfakefs import fake_filesystem
+from pyfakefs import fake_tempfile
 import mock
 import suds
 import yaml
@@ -45,9 +44,11 @@ class CommonTest(unittest.TestCase):
     self.tempfile = fake_tempfile.FakeTempfileModule(self.filesystem)
     self.fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
     self.host1 = 'h1'
-    self.port1 = 'p1'
+    self.port1 = 1
     self.host2 = 'h2'
-    self.port2 = 'p2'
+    self.port2 = 2
+    self.uplink_host = '127.0.0.1'
+    self.uplink_port = 999
     self.username = 'username'
     self.password = 'password'
 

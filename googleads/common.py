@@ -39,7 +39,7 @@ except ImportError:
   # not have certificate validation performed until they update.
   pass
 
-VERSION = '4.0.0'
+VERSION = '4.1.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'
@@ -127,73 +127,10 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
         'values are: %s, actual values are %s'
         % (path, required_client_values, original_keys))
 
-  http_proxy = None
-  https_proxy = None
-
-  # HTTP Proxy Config
-  try:
-    if 'http_proxy' in proxy_config_data:
-      http_proxy_data = proxy_config_data.get('http_proxy')
-      original_http_proxy_keys = list(http_proxy_data.keys())
-      http_proxy = ProxyConfig.Proxy(
-          http_proxy_data['host'], http_proxy_data['port'],
-          username=http_proxy_data.get('username'),
-          password=http_proxy_data.get('password'))
-  except KeyError:
-    raise googleads.errors.GoogleAdsValueError(
-        'Your yaml file, %s, is missing some of the required http proxy '
-        'values. Required values are: %s, actual values are %s'
-        % (path, _PROXY_KEYS, original_http_proxy_keys))
-  # HTTPS Proxy Config
-  # Note: If both HTTP and HTTPS proxies are specified, the ProxyInfo used
-  # by oauth2.py will always be the HTTPS proxy.
-  try:
-    if 'https_proxy' in proxy_config_data:
-      https_proxy_data = proxy_config_data.get('https_proxy')
-      original_https_proxy_keys = list(https_proxy_data.keys())
-      https_proxy = ProxyConfig.Proxy(
-          https_proxy_data['host'], https_proxy_data['port'],
-          username=https_proxy_data.get('username'),
-          password=https_proxy_data.get('password'))
-  except KeyError:
-    raise googleads.errors.GoogleAdsValueError(
-        'Your yaml file, %s, is missing some of the required https proxy '
-        'values. Required values are: %s, actual values are %s'
-        % (path, _PROXY_KEYS, original_https_proxy_keys))
-
-  cafile = proxy_config_data.get('cafile', None)
-  disable_certificate_validation = proxy_config_data.get(
-      'disable_certificate_validation', False)
-  proxy_config = ProxyConfig(
-      http_proxy=http_proxy, https_proxy=https_proxy, cafile=cafile,
-      disable_certificate_validation=disable_certificate_validation)
+  proxy_config = _ExtractProxyConfig(product_yaml_key, proxy_config_data)
   client_kwargs['proxy_config'] = proxy_config
-
-  if all(config in product_data for config in _OAUTH2_INSTALLED_APP_KEYS):
-    # Use provided configurations for the installed application flow.
-    client_kwargs['oauth2_client'] = (
-        googleads.oauth2.GoogleRefreshTokenClient(
-            product_data['client_id'], product_data['client_secret'],
-            product_data['refresh_token'], proxy_config=proxy_config))
-    for key in _OAUTH2_INSTALLED_APP_KEYS:
-      del product_data[key]
-  elif all(config in product_data for config in _OAUTH2_SERVICE_ACCT_KEYS):
-    # Use provided configurations for the service account flow.
-    client_kwargs['oauth2_client'] = (
-        googleads.oauth2.GoogleServiceAccountClient(
-            googleads.oauth2.GetAPIScope(product_yaml_key),
-            product_data['service_account_email'],
-            product_data['path_to_private_key_file'],
-            proxy_config=proxy_config))
-    for key in _OAUTH2_SERVICE_ACCT_KEYS:
-      del product_data[key]
-  else:
-    raise googleads.errors.GoogleAdsValueError(
-        'Your yaml file, %s, is incorrectly configured for OAuth2. You '
-        'need to specify credentials for either the installed application '
-        'flow (%s) or service account flow (%s). Actual values provided are: '
-        '%s' % (path, _OAUTH2_INSTALLED_APP_KEYS, _OAUTH2_SERVICE_ACCT_KEYS,
-                original_keys))
+  client_kwargs['oauth2_client'] = _ExtractOAuth2Client(
+      product_yaml_key, product_data, proxy_config)
 
   for value in optional_product_values:
     if value in product_data:
@@ -201,11 +138,119 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
       del product_data[value]
 
   if product_data:
-    warnings.warn(
-        'Your yaml file, %s, contains the following unrecognized '
-        'keys: %s. They were ignored.' % (path, product_data), stacklevel=3)
+    warnings.warn('Your yaml file, %s, contains the following unrecognized '
+                  'keys: %s. They were ignored.' % (path, product_data),
+                  stacklevel=3)
 
   return client_kwargs
+
+
+def _ExtractOAuth2Client(product_yaml_key, product_data, proxy_config):
+  """Generates an GoogleOAuth2Client subclass using the given product_data.
+
+  Args:
+    product_yaml_key: a string key identifying the product being configured.
+    product_data: a dict containing the configurations for a given product.
+    proxy_config: a ProxyConfig instance.
+
+  Returns:
+    An instantiated GoogleOAuth2Client subclass.
+
+  Raises:
+    A GoogleAdsValueError if the OAuth2 configuration for the given product is
+    misconfigured.
+  """
+  if all(config in product_data for config in _OAUTH2_INSTALLED_APP_KEYS):
+    oauth2_args = [
+        product_data['client_id'], product_data['client_secret'],
+        product_data['refresh_token']
+    ]
+    oauth2_client = googleads.oauth2.GoogleRefreshTokenClient
+    for key in _OAUTH2_INSTALLED_APP_KEYS:
+      del product_data[key]
+  elif all(config in product_data for config in _OAUTH2_SERVICE_ACCT_KEYS):
+    oauth2_args = [
+        googleads.oauth2.GetAPIScope(product_yaml_key),
+        product_data['service_account_email'],
+        product_data['path_to_private_key_file']
+    ]
+    oauth2_client = googleads.oauth2.GoogleServiceAccountClient
+    for key in _OAUTH2_SERVICE_ACCT_KEYS:
+      del product_data[key]
+  else:
+    raise googleads.errors.GoogleAdsValueError(
+        'Your yaml file is incorrectly configured for OAuth2. You need to '
+        'specify credentials for either the installed application flow (%s) '
+        'or service account flow (%s).' %
+        (_OAUTH2_INSTALLED_APP_KEYS, _OAUTH2_SERVICE_ACCT_KEYS))
+
+  return oauth2_client(*oauth2_args, proxy_config=proxy_config)
+
+
+def _ExtractProxyConfig(product_yaml_key, proxy_config_data):
+  """Returns an initialized ProxyConfig using the given proxy_config_data.
+
+  Args:
+    product_yaml_key: a string indicating the client being loaded.
+    proxy_config_data: a dict containing the contents of proxy_config from the
+      YAML file.
+
+  Returns:
+    If there is a proxy to configure in proxy_config, this will return a
+    ProxyConfig instance with those settings. Otherwise, it will return None.
+
+  Raises:
+    A GoogleAdsValueError if one of the required keys specified by _PROXY_KEYS
+    is missing.
+  """
+  cafile = proxy_config_data.get('cafile', None)
+  disable_certificate_validation = proxy_config_data.get(
+      'disable_certificate_validation', False)
+  http_proxy = _ExtractProxy(_HTTP_PROXY_YAML_KEY, proxy_config_data)
+  https_proxy = _ExtractProxy(_HTTPS_PROXY_YAML_KEY, proxy_config_data)
+  proxy_config = ProxyConfig(
+      http_proxy=http_proxy,
+      https_proxy=https_proxy,
+      cafile=cafile,
+      disable_certificate_validation=disable_certificate_validation)
+
+  return proxy_config
+
+
+def _ExtractProxy(proxy_yaml_key, proxy_config_data):
+  """Extracts a ProxyConfig.Proxy from the proxy_config for a given key.
+
+  Args:
+    proxy_yaml_key: a key specifying the type of proxy for which data is being
+      loaded.
+    proxy_config_data: a dict containing the proxy configurations loaded from
+      the YAML file.
+
+  Returns:
+    If the proxy_yaml_key exists in the proxy_config_data, this will return a
+    ProxyConfig.Proxy instance initialized with the data associated with it.
+    Otherwise, this will return None.
+
+  Raises:
+    A GoogleAdsValueError if one of the required keys specified by _PROXY_KEYS
+    is missing.
+  """
+  proxy = None
+  try:
+    if proxy_yaml_key in proxy_config_data:
+      proxy_data = proxy_config_data.get(proxy_yaml_key)
+      original_proxy_keys = list(proxy_data.keys())
+      proxy = ProxyConfig.Proxy(proxy_data['host'],
+                                proxy_data['port'],
+                                username=proxy_data.get('username'),
+                                password=proxy_data.get('password'))
+  except KeyError:
+    raise googleads.errors.GoogleAdsValueError(
+        'Your yaml file is missing some of the required proxy values. Required '
+        'values are: %s, actual values are %s' %
+        (_PROXY_KEYS, original_proxy_keys))
+
+  return proxy
 
 
 def _PackForSuds(obj, factory):
@@ -354,16 +399,17 @@ class ProxyConfig(object):
     # Attempt to create a context; this should succeed in Python 2 versions
     # 2.7.9+ and Python 3 versions 3.4+.
     try:
-      ssl_context = ssl.create_default_context(cafile=cafile)
+      if disable_ssl_certificate_validation:
+        ssl._create_default_https_context = ssl._create_unverified_context
+        ssl_context = ssl.create_default_context()
+      else:
+        ssl_context = ssl.create_default_context(cafile=cafile)
     except AttributeError:
       # Earlier versions lack ssl.create_default_context()
       # Rather than raising the exception, no context will be provided for
       # legacy support. Of course, this means no certificate validation is
       # taking place!
       return None
-
-    if disable_ssl_certificate_validation:
-      ssl_context.verify_mode = ssl.CERT_NONE
 
     return ssl_context
 

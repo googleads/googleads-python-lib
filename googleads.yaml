@@ -25,6 +25,16 @@ adwords:
   # The following values configure the client for the service account flow.
   # service_account_email: INSERT_SERVICE_ACCOUNT_EMAIL_HERE
   # path_to_private_key_file: INSERT_PATH_TO_FILE_HERE
+  #############################################################################
+  # ReportDownloader Headers                                                  #
+  # Below you may specify boolean values for optional headers that will be    #
+  # applied to all requests made by the ReportDownloader utility by default.  #
+  #############################################################################
+  # report_downloader_headers:
+    # skip_report_header: False
+    # skip_column_header: False
+    # skip_report_summary: False
+    # use_raw_enum_values: False
 
 
 # DfpClient configurations

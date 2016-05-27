@@ -99,6 +99,7 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
 
   def setUp(self):
     self.aw_client = mock.Mock()
+    self.aw_client.report_download_headers = {}
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.aw_client, CURRENT_VERSION)
 
@@ -136,7 +137,7 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     suds_client.set_options.assert_any_call(
         soapheaders=soap_header, headers=oauth_header)
 
-  def testGetReportDownloadHeaders(self):
+  def testGetReportDownloadHeadersOverrideDefaults(self):
     ccid = 'client customer id'
     dev_token = 'developer token'
     user_agent = 'user agent!'
@@ -146,6 +147,9 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     self.aw_client.user_agent = user_agent
     self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
+    self.aw_client.report_downloader_headers = {
+        'skip_report_header': True, 'skip_column_header': False,
+        'skip_report_summary': False, 'use_raw_enum_values': True}
     expected_return_value = {
         'Content-type': 'application/x-www-form-urlencoded',
         'developerToken': dev_token,
@@ -155,17 +159,51 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
             user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
             ',gzip']),
         'skipReportHeader': 'False',
-        'skipColumnHeader': 'False',
-        'skipReportSummary': 'False'
+        'skipColumnHeader': 'True',
+        'skipReportSummary': 'False',
+        'useRawEnumValues': 'True'
     }
 
     self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
                      self.header_handler.GetReportDownloadHeaders(
-                         {'skip_report_header': False,
-                          'skip_column_header': False,
-                          'skip_report_summary': False}))
+                         skip_report_header=False,
+                         skip_column_header=True,
+                         skip_report_summary=False,
+                         use_raw_enum_values=True))
+
+  def testGetReportDownloadHeadersWithDefaultsFromConfig(self):
+    ccid = 'client customer id'
+    dev_token = 'developer token'
+    user_agent = 'user agent!'
+    oauth_header = {'Authorization': 'header'}
+    self.aw_client.client_customer_id = ccid
+    self.aw_client.developer_token = dev_token
+    self.aw_client.user_agent = user_agent
+    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
+        oauth_header)
+    self.aw_client.report_download_headers = {
+        'skip_report_header': True, 'skip_column_header': False,
+        'skip_report_summary': False, 'use_raw_enum_values': True}
+    expected_return_value = {
+        'Content-type': 'application/x-www-form-urlencoded',
+        'developerToken': dev_token,
+        'clientCustomerId': ccid,
+        'Authorization': 'header',
+        'User-Agent': ''.join([
+            user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            ',gzip']),
+        'skipReportHeader': 'True',
+        'skipColumnHeader': 'False',
+        'skipReportSummary': 'False',
+        'useRawEnumValues': 'True'
+    }
+
+    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
+        oauth_header)
+    self.assertEqual(expected_return_value,
+                     self.header_handler.GetReportDownloadHeaders())
 
   def testGetReportDownloadHeadersWithInvalidKeyword(self):
     ccid = 'client customer id'
@@ -177,10 +215,9 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
 
     self.assertRaises(
         googleads.errors.GoogleAdsValueError,
-        self.header_handler.GetReportDownloadHeaders,
-        {'invalid_key_word': True})
+        self.header_handler.GetReportDownloadHeaders, invalid_key_word=True)
 
-  def testGetReportDownloadHeadersWithOptionalHeaders(self):
+  def testGetReportDownloadHeadersWithKeywordArguments(self):
     ccid = 'client customer id'
     dev_token = 'developer token'
     user_agent = 'user agent!'
@@ -201,17 +238,44 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         'skipReportHeader': 'True',
         'skipColumnHeader': 'True',
         'skipReportSummary': 'True',
-        'includeZeroImpressions': 'True'
+        'includeZeroImpressions': 'True',
+        'useRawEnumValues': 'True'
     }
 
     self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
         oauth_header)
     self.assertEqual(expected_return_value,
                      self.header_handler.GetReportDownloadHeaders(
-                         {'skip_report_header': True,
-                          'skip_column_header': True,
-                          'skip_report_summary': True,
-                          'include_zero_impressions': True}))
+                         skip_report_header=True,
+                         skip_column_header=True,
+                         skip_report_summary=True,
+                         include_zero_impressions=True,
+                         use_raw_enum_values=True))
+
+  def testGetReportDownloadHeadersWithNoOptionalHeaders(self):
+    ccid = 'client customer id'
+    dev_token = 'developer token'
+    user_agent = 'user agent!'
+    oauth_header = {'Authorization': 'header'}
+    self.aw_client.client_customer_id = ccid
+    self.aw_client.developer_token = dev_token
+    self.aw_client.user_agent = user_agent
+    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
+        oauth_header)
+    expected_return_value = {
+        'Content-type': 'application/x-www-form-urlencoded',
+        'developerToken': dev_token,
+        'clientCustomerId': ccid,
+        'Authorization': 'header',
+        'User-Agent': ''.join([
+            user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            ',gzip'])
+    }
+
+    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
+        oauth_header)
+    self.assertEqual(expected_return_value,
+                     self.header_handler.GetReportDownloadHeaders())
 
 
 class AdWordsClientTest(unittest.TestCase):
@@ -1313,7 +1377,9 @@ class ReportDownloaderTest(unittest.TestCase):
     with mock.patch('suds.mx.Content') as mock_content:
       with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
         self.opener.open.return_value = fake_request
-        self.report_downloader.DownloadReport(report_definition, output_file)
+        self.report_downloader.DownloadReport(report_definition, output_file,
+                                              skip_report_header=True,
+                                              use_raw_enum_values=False)
         mock_request.assert_called_once_with(
             ('https://adwords.google.com/api/adwords/reportdownload/%s'
              % self.version), post_body, headers)
@@ -1321,7 +1387,8 @@ class ReportDownloaderTest(unittest.TestCase):
         self.marshaller.process.assert_called_once_with(
             mock_content.return_value)
         self.assertEqual(content, output_file.getvalue())
-        self.header_handler.GetReportDownloadHeaders.assert_called_once_with({})
+        self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+            skip_report_header=True, use_raw_enum_values=False)
 
   def testDownloadReportAsString(self):
     report_definition = {'table': 'campaigns',
@@ -1350,7 +1417,7 @@ class ReportDownloaderTest(unittest.TestCase):
         self.marshaller.process.assert_called_once_with(
             mock_content.return_value)
         self.assertEqual(content, s)
-        self.header_handler.GetReportDownloadHeaders.assert_called_once_with({})
+        self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
 
   def testDownloadReportAsStringWithAwql(self):
     query = 'SELECT Id FROM Campaign WHERE NAME LIKE \'%Test%\''
@@ -1367,14 +1434,16 @@ class ReportDownloaderTest(unittest.TestCase):
     fake_request.seek(0)
     with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
       self.opener.open.return_value = fake_request
-      s = self.report_downloader.DownloadReportAsStringWithAwql(query,
-                                                                file_format)
+      s = self.report_downloader.DownloadReportAsStringWithAwql(
+          query, file_format, include_zero_impressions=True,
+          use_raw_enum_values=False)
       mock_request.assert_called_once_with(
           ('https://adwords.google.com/api/adwords/reportdownload/%s'
            % self.version), post_body, headers)
       self.opener.open.assert_called_once_with(mock_request.return_value)
     self.assertEqual(content, s)
-    self.header_handler.GetReportDownloadHeaders.assert_called_once_with({})
+    self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+        include_zero_impressions=True, use_raw_enum_values=False)
 
   def testDownloadReportCheckFormat_CSVStringSuccess(self):
     output_file = io.StringIO()
@@ -1444,7 +1513,7 @@ class ReportDownloaderTest(unittest.TestCase):
         self.marshaller.process.assert_called_once_with(
             mock_content.return_value)
         self.assertEqual('', output_file.getvalue())
-        self.header_handler.GetReportDownloadHeaders.assert_called_once_with({})
+        self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
 
   def testDownloadReportWithAwql(self):
     output_file = io.StringIO()
@@ -1471,7 +1540,7 @@ class ReportDownloaderTest(unittest.TestCase):
       self.opener.open.assert_called_once_with(mock_request.return_value)
 
     self.assertEqual(content, output_file.getvalue())
-    self.header_handler.GetReportDownloadHeaders.assert_called_once_with({})
+    self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
 
   def testDownloadReportWithBytesIO(self):
     output_file = io.BytesIO()
@@ -1501,7 +1570,7 @@ class ReportDownloaderTest(unittest.TestCase):
         self.marshaller.process.assert_called_once_with(
             mock_content.return_value)
         self.assertEqual(content, output_file.getvalue().decode('utf-8'))
-        self.header_handler.GetReportDownloadHeaders.assert_called_once_with({})
+        self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
 
   def testExtractError_badRequest(self):
     response = mock.Mock()

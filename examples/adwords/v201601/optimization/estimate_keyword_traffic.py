@@ -93,34 +93,35 @@ def main(client):
       continue
 
     # Find the mean of the min and max values.
-    mean_avg_cpc = (calc_mean(estimate['min']['averageCpc']['microAmount'],
-                              estimate['max']['averageCpc']['microAmount'])
+    mean_avg_cpc = (_CalculateMean(estimate['min']['averageCpc']['microAmount'],
+                                   estimate['max']['averageCpc']['microAmount'])
                     if 'averageCpc' in estimate['min'] else 'N/A')
-    mean_avg_pos = calc_mean(estimate['min']['averagePosition'],
-                             estimate['max']['averagePosition'])
-    mean_clicks = calc_mean(estimate['min']['clicksPerDay'],
-                            estimate['max']['clicksPerDay'])
-    mean_total_cost = calc_mean(estimate['min']['totalCost']['microAmount'],
-                                estimate['max']['totalCost']['microAmount'])
+    mean_avg_pos = _CalculateMean(estimate['min']['averagePosition'],
+                                  estimate['max']['averagePosition'])
+    mean_clicks = _CalculateMean(estimate['min']['clicksPerDay'],
+                                 estimate['max']['clicksPerDay'])
+    mean_total_cost = _CalculateMean(
+        estimate['min']['totalCost']['microAmount'],
+        estimate['max']['totalCost']['microAmount'])
 
     print ('Results for the keyword with text \'%s\' and match type \'%s\':'
            % (keyword['text'], keyword['matchType']))
-    print '  Estimated average CPC: %s' % mean_avg_cpc
-    print '  Estimated ad position: %s' % mean_avg_pos
-    print '  Estimated daily clicks: %s' % mean_clicks
-    print '  Estimated daily cost: %s' % mean_total_cost
+    print '  Estimated average CPC: %s' % _FormatMean(mean_avg_cpc)
+    print '  Estimated ad position: %s' % _FormatMean(mean_avg_pos)
+    print '  Estimated daily clicks: %s' % _FormatMean(mean_clicks)
+    print '  Estimated daily cost: %s' % _FormatMean(mean_total_cost)
 
 
-def fmt_mean(mean):
-  if mean:
-    return '%.2f' % mean
+def _CalculateMean(min_est, max_est):
+  if min_est and max_est:
+    return (float(min_est) + float(max_est)) / 2.0
   else:
     return None
 
 
-def calc_mean(min_est, max_est):
-  if min_est and max_est:
-    return (float(min_est) + float(max_est)) / 2.0
+def _FormatMean(mean):
+  if mean:
+    return '%.2f' % mean
   else:
     return None
 

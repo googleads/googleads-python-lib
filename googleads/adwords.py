@@ -167,6 +167,52 @@ _SERVICE_MAP = {
         'TrafficEstimatorService': 'o',
         'TrialAsyncErrorService': 'cm',
         'TrialService': 'cm'
+    },
+    'v201605': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'BatchJobService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'DraftAsyncErrorService': 'cm',
+        'DraftService': 'cm',
+        'ExperimentService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'TrialAsyncErrorService': 'cm',
+        'TrialService': 'cm'
     }
 }
 
@@ -174,7 +220,8 @@ _SERVICE_MAP = {
 _REPORT_HEADER_KWARGS = {'include_zero_impressions': 'includeZeroImpressions',
                          'skip_report_header': 'skipReportHeader',
                          'skip_column_header': 'skipColumnHeader',
-                         'skip_report_summary': 'skipReportSummary'}
+                         'skip_report_summary': 'skipReportSummary',
+                         'use_raw_enum_values': 'useRawEnumValues'}
 
 # The endpoint used by default when making AdWords API requests.
 _DEFAULT_ENDPOINT = 'https://adwords.google.com'
@@ -209,7 +256,7 @@ class AdWordsClient(object):
   _REQUIRED_INIT_VALUES = ('user_agent', 'developer_token')
   # A list of values which may optionally be provided when using AdWords.
   _OPTIONAL_INIT_VALUES = ('validate_only', 'partial_failure',
-                           'client_customer_id')
+                           'client_customer_id', 'report_downloader_headers')
   # The format of SOAP service WSDLs. A server, namespace, version, and service
   # name need to be formatted in.
   _SOAP_SERVICE_FORMAT = '%s/api/adwords/%s/%s/%s?wsdl'
@@ -238,9 +285,7 @@ class AdWordsClient(object):
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(
-      self, developer_token, oauth2_client, user_agent,
-      client_customer_id=None, validate_only=False, partial_failure=False,
-      cache=None, proxy_config=None):
+      self, developer_token, oauth2_client, user_agent, **kwargs):
     """Initializes an AdWordsClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -252,7 +297,9 @@ class AdWordsClient(object):
           your requests.
       user_agent: An arbitrary string which will be used to identify your
           application
-      [optional]
+      **kwargs: Optional keyword arguments.
+
+    Keyword Arguments:
       client_customer_id: A string identifying which AdWords customer you want
           to act as. You do not have to provide this if you are using a client
           account. You probably want to provide this if you're using an AdWords
@@ -267,20 +314,24 @@ class AdWordsClient(object):
       cache: A subclass of suds.cache.Cache; defaults to None.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
         isn't being used.
+      report_downloader_headers: A dict containing optional headers to be used
+        by default when making requests with the ReportDownloader.
     """
     self.developer_token = developer_token
     self.oauth2_client = oauth2_client
     self.oauth2_client.Refresh()
     self.user_agent = user_agent
-    self.client_customer_id = client_customer_id
-    self.validate_only = validate_only
-    self.partial_failure = partial_failure
-    self.cache = cache
-    self.proxy_config = (proxy_config if proxy_config
-                         else googleads.common.ProxyConfig())
+    self.client_customer_id = kwargs.get('client_customer_id')
+    self.validate_only = kwargs.get('validate_only', False)
+    self.partial_failure = kwargs.get('partial_failure', False)
+    self.cache = kwargs.get('cache')
+    proxy_config = kwargs.get('proxy_config')
+    self.proxy_config = (proxy_config if proxy_config else
+                         googleads.common.ProxyConfig())
+    self.report_download_headers = kwargs.get('report_download_headers', {})
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
-                 server=_DEFAULT_ENDPOINT):
+                 server=None):
     """Creates a service client for the given service.
 
     Args:
@@ -299,6 +350,9 @@ class AdWordsClient(object):
     Raises:
       A GoogleAdsValueError if the service or version provided do not exist.
     """
+    if not server:
+      server = _DEFAULT_ENDPOINT
+
     if server[-1] == '/': server = server[:-1]
     try:
       client = suds.client.Client(
@@ -321,7 +375,7 @@ class AdWordsClient(object):
         client, _AdWordsHeaderHandler(self, version))
 
   def GetBatchJobHelper(self, version=sorted(_SERVICE_MAP.keys())[-1],
-                        server=_DEFAULT_ENDPOINT):
+                        server=None):
     """Returns a BatchJobHelper to work with the BatchJobService.
 
       This is a convenience method. It is functionally identical to calling
@@ -337,6 +391,9 @@ class AdWordsClient(object):
       Returns:
         An initialized BatchJobHelper tied to this client.
     """
+    if not server:
+      server = _DEFAULT_ENDPOINT
+
     request_builder = BatchJobHelper.GetRequestBuilder(
         client=self, version=version, server=server)
     response_parser = BatchJobHelper.GetResponseParser()
@@ -344,7 +401,7 @@ class AdWordsClient(object):
     return BatchJobHelper(request_builder, response_parser, version=version)
 
   def GetReportDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
-                          server=_DEFAULT_ENDPOINT):
+                          server=None):
     """Creates a downloader for AdWords reports.
 
     This is a convenience method. It is functionally identical to calling
@@ -360,6 +417,9 @@ class AdWordsClient(object):
     Returns:
       A ReportDownloader tied to this AdWordsClient, ready to download reports.
     """
+    if not server:
+      server = _DEFAULT_ENDPOINT
+
     return ReportDownloader(self, version, server)
 
   def SetClientCustomerId(self, client_customer_id):
@@ -409,11 +469,14 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
         soapheaders=header,
         headers=self._adwords_client.oauth2_client.CreateHttpHeader())
 
-  def GetReportDownloadHeaders(self, kwargs):
+  def GetReportDownloadHeaders(self, **kwargs):
     """Returns a dictionary of headers for a report download request.
 
+    Note that the given keyword arguments will override any settings configured
+    from the googleads.yaml file.
+
     Args:
-      kwargs: A dictionary containing optional keyword arguments.
+      **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
       include_zero_impressions: A boolean indicating whether the report should
@@ -427,6 +490,8 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
+      use_raw_enum_values: A boolean indicating whether to return enum field
+          values as enums instead of display values.
 
     Returns:
       A dictionary containing the headers configured for downloading a report.
@@ -440,9 +505,12 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
                                ',gzip'])
     })
 
-    for kw in kwargs:
+    updated_kwargs = dict(self._adwords_client.report_download_headers)
+    updated_kwargs.update(kwargs)
+
+    for kw in updated_kwargs:
       try:
-        headers.update({_REPORT_HEADER_KWARGS[kw]: str(kwargs[kw])})
+        headers.update({_REPORT_HEADER_KWARGS[kw]: str(updated_kwargs[kw])})
       except KeyError:
         raise googleads.errors.GoogleAdsValueError(
             'The provided keyword "%s" is invalid. Accepted keywords are: %s'
@@ -706,7 +774,7 @@ class BatchJobHelper(object):
         GoogleAdsValueError: if no xsi_type is specified for the operations.
       """
       if operations:
-            # Verify that all operations included specify an xsi_type.
+        # Verify that all operations included specify an xsi_type.
         for operation in operations:
           if 'xsi_type' not in operation:
             raise googleads.errors.AdWordsBatchJobServiceInvalidOperationError(
@@ -1019,7 +1087,7 @@ class ReportDownloader(object):
   _REPORT_DEFINITION_NAME = 'reportDefinition'
 
   def __init__(self, adwords_client, version=sorted(_SERVICE_MAP.keys())[-1],
-               server=_DEFAULT_ENDPOINT):
+               server=None):
     """Initializes a ReportDownloader.
 
     Args:
@@ -1031,6 +1099,9 @@ class ReportDownloader(object):
           in future releases to point to what is then the latest version.
       server: A string identifying the webserver hosting the AdWords API.
     """
+    if not server:
+      server = _DEFAULT_ENDPOINT
+
     if server[-1] == '/': server = server[:-1]
     self._adwords_client = adwords_client
     self._namespace = self._NAMESPACE_FORMAT % version
@@ -1084,6 +1155,8 @@ class ReportDownloader(object):
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
+      use_raw_enum_values: A boolean indicating whether to return enum field
+          values as enums instead of display values.
 
     Raises:
       AdWordsReportBadRequestError: if the report download fails due to
@@ -1095,7 +1168,7 @@ class ReportDownloader(object):
     """
     self._DownloadReportCheckFormat(report_definition['downloadFormat'], output)
     self._DownloadReport(self._SerializeReportDefinition(report_definition),
-                         output, kwargs)
+                         output, **kwargs)
 
   def DownloadReportAsStream(self, report_definition, **kwargs):
     """Downloads an AdWords report using a report definition.
@@ -1120,6 +1193,8 @@ class ReportDownloader(object):
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
+      use_raw_enum_values: A boolean indicating whether to return enum field
+          values as enums instead of display values.
 
     Returns:
       A stream to be used in retrieving the report contents.
@@ -1133,7 +1208,7 @@ class ReportDownloader(object):
           network error.
     """
     return self._DownloadReportAsStream(
-        self._SerializeReportDefinition(report_definition), kwargs)
+        self._SerializeReportDefinition(report_definition), **kwargs)
 
   def DownloadReportAsStreamWithAwql(self, query, file_format, **kwargs):
     """Downloads an AdWords report using an AWQL query.
@@ -1160,6 +1235,8 @@ class ReportDownloader(object):
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
+      use_raw_enum_values: A boolean indicating whether to return enum field
+          values as enums instead of display values.
 
     Returns:
       A stream to be used in retrieving the report contents.
@@ -1173,7 +1250,7 @@ class ReportDownloader(object):
           network error.
     """
     return self._DownloadReportAsStream(self._SerializeAwql(query, file_format),
-                                        kwargs)
+                                        **kwargs)
 
   def DownloadReportAsString(self, report_definition, **kwargs):
     """Downloads an AdWords report using a report definition.
@@ -1198,6 +1275,8 @@ class ReportDownloader(object):
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
+      use_raw_enum_values: A boolean indicating whether to return enum field
+          values as enums instead of display values.
 
     Returns:
       A string containing the report contents.
@@ -1213,7 +1292,7 @@ class ReportDownloader(object):
     response = None
     try:
       response = self._DownloadReportAsStream(
-          self._SerializeReportDefinition(report_definition), kwargs)
+          self._SerializeReportDefinition(report_definition), **kwargs)
       return response.read().decode('utf-8')
     finally:
       if response:
@@ -1244,6 +1323,8 @@ class ReportDownloader(object):
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
+      use_raw_enum_values: A boolean indicating whether to return enum field
+          values as enums instead of display values.
 
     Returns:
       A string containing the report contents.
@@ -1259,7 +1340,7 @@ class ReportDownloader(object):
     response = None
     try:
       response = self._DownloadReportAsStream(
-          self._SerializeAwql(query, file_format), kwargs)
+          self._SerializeAwql(query, file_format), **kwargs)
       return response.read().decode('utf-8')
     finally:
       if response:
@@ -1295,6 +1376,8 @@ class ReportDownloader(object):
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
+      use_raw_enum_values: A boolean indicating whether to return enum field
+          values as enums instead of display values.
 
     Raises:
       AdWordsReportBadRequestError: if the report download fails due to
@@ -1306,9 +1389,9 @@ class ReportDownloader(object):
     """
     self._DownloadReportCheckFormat(file_format, output)
     self._DownloadReport(self._SerializeAwql(query, file_format), output,
-                         kwargs)
+                         **kwargs)
 
-  def _DownloadReport(self, post_body, output, kwargs):
+  def _DownloadReport(self, post_body, output, **kwargs):
     """Downloads an AdWords report, writing the contents to the given file.
 
     Args:
@@ -1316,7 +1399,7 @@ class ReportDownloader(object):
           string.
       output: A writable object where the contents of the report will be written
           to.
-      kwargs: A dictionary containing optional keyword arguments.
+      **kwargs: A dictionary containing optional keyword arguments.
 
     Keyword Arguments:
       include_zero_impressions: A boolean indicating whether the report should
@@ -1330,6 +1413,8 @@ class ReportDownloader(object):
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
+      use_raw_enum_values: A boolean indicating whether to return enum field
+          values as enums instead of display values.
 
     Raises:
       AdWordsReportBadRequestError: if the report download fails due to
@@ -1341,7 +1426,7 @@ class ReportDownloader(object):
     """
     response = None
     try:
-      response = self._DownloadReportAsStream(post_body, kwargs)
+      response = self._DownloadReportAsStream(post_body, **kwargs)
       output.write(response.read().decode() if sys.version_info[0] == 3
                    and (getattr(output, 'mode', 'w') == 'w'
                         and type(output) is not io.BytesIO)
@@ -1350,13 +1435,13 @@ class ReportDownloader(object):
       if response:
         response.close()
 
-  def _DownloadReportAsStream(self, post_body, kwargs):
+  def _DownloadReportAsStream(self, post_body, **kwargs):
     """Downloads an AdWords report, returning a stream.
 
     Args:
       post_body: The contents of the POST request's body as a URL encoded
           string.
-      kwargs: A dictionary containing optional keyword arguments.
+      **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
       include_zero_impressions: A boolean indicating whether the report should
@@ -1370,6 +1455,8 @@ class ReportDownloader(object):
       skip_report_summary: A boolean indicating whether to include a summary row
           containing the report totals. If false or not specified, report output
           will include the summary row.
+      use_raw_enum_values: A boolean indicating whether to return enum field
+          values as enums instead of display values.
 
     Returns:
       A stream to be used in retrieving the report contents.
@@ -1386,7 +1473,7 @@ class ReportDownloader(object):
       post_body = bytes(post_body, 'utf8')
     request = urllib2.Request(
         self._end_point, post_body,
-        self._header_handler.GetReportDownloadHeaders(kwargs))
+        self._header_handler.GetReportDownloadHeaders(**kwargs))
     try:
       return self.url_opener.open(request)
     except urllib2.HTTPError, e:

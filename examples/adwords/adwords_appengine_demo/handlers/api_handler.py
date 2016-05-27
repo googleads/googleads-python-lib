@@ -87,7 +87,6 @@ class APIHandler(object):
         'operator': 'ADD',
         'operand': {
             'name': 'Budget #%s' % time.time(),
-            'period': 'DAILY',
             'amount': {
                 'microAmount': micro_amount
             },

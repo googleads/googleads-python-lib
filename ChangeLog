@@ -1,3 +1,8 @@
+4.1.0 -- 5/26/2016
+* Added support for AdWords v201605.
+* Added new use_raw_enum_values keyword argument to the AdWords ReportDownloader
+  utility.
+
 4.0.0 -- 5/17/2016
 * Add support for DFP v201605.
 * Removed examples for DFP v201505.
