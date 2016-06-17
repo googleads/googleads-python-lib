@@ -199,7 +199,8 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
         client_email, private_key, scope,
         private_key_password=private_key_password, user_agent=self._USER_AGENT,
         token_uri=self._GOOGLE_OAUTH2_ENDPOINT, sub=sub)
-    self.proxy_config = proxy_config
+    self.proxy_config = (proxy_config if proxy_config else
+                         googleads.common.ProxyConfig())
     self.Refresh()
 
   def CreateHttpHeader(self):

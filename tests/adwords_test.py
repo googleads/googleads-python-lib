@@ -218,11 +218,12 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         self.header_handler.GetReportDownloadHeaders, invalid_key_word=True)
 
   def testGetReportDownloadHeadersWithKeywordArguments(self):
-    ccid = 'client customer id'
+    original_ccid = 'client customer id'
+    updated_ccid = 'updated client customer id'
     dev_token = 'developer token'
     user_agent = 'user agent!'
     oauth_header = {'Authorization': 'header'}
-    self.aw_client.client_customer_id = ccid
+    self.aw_client.client_customer_id = original_ccid
     self.aw_client.developer_token = dev_token
     self.aw_client.user_agent = user_agent
     self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
@@ -230,7 +231,7 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     expected_return_value = {
         'Content-type': 'application/x-www-form-urlencoded',
         'developerToken': dev_token,
-        'clientCustomerId': ccid,
+        'clientCustomerId': updated_ccid,
         'Authorization': 'header',
         'User-Agent': ''.join([
             user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
@@ -250,7 +251,8 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
                          skip_column_header=True,
                          skip_report_summary=True,
                          include_zero_impressions=True,
-                         use_raw_enum_values=True))
+                         use_raw_enum_values=True,
+                         client_customer_id=updated_ccid))
 
   def testGetReportDownloadHeadersWithNoOptionalHeaders(self):
     ccid = 'client customer id'

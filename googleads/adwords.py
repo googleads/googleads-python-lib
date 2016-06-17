@@ -36,49 +36,6 @@ import googleads.errors
 # A giant dictionary of AdWords versions, the services they support, and which
 # namespace those services are in.
 _SERVICE_MAP = {
-    'v201509': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'BatchJobService': 'cm',
-        'BudgetOrderService': 'billing',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'ExperimentService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'LocationCriterionService': 'cm',
-        'MediaService': 'cm',
-        'MutateJobService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-        'ManagedCustomerService': 'mcm',
-        'CustomerService': 'mcm',
-        'CustomerFeedService': 'cm',
-        'BudgetService': 'cm',
-        'BiddingStrategyService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'LabelService': 'cm',
-    },
     'v201601': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
@@ -217,7 +174,8 @@ _SERVICE_MAP = {
 }
 
 # Supported kwargs for params sent in the report header.
-_REPORT_HEADER_KWARGS = {'include_zero_impressions': 'includeZeroImpressions',
+_REPORT_HEADER_KWARGS = {'client_customer_id': 'clientCustomerId',
+                         'include_zero_impressions': 'includeZeroImpressions',
                          'skip_report_header': 'skipReportHeader',
                          'skip_column_header': 'skipColumnHeader',
                          'skip_report_summary': 'skipReportSummary',
@@ -479,6 +437,8 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
+      client_customer_id: A string containing a client_customer_id intended to
+        override the default value set by the AdWordsClient.
       include_zero_impressions: A boolean indicating whether the report should
         show rows with zero impressions.
       skip_report_header: A boolean indicating whether to include a header row
@@ -500,7 +460,8 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     headers.update({
         'Content-type': self._CONTENT_TYPE,
         'developerToken': str(self._adwords_client.developer_token),
-        'clientCustomerId': str(self._adwords_client.client_customer_id),
+        'clientCustomerId': str(kwargs.get(
+            'client_customer_id', self._adwords_client.client_customer_id)),
         'User-Agent': ''.join([self._adwords_client.user_agent, self._LIB_SIG,
                                ',gzip'])
     })
@@ -519,6 +480,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     return headers
 
 
+@googleads.common.RegisterUtility('BatchJobHelper')
 class BatchJobHelper(object):
   """A utility that simplifies working with the BatchJobService."""
 
@@ -1071,6 +1033,13 @@ class IncrementalUploadHelper(object):
     self._is_last = is_last
 
 
+@googleads.common.RegisterUtility(
+    'ReportDownloader', {'DownloadReport': 'File',
+                         'DownloadReportWithAwql': 'File',
+                         'DownloadReportAsStream': 'Stream',
+                         'DownloadReportAsStreamWithAwql': 'Stream',
+                         'DownloadReportAsString': 'String',
+                         'DownloadReportAsStringWithAwql': 'String'})
 class ReportDownloader(object):
   """A utility that can be used to download reports from AdWords."""
 
@@ -1144,6 +1113,8 @@ class ReportDownloader(object):
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
+      client_customer_id: A string containing a client_customer_id intended to
+        override the default value set for the client.
       include_zero_impressions: A boolean indicating whether the report should
         show rows with zero impressions.
       skip_report_header: A boolean indicating whether to include a header row
@@ -1182,6 +1153,8 @@ class ReportDownloader(object):
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
+      client_customer_id: A string containing a client_customer_id intended to
+        override the default value set for the client.
       include_zero_impressions: A boolean indicating whether the report should
         show rows with zero impressions.
       skip_report_header: A boolean indicating whether to include a header row
@@ -1224,6 +1197,8 @@ class ReportDownloader(object):
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
+      client_customer_id: A string containing a client_customer_id intended to
+        override the default value set for the client.
       include_zero_impressions: A boolean indicating whether the report should
         show rows with zero impressions.
       skip_report_header: A boolean indicating whether to include a header row
@@ -1264,6 +1239,8 @@ class ReportDownloader(object):
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
+      client_customer_id: A string containing a client_customer_id intended to
+        override the default value set for the client.
       include_zero_impressions: A boolean indicating whether the report should
         show rows with zero impressions.
       skip_report_header: A boolean indicating whether to include a header row
@@ -1312,6 +1289,8 @@ class ReportDownloader(object):
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
+      client_customer_id: A string containing a client_customer_id intended to
+        override the default value set for the client.
       include_zero_impressions: A boolean indicating whether the report should
         show rows with zero impressions.
       skip_report_header: A boolean indicating whether to include a header row
@@ -1365,6 +1344,8 @@ class ReportDownloader(object):
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
+      client_customer_id: A string containing a client_customer_id intended to
+        override the default value set for the client.
       include_zero_impressions: A boolean indicating whether the report should
         show rows with zero impressions.
       skip_report_header: A boolean indicating whether to include a header row
@@ -1402,6 +1383,8 @@ class ReportDownloader(object):
       **kwargs: A dictionary containing optional keyword arguments.
 
     Keyword Arguments:
+      client_customer_id: A string containing a client_customer_id intended to
+        override the default value set for the client.
       include_zero_impressions: A boolean indicating whether the report should
         show rows with zero impressions.
       skip_report_header: A boolean indicating whether to include a header row
@@ -1444,6 +1427,8 @@ class ReportDownloader(object):
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
+      client_customer_id: A string containing a client_customer_id intended to
+        override the default value set for the client.
       include_zero_impressions: A boolean indicating whether the report should
         show rows with zero impressions.
       skip_report_header: A boolean indicating whether to include a header row

@@ -60,7 +60,7 @@ def main(client, ad_group_id):
             'adGroupId': ad_group_id,
             'ad': {
                 'xsi_type': 'ResponsiveDisplayAd',
-                'marketingImage': image,
+                'marketingImage': {'mediaId': image['mediaId']},
                 'shortHeadline': 'Travel',
                 'longHeadline': 'Travel the World',
                 'description': 'Take to the air!',

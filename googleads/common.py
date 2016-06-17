@@ -15,9 +15,12 @@
 """Common client library functions and classes used by all products."""
 
 
+from functools import wraps
+import inspect
 import os
 import ssl
 import sys
+import threading
 import urllib2
 import warnings
 
@@ -29,7 +32,7 @@ import yaml
 
 import googleads.errors
 import googleads.oauth2
-import googleads.patches
+import googleads.util
 
 try:
   import urllib2.HTTPSHandler
@@ -39,7 +42,7 @@ except ImportError:
   # not have certificate validation performed until they update.
   pass
 
-VERSION = '4.1.0'
+VERSION = '4.2.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'
@@ -58,8 +61,13 @@ _OAUTH2_SERVICE_ACCT_KEYS = ('service_account_email',
 # instance.
 _PROXY_KEYS = ('host', 'port')
 
+# Global variables used to enable and store utility usage stats.
+_utility_registry = googleads.util.UtilityRegistry()
+_UTILITY_REGISTER_YAML_KEY = 'include_utilities_in_user_agent'
+_UTILITY_LOCK = threading.Lock()
+
 # Apply any necessary patches to dependency libraries.
-googleads.patches.Apply()
+googleads.util.PatchHelper().Apply()
 
 
 def GenerateLibSig(short_name):
@@ -70,7 +78,15 @@ def GenerateLibSig(short_name):
   Returns:
     A library signature string to append to user-supplied user-agent value.
   """
-  return ' (%s, %s, %s)' % (short_name, _COMMON_LIB_SIG, _PYTHON_VERSION)
+  with _UTILITY_LOCK:
+    utilities_used = ', '.join([utility for utility in _utility_registry])
+    _utility_registry.Clear()
+
+  if utilities_used:
+    return ' (%s, %s, %s, %s)' % (short_name, _COMMON_LIB_SIG, _PYTHON_VERSION,
+                                  utilities_used)
+  else:
+    return ' (%s, %s, %s)' % (short_name, _COMMON_LIB_SIG, _PYTHON_VERSION)
 
 
 def LoadFromStorage(path, product_yaml_key, required_client_values,
@@ -114,6 +130,8 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
     raise googleads.errors.GoogleAdsValueError(
         'Given yaml file, %s, does not contain a "%s" configuration.'
         % (path, product_yaml_key))
+
+  IncludeUtilitiesInUserAgent(data.get(_UTILITY_REGISTER_YAML_KEY, True))
 
   original_keys = list(product_data.keys())
   client_kwargs = {}
@@ -319,13 +337,13 @@ def _PackForSuds(obj, factory):
 def _RecurseOverObject(obj, factory, parent=None):
   """Recurses over a nested structure to look for changes in Suds objects.
 
-    Args:
-      obj: A parameter for a SOAP request field which is to be inspected and
-          will be packed for Suds if an xsi_type is specified, otherwise will be
-          left unaltered.
-      factory: The suds.client.Factory object which can create instances of the
-          classes generated from the WSDL.
-      parent: The parent object that contains the obj parameter to be inspected.
+  Args:
+    obj: A parameter for a SOAP request field which is to be inspected and
+        will be packed for Suds if an xsi_type is specified, otherwise will be
+        left unaltered.
+    factory: The suds.client.Factory object which can create instances of the
+        classes generated from the WSDL.
+    parent: The parent object that contains the obj parameter to be inspected.
   """
   if _IsSudsIterable(obj):
     # Since in-place modification of the Suds object is taking place, the
@@ -345,6 +363,60 @@ def _RecurseOverObject(obj, factory, parent=None):
 def _IsSudsIterable(obj):
   """A short helper method to determine if a field is iterable for Suds."""
   return (obj and not isinstance(obj, basestring) and hasattr(obj, '__iter__'))
+
+
+def IncludeUtilitiesInUserAgent(value):
+  """Configures the logging of utilities in the User-Agent.
+
+  Args:
+    value: a bool indicating that you want to include utility names in the
+      User-Agent if set True, otherwise, these will not be added.
+  """
+  with _UTILITY_LOCK:
+    _utility_registry.SetEnabled(value)
+
+
+def RegisterUtility(utility_name, version_mapping=None):
+  """Decorator that registers a class with the given utility name.
+
+  This will only register the utilities being used if the UtilityRegistry is
+  enabled. Note that only the utility class's public methods will cause the
+  utility name to be added to the registry.
+
+  Args:
+    utility_name: A str specifying the utility name associated with the class.
+    version_mapping: A dict containing optional version strings to append to the
+    utility string for individual methods; where the key is the method name and
+    the value is the text to be appended as the version.
+
+  Returns:
+    The decorated class.
+  """
+  def MethodDecorator(utility_method, version):
+    """Decorates a method in the utility class."""
+    registry_name = ('%s/%s' % (utility_name, version) if version
+                     else utility_name)
+    @wraps(utility_method)
+    def Wrapper(*args, **kwargs):
+      with _UTILITY_LOCK:
+        _utility_registry.Add(registry_name)
+      return utility_method(*args, **kwargs)
+    return Wrapper
+
+  def ClassDecorator(cls):
+    """Decorates a utility class."""
+    for name, method in inspect.getmembers(cls, inspect.ismethod):
+      # Public methods of the class will have the decorator applied.
+      if not name.startswith('_'):
+        # The decorator will only be applied to unbound methods; this prevents
+        # it from clobbering class methods. If the attribute doesn't exist, set
+        # None for PY3 compatibility.
+        if not getattr(method, '__self__', None):
+          setattr(cls, name, MethodDecorator(
+              method, version_mapping.get(name) if version_mapping else None))
+    return cls
+
+  return ClassDecorator
 
 
 class ProxyConfig(object):
@@ -423,7 +495,7 @@ class ProxyConfig(object):
     handlers = []
 
     if self._ssl_context:
-      handlers.append(urllib2.HTTPSHandler(self._ssl_context))
+      handlers.append(urllib2.HTTPSHandler(context=self._ssl_context))
 
     if self._proxy_option:
       handlers.append(urllib2.ProxyHandler(self._proxy_option))

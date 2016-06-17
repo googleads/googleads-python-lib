@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Unit tests to cover the common module."""
 
 
@@ -51,6 +52,25 @@ class CommonTest(unittest.TestCase):
     self.uplink_port = 999
     self.username = 'username'
     self.password = 'password'
+    self.test1_name = 'Test1'
+    self.test2_name = 'Test2'
+    self.test2_version = 'testing'
+
+    @googleads.common.RegisterUtility(self.test1_name)
+    class Test1(object):
+
+      def test(self):
+        pass
+
+    @googleads.common.RegisterUtility(self.test2_name,
+                                      {'test': self.test2_version})
+    class Test2(object):
+
+      def test(self):
+        pass
+
+    self.test1 = Test1
+    self.test2 = Test2
 
   def _CreateYamlFile(self, data, insert_oauth2_key=None, oauth_dict=None):
     """Return the filename of a yaml file created for testing."""
@@ -60,7 +80,7 @@ class CommonTest(unittest.TestCase):
       for key in data:
         if key is insert_oauth2_key:
           data[key].update(oauth_dict)
-        yaml_handle.write(yaml.dump({key: data[key]}))
+      yaml_handle.write(yaml.dump(data))
 
     return yaml_file.name
 
@@ -302,6 +322,7 @@ class CommonTest(unittest.TestCase):
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e',
                             'proxy_config': proxy_config.return_value}, rval)
+          self.assertTrue(googleads.common._utility_registry._enabled)
 
     # The optional key is present.
     yaml_fname = self._CreateYamlFile({'one': {'needed': 'd', 'keys': 'e',
@@ -321,6 +342,7 @@ class CommonTest(unittest.TestCase):
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e', 'other': 'f',
                             'proxy_config': proxy_config.return_value}, rval)
+          self.assertTrue(googleads.common._utility_registry._enabled)
 
   def testLoadFromStorage_relativePath(self):
     fake_os = fake_filesystem.FakeOsModule(self.filesystem)
@@ -346,6 +368,7 @@ class CommonTest(unittest.TestCase):
         self.assertEqual({'oauth2_client': mock_client.return_value,
                           'proxy_config': proxy_config.return_value,
                           'needed': 'd', 'keys': 'e'}, rval)
+        self.assertTrue(googleads.common._utility_registry._enabled)
 
   def testLoadFromStorage_serviceAccount(self):
     dfp_scope = googleads.oauth2.GetAPIScope('dfp')
@@ -370,6 +393,7 @@ class CommonTest(unittest.TestCase):
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
                       'needed': 'd', 'keys': 'e'}, rval)
+    self.assertTrue(googleads.common._utility_registry._enabled)
 
     # The optional key is present.
     yaml_fname = self._CreateYamlFile(
@@ -392,6 +416,31 @@ class CommonTest(unittest.TestCase):
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
                       'needed': 'd', 'keys': 'e', 'other': 'f'}, rval)
+    self.assertTrue(googleads.common._utility_registry._enabled)
+
+
+  def testLoadFromStorage_utilityRegistryDisabled(self):
+    yaml_fname = self._CreateYamlFile(
+        {'one': {'needed': 'd', 'keys': 'e'},
+         'include_utilities_in_user_agent': False},
+        'one', self._OAUTH_INSTALLED_APP_DICT)
+
+    with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
+      with mock.patch('googleads.common.open', self.fake_open, create=True):
+        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
+          proxy_config.return_value = mock.Mock()
+          rval = googleads.common.LoadFromStorage(
+              yaml_fname, 'one', ['needed', 'keys'], ['other'])
+          proxy_config.assert_called_once_with(
+              http_proxy=None, https_proxy=None, cafile=None,
+              disable_certificate_validation=False)
+          mock_client.assert_called_once_with(
+              'a', 'b', 'c', proxy_config=proxy_config.return_value)
+          self.assertEqual({'oauth2_client': mock_client.return_value,
+                            'needed': 'd', 'keys': 'e',
+                            'proxy_config': proxy_config.return_value}, rval)
+          self.assertFalse(googleads.common._utility_registry._enabled)
+
 
   def testLoadFromStorage_warningWithUnrecognizedKey(self):
     yaml_fname = self._CreateYamlFile(
@@ -412,10 +461,60 @@ class CommonTest(unittest.TestCase):
                 'Im': 'here',
                 'proxy_config': proxy_config.return_value
             }, rval)
+        self.assertTrue(googleads.common._utility_registry._enabled)
         self.assertEqual(len(captured_warnings), 1)
 
   def testGenerateLibSig(self):
     my_name = 'Joseph'
+    self.assertEqual(
+        ' (%s, %s, %s)' % (my_name, googleads.common._COMMON_LIB_SIG,
+                           googleads.common._PYTHON_VERSION),
+        googleads.common.GenerateLibSig(my_name))
+
+  def testGenerateLibSigWithUtilities(self):
+    my_name = 'Mark'
+
+    t1 = self.test1()
+    t2 = self.test2()
+
+    # The order of utilities in the generated library signature is not
+    # guaranteed, so verify that the string contains the same values instead.
+    # Make the first request using both utilities.
+    t1.test()
+    t2.test()
+    expected = set((my_name, googleads.common._COMMON_LIB_SIG,
+                    googleads.common._PYTHON_VERSION, self.test1_name,
+                    '%s/%s' % (self.test2_name, self.test2_version)))
+    generated = set(googleads.common.GenerateLibSig(my_name)[2:-1].split(', '))
+
+    self.assertEqual(expected, generated)
+
+    # Make another request, this time no utilities.
+    expected = set((my_name, googleads.common._COMMON_LIB_SIG,
+                    googleads.common._PYTHON_VERSION))
+    generated = set(googleads.common.GenerateLibSig(my_name)[2:-1].split(', '))
+
+    self.assertEqual(expected, generated)
+
+    # Make another request, this time one utility.
+    t1.test()
+    expected = set((my_name, googleads.common._COMMON_LIB_SIG,
+                    googleads.common._PYTHON_VERSION, self.test1_name))
+    generated = set(googleads.common.GenerateLibSig(my_name)[2:-1].split(', '))
+
+    self.assertEqual(expected, generated)
+
+
+  def testGenerateLibSigWithUtilitiesDisabled(self):
+    my_name = 'Mark'
+
+    googleads.common.IncludeUtilitiesInUserAgent(False)
+
+    t1 = self.test1()
+    t1.test()
+    t2 = self.test2()
+    t2.test()
+
     self.assertEqual(
         ' (%s, %s, %s)' % (my_name, googleads.common._COMMON_LIB_SIG,
                            googleads.common._PYTHON_VERSION),
@@ -602,7 +701,8 @@ class ProxyConfigTest(unittest.TestCase):
                           proxy_handler.return_value])
         proxy_handler.assert_called_once_with(
             {'https': '%s' % str(https_proxy)})
-        urllib2.HTTPSHandler.assert_called_once_with(ssl_ctxt.return_value)
+        urllib2.HTTPSHandler.assert_called_once_with(
+            context=ssl_ctxt.return_value)
 
   def testProxyConfigWithNoProxy(self):
     proxy_config = googleads.common.ProxyConfig()

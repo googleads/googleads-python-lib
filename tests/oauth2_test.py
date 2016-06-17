@@ -235,6 +235,18 @@ class GoogleServiceAccountTest(unittest.TestCase):
                         self.googleads_client.CreateHttpHeader)
       self.assertFalse(self.mock_oauth2_credentials.apply.called)
 
+  def testIssue123(self):
+    """Test that verifies the fix for Issue #123 on the GitHub Issue Tracker.
+
+    See: https://github.com/googleads/googleads-python-lib/issues/123
+    """
+    with mock.patch('__builtin__.open'):
+      with mock.patch('oauth2client.client.SignedJwtAssertionCredentials',
+                      self.oauth2_credentials):
+        googleads.oauth2.GoogleServiceAccountClient(
+            self.scope, self.service_account_email, '/dev/null',
+            self.private_key_password)
+
 
 if __name__ == '__main__':
   unittest.main()

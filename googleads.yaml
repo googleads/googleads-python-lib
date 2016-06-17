@@ -80,3 +80,8 @@ dfp:
     # The following values are optional:
     # username: INSERT_USERNAME_HERE
     # password: INSERT_PASSWORD_HERE
+
+
+# Optional: By default, the library will include utilities used in the user
+# agent.
+# include_utilities_in_user_agent: True

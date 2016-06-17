@@ -9,6 +9,9 @@ code to help you get started integrating with our APIs.
 ##Getting started
 1. Download and install the library
 
+   *[setuptools](https://pypi.python.org/pypi/setuptools) is a pre-requisite
+   for installing the googleads library*
+
    It is recommended that you install the library and its dependencies from
    PyPI using [pip](https://pip.pypa.io/en/stable/installing/). This can be
    accomplished with a single command:
@@ -144,6 +147,17 @@ suds_client.set_options(
 suds_client.service.mutate([operation])
 ```
 
+##Timeout Tips
+The requests sent by this library are sent via urllib, which is consequently
+where the timeout is set. If you set a system timeout elsewhere, the googleads
+library will respect it.
+
+You can do the following if you wish to override the timeout:
+
+```python
+import socket
+socket.setdefaulttimeout(15 * 60)
+```
 
 ##External Dependencies:
 

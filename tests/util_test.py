@@ -22,11 +22,12 @@ from xml.etree import ElementTree
 
 import googleads.adwords
 import googleads.dfp
+import googleads.util
 import mock
 
 
 class PatchesTest(unittest.TestCase):
-  """Tests for the googleads.patches module."""
+  """Tests for the PatchHelper utility."""
 
   def setUp(self):
     oauth_header = {'Authorization': 'header'}
