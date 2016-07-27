@@ -72,7 +72,7 @@ def main(client):
                'criteria "%s".' % (negative, campaign_criterion['campaignId'],
                                    criterion['type'], criteria))
     else:
-      print 'No campaign targets were found.'
+      print ('No campaign targets were found.')
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])
