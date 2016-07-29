@@ -96,8 +96,8 @@ def main(client, ad_group_id):
   # Display results.
   if 'value' in ads:
     for ad in ads['value']:
-      print ('Added new click-to-download ad to ad group ID \'%s\' '
-             'with URL \'%s\'.' % (ad['ad']['id'], ad['ad']['finalUrls'][0]))
+      print ('Added new click-to-download ad with ID "%s" and final URL "%s".'
+             % (ad['ad']['id'], ad['ad']['finalUrls'][0]))
   else:
     print 'No ads were added.'
 

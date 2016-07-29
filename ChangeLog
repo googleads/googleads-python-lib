@@ -1,3 +1,6 @@
+4.3.0 -- 7/29/2016
+* Added support for AdWords v201607.
+
 4.2.0 -- 6/13/2016
 * Removed support and examples for AdWords v201509.
 * The AdWords ReportDownloader now accepts a "client_customer_id" keyword

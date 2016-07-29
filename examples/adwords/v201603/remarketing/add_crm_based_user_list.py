@@ -15,7 +15,7 @@
 # limitations under the License.
 
 
-"""Adds a remarketing user list and populates it with hashed email addresses.
+"""Adds a user list and populates it with hashed email addresses.
 
 Note: It may take several hours for the list to be populated with members. Email
 addresses must be associated with a Google account. For privacy purposes, the

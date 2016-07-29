@@ -42,7 +42,8 @@ except ImportError:
   # not have certificate validation performed until they update.
   pass
 
-VERSION = '4.2.0'
+
+VERSION = '4.3.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'

@@ -170,6 +170,52 @@ _SERVICE_MAP = {
         'TrafficEstimatorService': 'o',
         'TrialAsyncErrorService': 'cm',
         'TrialService': 'cm'
+    },
+    'v201607': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'BatchJobService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'DraftAsyncErrorService': 'cm',
+        'DraftService': 'cm',
+        'ExperimentService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'TrialAsyncErrorService': 'cm',
+        'TrialService': 'cm'
     }
 }
 
@@ -213,8 +259,10 @@ class AdWordsClient(object):
   # A list of values which must be provided to use AdWords.
   _REQUIRED_INIT_VALUES = ('user_agent', 'developer_token')
   # A list of values which may optionally be provided when using AdWords.
-  _OPTIONAL_INIT_VALUES = ('validate_only', 'partial_failure',
-                           'client_customer_id', 'report_downloader_headers')
+  _OPTIONAL_INIT_VALUES = (
+      'validate_only', 'partial_failure', 'client_customer_id',
+      'report_downloader_headers')
+
   # The format of SOAP service WSDLs. A server, namespace, version, and service
   # name need to be formatted in.
   _SOAP_SERVICE_FORMAT = '%s/api/adwords/%s/%s/%s?wsdl'

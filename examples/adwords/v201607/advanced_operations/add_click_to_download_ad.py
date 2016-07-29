@@ -25,6 +25,10 @@ directory. For more information, see the "Caching authentication information"
 section of our README.
 
 """
+
+import base64
+import urllib2
+
 from googleads import adwords
 
 
@@ -33,7 +37,13 @@ AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
 
 def main(client, ad_group_id):
   # Initialize appropriate service.
-  ad_group_ad_service = client.GetService('AdGroupAdService', version='v201605')
+  ad_group_ad_service = client.GetService('AdGroupAdService', version='v201607')
+
+  # Optionally, you may specify a landscape image. The image needs to be in a
+  # BASE64 encoded form. Here we download a demo image and encode it for this
+  # ad.
+  opener = urllib2.build_opener(*client.proxy_config.GetHandlers())
+  image_data = base64.b64encode(opener.open('http://goo.gl/9JmyKk').read())
 
   # Create the template elements for the ad. You can refer to
   #     https://developers.google.com/adwords/api/docs/appendix/templateads
@@ -65,6 +75,14 @@ def main(client, ad_group_id):
               'name': 'appStore',
               'fieldText': '2',
               'type': 'ENUM'
+          },
+          {
+              'name': 'landscapeImage',
+              'field_media': {
+                  'xsi_type': 'Image',
+                  'data': image_data
+              },
+              'type': 'IMAGE'
           }
       ]
   }

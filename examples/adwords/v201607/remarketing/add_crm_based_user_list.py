@@ -33,7 +33,7 @@ from googleads import adwords
 
 def main(client, emails):
   # Initialize appropriate services.
-  user_list_service = client.GetService('AdwordsUserListService', 'v201605')
+  user_list_service = client.GetService('AdwordsUserListService', 'v201607')
 
   user_list = {
       'xsi_type': 'CrmBasedUserList',
