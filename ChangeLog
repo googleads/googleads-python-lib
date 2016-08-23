@@ -1,3 +1,8 @@
+4.4.0 -- 8/23/2016
+* Removed support for DFP v201505.
+* Added support for DFP v201608.
+* Removed examples for DFP v201508 and v201511.
+
 4.3.0 -- 7/29/2016
 * Added support for AdWords v201607.
 

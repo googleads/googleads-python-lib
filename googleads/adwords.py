@@ -336,8 +336,7 @@ class AdWordsClient(object):
                          googleads.common.ProxyConfig())
     self.report_download_headers = kwargs.get('report_download_headers', {})
 
-  def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
-                 server=None):
+  def GetService(self, service_name, version=None, server=None):
     """Creates a service client for the given service.
 
     Args:
@@ -358,24 +357,28 @@ class AdWordsClient(object):
     """
     if not server:
       server = _DEFAULT_ENDPOINT
+    server = server.rstrip('/')
 
-    if server[-1] == '/': server = server[:-1]
+    if not version:
+      version = sorted(_SERVICE_MAP.keys())[-1]
+
     try:
-      client = suds.client.Client(
-          self._SOAP_SERVICE_FORMAT %
-          (server, _SERVICE_MAP[version][service_name], version, service_name),
-          cache=self.cache, timeout=3600,
-          transport=self.proxy_config.GetSudsProxyTransport())
+      version_service_mapping = _SERVICE_MAP[version][service_name]
     except KeyError:
+      msg_fmt = 'Unrecognized %s for the AdWords API. Given: %s Supported: %s'
+
       if version in _SERVICE_MAP:
         raise googleads.errors.GoogleAdsValueError(
-            'Unrecognized service for the AdWords API. Service given: %s '
-            'Supported services: %s'
-            % (service_name, _SERVICE_MAP[version].keys()))
+            msg_fmt % ('service', service_name, _SERVICE_MAP[version].keys()))
       else:
         raise googleads.errors.GoogleAdsValueError(
-            'Unrecognized version of the AdWords API. Version given: %s '
-            'Supported versions: %s' % (version, _SERVICE_MAP.keys()))
+            msg_fmt % ('version', version, _SERVICE_MAP.keys()))
+
+    client = suds.client.Client(
+        self._SOAP_SERVICE_FORMAT %
+        (server, version_service_mapping, version, service_name),
+        cache=self.cache, timeout=3600,
+        transport=self.proxy_config.GetSudsProxyTransport())
 
     return googleads.common.SudsServiceProxy(
         client, _AdWordsHeaderHandler(self, version))
@@ -401,7 +404,7 @@ class AdWordsClient(object):
       server = _DEFAULT_ENDPOINT
 
     request_builder = BatchJobHelper.GetRequestBuilder(
-        client=self, version=version, server=server)
+        self, version=version, server=server)
     response_parser = BatchJobHelper.GetResponseParser()
 
     return BatchJobHelper(request_builder, response_parser, version=version)
@@ -444,8 +447,8 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
   _LIB_SIG = googleads.common.GenerateLibSig('AwApi-Python')
   # The name of the WSDL-defined SOAP Header class used in all SOAP requests.
   # The namespace needs the version of AdWords being used to be templated in.
-  _SOAP_HEADER_CLASS = ('{https://adwords.google.com/api/adwords/cm/%s}'
-                        'SoapHeader')
+  _SOAP_HEADER_CLASS = (
+      '{https://adwords.google.com/api/adwords/cm/%s}SoapHeader')
   # The content type of report download requests
   _CONTENT_TYPE = 'application/x-www-form-urlencoded'
 
@@ -463,7 +466,11 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     self._version = version
 
   def SetHeaders(self, suds_client):
-    """Sets the SOAP and HTTP headers on the given suds client."""
+    """Sets the SOAP and HTTP headers on the given suds client.
+
+    Args:
+      suds_client: An initialized suds.client.Client.
+    """
     header = suds_client.factory.create(self._SOAP_HEADER_CLASS % self._version)
     header.clientCustomerId = self._adwords_client.client_customer_id
     header.developerToken = self._adwords_client.developer_token
@@ -503,6 +510,10 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
 
     Returns:
       A dictionary containing the headers configured for downloading a report.
+
+    Raises:
+      GoogleAdsValueError: If one or more of the report header keyword arguments
+        is invalid.
     """
     headers = self._adwords_client.oauth2_client.CreateHttpHeader()
     headers.update({
@@ -519,7 +530,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
 
     for kw in updated_kwargs:
       try:
-        headers.update({_REPORT_HEADER_KWARGS[kw]: str(updated_kwargs[kw])})
+        headers[_REPORT_HEADER_KWARGS[kw]] = str(updated_kwargs[kw])
       except KeyError:
         raise googleads.errors.GoogleAdsValueError(
             'The provided keyword "%s" is invalid. Accepted keywords are: %s'
@@ -542,8 +553,7 @@ class BatchJobHelper(object):
         batch_job_response: a str containing the response from the
         BatchJobService.
       """
-      raise NotImplementedError('You must subclass'
-                                'AbstractResponseParser.')
+      raise NotImplementedError('You must implement ParseResponse().')
 
   class _XMLToDictResponseParser(AbstractResponseParser):
     """Parses responses from the BatchJobService, returning as a dictionary."""
@@ -576,8 +586,7 @@ class BatchJobHelper(object):
         A urllib2.Request instance with the correct method, headers, and
         padding (if required) for the batch job upload.
       """
-      raise NotImplementedError('You must subclass'
-                                'AbstractUploadRequestBuilder.')
+      raise NotImplementedError('You must implement BuildUploadRequest().')
 
   class _SudsUploadRequestBuilder(AbstractUploadRequestBuilder):
     """Builds requests used to upload operations for Batch Jobs."""
@@ -589,49 +598,50 @@ class BatchJobHelper(object):
     _UPLOAD_SUFFIX = '</mutate>'
     # Incremental uploads must have a content-length that is a multiple of this.
     _BATCH_JOB_INCREMENT = 262144
-    # Generate a mapping of Operations to their service and methods.
+    _OPERATION = namedtuple('Operation',
+                            ['operation_type', 'service', 'method'])
     _OPERATION_MAP = {
-        op[0]: namedtuple('Operation', ['operation_type', 'service', 'method'])
-               (op[0], op[1], op[2])
-        for op in (
-            ('AdGroupAdOperation', 'AdGroupAdService', 'mutate'),
-            ('AdGroupAdLabelOperation', 'AdGroupAdService', 'mutateLabel'),
-            ('AdGroupBidModifierOperation', 'AdGroupBidModifierService',
-             'mutate'),
-            ('AdGroupCriterionOperation', 'AdGroupCriterionService',
-             'mutate'),
-            ('AdGroupCriterionLabelOperation', 'AdGroupCriterionService',
-             'mutateLabel'),
-            ('AdGroupOperation', 'AdGroupService', 'mutate'),
-            ('AdGroupLabelOperation', 'AdGroupService', 'mutateLabel'),
-            ('BudgetOperation', 'BudgetService', 'mutate'),
-            ('CampaignCriterionOperation', 'CampaignCriterionService',
-             'mutate'),
-            ('CampaignOperation', 'CampaignService', 'mutate'),
-            ('CampaignLabelOperation', 'CampaignService', 'mutateLabel'),
-            ('FeedItemOperation', 'FeedItemService', 'mutate')
-        )
+        'AdGroupAdOperation': _OPERATION('AdGroupAdOperation',
+                                         'AdGroupAdService', 'mutate'),
+        'AdGroupAdLabelOperation': _OPERATION(
+            'AdGroupAdLabelOperation', 'AdGroupAdService', 'mutateLabel'),
+        'AdGroupBidModifierOperation': _OPERATION(
+            'AdGroupBidModifierOperation', 'AdGroupBidModifierService',
+            'mutate'),
+        'AdGroupCriterionOperation': _OPERATION(
+            'AdGroupCriterionOperation', 'AdGroupCriterionService', 'mutate'),
+        'AdGroupCriterionLabelOperation': _OPERATION(
+            'AdGroupCriterionLabelOperation', 'AdGroupCriterionService',
+            'mutateLabel'),
+        'AdGroupOperation': _OPERATION('AdGroupOperation', 'AdGroupService',
+                                       'mutate'),
+        'AdGroupLabelOperation': _OPERATION('AdGroupLabelOperation',
+                                            'AdGroupService', 'mutateLabel'),
+        'BudgetOperation': _OPERATION('BudgetOperation', 'BudgetService',
+                                      'mutate'),
+        'CampaignCriterionOperation': _OPERATION(
+            'CampaignCriterionOperation', 'CampaignCriterionService', 'mutate'),
+        'CampaignOperation': _OPERATION('CampaignOperation',
+                                        'CampaignService', 'mutate'),
+        'CampaignLabelOperation': _OPERATION('CampaignLabelOperation',
+                                             'CampaignService', 'mutateLabel'),
+        'FeedItemOperation': _OPERATION('FeedItemOperation', 'FeedItemService',
+                                        'mutate')
     }
 
-    def __init__(self, **kwargs):
+    def __init__(self, client, **kwargs):
       """Initializes a _SudsUploadRequestBuilder.
 
       Arguments:
+        client: an AdWordsClient instance.
         **kwargs: Keyword arguments.
 
       Keyword Arguments:
-        client: an AdWordsClient instance.
         version: a string identifying the AdWords version to connect to.
         server: a string identifying the webserver hosting the AdWords API.
-
-      Raises:
-        AttributeError: if no client is specified in the Keyword Arguments.
       """
-      if 'client' not in kwargs:
-        raise AttributeError('No client specified for Request Builder.')
-
+      self.client = client
       self._version = kwargs.get('version', sorted(_SERVICE_MAP.keys())[-1])
-      self.client = kwargs['client']
       server = kwargs.get('server', _DEFAULT_ENDPOINT)
       self._adwords_endpoint = ('%s/api/adwords/cm/%s' %
                                 (server, self._version))
@@ -783,12 +793,11 @@ class BatchJobHelper(object):
       Raises:
         GoogleAdsValueError: if no xsi_type is specified for the operations.
       """
-      if operations:
         # Verify that all operations included specify an xsi_type.
-        for operation in operations:
-          if 'xsi_type' not in operation:
-            raise googleads.errors.AdWordsBatchJobServiceInvalidOperationError(
-                'Operations have no xsi_type specified.')
+      if operations:
+        if any('xsi_type' not in operation for operation in operations):
+          raise googleads.errors.AdWordsBatchJobServiceInvalidOperationError(
+              'Operations have no xsi_type specified.')
         return self._ExtractOperations(self._GenerateRawRequestXML(operations))
       else:
         return ''
@@ -803,12 +812,11 @@ class BatchJobHelper(object):
       Returns:
         A str containing the raw XML of the request to the given service that
         would execute the given operations.
+
+      Raises:
+        KeyError: If the given operation type is not supported.
       """
-      try:
-        operation = self._OPERATION_MAP[operations[0]['xsi_type']]
-      except KeyError, e:
-        raise googleads.errors.GoogleAdsValueError('"%s" is an unsupported '
-                                                   'operation.' % e.message)
+      operation = self._OPERATION_MAP[operations[0]['xsi_type']]
       service = self.client.GetService(operation.service, self._version)
       service.suds_client.set_options(nosend=True)
       service_request = (getattr(service, operation.method)
@@ -882,14 +890,14 @@ class BatchJobHelper(object):
                                    version=self._version)
 
   @classmethod
-  def GetRequestBuilder(cls, **kwargs):
+  def GetRequestBuilder(cls, *args, **kwargs):
     """Get a new AbstractUploadRequestBuilder instance."""
-    return cls._SudsUploadRequestBuilder(**kwargs)
+    return cls._SudsUploadRequestBuilder(*args, **kwargs)
 
   @classmethod
-  def GetResponseParser(cls, **kwargs):
+  def GetResponseParser(cls, *args, **kwargs):
     """Get a new AbstractResponseParser instance."""
-    return cls._XMLToDictResponseParser(**kwargs)
+    return cls._XMLToDictResponseParser(*args, **kwargs)
 
   def ParseResponse(self, batch_job_response):
     """Parses a Batch Job Service response and returns it as a suds object.
@@ -933,7 +941,8 @@ class IncrementalUploadHelper(object):
     Args:
       file_input: a file-like object containing a serialized
         IncrementalUploadHelper.
-      client: an AdWordsClient instance.
+      client: an AdWordsClient instance. If not specified, an AdWordsClient will
+        be instantiated using the default configuration file.
 
     Returns:
       An IncrementalUploadHelper instance initialized using the contents of the
@@ -950,21 +959,22 @@ class IncrementalUploadHelper(object):
 
     try:
       data = yaml.safe_load(file_input)
-    except yaml.YAMLError:
+    except yaml.YAMLError as e:
       raise googleads.errors.GoogleAdsError(
-          'Error loading IncrementalUploadHelper from file.')
+          'Error loading IncrementalUploadHelper from file: %s' % str(e))
 
     batch_job_helper = client.GetBatchJobHelper(version=data['version'])
     request_builder = batch_job_helper.GetRequestBuilder(
-        client=client, version=data['version'])
+        client, version=data['version'])
 
     try:
       return cls(request_builder, data['upload_url'],
                  current_content_length=data['current_content_length'],
                  is_last=data['is_last'], version=data['version'])
-    except KeyError:
+    except KeyError as e:
       raise googleads.errors.GoogleAdsValueError(
-          'Can\'t parse IncrementalUploadHelper from file.')
+          'Can\'t parse IncrementalUploadHelper from file. Required field '
+          '"%s" is missing.' % e.message)
 
   def __init__(self, request_builder, upload_url, current_content_length=0,
                is_last=False, version=sorted(_SERVICE_MAP.keys())[-1]):
@@ -1010,8 +1020,7 @@ class IncrementalUploadHelper(object):
       already been initialized or the version is below v201601.
     """
     # If initialization is not necessary, return the provided upload_url.
-    if (self._version < 'v201601'
-        or current_content_length != 0):
+    if self._version < 'v201601' or current_content_length != 0:
       return upload_url
 
     headers = {
@@ -1045,9 +1054,9 @@ class IncrementalUploadHelper(object):
 
     try:
       yaml.dump(data, output)
-    except yaml.YAMLError:
+    except yaml.YAMLError as e:
       raise googleads.errors.GoogleAdsError(
-          'Error dumping IncrementalUploadHelper to file.')
+          'Error dumping IncrementalUploadHelper to file: %s' % str(e))
 
   def UploadOperations(self, operations, is_last=False):
     """Uploads operations to the given uploadUrl in incremental steps.
@@ -1062,7 +1071,7 @@ class IncrementalUploadHelper(object):
       is_last: a boolean indicating whether this is the final increment to be
         added to the batch job.
     """
-    if self._is_last is True:
+    if self._is_last:
       raise googleads.errors.AdWordsBatchJobServiceInvalidOperationError(
           'Can\'t add new operations to a completed incremental upload.')
     # Build the request
@@ -1073,7 +1082,7 @@ class IncrementalUploadHelper(object):
     # code 308 (for resumable uploads).
     try:
       self._url_opener.open(req)
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
       if e.code != 308:
         raise urllib2.HTTPError(e)
     # Update upload status.
@@ -1119,7 +1128,7 @@ class ReportDownloader(object):
     if not server:
       server = _DEFAULT_ENDPOINT
 
-    if server[-1] == '/': server = server[:-1]
+    server = server.rstrip('/')
     self._adwords_client = adwords_client
     self._namespace = self._NAMESPACE_FORMAT % version
     self._end_point = self._END_POINT_FORMAT % (server, version)
@@ -1139,9 +1148,9 @@ class ReportDownloader(object):
     self._marshaller = suds.mx.literal.Literal(schema)
 
   def _DownloadReportCheckFormat(self, file_format, output):
-    if(file_format.startswith('GZIPPED_')
-       and not (('b' in getattr(output, 'mode', 'w')) or
-                type(output) is io.BytesIO)):
+    is_binary_mode = getattr(output, 'mode', 'w') == 'wb'
+    if (file_format.startswith('GZIPPED_')
+        and not (is_binary_mode or type(output) is io.BytesIO)):
       raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
                                                  ' output for GZIPPED formats.')
 
@@ -1509,7 +1518,7 @@ class ReportDownloader(object):
         self._header_handler.GetReportDownloadHeaders(**kwargs))
     try:
       return self.url_opener.open(request)
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
       raise self._ExtractError(e)
 
   def _SerializeAwql(self, query, file_format):

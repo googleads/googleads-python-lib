@@ -38,27 +38,48 @@ URL_REQUEST_PATH = ('urllib2' if PYTHON2 else 'urllib.request')
 CURRENT_VERSION = sorted(googleads.adwords._SERVICE_MAP.keys())[-1]
 
 
-def GetAdWordsClient(proxy_config=None):
+def GetAdWordsClient(**kwargs):
   """Returns an initialized AdwordsClient for use in testing.
 
+  If not specified, the keyword arguments will be set to default test values.
+
   Args:
-    proxy_config: A googleads.common.ProxyConfig or None if no proxy is being
-        used.
+    **kwargs: Optional keyword arguments that can be provided to customize the
+      generated AdWordsClient.
+  Keyword Arguments:
+    ccid: A str value for the AdWordsClient's client_customer_id.
+    dev_token: A str value for the AdWordsClient's developer_token.
+    oauth2_client: A GoogleOAuth2Client instance or mock implementing its
+      interface.
+    proxy_config: A googleads.common.ProxyConfig instance. If not specified,
+      this will default to None to specify that no Proxy is being used.
+    report_downloader_headers: A dict containing optional report downloader
+      headers.
+    user_agent: A str value for the AdWordsClient's user_agent.
 
   Returns:
-    An AdWordsClient instance with or without a proxy configured depending on
-      whether a ProxyConfig instance was provided.
+    An AdWordsClient instance intended for testing.
   """
-  oauth_header = {'Authorization': 'header'}
-  client_customer_id = 'client customer id'
-  dev_token = 'N3v3rG0nN4Giv3Y0uUp'
-  user_agent = 'N3v3rG0nN4l37y0uDoWN'
-  oauth2_client = mock.Mock()
-  oauth2_client.CreateHttpHeader.return_value = dict(oauth_header)
+  client_customer_id = kwargs.get('ccid', 'client customer id')
+  dev_token = kwargs.get('dev_token', 'dev_token')
+  user_agent = kwargs.get('user_agent', 'user_agent')
+  validate_only = kwargs.get('validate_only', False)
+  partial_failure = kwargs.get('partial_failure', False)
+  report_downloader_headers = kwargs.get('report_downloader_headers', {})
+
+  if 'oauth2_client' in kwargs:
+    oauth2_client = kwargs['oauth2_client']
+  else:
+    oauth_header = {'Authorization': 'header'}
+    oauth2_client = mock.Mock()
+    oauth2_client.CreateHttpHeader.return_value = dict(oauth_header)
 
   client = googleads.adwords.AdWordsClient(
       dev_token, oauth2_client, user_agent,
-      client_customer_id=client_customer_id, proxy_config=proxy_config)
+      client_customer_id=client_customer_id,
+      proxy_config=kwargs.get('proxy_config'),
+      validate_only=validate_only, partial_failure=partial_failure,
+      report_downloader_headers=report_downloader_headers)
 
   return client
 
@@ -69,9 +90,13 @@ def GetProxyConfig(http_host=None, http_port=None, https_host=None,
   """Returns an initialized ProxyConfig for use in testing.
 
   Args:
-    http_host: A str containing the url or IP of an http proxy host.
+    http_host: A str containing the url or IP of an http proxy host. If this is
+      not specified, the ProxyConfig will be initialized without an HTTP proxy
+      configured.
     http_port: An int port number for the HTTP proxy host.
-    https_host: A str containing the url or IP of an https proxy host.
+    https_host: A str containing the url or IP of an https proxy host. If this
+      is not specified, the ProxyConfig will be initialized without an HTTPS
+      proxy configured.
     https_port: An int port number for the HTTPS proxy host.
     cafile: A str containing the path to a custom ca file.
     disable_certificate_validation: A boolean indicating whether or not to
@@ -98,74 +123,60 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
   """Tests for the googleads.adwords._AdWordsHeaderHandler class."""
 
   def setUp(self):
-    self.aw_client = mock.Mock()
-    self.aw_client.report_download_headers = {}
+    self.report_downloader_headers = {}
+    self.oauth2_client = mock.Mock()
+    self.oauth_header = {'Authorization': 'header'}
+    self.oauth2_client.CreateHttpHeader.return_value = self.oauth_header
+    self.ccid = 'client customer id'
+    self.dev_token = 'developer token'
+    self.user_agent = 'user agent!'
+    self.validate_only = True
+    self.partial_failure = False
+    self.aw_client = GetAdWordsClient(
+        ccid=self.ccid, dev_token=self.dev_token, user_agent=self.user_agent,
+        oauth2_client=self.oauth2_client, validate_only=self.validate_only,
+        partial_failure=self.partial_failure,
+        report_downloader_headers=self.report_downloader_headers)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.aw_client, CURRENT_VERSION)
 
   def testSetHeaders(self):
     suds_client = mock.Mock()
-    ccid = 'client customer id'
-    dev_token = 'developer token'
-    user_agent = 'user agent!'
-    validate_only = True
-    partial_failure = False
-    oauth_header = {'oauth': 'header'}
-    self.aw_client.client_customer_id = ccid
-    self.aw_client.developer_token = dev_token
-    self.aw_client.user_agent = user_agent
-    self.aw_client.validate_only = validate_only
-    self.aw_client.partial_failure = partial_failure
-    self.aw_client.oauth2_client.CreateHttpHeader.return_value = (oauth_header)
-
     self.header_handler.SetHeaders(suds_client)
-
     # Check that the SOAP header has the correct values.
     suds_client.factory.create.assert_called_once_with(
         '{https://adwords.google.com/api/adwords/cm/%s}SoapHeader' %
         CURRENT_VERSION)
     soap_header = suds_client.factory.create.return_value
-    self.assertEqual(ccid, soap_header.clientCustomerId)
-    self.assertEqual(dev_token, soap_header.developerToken)
+    self.assertEqual(self.ccid, soap_header.clientCustomerId)
+    self.assertEqual(self.dev_token, soap_header.developerToken)
     self.assertEqual(
-        ''.join([user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG]),
+        ''.join([self.user_agent,
+                 googleads.adwords._AdWordsHeaderHandler._LIB_SIG]),
         soap_header.userAgent)
-    self.assertEqual(validate_only, soap_header.validateOnly)
-    self.assertEqual(partial_failure, soap_header.partialFailure)
-
+    self.assertEqual(self.validate_only, soap_header.validateOnly)
+    self.assertEqual(self.partial_failure, soap_header.partialFailure)
     # Check that the suds client has the correct values.
     suds_client.set_options.assert_any_call(
-        soapheaders=soap_header, headers=oauth_header)
+        soapheaders=soap_header, headers=self.oauth_header)
 
   def testGetReportDownloadHeadersOverrideDefaults(self):
-    ccid = 'client customer id'
-    dev_token = 'developer token'
-    user_agent = 'user agent!'
-    oauth_header = {'Authorization': 'header'}
-    self.aw_client.client_customer_id = ccid
-    self.aw_client.developer_token = dev_token
-    self.aw_client.user_agent = user_agent
-    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
     self.aw_client.report_downloader_headers = {
         'skip_report_header': True, 'skip_column_header': False,
         'skip_report_summary': False, 'use_raw_enum_values': True}
     expected_return_value = {
         'Content-type': 'application/x-www-form-urlencoded',
-        'developerToken': dev_token,
-        'clientCustomerId': ccid,
+        'developerToken': self.dev_token,
+        'clientCustomerId': self.ccid,
         'Authorization': 'header',
         'User-Agent': ''.join([
-            user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            self.user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
             ',gzip']),
         'skipReportHeader': 'False',
         'skipColumnHeader': 'True',
         'skipReportSummary': 'False',
         'useRawEnumValues': 'True'
     }
-
-    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
     self.assertEqual(expected_return_value,
                      self.header_handler.GetReportDownloadHeaders(
                          skip_report_header=False,
@@ -174,67 +185,39 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
                          use_raw_enum_values=True))
 
   def testGetReportDownloadHeadersWithDefaultsFromConfig(self):
-    ccid = 'client customer id'
-    dev_token = 'developer token'
-    user_agent = 'user agent!'
-    oauth_header = {'Authorization': 'header'}
-    self.aw_client.client_customer_id = ccid
-    self.aw_client.developer_token = dev_token
-    self.aw_client.user_agent = user_agent
-    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
     self.aw_client.report_download_headers = {
         'skip_report_header': True, 'skip_column_header': False,
         'skip_report_summary': False, 'use_raw_enum_values': True}
     expected_return_value = {
         'Content-type': 'application/x-www-form-urlencoded',
-        'developerToken': dev_token,
-        'clientCustomerId': ccid,
+        'developerToken': self.dev_token,
+        'clientCustomerId': self.ccid,
         'Authorization': 'header',
         'User-Agent': ''.join([
-            user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            self.user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
             ',gzip']),
         'skipReportHeader': 'True',
         'skipColumnHeader': 'False',
         'skipReportSummary': 'False',
         'useRawEnumValues': 'True'
     }
-
-    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
     self.assertEqual(expected_return_value,
                      self.header_handler.GetReportDownloadHeaders())
 
   def testGetReportDownloadHeadersWithInvalidKeyword(self):
-    ccid = 'client customer id'
-    dev_token = 'developer token'
-    user_agent = 'user agent!'
-    self.aw_client.client_customer_id = ccid
-    self.aw_client.developer_token = dev_token
-    self.aw_client.user_agent = user_agent
-
     self.assertRaises(
         googleads.errors.GoogleAdsValueError,
         self.header_handler.GetReportDownloadHeaders, invalid_key_word=True)
 
   def testGetReportDownloadHeadersWithKeywordArguments(self):
-    original_ccid = 'client customer id'
     updated_ccid = 'updated client customer id'
-    dev_token = 'developer token'
-    user_agent = 'user agent!'
-    oauth_header = {'Authorization': 'header'}
-    self.aw_client.client_customer_id = original_ccid
-    self.aw_client.developer_token = dev_token
-    self.aw_client.user_agent = user_agent
-    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
     expected_return_value = {
         'Content-type': 'application/x-www-form-urlencoded',
-        'developerToken': dev_token,
+        'developerToken': self.dev_token,
         'clientCustomerId': updated_ccid,
         'Authorization': 'header',
         'User-Agent': ''.join([
-            user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            self.user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
             ',gzip']),
         'skipReportHeader': 'True',
         'skipColumnHeader': 'True',
@@ -242,9 +225,6 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         'includeZeroImpressions': 'True',
         'useRawEnumValues': 'True'
     }
-
-    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
     self.assertEqual(expected_return_value,
                      self.header_handler.GetReportDownloadHeaders(
                          skip_report_header=True,
@@ -255,27 +235,15 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
                          client_customer_id=updated_ccid))
 
   def testGetReportDownloadHeadersWithNoOptionalHeaders(self):
-    ccid = 'client customer id'
-    dev_token = 'developer token'
-    user_agent = 'user agent!'
-    oauth_header = {'Authorization': 'header'}
-    self.aw_client.client_customer_id = ccid
-    self.aw_client.developer_token = dev_token
-    self.aw_client.user_agent = user_agent
-    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
     expected_return_value = {
         'Content-type': 'application/x-www-form-urlencoded',
-        'developerToken': dev_token,
-        'clientCustomerId': ccid,
+        'developerToken': self.dev_token,
+        'clientCustomerId': self.ccid,
         'Authorization': 'header',
         'User-Agent': ''.join([
-            user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            self.user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
             ',gzip'])
     }
-
-    self.aw_client.oauth2_client.CreateHttpHeader.return_value = dict(
-        oauth_header)
     self.assertEqual(expected_return_value,
                      self.header_handler.GetReportDownloadHeaders())
 
@@ -739,7 +707,7 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
             'bogusProperty': 'bogusValue'}
     }]
 
-    self.assertRaises(googleads.errors.GoogleAdsValueError,
+    self.assertRaises(KeyError,
                       self.request_builder._GenerateRawRequestXML,
                       bogus_operations)
 

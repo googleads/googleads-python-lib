@@ -173,6 +173,13 @@ class DfpClientTest(unittest.TestCase):
         self.oauth2_client, self.application_name, self.network_code,
         self.https_proxy, self.cache)
 
+  def testInitializeWithUselessApplicationName(self):
+    self.application_name = 'try_to_trick_me_INSERT_APPLICATION_NAME_HERE'
+    self.assertRaises(
+        googleads.errors.GoogleAdsValueError, googleads.dfp.DfpClient,
+        self.oauth2_client, self.application_name, self.network_code,
+        self.https_proxy, self.cache)
+
   def testGetService_success(self):
     service = googleads.dfp._SERVICE_MAP[self.version][0]
 
