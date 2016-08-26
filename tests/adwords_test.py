@@ -273,6 +273,26 @@ class AdWordsClientTest(unittest.TestCase):
       self.assertIsInstance(googleads.adwords.AdWordsClient.LoadFromStorage(),
                             googleads.adwords.AdWordsClient)
 
+  def testLoadFromStorageWithNonASCIIUserAgent(self):
+    with mock.patch('googleads.common.LoadFromStorage') as mock_load:
+      mock_load.return_value = {
+          'developer_token': 'abcdEFghIjkLMOpqRs',
+          'oauth2_client': mock.Mock(),
+          'user_agent': u'ゼロ'
+      }
+      self.assertRaises(googleads.errors.GoogleAdsValueError,
+                        googleads.adwords.AdWordsClient.LoadFromStorage)
+
+  def testLoadFromStorageWithNoUserAgent(self):
+    with mock.patch('googleads.common.LoadFromStorage') as mock_load:
+      mock_load.return_value = {
+          'developer_token': 'abcdEFghIjkLMOpqRs',
+          'oauth2_client': mock.Mock()
+      }
+
+      client = googleads.adwords.AdWordsClient.LoadFromStorage()
+      self.assertEquals(client.user_agent, 'unknown')
+
   def testGetService_success(self):
     version = CURRENT_VERSION
     service = googleads.adwords._SERVICE_MAP[version].keys()[0]

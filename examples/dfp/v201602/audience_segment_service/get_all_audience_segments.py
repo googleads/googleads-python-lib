@@ -25,9 +25,6 @@ from googleads import dfp
 
 
 def main(client):
-  # Initialize client object.
-  client = dfp.DfpClient.LoadFromStorage()
-
   # Initialize appropriate service.
   audience_segment_service = client.GetService(
       'AudienceSegmentService', version='v201602')

@@ -687,22 +687,20 @@ class ProxyConfigTest(unittest.TestCase):
   def testProxyConfigGetHandlersWithProxyAndSLLContext(self):
     https_proxy = googleads.common.ProxyConfig.Proxy(self.proxy_host1,
                                                      self.proxy_port1)
-    # We normally couldn't access HTTPSHandler below Python 2.7.9, but we'll at
-    # least verify that the logic is right.
-    urllib2.HTTPSHandler = mock.Mock()
-    urllib2.HTTPSHandler.return_value = mock.Mock()
     with mock.patch('googleads.common.ProxyConfig._InitSSLContext') as ssl_ctxt:
       ssl_ctxt.return_value = 'CONTEXT'
       with mock.patch('urllib2.ProxyHandler') as proxy_handler:
         proxy_handler.return_value = mock.Mock()
-        proxy_config = googleads.common.ProxyConfig(https_proxy=https_proxy)
-        self.assertEqual(proxy_config.GetHandlers(),
-                         [urllib2.HTTPSHandler.return_value,
-                          proxy_handler.return_value])
-        proxy_handler.assert_called_once_with(
-            {'https': '%s' % str(https_proxy)})
-        urllib2.HTTPSHandler.assert_called_once_with(
-            context=ssl_ctxt.return_value)
+        with mock.patch('urllib2.HTTPSHandler') as https_handler:
+          https_handler.return_value = mock.Mock()
+          proxy_config = googleads.common.ProxyConfig(https_proxy=https_proxy)
+          self.assertEqual(proxy_config.GetHandlers(),
+                           [https_handler.return_value,
+                            proxy_handler.return_value])
+          proxy_handler.assert_called_once_with(
+              {'https': '%s' % str(https_proxy)})
+          https_handler.assert_called_once_with(
+              context=ssl_ctxt.return_value)
 
   def testProxyConfigWithNoProxy(self):
     proxy_config = googleads.common.ProxyConfig()

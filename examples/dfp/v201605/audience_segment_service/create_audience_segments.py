@@ -27,9 +27,6 @@ CUSTOM_TARGETING_KEY_ID = 'INSERT_CUSTOM_TARGETING_KEY_ID_HERE'
 CUSTOM_TARGETING_VALUE_ID = 'INSERT_CUSTOM_TARGETING_VALUE_ID_HERE'
 
 def main(client, custom_targeting_key_id, custom_targeting_value_id):
-  # Initialize client object.
-  client = dfp.DfpClient.LoadFromStorage()
-
   # Initialize appropriate services.
   audience_segment_service = client.GetService(
       'AudienceSegmentService', version='v201605')

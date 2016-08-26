@@ -35,9 +35,6 @@ BASE_CAMPAIGN_ID = 'INSERT_BASE_CAMPAIGN_ID_HERE'
 
 
 def main(client, base_campaign_id):
-  # Initialize appropriate services.
-  campaign_criterion_service = client.GetService('CampaignCriterionService',
-                                                 version='v201607')
   draft_service = client.GetService('DraftService', version='v201607')
 
   draft = {
@@ -52,6 +49,9 @@ def main(client, base_campaign_id):
   # Once the draft is created, you can modify the draft campaign as if it were a
   # real campaign. For example, you may add criteria, adjust bids, or even
   # include additional ads. Adding a criteria is shown here.
+  campaign_criterion_service = client.GetService('CampaignCriterionService',
+                                                 version='v201607')
+
   criterion = {
       'xsi_type': 'Language',
       'id': 1003  # Spanish

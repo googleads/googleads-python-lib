@@ -51,8 +51,9 @@ def main(client):
       for reconciliation_report in response['results']:
         # Print out some information for each reconciliation report.
         print(
-            'Reconciliation report with ID "%d" and start date "%d" was found.\n'
-            % (reconciliation_report['id'], last_month.strftime('%Y-%m-01')))
+            'Reconciliation report with ID "%d" and start date "%s" was found.'
+            '\n' % (reconciliation_report['id'],
+                    last_month.strftime('%Y-%m-01')))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break

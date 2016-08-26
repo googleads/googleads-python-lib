@@ -37,7 +37,7 @@ def main(client):
       {'key': 'now',
        'value': {
            'xsi_type': 'TextValue',
-           'value': datetime.now().strftime('%y-%m-%d_t%h:%m:%s')
+           'value': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
        }},
       {'key': 'soon',
        'value': {

@@ -36,49 +36,6 @@ import googleads.errors
 # A giant dictionary of AdWords versions, the services they support, and which
 # namespace those services are in.
 _SERVICE_MAP = {
-    'v201601': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'BatchJobService': 'cm',
-        'BudgetOrderService': 'billing',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'ExperimentService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'LocationCriterionService': 'cm',
-        'MediaService': 'cm',
-        'MutateJobService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-        'ManagedCustomerService': 'mcm',
-        'CustomerService': 'mcm',
-        'CustomerFeedService': 'cm',
-        'BudgetService': 'cm',
-        'BiddingStrategyService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'LabelService': 'cm',
-    },
     'v201603': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
@@ -229,6 +186,8 @@ _REPORT_HEADER_KWARGS = {'client_customer_id': 'clientCustomerId',
 
 # The endpoint used by default when making AdWords API requests.
 _DEFAULT_ENDPOINT = 'https://adwords.google.com'
+# The user-agent used by default when making AdWords API requests.
+_DEFAULT_USER_AGENT = 'unknown'
 
 
 class AdWordsClient(object):
@@ -257,10 +216,10 @@ class AdWordsClient(object):
   # The key in the storage yaml which contains AdWords data.
   _YAML_KEY = 'adwords'
   # A list of values which must be provided to use AdWords.
-  _REQUIRED_INIT_VALUES = ('user_agent', 'developer_token')
+  _REQUIRED_INIT_VALUES = ('developer_token')
   # A list of values which may optionally be provided when using AdWords.
   _OPTIONAL_INIT_VALUES = (
-      'validate_only', 'partial_failure', 'client_customer_id',
+      'validate_only', 'partial_failure', 'client_customer_id', 'user_agent',
       'report_downloader_headers')
 
   # The format of SOAP service WSDLs. A server, namespace, version, and service
@@ -290,8 +249,8 @@ class AdWordsClient(object):
         path, cls._YAML_KEY, cls._REQUIRED_INIT_VALUES,
         cls._OPTIONAL_INIT_VALUES))
 
-  def __init__(
-      self, developer_token, oauth2_client, user_agent, **kwargs):
+  def __init__(self, developer_token, oauth2_client,
+               user_agent=_DEFAULT_USER_AGENT, **kwargs):
     """Initializes an AdWordsClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -301,8 +260,9 @@ class AdWordsClient(object):
       developer_token: A string containing your AdWords API developer token.
       oauth2_client: A googleads.oauth2.GoogleOAuth2Client used to authorize
           your requests.
-      user_agent: An arbitrary string which will be used to identify your
-          application
+      user_agent: An arbitrary string containing only ASCII characters that will
+          be used to identify your application. If not set, this will default to
+          the string value "unknown".
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
@@ -322,12 +282,24 @@ class AdWordsClient(object):
         isn't being used.
       report_downloader_headers: A dict containing optional headers to be used
         by default when making requests with the ReportDownloader.
+
+    Raises:
+      GoogleAdsValueError: If the provided user_agent contains non-ASCII
+        characters.
     """
     self.developer_token = developer_token
     self.oauth2_client = oauth2_client
     self.oauth2_client.Refresh()
-    self.user_agent = user_agent
     self.client_customer_id = kwargs.get('client_customer_id')
+    self.user_agent = user_agent
+    # Verify that the provided user_agent contains only ASCII characters. In
+    # both Python 2 and Python 3, a UnicodeEncodeError will be raised if it
+    # contains a non-ASCII character.
+    try:
+      self.user_agent.encode('ascii')
+    except UnicodeEncodeError:
+      raise googleads.errors.GoogleAdsValueError(
+          'Invalid user_agent value, must contain only ASCII characters.')
     self.validate_only = kwargs.get('validate_only', False)
     self.partial_failure = kwargs.get('partial_failure', False)
     self.cache = kwargs.get('cache')
@@ -1007,9 +979,6 @@ class IncrementalUploadHelper(object):
   def _InitializeURL(self, upload_url, current_content_length):
     """Ensures that the URL used to upload operations is properly initialized.
 
-    Initialization is only necessary in v201601 or higher when the
-    current_content_length is 0.
-
     Args:
       upload_url: a string url.
       current_content_length: an integer identifying the current content length
@@ -1017,10 +986,10 @@ class IncrementalUploadHelper(object):
 
     Returns:
       An initialized string URL, or the provided string URL if the URL has
-      already been initialized or the version is below v201601.
+      already been initialized.
     """
     # If initialization is not necessary, return the provided upload_url.
-    if self._version < 'v201601' or current_content_length != 0:
+    if current_content_length != 0:
       return upload_url
 
     headers = {

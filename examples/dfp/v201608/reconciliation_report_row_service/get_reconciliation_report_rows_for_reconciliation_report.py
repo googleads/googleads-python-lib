@@ -26,14 +26,9 @@ def main(client, reconciliation_report_id):
   # Initialize appropriate service.
   reconciliation_report_row_service = client.GetService(
       'ReconciliationReportRowService', version='v201608')
-  query = ('WHERE reconciliationReportId = :reconciliationReportId AND '
-           'lineItemId != :lineItemId')
+  query = ('WHERE reconciliationReportId = %s AND '
+           'lineItemId != :lineItemId') % reconciliation_report_id
   values = [
-      {'key': 'reconciliationReportId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': reconciliation_report_id
-       }},
       {'key': 'lineItemId',
        'value': {
            'xsi_type': 'NumberValue',

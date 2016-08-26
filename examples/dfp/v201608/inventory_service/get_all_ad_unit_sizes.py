@@ -30,17 +30,14 @@ def main(client):
 
   # Retreive a small amount of ad unit sizes at a time, paging
   # through until all ad unit sizes have been retrieved.
-  while True:
-    response = ad_unit_size_service.getAdUnitSizesByStatement(
-        statement.ToStatement())
-    if response:
-      for ad_unit_size in response:
-        # Print out some information for each ad unit size.
+  response = ad_unit_size_service.getAdUnitSizesByStatement(
+      statement.ToStatement())
+  if response:
+    for ad_unit_size in response:
+      # Print out some information for each ad unit size.
+      if 'fullDisplayString' in ad_unit_size:
         print('Ad unit size with dimensions "%s" was found.\n' %
               (ad_unit_size['fullDisplayString']))
-        statement.offset += dfp.SUGGESTED_PAGE_LIMIT
-    else:
-      break
 
 
 if __name__ == '__main__':

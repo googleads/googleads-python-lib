@@ -27,9 +27,6 @@ AUDIENCE_SEGMENT_ID = 'INSERT_AUDIENCE_SEGMENT_ID_HERE'
 
 
 def main(client, audience_segment_id):
-  # Initialize client object.
-  client = dfp.DfpClient.LoadFromStorage()
-
   # Initialize appropriate service.
   audience_segment_service = client.GetService(
       'AudienceSegmentService', version='v201605')

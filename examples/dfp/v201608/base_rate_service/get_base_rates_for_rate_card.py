@@ -46,7 +46,8 @@ def main(client, rate_card_id):
         # Print out some information for each base rate.
         print('Base rate with ID "%d", type "%s", and rate card ID "%d" was '
               'found.\n' %
-              (base_rate['id'], base_rate['type'], base_rate['rateCardId']))
+              (base_rate['id'], dfp.DfpClassType(base_rate),
+               base_rate['rateCardId']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break

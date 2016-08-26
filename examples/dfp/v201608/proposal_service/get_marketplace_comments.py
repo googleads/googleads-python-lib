@@ -29,22 +29,15 @@ def main(client, proposal_id):
   # Initialize appropriate service.
   marketplace_comment_service = client.GetService(
       'ProposalService', version='v201608')
-  query = 'WHERE proposal_id = :proposal_id'
-  values = [
-      {'key': 'proposal_id',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': proposal_id
-       }}
-  ]
+  query = 'WHERE proposalId = %s' % proposal_id
   # Create a statement to select marketplace comments.
-  statement = dfp.FilterStatement(query, values)
+  statement = {'query': query}
 
   # Retrieve a small amount of marketplace comments at a time, paging
   # through until all marketplace comments have been retrieved.
   while True:
     response = marketplace_comment_service.getMarketplaceCommentsByStatement(
-        statement.ToStatement())
+        statement)
     if 'results' in response:
       for marketplace_comment in response['results']:
         # Print out some information for each marketplace comment.
@@ -59,7 +52,6 @@ def main(client, proposal_id):
             'Marketplace comment with creation time "%s"and comment "%s" was '
             'found.\n'
             % (date_time_string, marketplace_comment['comment']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break
 

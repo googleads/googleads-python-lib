@@ -43,7 +43,7 @@ except ImportError:
   pass
 
 
-VERSION = '4.4.0'
+VERSION = '4.5.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'

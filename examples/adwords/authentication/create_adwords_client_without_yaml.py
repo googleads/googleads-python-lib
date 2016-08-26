@@ -44,7 +44,8 @@ def main(client_id, client_secret, refresh_token, developer_token, user_agent,
       client_id, client_secret, refresh_token)
 
   adwords_client = adwords.AdWordsClient(
-      developer_token, oauth2_client, user_agent, client_customer_id)
+      developer_token, oauth2_client, user_agent,
+      client_customer_id=client_customer_id)
 
   customer = adwords_client.GetService('CustomerService').get()
   print 'You are logged in as customer: %s' % customer['customerId']

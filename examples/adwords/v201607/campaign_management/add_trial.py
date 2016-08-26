@@ -52,7 +52,6 @@ def main(client, base_campaign_id, draft_id):
 
   trial_operation = {'operator': 'ADD', 'operand': trial}
   trial_id = trial_service.mutate([trial_operation])['value'][0]['id']
-
   selector = {
       'fields': ['Id', 'Status', 'BaseCampaignId', 'TrialCampaignId'],
       'predicates': [{

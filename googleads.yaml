@@ -4,11 +4,11 @@ adwords:
   # Required Fields                                                           #
   #############################################################################
   developer_token: INSERT_DEVELOPER_TOKEN_HERE
-  user_agent: INSERT_USER_AGENT_HERE
   #############################################################################
   # Optional Fields                                                           #
   #############################################################################
   # client_customer_id: INSERT_CLIENT_CUSTOMER_ID_HERE
+  # user_agent: INSERT_USER_AGENT_HERE
   # partial_failure: True
   # validate_only: True
   #############################################################################
