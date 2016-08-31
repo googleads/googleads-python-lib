@@ -215,9 +215,10 @@ class AdWordsClient(object):
 
   # The key in the storage yaml which contains AdWords data.
   _YAML_KEY = 'adwords'
-  # A list of values which must be provided to use AdWords.
-  _REQUIRED_INIT_VALUES = ('developer_token')
-  # A list of values which may optionally be provided when using AdWords.
+  # A tuple containing values which must be provided to use AdWords.
+  _REQUIRED_INIT_VALUES = ('developer_token',)
+  # A tuple containing values which may optionally be provided when using
+  # AdWords.
   _OPTIONAL_INIT_VALUES = (
       'validate_only', 'partial_failure', 'client_customer_id', 'user_agent',
       'report_downloader_headers')

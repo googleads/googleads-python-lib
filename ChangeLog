@@ -1,3 +1,7 @@
+4.5.1 -- 8/30/2016:
+* Resolved issue #148:
+  https://github.com/googleads/googleads-python-lib/issues/148
+
 4.5.0 -- 8/26/2016
 * AdWordsClient's initializer no longer requires the user_agent field. This
   field is also now validated to ensure that it only contains ASCII characters.

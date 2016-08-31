@@ -252,6 +252,8 @@ class AdWordsClientTest(unittest.TestCase):
   """Tests for the googleads.adwords.AdWordsClient class."""
 
   def setUp(self):
+    self.load_from_storage_path = os.path.join(
+        os.path.dirname(__file__), 'test_data/adwords_googleads.yaml')
     self.https_proxy_host = 'myproxy'
     self.https_proxy_port = 443
     self.proxy_config = GetProxyConfig(https_host=self.https_proxy_host,
@@ -264,13 +266,9 @@ class AdWordsClientTest(unittest.TestCase):
         self.adwords_client, CURRENT_VERSION)
 
   def testLoadFromStorage(self):
-    with mock.patch('googleads.common.LoadFromStorage') as mock_load:
-      mock_load.return_value = {
-          'developer_token': 'abcdEFghIjkLMOpqRs',
-          'oauth2_client': mock.Mock(),
-          'user_agent': 'unit testing'
-      }
-      self.assertIsInstance(googleads.adwords.AdWordsClient.LoadFromStorage(),
+    with mock.patch('googleads.oauth2.GoogleRefreshTokenClient.Refresh'):
+      self.assertIsInstance(googleads.adwords.AdWordsClient.LoadFromStorage(
+          path=self.load_from_storage_path),
                             googleads.adwords.AdWordsClient)
 
   def testLoadFromStorageWithNonASCIIUserAgent(self):
@@ -446,30 +444,32 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
   def setUpClass(cls):
     test_dir = os.path.dirname(__file__)
     with open(os.path.join(
-        test_dir, 'data/batch_job_util_budget_template.txt')) as handler:
+        test_dir, 'test_data/batch_job_util_budget_template.txt')) as handler:
       cls.BUDGET_TEMPLATE = handler.read()
     with open(os.path.join(
         test_dir,
-        'data/batch_job_util_campaign_criterion_template.txt')) as handler:
+        'test_data/batch_job_util_campaign_criterion_template.txt')) as handler:
       cls.CAMPAIGN_CRITERION_TEMPLATE = handler.read()
     with open(os.path.join(
         test_dir,
-        'data/batch_job_util_campaign_label_template.txt')) as handler:
+        'test_data/batch_job_util_campaign_label_template.txt')) as handler:
       cls.CAMPAIGN_LABEL_TEMPLATE = handler.read()
     with open(os.path.join(
-        test_dir, 'data/batch_job_util_invalid_request.txt')) as handler:
+        test_dir, 'test_data/batch_job_util_invalid_request.txt')) as handler:
       cls.INVALID_API_REQUEST = handler.read()
     with open(os.path.join(
-        test_dir, 'data/batch_job_util_not_request.txt')) as handler:
+        test_dir, 'test_data/batch_job_util_not_request.txt')) as handler:
       cls.NOT_API_REQUEST = handler.read()
     with open(os.path.join(
-        test_dir, 'data/batch_job_util_raw_request_template.txt')) as handler:
+        test_dir, 'test_data/batch_job_util_raw_request_template.txt')
+             ) as handler:
       cls.RAW_API_REQUEST_TEMPLATE = handler.read()
     with open(os.path.join(
-        test_dir, 'data/batch_job_util_operations_template.txt')) as handler:
+        test_dir, 'test_data/batch_job_util_operations_template.txt')
+             ) as handler:
       cls.OPERATIONS_TEMPLATE = handler.read()
     with open(os.path.join(
-        test_dir, 'data/batch_job_util_upload_template.txt')) as handler:
+        test_dir, 'test_data/batch_job_util_upload_template.txt')) as handler:
       cls.UPLOAD_OPERATIONS_TEMPLATE = handler.read()
 
   def ExpandOperandTemplate(self, operation_type, operand):
@@ -1254,7 +1254,7 @@ class ResponseParserTest(unittest.TestCase):
   def setUpClass(cls):
     test_dir = os.path.dirname(__file__)
     with open(os.path.join(
-        test_dir, 'data/batch_job_util_response_template.txt')) as handler:
+        test_dir, 'test_data/batch_job_util_response_template.txt')) as handler:
       cls.API_RESPONSE_XML_TEMPLATE = handler.read()
 
   def testParseResponse(self):
