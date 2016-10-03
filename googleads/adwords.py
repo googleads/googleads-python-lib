@@ -173,6 +173,52 @@ _SERVICE_MAP = {
         'TrafficEstimatorService': 'o',
         'TrialAsyncErrorService': 'cm',
         'TrialService': 'cm'
+    },
+    'v201609': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'BatchJobService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'DraftAsyncErrorService': 'cm',
+        'DraftService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'OfflineCallConversionFeedService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'TrialAsyncErrorService': 'cm',
+        'TrialService': 'cm'
     }
 }
 
@@ -308,6 +354,7 @@ class AdWordsClient(object):
     self.proxy_config = (proxy_config if proxy_config else
                          googleads.common.ProxyConfig())
     self.report_download_headers = kwargs.get('report_download_headers', {})
+    self.message_plugin = googleads.common.LoggingMessagePlugin()
 
   def GetService(self, service_name, version=None, server=None):
     """Creates a service client for the given service.
@@ -351,7 +398,8 @@ class AdWordsClient(object):
         self._SOAP_SERVICE_FORMAT %
         (server, version_service_mapping, version, service_name),
         cache=self.cache, timeout=3600,
-        transport=self.proxy_config.GetSudsProxyTransport())
+        transport=self.proxy_config.GetSudsProxyTransport(),
+        plugins=[self.message_plugin])
 
     return googleads.common.SudsServiceProxy(
         client, _AdWordsHeaderHandler(self, version))

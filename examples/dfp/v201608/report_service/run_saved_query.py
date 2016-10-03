@@ -41,11 +41,11 @@ def main(client, saved_query_id):
           'value': saved_query_id
       }
   }]
-  filter_statement = {'query': 'WHERE id = :id',
-                      'values': values}
+  query = 'WHERE id = :id'
+  statement = dfp.FilterStatement(query, values, 1)
 
   response = report_service.getSavedQueriesByStatement(
-      filter_statement.ToStatement())
+      statement.ToStatement())
 
   if 'results' in response:
     saved_query = response['results'][0]

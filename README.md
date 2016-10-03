@@ -104,11 +104,26 @@ for API change announcements and other news.
 The library uses Python's built in logging framework. If you wish to log your
 SOAP interactions to stdout, you can do the following:
 ```python
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format=googleads.util.LOGGER_FORMAT)
 logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 ```
 If you wish to log to a file, you'll need to attach a log handler to this source
 which is configured to write the output to a file.
+
+
+##How do I disable log filters?
+By default, this library will apply log filters to the `googleads.common`,
+`suds.client`, and `suds.transport` loggers in order to omit sensitive data. If
+you need to see this data in your logs, you can disable the filters with the
+following:
+```python
+logging.getLogger('googleads.common').removeFilter(
+    googleads.util.GetGoogleAdsCommonFilter())
+logging.getLogger('suds.client').removeFilter(
+    googleads.util.GetSudsClientFilter())
+logging.getLogger('suds.transport').removeFilter(
+    googleads.util.GetSudsTransportFilter())
+```
 
 
 ##I'm familiar with suds. Can I use suds features with this library?

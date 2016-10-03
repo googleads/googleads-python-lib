@@ -16,7 +16,7 @@
 
 """This example gets all expanded text ads for a given ad group.
 
-To add an ad, run add_text_ads.py.
+To add an expanded text ad, run add_expanded_text_ads.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home

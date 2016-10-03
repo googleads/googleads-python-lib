@@ -84,6 +84,24 @@ class CommonTest(unittest.TestCase):
 
     return yaml_file.name
 
+  def testLoadFromStorage_deprecatedWarningLogger(self):
+    yaml_fname = self._CreateYamlFile({'one': {'needed': 'd', 'keys': 'e'}},
+                                      'one', self._OAUTH_INSTALLED_APP_DICT)
+    test_major_value = 2
+    test_minor_value = 7
+    test_micro_value = 6
+    with mock.patch('googleads.common._PY_VERSION_MAJOR', test_major_value):
+      with mock.patch('googleads.common._PY_VERSION_MINOR', test_minor_value):
+        with mock.patch('googleads.common._PY_VERSION_MICRO', test_micro_value):
+          with mock.patch('googleads.common._logger') as mock_logger:
+            with mock.patch('googleads.common.open', self.fake_open,
+                            create=True):
+              googleads.common.LoadFromStorage(yaml_fname, 'one',
+                                               ['needed', 'keys'], ['other'])
+              mock_logger.warning.assert_called_once_with(
+                  googleads.common._DEPRECATED_VERSION_TEMPLATE,
+                  test_major_value, test_minor_value, test_micro_value)
+
   def testLoadFromStorage_missingFile(self):
     with mock.patch('googleads.common.open', self.fake_open, create=True):
       self.assertRaises(
@@ -594,29 +612,30 @@ class CommonTest(unittest.TestCase):
 class SudsServiceProxyTest(unittest.TestCase):
   """Tests for the googleads.common.SudsServiceProxy class."""
 
-  def testSudsServiceProxy(self):
-    header_handler = mock.Mock()
-    port = mock.Mock()
-    port.methods = ('SoapMethod',)
-    services = mock.Mock()
-    services.ports = [port]
-    client = mock.Mock()
-    client.wsdl.services = [services]
-    suds_service_wrapper = googleads.common.SudsServiceProxy(
-        client, header_handler)
+  def setUp(self):
+    self.header_handler = mock.Mock()
+    self.port = mock.Mock()
+    self.port.methods = ('SoapMethod',)
+    self.services = mock.Mock()
+    self.services.ports = [self.port]
+    self.client = mock.Mock()
+    self.client.wsdl.services = [self.services]
+    self.suds_service_wrapper = googleads.common.SudsServiceProxy(
+        self.client, self.header_handler)
 
-    self.assertEqual(suds_service_wrapper.SoapMethod,
-                     suds_service_wrapper._method_proxies['SoapMethod'])
-    self.assertEqual(suds_service_wrapper.NotSoapMethod,
-                     client.service.NotSoapMethod)
+  def testSudsServiceProxy(self):
+    self.assertEqual(self.suds_service_wrapper.SoapMethod,
+                     self.suds_service_wrapper._method_proxies['SoapMethod'])
+    self.assertEqual(self.suds_service_wrapper.NotSoapMethod,
+                     self.client.service.NotSoapMethod)
 
     with mock.patch('googleads.common._PackForSuds') as mock_pack_for_suds:
       mock_pack_for_suds.return_value = 'modified_test'
-      suds_service_wrapper.SoapMethod('test')
-      mock_pack_for_suds.assert_called_once_with('test', client.factory)
+      self.suds_service_wrapper.SoapMethod('test')
+      mock_pack_for_suds.assert_called_once_with('test', self.client.factory)
 
-    client.service.SoapMethod.assert_called_once_with('modified_test')
-    header_handler.SetHeaders.assert_called_once_with(client)
+    self.client.service.SoapMethod.assert_called_once_with('modified_test')
+    self.header_handler.SetHeaders.assert_called_once_with(self.client)
 
 
 class HeaderHandlerTest(unittest.TestCase):

@@ -14,6 +14,8 @@
 
 """Unit tests to cover the errors module."""
 
+import logging
+import os
 import re
 import unittest
 from xml.etree import ElementTree
@@ -24,6 +26,7 @@ import googleads.adwords
 import googleads.dfp
 import googleads.util
 import mock
+import suds.transport
 
 
 class PatchesTest(unittest.TestCase):
@@ -133,6 +136,105 @@ class PatchesTest(unittest.TestCase):
         'customer').find('trackingUrlTemplate')
     # Assert that the request includes the empty trackingUrlTemplate.
     self.assertTrue(tracking_url_template is not None)
+
+
+class GoogleAdsCommonFilterTest(unittest.TestCase):
+  """Tests for the GoogleAdsCommonFilter utility."""
+
+  def setUp(self):
+    self.filter = googleads.util.GetGoogleAdsCommonFilter()
+    self.omitted_text = 'OMITTED'
+    self.dev_token_template = ('<tns:developerToken>%s</tns:developerToken>')
+
+  def testGetGoogleAdsCommonFilter(self):
+    self.assertIs(self.filter, googleads.util.GetGoogleAdsCommonFilter())
+
+  def testFilterAtInfoLevel(self):
+    record = mock.Mock()
+    record.levelno = logging.INFO
+    record.args = [self.dev_token_template % 'test']
+    self.filter.filter(record)
+    self.assertEqual(
+        record.args, (self.dev_token_template % self.omitted_text,))
+
+  def testFilterAtUnfilteredLevel(self):
+    expected_args = (1, 2, 3, 4, 5)
+    record = mock.Mock()
+    record.levelno = logging.DEBUG
+    record.args = expected_args
+    self.filter.filter(record)
+    self.assertEqual(record.args, expected_args)
+
+
+class SudsClientFilterTest(unittest.TestCase):
+  """Tests for the SudsClientFilter utility."""
+
+  def setUp(self):
+    self.filter = googleads.util.GetSudsClientFilter()
+    self.omitted_text = 'OMITTED'
+    self.dev_token_template = 'DevToken'
+    self.location = 'https://www.google.com'
+    test_dir = os.path.dirname(__file__)
+    with open(os.path.join(
+        test_dir, 'test_data/request_envelope_template.txt'), 'r') as handler:
+      self.test_request_envelope_template = handler.read()
+
+  def testGetSudsClientFilter(self):
+    self.assertIs(self.filter, googleads.util.GetSudsClientFilter())
+
+  def testFilterWithSudsClientSOAPMessage(self):
+    record = mock.Mock()
+    soapenv = mock.Mock()
+    soapenv.str.return_value = (self.test_request_envelope_template
+                                % self.dev_token_template)
+    record.msg = 'sending to (%s)\nmessage:\n%s'
+    record.args = [self.location, soapenv]
+    self.filter.filter(record)
+    self.assertEqual(record.args, (self.location,
+                                   (self.test_request_envelope_template
+                                    % self.omitted_text)))
+
+  def testFilterWithSudsClientHeadersMessage(self):
+    record = mock.Mock()
+    record.msg = 'headers = %s'
+    record.args = {'Content-Type': 'text/xml; charset=utf-8',
+                   'Authorization': 'Bearer abc123doremi'}
+    expected_args = {'Content-Type': 'text/xml; charset=utf-8',
+                     'Authorization': self.omitted_text}
+    self.filter.filter(record)
+    self.assertEqual(record.args, expected_args)
+
+
+class SudsTransportFilterTest(unittest.TestCase):
+  """Tests for the SudsTransportFilter utility."""
+
+  def setUp(self):
+    self.filter = googleads.util.GetSudsTransportFilter()
+    self.omitted_text = 'OMITTED'
+    self.dev_token_template = 'DevToken'
+    self.location = 'https://www.google.com'
+    test_dir = os.path.dirname(__file__)
+    with open(os.path.join(
+        test_dir, 'test_data/request_envelope_template.txt'), 'r') as handler:
+      self.test_request_envelope_template = handler.read()
+
+  def testGetSudsTransportFilter(self):
+    self.assertIs(self.filter, googleads.util.GetSudsTransportFilter())
+
+  def testFilterSudsTransportRequest(self):
+    request_instance = suds.transport.Request('https://www.google.com')
+    request_instance.headers = {'User-Agent': 'user-agent',
+                                'Authorization': 'abc123doremi'}
+    request_instance.message = (self.test_request_envelope_template %
+                                self.dev_token_template)
+    expected_headers = {'User-Agent': 'user-agent',
+                        'Authorization': self.omitted_text}
+    record = mock.Mock()
+    record.args = (request_instance,)
+    self.filter.filter(record)
+    self.assertEqual(record.args[0].headers, expected_headers)
+    self.assertEqual(record.args[0].message,
+                     self.test_request_envelope_template % self.omitted_text)
 
 
 if __name__ == '__main__':

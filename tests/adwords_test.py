@@ -292,38 +292,41 @@ class AdWordsClientTest(unittest.TestCase):
       self.assertEquals(client.user_agent, 'unknown')
 
   def testGetService_success(self):
-    version = CURRENT_VERSION
-    service = googleads.adwords._SERVICE_MAP[version].keys()[0]
-    namespace = googleads.adwords._SERVICE_MAP[version][service]
-    mock_transport_instance = mock.Mock()
-
+    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
     server = 'https://testing.test.com/'
-    with mock.patch('suds.client.Client') as mock_client:
-      with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
-                     ) as mock_transport:
-        mock_transport.return_value = mock_transport_instance
-        suds_service = self.aw_client.GetService(
-            service, version, server)
 
-        mock_client.assert_called_once_with(
-            'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
-            % (namespace, version, service), cache=self.cache,
-            transport=mock_transport_instance, timeout=3600)
+    with mock.patch('googleads.common.LoggingMessagePlugin') as mock_plugin:
+      with mock.patch('suds.client.Client') as mock_client:
+        with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
+                       ) as mock_transport:
+          mock_plugin.return_value = mock.Mock()
+          mock_transport.return_value = mock.Mock()
+          client = GetAdWordsClient()
+          suds_service = client.GetService(
+              service, CURRENT_VERSION, server)
+
+          mock_client.assert_called_once_with(
+              'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
+              % (namespace, CURRENT_VERSION, service), cache=self.cache,
+              transport=mock_transport.return_value, timeout=3600,
+              plugins=[mock_plugin.return_value])
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
     # Use the default server without a proxy.
     with mock.patch('suds.client.Client') as mock_client:
       with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
                      ) as mock_transport:
-        mock_transport.return_value = mock_transport_instance
-        suds_service = self.adwords_client.GetService(service, version)
+        mock_transport.return_value = mock.Mock()
+        suds_service = client.GetService(service, CURRENT_VERSION)
 
         mock_client.assert_called_once_with(
             'https://adwords.google.com/api/adwords/%s/%s/%s?wsdl'
-            % (namespace, version, service), cache=self.cache,
-            transport=mock_transport_instance, timeout=3600)
+            % (namespace, CURRENT_VERSION, service), cache=self.cache,
+            transport=mock_transport.return_value, timeout=3600,
+            plugins=[mock_plugin.return_value])
         self.assertFalse(mock_client.return_value.set_options.called)
         self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 

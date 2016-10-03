@@ -1,3 +1,11 @@
+4.6.1 -- 9/30/16:
+* Added support for AdWords v201609.
+* The library now automatically applies filters to log output to sanitize its
+  contents of sensitive data. For more details on how to configure logging or
+  disable log filtering, see the README.
+* The library will now log warnings if it detects that it is being run with
+  Python versions below 2.7.9.
+
 4.5.1 -- 8/30/2016:
 * Resolved issue #148:
   https://github.com/googleads/googleads-python-lib/issues/148

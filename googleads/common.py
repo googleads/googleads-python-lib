@@ -17,6 +17,7 @@
 
 from functools import wraps
 import inspect
+import logging
 import os
 import ssl
 import sys
@@ -43,13 +44,28 @@ except ImportError:
   pass
 
 
-VERSION = '4.5.1'
+logging.getLogger('suds.client').addFilter(googleads.util.GetSudsClientFilter())
+logging.getLogger('suds.transport.http').addFilter(
+    googleads.util.GetSudsTransportFilter())
+_logger = logging.getLogger(__name__)
+_logger.addFilter(googleads.util.GetGoogleAdsCommonFilter())
+
+_PY_VERSION_MAJOR = sys.version_info.major
+_PY_VERSION_MINOR = sys.version_info.minor
+_PY_VERSION_MICRO = sys.version_info.micro
+_DEPRECATED_VERSION_TEMPLATE = (
+    'This library is being run by an unsupported Python version (%s.%s.%s). In '
+    'order to benefit from important security improvements and ensure '
+    'compatibility with this library, upgrade to Python 2.7.9 or higher.')
+
+
+VERSION = '4.6.1'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'
 _PROXY_CONFIG_KEY = 'proxy_config'
-_PYTHON_VERSION = 'Python/%d.%d.%d' % (sys.version_info[0], sys.version_info[1],
-                                       sys.version_info[2])
+_PYTHON_VERSION = 'Python/%d.%d.%d' % (
+    _PY_VERSION_MAJOR, _PY_VERSION_MINOR, _PY_VERSION_MICRO)
 
 # The keys in the authentication dictionary that are used to construct OAuth2
 # credentials.
@@ -117,6 +133,15 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
     information necessary to instantiate a client object - either a
     required_client_values key was missing or an OAuth2 key was missing.
   """
+  # Warn users on deprecated Python versions on initialization.
+  if _PY_VERSION_MAJOR == 2:
+    if _PY_VERSION_MINOR == 7 and _PY_VERSION_MICRO < 9:
+      _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
+                      _PY_VERSION_MINOR, _PY_VERSION_MICRO)
+    elif _PY_VERSION_MINOR < 7:
+      _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
+                      _PY_VERSION_MINOR, _PY_VERSION_MICRO)
+
   if not os.path.isabs(path):
     path = os.path.expanduser(path)
   try:
@@ -613,8 +638,13 @@ class SudsServiceProxy(object):
     def MakeSoapRequest(*args):
       """Perform a SOAP call."""
       self._header_handler.SetHeaders(self.suds_client)
-      return soap_service_method(*[_PackForSuds(arg, self.suds_client.factory)
-                                   for arg in args])
+      try:
+        return soap_service_method(*[_PackForSuds(arg, self.suds_client.factory)
+                                     for arg in args])
+      except suds.WebFault as e:
+        _logger.error('Server raised fault in response.')
+        _logger.info('Failure response:\n%s', e.document)
+        raise e
 
     return MakeSoapRequest
 
@@ -625,3 +655,10 @@ class HeaderHandler(object):
   def SetHeaders(self, client):
     """Sets the SOAP and HTTP headers on the given suds client."""
     raise NotImplementedError('You must subclass HeaderHandler.')
+
+
+class LoggingMessagePlugin(suds.plugin.MessagePlugin):
+  """A MessagePlugin used to log request summaries."""
+
+  def sending(self, context):
+    _logger.info('Request made.')
