@@ -1166,7 +1166,9 @@ class ReportDownloader(object):
     self._marshaller = suds.mx.literal.Literal(schema)
 
   def _DownloadReportCheckFormat(self, file_format, output):
-    is_binary_mode = getattr(output, 'mode', 'w') == 'wb'
+    mode = getattr(output, 'mode', 'w')
+    # Check for binary and write mode
+    is_binary_mode = 'b' in mode and ('+' in mode or 'w' in mode)
     if (file_format.startswith('GZIPPED_')
         and not (is_binary_mode or type(output) is io.BytesIO)):
       raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
