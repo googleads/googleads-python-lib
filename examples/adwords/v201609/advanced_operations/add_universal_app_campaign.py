@@ -41,6 +41,9 @@ def main(client):
   # Create the Universal App campaign.
   universal_app_campaign = {
       'name': 'Interplanetary Cruise App #%s' % uuid.uuid4(),
+      # Recommendation: Set the campaign to PAUSED when creating it to stop the
+      # ads from immediately serving. Set to ENABLED once you've added targeting
+      # and the ads are ready to serve.
       'status': 'PAUSED',
       'advertisingChannelType': 'MULTI_CHANNEL',
       'advertisingChannelSubType': 'UNIVERSAL_APP_CAMPAIGN',

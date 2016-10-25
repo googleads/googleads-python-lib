@@ -201,7 +201,8 @@ class GoogleServiceAccountTest(unittest.TestCase):
     self.mock_oauth2_credentials.apply = mock.Mock(side_effect=apply)
     self.mock_oauth2_credentials.refresh = mock.Mock(side_effect=refresh)
     with mock.patch('__builtin__.open', fake_open):
-      with mock.patch('oauth2client.client.SignedJwtAssertionCredentials',
+      with mock.patch('oauth2client.client'
+                      '.SignedJwtAssertionCredentials',
                       self.oauth2_credentials):
         self.googleads_client = googleads.oauth2.GoogleServiceAccountClient(
             self.scope, self.service_account_email, key_file_path,
@@ -241,7 +242,8 @@ class GoogleServiceAccountTest(unittest.TestCase):
     See: https://github.com/googleads/googleads-python-lib/issues/123
     """
     with mock.patch('__builtin__.open'):
-      with mock.patch('oauth2client.client.SignedJwtAssertionCredentials',
+      with mock.patch('oauth2client.client'
+                      '.SignedJwtAssertionCredentials',
                       self.oauth2_credentials):
         googleads.oauth2.GoogleServiceAccountClient(
             self.scope, self.service_account_email, '/dev/null',

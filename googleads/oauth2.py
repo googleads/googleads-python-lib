@@ -14,8 +14,10 @@
 """OAuth2 integration for the googleads library.
 
 This module provides a basic interface which the googleads library uses to
-authorize API requests and some simple implementations built on oauth2client. If
-our OAuth2 workflows doesn't meet your requirements, you can implement this
+authorize API requests and some simple implementations built on
+oauth2client.
+
+If our OAuth2 workflows doesn't meet your requirements, you can implement this
 interface in your own way. For example, you could pull credentials from a shared
 server and/or centralize refreshing credentials to prevent every Python process
 from independently refreshing the credentials.
@@ -195,10 +197,12 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
       raise googleads.errors.GoogleAdsValueError('The specified key file (%s)'
                                                  ' does not exist.' % key_file)
 
-    self.oauth2credentials = oauth2client.client.SignedJwtAssertionCredentials(
-        client_email, private_key, scope,
-        private_key_password=private_key_password, user_agent=self._USER_AGENT,
-        token_uri=self._GOOGLE_OAUTH2_ENDPOINT, sub=sub)
+    self.oauth2credentials = (
+        oauth2client.client.SignedJwtAssertionCredentials(
+            client_email, private_key, scope,
+            private_key_password=private_key_password,
+            user_agent=self._USER_AGENT, token_uri=self._GOOGLE_OAUTH2_ENDPOINT,
+            sub=sub))
     self.proxy_config = (proxy_config if proxy_config else
                          googleads.common.ProxyConfig())
     self.Refresh()

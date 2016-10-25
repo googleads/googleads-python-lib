@@ -59,6 +59,9 @@ def main(client):
       'operator': 'ADD',
       'operand': {
           'name': 'Interplanetary Cruise #%s' % uuid.uuid4(),
+          # Recommendation: Set the campaign to PAUSED when creating it to
+          # stop the ads from immediately serving. Set to ENABLED once you've
+          # added targeting and the ads are ready to serve.
           'status': 'PAUSED',
           'advertisingChannelType': 'SEARCH',
           'biddingStrategyConfiguration': {

@@ -14,9 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example uploads an image.
-
-To get images, run get_all_images.py.
+"""This example accepts a pending Google Merchant Center invitation link.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -26,41 +24,39 @@ section of our README.
 """
 
 
-import base64
 from googleads import adwords
 
 
-IMAGE_FILENAME = 'INSERT_IMAGE_PATH_HERE'
+SERVICE_LINK_ID = 'INSERT_SERVICE_LINK_ID_HERE'
 
 
-def main(client, image_filename):
+def main(client, service_link_id):
   # Initialize appropriate service.
-  media_service = client.GetService('MediaService', version='v201603')
+  customer_service = client.GetService(
+      'CustomerService', version='v201609')
 
-  with open(image_filename, 'r') as image_handle:
-    image_data = base64.encodestring(image_handle.read())
-
-  # Construct media and upload image.
-  media = [{
-      'xsi_type': 'Image',
-      'data': image_data,
-      'type': 'IMAGE'
+  # Create the operation to set the status to ACTIVE.
+  operations = [{
+      'operator': 'SET',
+      'operand': {
+          'serviceLinkId': service_link_id,
+          'serviceType': 'MERCHANT_CENTER',
+          'linkStatus': 'ACTIVE',
+      }
   }]
-  media = media_service.upload(media)[0]
+
+  # Update the service link.
+  mutated_service_links = customer_service.mutateServiceLinks(operations)
 
   # Display results.
-  if media:
-    dimensions = dict([(entry['key'], entry['value'])
-                       for entry in media['dimensions']])
-    print ('Image with id \'%s\', dimensions \'%sx%s\', and MimeType \'%s\' was'
-           ' uploaded.' % (media['mediaId'], dimensions['FULL']['height'],
-                           dimensions['FULL']['width'], media['mimeType']))
-  else:
-    print 'No images were uploaded.'
+  for mutated_service_link in mutated_service_links:
+    print ('Service link with service link ID \'%s\', type \'%s\' was updated '
+           'to status: \'%s\'.' % (mutated_service_link['serviceLinkId'],
+                                   mutated_service_link['serviceType'],
+                                   mutated_service_link['linkStatus']))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-
-  main(adwords_client, IMAGE_FILENAME)
+  main(adwords_client, SERVICE_LINK_ID)

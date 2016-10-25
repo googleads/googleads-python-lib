@@ -315,6 +315,9 @@ def BuildCampaignOperations(batch_job_helper,
           'xsi_type': 'CampaignOperation',
           'operand': {
               'name': 'Batch Campaign #%s' % uuid.uuid4(),
+              # Recommendation: Set the campaign to PAUSED when creating it to
+              # stop the ads from immediately serving. Set to ENABLED once
+              # you've added targeting and the ads are ready to serve.
               'status': 'PAUSED',
               # This is a temporary Id used by the BatchJobService to identify
               # the Campaigns for operations that require a campaignId.

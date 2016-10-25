@@ -1,3 +1,6 @@
+4.7.0 -- 10/25/16:
+* Removed support for AdWords v201603.
+
 4.6.1 -- 9/30/16:
 * Added support for AdWords v201609.
 * The library now automatically applies filters to log output to sanitize its
