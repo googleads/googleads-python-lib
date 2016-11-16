@@ -588,6 +588,9 @@ class BatchJobHelper(object):
         'AdGroupCriterionLabelOperation': _OPERATION(
             'AdGroupCriterionLabelOperation', 'AdGroupCriterionService',
             'mutateLabel'),
+        'AdGroupExtensionSettingOperation': _OPERATION(
+            'AdGroupExtensionSettingOperation', 'AdGroupExtensionSettingService',
+            'mutate'),
         'AdGroupOperation': _OPERATION('AdGroupOperation', 'AdGroupService',
                                        'mutate'),
         'AdGroupLabelOperation': _OPERATION('AdGroupLabelOperation',
