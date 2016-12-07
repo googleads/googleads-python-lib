@@ -55,7 +55,7 @@ def main(client, key_name):
     response = custom_targeting_service.getCustomTargetingKeysByStatement(
         statement.ToStatement())
     if 'results' in response:
-      key_ids = [key['id'] for key in response['results']]
+      key_ids = [str(key['id']) for key in response['results']]
       action = {'xsi_type': 'DeleteCustomTargetingKeys'}
       key_query = 'WHERE id IN (%s)' % ', '.join(key_ids)
       key_statement = dfp.FilterStatement(key_query)

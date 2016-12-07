@@ -228,6 +228,25 @@ class AdWordsClient(object):
   _SOAP_SERVICE_FORMAT = '%s/api/adwords/%s/%s/%s?wsdl'
 
   @classmethod
+  def LoadFromString(cls, yaml_doc):
+    """Creates an AdWordsClient with information stored in a yaml string.
+
+    Args:
+      yaml_doc: The yaml string containing the cached AdWords data.
+
+    Returns:
+      An AdWordsClient initialized with the values cached in the string.
+
+    Raises:
+      A GoogleAdsValueError if the given yaml string does not contain the
+      information necessary to instantiate a client object - either a
+      required key was missing or an OAuth2 key was missing.
+    """
+    return cls(**googleads.common.LoadFromString(
+        yaml_doc, cls._YAML_KEY, cls._REQUIRED_INIT_VALUES,
+        cls._OPTIONAL_INIT_VALUES))
+
+  @classmethod
   def LoadFromStorage(cls, path=None):
     """Creates an AdWordsClient with information stored in a yaml file.
 
@@ -588,6 +607,9 @@ class BatchJobHelper(object):
         'AdGroupCriterionLabelOperation': _OPERATION(
             'AdGroupCriterionLabelOperation', 'AdGroupCriterionService',
             'mutateLabel'),
+        'AdGroupExtensionSettingOperation': _OPERATION(
+            'AdGroupExtensionSettingOperation',
+            'AdGroupExtensionSettingService', 'mutate'),
         'AdGroupOperation': _OPERATION('AdGroupOperation', 'AdGroupService',
                                        'mutate'),
         'AdGroupLabelOperation': _OPERATION('AdGroupLabelOperation',
@@ -596,10 +618,16 @@ class BatchJobHelper(object):
                                       'mutate'),
         'CampaignCriterionOperation': _OPERATION(
             'CampaignCriterionOperation', 'CampaignCriterionService', 'mutate'),
+        'CampaignExtensionSettingOperation': _OPERATION(
+            'CampaignExtensionSettingOperation',
+            'CampaignExtensionSettingService', 'mutate'),
         'CampaignOperation': _OPERATION('CampaignOperation',
                                         'CampaignService', 'mutate'),
         'CampaignLabelOperation': _OPERATION('CampaignLabelOperation',
                                              'CampaignService', 'mutateLabel'),
+        'CustomerExtensionSettingOperation': _OPERATION(
+            'CustomerExtensionSettingOperation',
+            'CustomerExtensionSettingService', 'mutate'),
         'FeedItemOperation': _OPERATION('FeedItemOperation', 'FeedItemService',
                                         'mutate')
     }
@@ -1056,7 +1084,7 @@ class IncrementalUploadHelper(object):
       self._url_opener.open(req)
     except urllib2.HTTPError as e:
       if e.code != 308:
-        raise urllib2.HTTPError(e)
+        raise
     # Update upload status.
     self._current_content_length += len(req.data)
     self._is_last = is_last
@@ -1120,9 +1148,11 @@ class ReportDownloader(object):
     self._marshaller = suds.mx.literal.Literal(schema)
 
   def _DownloadReportCheckFormat(self, file_format, output):
-    is_binary_mode = getattr(output, 'mode', 'w') == 'wb'
+    mode = getattr(output, 'mode', 'w')
+    is_valid_gzip_mode = 'b' in mode and ('+' in mode or 'w' in mode)
+
     if (file_format.startswith('GZIPPED_')
-        and not (is_binary_mode or type(output) is io.BytesIO)):
+        and not (is_valid_gzip_mode or type(output) is io.BytesIO)):
       raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
                                                  ' output for GZIPPED formats.')
 

@@ -265,6 +265,7 @@ class AdWordsClientTest(unittest.TestCase):
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.adwords_client, CURRENT_VERSION)
 
+
   def testLoadFromStorage(self):
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient.Refresh'):
       self.assertIsInstance(googleads.adwords.AdWordsClient.LoadFromStorage(
@@ -1472,6 +1473,26 @@ class ReportDownloaderTest(unittest.TestCase):
     self.assertRaises(googleads.errors.GoogleAdsValueError,
                       self.report_downloader._DownloadReportCheckFormat,
                       'GZIPPED_CSV', output_file)
+
+  def testDownloadReportCheckFormat_Issue152(self):
+    output_file = io.StringIO()
+    output_file.mode = 'w+b'  # Verify writing and reading works.
+
+    try:
+      self.report_downloader._DownloadReportCheckFormat(
+          'GZIPPED_CSV', output_file)
+    except googleads.errors.GoogleAdsValueError:
+      self.fail('_DownloadReportCheckFormat raised GoogleAdsValueError'
+                'unexpectedly!')
+
+    output_file.mode = 'r+b'  # Verify reading and writing works.
+
+    try:
+      self.report_downloader._DownloadReportCheckFormat(
+          'GZIPPED_CSV', output_file)
+    except googleads.errors.GoogleAdsValueError:
+      self.fail('_DownloadReportCheckFormat raised GoogleAdsValueError'
+                'unexpectedly!')
 
   def testDownloadReport_failure(self):
     output_file = io.StringIO()

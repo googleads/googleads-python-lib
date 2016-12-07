@@ -39,48 +39,6 @@ SUGGESTED_PAGE_LIMIT = 500
 _CHUNK_SIZE = 16 * 1024
 # A giant dictionary of DFP versions and the services they support.
 _SERVICE_MAP = {
-    'v201508':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
-         'CompanyService', 'ContactService', 'ContentBundleService',
-         'ContentMetadataKeyHierarchyService', 'ContentService',
-         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
-         'CreativeWrapperService', 'CustomFieldService',
-         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
-         'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
-         'OrderService', 'PackageService', 'PlacementService',
-         'PremiumRateService', 'ProductService', 'ProductPackageService',
-         'ProductPackageItemService', 'ProductTemplateService',
-         'ProposalLineItemService', 'ProposalService',
-         'PublisherQueryLanguageService', 'RateCardService',
-         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
-         'ReconciliationLineItemReportService',
-         'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
-         'SuggestedAdUnitService', 'TeamService', 'UserService',
-         'UserTeamAssociationService', 'WorkflowRequestService'),
-    'v201511':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
-         'CompanyService', 'ContactService', 'ContentBundleService',
-         'ContentMetadataKeyHierarchyService', 'ContentService',
-         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
-         'CreativeWrapperService', 'CustomFieldService',
-         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
-         'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
-         'OrderService', 'PackageService', 'PlacementService',
-         'PremiumRateService', 'ProductService', 'ProductPackageService',
-         'ProductPackageItemService', 'ProductTemplateService',
-         'ProposalLineItemService', 'ProposalService',
-         'PublisherQueryLanguageService', 'RateCardService',
-         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
-         'ReconciliationLineItemReportService',
-         'ReconciliationReportService', 'ReportService', 'SharedAdUnitService',
-         'SuggestedAdUnitService', 'TeamService', 'UserService',
-         'UserTeamAssociationService', 'WorkflowRequestService'),
     'v201602':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
@@ -144,6 +102,27 @@ _SERVICE_MAP = {
          'ReconciliationReportService', 'ReportService',
          'SuggestedAdUnitService', 'TeamService', 'UserService',
          'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201611':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CompanyService', 'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService',
+         'MobileApplicationService', 'NetworkService', 'OrderService',
+         'PackageService', 'PlacementService', 'PremiumRateService',
+         'ProductService', 'ProductPackageService', 'ProductPackageItemService',
+         'ProductTemplateService', 'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationLineItemReportService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
 }
 
 
@@ -173,6 +152,25 @@ class DfpClient(object):
   # The format of SOAP service WSDLs. A server, version, and service name need
   # to be formatted in.
   _SOAP_SERVICE_FORMAT = '%s/apis/ads/publisher/%s/%s?wsdl'
+
+  @classmethod
+  def LoadFromString(cls, yaml_doc):
+    """Creates a DfpClient with information stored in a yaml string.
+
+    Args:
+      yaml_doc: The yaml string containing the cached DFP data.
+
+    Returns:
+      A DfpClient initialized with the values cached in the yaml string.
+
+    Raises:
+      A GoogleAdsValueError if the given yaml string does not contain the
+      information necessary to instantiate a client object - either a
+      required key was missing or an OAuth2 key was missing.
+    """
+    return cls(**googleads.common.LoadFromString(
+        yaml_doc, cls._YAML_KEY, cls._REQUIRED_INIT_VALUES,
+        cls._OPTIONAL_INIT_VALUES))
 
   @classmethod
   def LoadFromStorage(cls, path=None):

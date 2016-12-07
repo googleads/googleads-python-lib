@@ -72,7 +72,7 @@ def main(client):
   # Create custom targeting value objects.
   values = [
       {
-          'customTargetingKeyId': keys['id'],
+          'customTargetingKeyId': keys[0]['id'],
           'displayName': 'male',
           # Name is set to 1 so that the actual name can be hidden from website
           # users.
@@ -80,7 +80,7 @@ def main(client):
           'matchType': 'EXACT'
       },
       {
-          'customTargetingKeyId': keys['id'],
+          'customTargetingKeyId': keys[0]['id'],
           'displayName': 'female',
           # Name is set to 2 so that the actual name can be hidden from website
           # users.

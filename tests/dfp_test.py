@@ -156,6 +156,16 @@ class DfpClientTest(unittest.TestCase):
         self.oauth2_client, self.application_name, self.network_code,
         proxy_config=self.proxy_config, cache=self.cache)
 
+  def testLoadFromString(self):
+    with mock.patch('googleads.common.LoadFromString') as mock_load:
+      mock_load.return_value = {
+          'network_code': 'abcdEFghIjkLMOpqRs',
+          'oauth2_client': True,
+          'application_name': 'unit testing'
+      }
+      self.assertIsInstance(googleads.dfp.DfpClient.LoadFromString(''),
+                            googleads.dfp.DfpClient)
+
   def testLoadFromStorage(self):
     with mock.patch('googleads.common.LoadFromStorage') as mock_load:
       mock_load.return_value = {
@@ -165,6 +175,8 @@ class DfpClientTest(unittest.TestCase):
       }
       self.assertIsInstance(googleads.dfp.DfpClient.LoadFromStorage(),
                             googleads.dfp.DfpClient)
+
+
 
   def testInitializeWithDefaultApplicationName(self):
     self.application_name = 'INSERT_APPLICATION_NAME_HERE'
