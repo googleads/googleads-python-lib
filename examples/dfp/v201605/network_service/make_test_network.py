@@ -37,7 +37,7 @@ def main(client):
   network_service = client.GetService('NetworkService', version='v201605')
 
   # Create a test network.
-  network = network_service.MakeTestNetwork()
+  network = network_service.makeTestNetwork()
 
   # Display results.
   print ('Test network with network code \'%s\' and display name \'%s\' '

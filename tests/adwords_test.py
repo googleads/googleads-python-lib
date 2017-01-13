@@ -31,6 +31,7 @@ import googleads.adwords
 import googleads.common
 import googleads.errors
 import mock
+import suds
 
 
 PYTHON2 = sys.version_info[0] == 2
@@ -77,6 +78,7 @@ def GetAdWordsClient(**kwargs):
   client = googleads.adwords.AdWordsClient(
       dev_token, oauth2_client, user_agent,
       client_customer_id=client_customer_id,
+      cache=kwargs.get('cache'),
       proxy_config=kwargs.get('proxy_config'),
       validate_only=validate_only, partial_failure=partial_failure,
       report_downloader_headers=report_downloader_headers)
@@ -132,13 +134,14 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     self.user_agent = 'user agent!'
     self.validate_only = True
     self.partial_failure = False
+    self.enable_compression = False
     self.aw_client = GetAdWordsClient(
         ccid=self.ccid, dev_token=self.dev_token, user_agent=self.user_agent,
         oauth2_client=self.oauth2_client, validate_only=self.validate_only,
         partial_failure=self.partial_failure,
         report_downloader_headers=self.report_downloader_headers)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
-        self.aw_client, CURRENT_VERSION)
+        self.aw_client, CURRENT_VERSION, self.enable_compression)
 
   def testSetHeaders(self):
     suds_client = mock.Mock()
@@ -258,12 +261,13 @@ class AdWordsClientTest(unittest.TestCase):
     self.https_proxy_port = 443
     self.proxy_config = GetProxyConfig(https_host=self.https_proxy_host,
                                        https_port=self.https_proxy_port)
-    self.cache = None
+    self.file_cache = suds.cache.FileCache
+    self.no_cache = suds.cache.NoCache
     self.adwords_client = GetAdWordsClient()
     self.aw_client = GetAdWordsClient(
         proxy_config=self.proxy_config)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
-        self.adwords_client, CURRENT_VERSION)
+        self.adwords_client, CURRENT_VERSION, False)
 
 
   def testLoadFromStorage(self):
@@ -271,6 +275,23 @@ class AdWordsClientTest(unittest.TestCase):
       self.assertIsInstance(googleads.adwords.AdWordsClient.LoadFromStorage(
           path=self.load_from_storage_path),
                             googleads.adwords.AdWordsClient)
+
+  def testLoadFromStorageWithCompressionEnabled(self):
+    enable_compression = True
+    user_agent_gzip_template = '%s (gzip)'
+    default_user_agent = 'unit testing'
+
+    with mock.patch('googleads.common.LoadFromStorage') as mock_load:
+      mock_load.return_value = {
+          'developer_token': 'abcdEFghIjkLMOpqRs',
+          'oauth2_client': mock.Mock(),
+          'user_agent': default_user_agent,
+          'enable_compression': enable_compression
+      }
+      client = googleads.adwords.AdWordsClient.LoadFromStorage()
+      self.assertEqual(enable_compression, client.enable_compression)
+      self.assertEqual(user_agent_gzip_template % default_user_agent,
+                       client.user_agent)
 
   def testLoadFromStorageWithNonASCIIUserAgent(self):
     with mock.patch('googleads.common.LoadFromStorage') as mock_load:
@@ -311,25 +332,79 @@ class AdWordsClientTest(unittest.TestCase):
 
           mock_client.assert_called_once_with(
               'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
-              % (namespace, CURRENT_VERSION, service), cache=self.cache,
+              % (namespace, CURRENT_VERSION, service),
               transport=mock_transport.return_value, timeout=3600,
               plugins=[mock_plugin.return_value])
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
-    # Use the default server without a proxy.
-    with mock.patch('suds.client.Client') as mock_client:
-      with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
-                     ) as mock_transport:
-        mock_transport.return_value = mock.Mock()
-        suds_service = client.GetService(service, CURRENT_VERSION)
+  def testGetService_successWithFileCache(self):
+    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
+    # Use a custom server. Also test what happens if the server ends with a
+    # trailing slash
+    server = 'https://testing.test.com/'
 
-        mock_client.assert_called_once_with(
-            'https://adwords.google.com/api/adwords/%s/%s/%s?wsdl'
-            % (namespace, CURRENT_VERSION, service), cache=self.cache,
-            transport=mock_transport.return_value, timeout=3600,
-            plugins=[mock_plugin.return_value])
-        self.assertFalse(mock_client.return_value.set_options.called)
-        self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+    with mock.patch('googleads.common.LoggingMessagePlugin') as mock_plugin:
+      with mock.patch('suds.client.Client') as mock_client:
+        with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
+                       ) as mock_transport:
+          mock_plugin.return_value = mock.Mock()
+          mock_transport.return_value = mock.Mock()
+          client = GetAdWordsClient(cache=self.file_cache)
+          suds_service = client.GetService(
+              service, CURRENT_VERSION, server)
+
+          mock_client.assert_called_once_with(
+              'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
+              % (namespace, CURRENT_VERSION, service),
+              transport=mock_transport.return_value, timeout=3600,
+              cache=self.file_cache, plugins=[mock_plugin.return_value])
+      self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+
+  def testGetService_successWithNoCache(self):
+    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
+    # Use a custom server. Also test what happens if the server ends with a
+    # trailing slash
+    server = 'https://testing.test.com/'
+
+    with mock.patch('googleads.common.LoggingMessagePlugin') as mock_plugin:
+      with mock.patch('suds.client.Client') as mock_client:
+        with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
+                       ) as mock_transport:
+          mock_plugin.return_value = mock.Mock()
+          mock_transport.return_value = mock.Mock()
+          client = GetAdWordsClient(cache=self.no_cache)
+          suds_service = client.GetService(
+              service, CURRENT_VERSION, server)
+
+          mock_client.assert_called_once_with(
+              'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
+              % (namespace, CURRENT_VERSION, service),
+              transport=mock_transport.return_value, timeout=3600,
+              cache=self.no_cache, plugins=[mock_plugin.return_value])
+      self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+
+  def testGetService_successWithoutProxy(self):
+    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
+
+    # Use the default server without a proxy.
+    with mock.patch('googleads.common.LoggingMessagePlugin') as mock_plugin:
+      with mock.patch('suds.client.Client') as mock_client:
+        with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
+                       ) as mock_transport:
+          mock_transport.return_value = mock.Mock()
+          client = GetAdWordsClient()
+          suds_service = client.GetService(service, CURRENT_VERSION)
+
+          mock_client.assert_called_once_with(
+              'https://adwords.google.com/api/adwords/%s/%s/%s?wsdl'
+              % (namespace, CURRENT_VERSION, service),
+              transport=mock_transport.return_value, timeout=3600,
+              plugins=[mock_plugin.return_value])
+          self.assertFalse(mock_client.return_value.set_options.called)
+          self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_badService(self):
     version = CURRENT_VERSION
@@ -342,6 +417,17 @@ class AdWordsClientTest(unittest.TestCase):
     self.assertRaises(
         googleads.errors.GoogleAdsValueError, self.adwords_client.GetService,
         'CampaignService', '11111')
+
+  def testGetService_compressionEnabled(self):
+    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    client = GetAdWordsClient()
+    client.enable_compression = True
+
+    with mock.patch('suds.client.Client'):
+      with mock.patch('googleads.adwords._AdWordsHeaderHandler') as mock_h:
+        client.GetService(service, CURRENT_VERSION)
+        mock_h.assert_called_once_with(client, CURRENT_VERSION,
+                                       client.enable_compression)
 
   def testGetBatchJobHelper(self):
     with mock.patch('googleads.adwords.BatchJobHelper') as mock_helper:

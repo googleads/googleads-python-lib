@@ -1,3 +1,26 @@
+5.0.0 -- 1/13/17:
+* BREAKING CHANGE: The underlying suds client now has cache enabled. By default,
+  suds uses FileCache which requires access to local file system and will break
+  users using Google App Engine. For more details on how to configure or disable
+  caching, see the README.
+* The library will now automatically apply a monkey patch to the suds-jurko
+  dependency on initialization that will modify the suds.transport.http module.
+  The patch modifies HttpTransport's send method such that it can detect and
+  decompress a gzip encoded SOAP body.
+* Added new "enable_compression" optional keyword argument for AdWordsClient and
+  DfpClient. If set True, the client will request gzip compression and
+  automatically decompress the SOAP body for you. For more details on this
+  feature, see:
+  https://developers.google.com/adwords/api/docs/guides/bestpractices?hl=en#use_compression
+* Resolved issues:
+  Issue 77: https://github.com/googleads/googleads-python-lib/issues/77
+  Issue 97: https://github.com/googleads/googleads-python-lib/issues/97
+* Resolved pull requests:
+  PR 79: https://github.com/googleads/googleads-python-lib/pull/79
+  PR 81: https://github.com/googleads/googleads-python-lib/pull/81
+  PR 91: https://github.com/googleads/googleads-python-lib/pull/91
+  PR 99: https://github.com/googleads/googleads-python-lib/pull/99
+
 4.8.0 -- 11/29/16:
 * Added support for DFP v201611.
 * Removed support for DFP v201508 and v201511.

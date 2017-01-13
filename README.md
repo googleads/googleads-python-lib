@@ -162,6 +162,31 @@ suds_client.set_options(
 suds_client.service.mutate([operation])
 ```
 
+##How can I configure or disable caching for the suds client?
+
+By default, the suds clients are cached because reading and digesting the WSDL
+can be expensive. However, the default caching method requires permission to
+access a local file system that may not be available in certain hosting
+environments such as App Engine.
+
+You can pass an implementation of `suds.cache.Cache` to the `AdWordsClient` or
+`DfpClient` initializer to modify the default caching behavior.
+
+For example, configuring a different location and duration of the cache file:
+```python
+file_cache = suds.cache.FileCache(location=cache_path, days=2)
+adwords_client = adwords.AdWordsClient(
+  developer_token, oauth2_client, user_agent,
+  client_customer_id=client_customer_id, cache=file_cache)
+```
+
+You can also disable caching in similar fashion:
+```python
+adwords_client = adwords.AdWordsClient(
+  developer_token, oauth2_client, user_agent,
+  client_customer_id=client_customer_id, cache=suds.cache.NoCache)
+```
+
 ##Timeout Tips
 The requests sent by this library are sent via urllib, which is consequently
 where the timeout is set. If you set a system timeout elsewhere, the googleads

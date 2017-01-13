@@ -25,6 +25,7 @@ import threading
 import urllib2
 import warnings
 
+
 import httplib2
 import socks
 import suds
@@ -59,7 +60,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '4.8.0'
+VERSION = '5.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'
@@ -77,6 +78,10 @@ _OAUTH2_SERVICE_ACCT_KEYS = ('service_account_email',
 # construct a Proxy, HTTPSProxy, and ProxyConfig instances.
 # instance.
 _PROXY_KEYS = ('host', 'port')
+
+# A key used to configure the client to accept and automatically decompress
+# gzip encoded SOAP responses.
+ENABLE_COMPRESSION_KEY = 'enable_compression'
 
 # Global variables used to enable and store utility usage stats.
 _utility_registry = googleads.util.UtilityRegistry()
@@ -175,6 +180,9 @@ def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
   client_kwargs['proxy_config'] = proxy_config
   client_kwargs['oauth2_client'] = _ExtractOAuth2Client(
       product_yaml_key, product_data, proxy_config)
+
+  client_kwargs[ENABLE_COMPRESSION_KEY] = data.get(
+      ENABLE_COMPRESSION_KEY, False)
 
   for value in optional_product_values:
     if value in product_data:
@@ -688,12 +696,24 @@ class SudsServiceProxy(object):
       """Perform a SOAP call."""
       self._header_handler.SetHeaders(self.suds_client)
       try:
-        return soap_service_method(*[_PackForSuds(arg, self.suds_client.factory)
-                                     for arg in args])
+        return soap_service_method(
+            *[_PackForSuds(arg, self.suds_client.factory) for arg in args])
       except suds.WebFault as e:
         _logger.error('Server raised fault in response.')
         _logger.info('Failure response:\n%s', e.document)
-        raise e
+
+        # Before re-throwing the WebFault exception, an error object needs to be
+        # wrapped in a list for safe iteration.
+        fault = e.fault.detail.ApiExceptionFault
+        if not hasattr(fault, 'errors') or fault.errors is None:
+          e.fault.detail.ApiExceptionFault.errors = []
+          raise
+
+        obj = fault.errors
+        if not isinstance(obj, list):
+          fault.errors = [obj]
+
+        raise
 
     return MakeSoapRequest
 

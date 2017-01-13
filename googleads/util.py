@@ -14,9 +14,14 @@
 
 """Utilities used by the client library."""
 
+import gzip
+import io
 import logging
 import re
+import sys
 import threading
+import urllib2
+
 
 import suds
 
@@ -54,6 +59,7 @@ class PatchHelper(object):
   def Apply(self):
     """Apply patches used by the Google Ads Client Library."""
     self._ApplySudsJurkoAppenderPatch()
+    self._ApplySudsJurkoSendPatch()
 
   def _ApplySudsJurkoAppenderPatch(self):
     """Appends a Monkey Patch to the suds.mx.appender module.
@@ -71,6 +77,48 @@ class PatchHelper(object):
         suds.mx.appender.Appender.append(self, child, cont)
 
     suds.mx.appender.ObjectAppender.append = PatchedAppend
+
+  def _ApplySudsJurkoSendPatch(self):
+    """Appends a Monkey Patch to the suds.transport.http module.
+
+    This allows the suds library to decompress the SOAP body when compression is
+    enabled. For more details on SOAP Compression, see:
+    https://developers.google.com/adwords/api/docs/guides/bestpractices?hl=en#use_compression
+    """
+    def PatchedHttpTransportSend(self, request):
+      """Patch for HttpTransport.send to enable gzip compression."""
+      msg = request.message
+      url = request.url
+      headers = request.headers
+      u2request = urllib2.Request(url, msg, headers)
+      self.addcookies(u2request)
+      self.proxy = self.options.proxy
+      request.headers.update(u2request.headers)
+      suds.transport.http.log.debug('sending:\n%s', request)
+      fp = self.u2open(u2request)
+      self.getcookies(fp, u2request)
+      headers = (fp.headers.dict if sys.version_info < (3, 0) else fp.headers)
+
+      try:
+        result = suds.transport.Reply(200, headers, fp.read())
+      except urllib2.HTTPError, e:
+        if e.code in (202, 204):
+          result = None
+        else:
+          raise suds.transport.TransportError(e.msg, e.code, e.fp)
+
+      if result.headers.get('content-encoding') == 'gzip':
+        # If gzip encoding is used, decompress here.
+        stream = io.BytesIO()
+        stream.write(result.message)
+        stream.flush()
+        stream.seek(0)
+        result.message = gzip.GzipFile(fileobj=stream, mode='rb').read()
+
+      suds.transport.http.log.debug('received:\n%s', result)
+      return result
+
+    suds.transport.http.HttpTransport.send = PatchedHttpTransportSend
 
 
 class _AbstractDevTokenSOAPFilter(logging.Filter):

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example downloads a criteria performance report as a string with AWQL.
+"""This example downloads a criteria performance report as a stream with AWQL.
 
 To get report fields, run get_report_fields.py.
 

@@ -12,7 +12,7 @@ adwords:
   # partial_failure: True
   # validate_only: True
   #############################################################################
-  # OAuth2 Configuration                                                   #
+  # OAuth2 Configuration                                                      #
   # Below you may provide credentials for either the installed application or #
   # service account flows. Remove or comment the lines for the flow you're    #
   # not using.                                                                #
@@ -43,11 +43,13 @@ dfp:
   # Required Fields                                                           #
   #############################################################################
   application_name: INSERT_APPLICATION_NAME_HERE
-  # The following values are required for all services except NetworkService,
-  # unless the network code is set directly on the DfpClient object:
+  #############################################################################
+  # Optional Fields                                                           #
+  #############################################################################
+  # The network_code is required for all services except NetworkService:
   # network_code: INSERT_NETWORK_CODE_HERE
   #############################################################################
-  # OAuth2 Configuration                                                   #
+  # OAuth2 Configuration                                                      #
   # Below you may provide credentials for either the installed application or #
   # service account flows. Remove or comment the lines for the flow you're    #
   # not using.                                                                #
@@ -62,7 +64,18 @@ dfp:
   # path_to_private_key_file: INSERT_PATH_TO_FILE_HERE
 
 
-# Proxy configurations (optional)
+# Common configurations:
+###############################################################################
+# Compression (optional)                                                      #
+# Below you may specify whether to accept and automatically decompress gzip   #
+# encoded SOAP requests. By default, gzip compression is not enabled.         #
+###############################################################################
+# enable_compression: False
+###############################################################################
+# Proxy configurations (optional)                                             #
+# Below you may specify an HTTP or HTTPS Proxy to be used when making API     #
+# requests.                                                                   #
+###############################################################################
 # proxy_config:
   # If specified, the given cafile will only be used if certificate validation
   # is not disabled.
@@ -80,8 +93,10 @@ dfp:
     # The following values are optional:
     # username: INSERT_USERNAME_HERE
     # password: INSERT_PASSWORD_HERE
-
-
-# Optional: By default, the library will include utilities used in the user
-# agent.
+################################################################################
+# Utilities Included (optional)                                                #
+# Below you may specify whether the library will include utilities used in the #
+# user agent. By default, the library will include utilities used in the user  #
+# agent.                                                                       #
+################################################################################
 # include_utilities_in_user_agent: True

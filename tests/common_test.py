@@ -126,7 +126,9 @@ class CommonTest(unittest.TestCase):
               'a', 'b', 'c', proxy_config=proxy_config.return_value)
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e',
-                            'proxy_config': proxy_config.return_value}, rval)
+                            'proxy_config': proxy_config.return_value,
+                            googleads.common.ENABLE_COMPRESSION_KEY: False},
+                           rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
     # The optional key is present.
@@ -146,7 +148,9 @@ class CommonTest(unittest.TestCase):
               'a', 'b', 'c', proxy_config=proxy_config.return_value)
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e', 'other': 'f',
-                            'proxy_config': proxy_config.return_value}, rval)
+                            'proxy_config': proxy_config.return_value,
+                            googleads.common.ENABLE_COMPRESSION_KEY: False},
+                           rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
   def testLoadFromStorage_relativePath(self):
@@ -172,7 +176,8 @@ class CommonTest(unittest.TestCase):
             'a', 'b', 'c', proxy_config=proxy_config.return_value)
         self.assertEqual({'oauth2_client': mock_client.return_value,
                           'proxy_config': proxy_config.return_value,
-                          'needed': 'd', 'keys': 'e'}, rval)
+                          'needed': 'd', 'keys': 'e',
+                          googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
         self.assertTrue(googleads.common._utility_registry._enabled)
 
   def _CreateYamlDoc(self, data, insert_oauth2_key=None, oauth_dict=None):
@@ -300,7 +305,8 @@ class CommonTest(unittest.TestCase):
     mock_client.assert_called_once_with(
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
-                      'proxy_config': proxy_config.return_value}, rval)
+                      'proxy_config': proxy_config.return_value,
+                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
 
   def testLoadFromString_passesWithHTTPAndHTTPSProxy(self):
     yaml_doc = self._CreateYamlDoc(
@@ -328,7 +334,8 @@ class CommonTest(unittest.TestCase):
     mock_client.assert_called_once_with(
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
-                      'proxy_config': proxy_config.return_value}, rval)
+                      'proxy_config': proxy_config.return_value,
+                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
 
   def testLoadFromString_passesWithHTTPProxy(self):
     yaml_doc = self._CreateYamlDoc(
@@ -353,7 +360,8 @@ class CommonTest(unittest.TestCase):
     mock_client.assert_called_once_with(
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
-                      'proxy_config': proxy_config.return_value}, rval)
+                      'proxy_config': proxy_config.return_value,
+                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
 
   def testLoadFromString_passesWithHTTPProxyLogin(self):
     yaml_doc = self._CreateYamlDoc(
@@ -381,7 +389,8 @@ class CommonTest(unittest.TestCase):
     mock_client.assert_called_once_with(
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
-                      'proxy_config': proxy_config.return_value}, rval)
+                      'proxy_config': proxy_config.return_value,
+                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
 
   def testLoadFromString_passesWithHTTPSProxy(self):
     yaml_doc = self._CreateYamlDoc(
@@ -407,7 +416,8 @@ class CommonTest(unittest.TestCase):
     mock_client.assert_called_once_with(
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
-                      'proxy_config': proxy_config.return_value}, rval)
+                      'proxy_config': proxy_config.return_value,
+                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
 
   def testLoadFromString_passesWithHTTPSProxyLogin(self):
     yaml_doc = self._CreateYamlDoc(
@@ -436,7 +446,8 @@ class CommonTest(unittest.TestCase):
     mock_client.assert_called_once_with(
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
-                      'proxy_config': proxy_config.return_value}, rval)
+                      'proxy_config': proxy_config.return_value,
+                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
 
   def testLoadFromString_failsWithMisconfiguredProxy(self):
     yaml_doc = self._CreateYamlDoc(
@@ -496,7 +507,9 @@ class CommonTest(unittest.TestCase):
               'a', 'b', 'c', proxy_config=proxy_config.return_value)
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e',
-                            'proxy_config': proxy_config.return_value}, rval)
+                            'proxy_config': proxy_config.return_value,
+                            googleads.common.ENABLE_COMPRESSION_KEY: False},
+                           rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
     # The optional key is present.
@@ -516,7 +529,9 @@ class CommonTest(unittest.TestCase):
               'a', 'b', 'c', proxy_config=proxy_config.return_value)
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e', 'other': 'f',
-                            'proxy_config': proxy_config.return_value}, rval)
+                            'proxy_config': proxy_config.return_value,
+                            googleads.common.ENABLE_COMPRESSION_KEY: False},
+                           rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
   def testLoadFromString_serviceAccount(self):
@@ -541,7 +556,8 @@ class CommonTest(unittest.TestCase):
         proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
-                      'needed': 'd', 'keys': 'e'}, rval)
+                      'needed': 'd', 'keys': 'e',
+                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
     self.assertTrue(googleads.common._utility_registry._enabled)
 
     # The optional key is present.
@@ -564,7 +580,8 @@ class CommonTest(unittest.TestCase):
         proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
-                      'needed': 'd', 'keys': 'e', 'other': 'f'}, rval)
+                      'needed': 'd', 'keys': 'e', 'other': 'f',
+                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
     self.assertTrue(googleads.common._utility_registry._enabled)
 
 
@@ -587,7 +604,9 @@ class CommonTest(unittest.TestCase):
               'a', 'b', 'c', proxy_config=proxy_config.return_value)
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e',
-                            'proxy_config': proxy_config.return_value}, rval)
+                            'proxy_config': proxy_config.return_value,
+                            googleads.common.ENABLE_COMPRESSION_KEY: False},
+                           rval)
           self.assertFalse(googleads.common._utility_registry._enabled)
 
 
@@ -608,7 +627,8 @@ class CommonTest(unittest.TestCase):
             {
                 'oauth2_client': mock_client.return_value,
                 'Im': 'here',
-                'proxy_config': proxy_config.return_value
+                'proxy_config': proxy_config.return_value,
+                googleads.common.ENABLE_COMPRESSION_KEY: False
             }, rval)
         self.assertTrue(googleads.common._utility_registry._enabled)
         self.assertEqual(len(captured_warnings), 1)

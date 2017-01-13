@@ -21,7 +21,6 @@ import unittest
 from xml.etree import ElementTree
 
 
-
 import googleads.adwords
 import googleads.dfp
 import googleads.util
@@ -44,6 +43,11 @@ class PatchesTest(unittest.TestCase):
     self.adwords_client = googleads.adwords.AdWordsClient(
         dev_token, oauth2_client, user_agent,
         client_customer_id=client_customer_id)
+    # AdWordsClient setup (compression enabled)
+    self.adwords_client_with_compression = googleads.adwords.AdWordsClient(
+        dev_token, oauth2_client, user_agent,
+        client_customer_id=client_customer_id,
+        enable_compression=True)
 
     # DfpClient setup
     network_code = '12345'
@@ -136,6 +140,106 @@ class PatchesTest(unittest.TestCase):
         'customer').find('trackingUrlTemplate')
     # Assert that the request includes the empty trackingUrlTemplate.
     self.assertTrue(tracking_url_template is not None)
+
+  def testSudsJurkoSendWithCompression(self):
+    """Verifies that the patched HttpTransport.send can decode gzip response."""
+    test_dir = os.path.dirname(__file__)
+    cs = self.adwords_client_with_compression.GetService('CampaignService')
+
+    with mock.patch('suds.transport.http.HttpTransport.u2open'):
+      with mock.patch('suds.transport.Reply') as mock_reply:
+        with open(os.path.join(
+            test_dir, 'test_data/gzip_response.bin'), 'rb') as handler:
+          # Use a fake reply containing a gzipped SOAP response.
+          reply_instance = mock.Mock()
+          reply_instance.code = 200
+          reply_instance.headers = {'content-encoding': 'gzip'}
+          reply_instance.message = handler.read()
+          mock_reply.return_value = reply_instance
+        # The send method would ordinarily fail to decompress the gzip SOAP
+        # message without the patch, resulting in an exception being raised.
+        cs.get()
+
+  def testSingleErrorListIssue90(self):
+    """Verifies that issue 90 has been resolved with the patch."""
+    query = 'WHERE 1 = 0'
+    statement = googleads.dfp.FilterStatement(query)
+    line_item_service = self.dfp_client.GetService('LineItemService')
+    line_item_action = {'xsi_type': 'ActivateLineItems'}
+    st = statement.ToStatement()
+
+    test_dir = os.path.dirname(__file__)
+
+    with mock.patch('suds.transport.http.HttpTransport.send') as mock_send:
+      with open(os.path.join(
+          test_dir, 'test_data/fault_response_envelope.txt'), 'rb'
+               ) as handler:
+        # Use a fake reply containing a fault SOAP response.
+        reply_instance = mock.Mock()
+        reply_instance.code = 500
+        reply_instance.headers = {}
+        reply_instance.message = handler.read()
+        mock_send.return_value = reply_instance
+        try:
+          line_item_service.performLineItemAction(line_item_action, st)
+        except suds.WebFault, e:
+          errors = e.fault.detail.ApiExceptionFault.errors
+          self.assertIsInstance(errors, list)
+          self.assertEqual(1, len(errors))
+
+  def testSingleErrorListIssue90_emptyErrors(self):
+    """Verifies that issue 90 has been resolved with the patch."""
+    query = 'WHERE 1 = 0'
+    statement = googleads.dfp.FilterStatement(query)
+    line_item_service = self.dfp_client.GetService('LineItemService')
+    line_item_action = {'xsi_type': 'ActivateLineItems'}
+    st = statement.ToStatement()
+
+    test_dir = os.path.dirname(__file__)
+
+    with mock.patch('suds.transport.http.HttpTransport.send') as mock_send:
+      with open(os.path.join(
+          test_dir, 'test_data/empty_fault_response_envelope.txt'), 'rb'
+               ) as handler:
+        # Use a fake reply containing a fault SOAP response.
+        reply_instance = mock.Mock()
+        reply_instance.code = 500
+        reply_instance.headers = {}
+        reply_instance.message = handler.read()
+        mock_send.return_value = reply_instance
+        try:
+          line_item_service.performLineItemAction(line_item_action, st)
+        except suds.WebFault, e:
+          errors = e.fault.detail.ApiExceptionFault.errors
+          self.assertIsInstance(errors, list)
+          self.assertEqual(0, len(errors))
+
+  def testSingleErrorListIssue90_multipleErrors(self):
+    """Verifies that issue 90 has been resolved with the patch."""
+    query = 'WHERE 1 = 0'
+    statement = googleads.dfp.FilterStatement(query)
+    line_item_service = self.dfp_client.GetService('LineItemService')
+    line_item_action = {'xsi_type': 'ActivateLineItems'}
+    st = statement.ToStatement()
+
+    test_dir = os.path.dirname(__file__)
+
+    with mock.patch('suds.transport.http.HttpTransport.send') as mock_send:
+      with open(os.path.join(
+          test_dir, 'test_data/multi_errors_fault_response_envelope.txt'), 'rb'
+               ) as handler:
+        # Use a fake reply containing a fault SOAP response.
+        reply_instance = mock.Mock()
+        reply_instance.code = 500
+        reply_instance.headers = {}
+        reply_instance.message = handler.read()
+        mock_send.return_value = reply_instance
+        try:
+          line_item_service.performLineItemAction(line_item_action, st)
+        except suds.WebFault, e:
+          errors = e.fault.detail.ApiExceptionFault.errors
+          self.assertIsInstance(errors, list)
+          self.assertEqual(2, len(errors))
 
 
 class GoogleAdsCommonFilterTest(unittest.TestCase):

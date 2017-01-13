@@ -109,7 +109,9 @@ class DfpHeaderHandlerTest(unittest.TestCase):
 
   def setUp(self):
     self.dfp_client = mock.Mock()
-    self.header_handler = googleads.dfp._DfpHeaderHandler(self.dfp_client)
+    self.enable_compression = False
+    self.header_handler = googleads.dfp._DfpHeaderHandler(
+        self.dfp_client, self.enable_compression)
 
   def testSetHeaders(self):
     suds_client = mock.Mock()
@@ -152,9 +154,17 @@ class DfpClientTest(unittest.TestCase):
         https_proxy=self.https_proxy)
     self.cache = None
     self.version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
-    self.dfp_client = googleads.dfp.DfpClient(
+
+  def CreateDfpClient(self, **kwargs):
+    if 'proxy_config' not in kwargs:
+      kwargs['proxy_config'] = self.proxy_config
+
+    if 'cache' not in kwargs:
+      kwargs['cache'] = self.cache
+
+    return googleads.dfp.DfpClient(
         self.oauth2_client, self.application_name, self.network_code,
-        proxy_config=self.proxy_config, cache=self.cache)
+        **kwargs)
 
   def testLoadFromString(self):
     with mock.patch('googleads.common.LoadFromString') as mock_load:
@@ -176,6 +186,25 @@ class DfpClientTest(unittest.TestCase):
       self.assertIsInstance(googleads.dfp.DfpClient.LoadFromStorage(),
                             googleads.dfp.DfpClient)
 
+  def testLoadFromStorageWithCompressionEnabled(self):
+    enable_compression = True
+    application_name_gzip_template = '%s (gzip)'
+    default_app_name = 'unit testing'
+
+    with mock.patch('googleads.common.LoadFromStorage') as mock_load:
+      with mock.patch('googleads.dfp._DfpHeaderHandler') as mock_h:
+        mock_load.return_value = {
+            'network_code': 'abcdEFghIjkLMOpqRs',
+            'oauth2_client': True,
+            'application_name': default_app_name,
+            'enable_compression': enable_compression
+        }
+        dfp_client = googleads.dfp.DfpClient.LoadFromStorage()
+        self.assertEqual(
+            application_name_gzip_template % default_app_name,
+            dfp_client.application_name)
+        mock_h.assert_called_once_with(dfp_client, enable_compression)
+
 
 
   def testInitializeWithDefaultApplicationName(self):
@@ -194,6 +223,7 @@ class DfpClientTest(unittest.TestCase):
 
   def testGetService_success(self):
     service = googleads.dfp._SERVICE_MAP[self.version][0]
+    dfp_client = self.CreateDfpClient()
 
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
@@ -202,49 +232,94 @@ class DfpClientTest(unittest.TestCase):
       with mock.patch('googleads.common.'
                       'ProxyConfig._SudsProxyTransport') as mock_transport:
         mock_transport.return_value = mock.Mock()
-        suds_service = self.dfp_client.GetService(service, self.version, server)
+        suds_service = dfp_client.GetService(service, self.version, server)
 
         mock_client.assert_called_once_with(
             'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
-            % (self.version, service), cache=self.cache, timeout=3600,
+            % (self.version, service), timeout=3600,
             transport=mock_transport.return_value)
         self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
-    # Use the default server without a proxy.
-    self.dfp_client.proxy_option = None
+  def testGetService_successWithFileCache(self):
+    service = googleads.dfp._SERVICE_MAP[self.version][0]
+    dfp_client = self.CreateDfpClient(cache=suds.cache.FileCache)
+
+    # Use a custom server. Also test what happens if the server ends with a
+    # trailing slash
+    server = 'https://testing.test.com/'
     with mock.patch('suds.client.Client') as mock_client:
       with mock.patch('googleads.common.'
                       'ProxyConfig._SudsProxyTransport') as mock_transport:
         mock_transport.return_value = mock.Mock()
-        suds_service = self.dfp_client.GetService(service, self.version)
+        suds_service = dfp_client.GetService(service, self.version, server)
+
+        mock_client.assert_called_once_with(
+            'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
+            % (self.version, service), timeout=3600,
+            cache=suds.cache.FileCache, transport=mock_transport.return_value)
+        self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+
+  def testGetService_successWithNoCache(self):
+    service = googleads.dfp._SERVICE_MAP[self.version][0]
+    dfp_client = self.CreateDfpClient(cache=suds.cache.NoCache)
+
+    # Use a custom server. Also test what happens if the server ends with a
+    # trailing slash
+    server = 'https://testing.test.com/'
+    with mock.patch('suds.client.Client') as mock_client:
+      with mock.patch('googleads.common.'
+                      'ProxyConfig._SudsProxyTransport') as mock_transport:
+        mock_transport.return_value = mock.Mock()
+        suds_service = dfp_client.GetService(service, self.version, server)
+
+        mock_client.assert_called_once_with(
+            'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
+            % (self.version, service), timeout=3600,
+            cache=suds.cache.NoCache, transport=mock_transport.return_value)
+        self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+
+  def testGetService_successWithoutProxy(self):
+    service = googleads.dfp._SERVICE_MAP[self.version][0]
+    dfp_client = self.CreateDfpClient()
+
+    # Use the default server without a proxy.
+    dfp_client.proxy_option = None
+    with mock.patch('suds.client.Client') as mock_client:
+      with mock.patch('googleads.common.'
+                      'ProxyConfig._SudsProxyTransport') as mock_transport:
+        mock_transport.return_value = mock.Mock()
+        suds_service = dfp_client.GetService(service, self.version)
 
         mock_client.assert_called_once_with(
             'https://ads.google.com/apis/ads/publisher/%s/%s?wsdl'
-            % (self.version, service), cache=self.cache, timeout=3600,
+            % (self.version, service), timeout=3600,
             transport=mock_transport.return_value)
         self.assertFalse(mock_client.return_value.set_options.called)
         self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_badService(self):
+    dfp_client = self.CreateDfpClient()
     with mock.patch('suds.client.Client') as mock_client:
       mock_client.side_effect = suds.transport.TransportError('', '')
       self.assertRaises(
-          googleads.errors.GoogleAdsValueError, self.dfp_client.GetService,
+          googleads.errors.GoogleAdsValueError, dfp_client.GetService,
           'GYIVyievfyiovslf', self.version)
 
   def testGetService_badVersion(self):
+    dfp_client = self.CreateDfpClient()
     with mock.patch('suds.client.Client') as mock_client:
       mock_client.side_effect = suds.transport.TransportError('', '')
       self.assertRaises(
-          googleads.errors.GoogleAdsValueError, self.dfp_client.GetService,
+          googleads.errors.GoogleAdsValueError, dfp_client.GetService,
           'CampaignService', '11111')
 
   def testGetService_transportError(self):
     service = googleads.dfp._SERVICE_MAP[self.version][0]
+    dfp_client = self.CreateDfpClient()
     with mock.patch('suds.client.Client') as mock_client:
       mock_client.side_effect = suds.transport.TransportError('', '')
       self.assertRaises(suds.transport.TransportError,
-                        self.dfp_client.GetService, service, self.version)
+                        dfp_client.GetService, service, self.version)
 
 
 class DataDownloaderTest(unittest.TestCase):

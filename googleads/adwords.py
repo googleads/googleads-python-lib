@@ -23,7 +23,6 @@ import urllib
 import urllib2
 from xml.etree import ElementTree
 
-
 import suds.client
 import suds.mx.literal
 import suds.xsd.doctor
@@ -221,7 +220,8 @@ class AdWordsClient(object):
   # AdWords.
   _OPTIONAL_INIT_VALUES = (
       'validate_only', 'partial_failure', 'client_customer_id', 'user_agent',
-      'report_downloader_headers')
+      'report_downloader_headers',
+      googleads.common.ENABLE_COMPRESSION_KEY)
 
   # The format of SOAP service WSDLs. A server, namespace, version, and service
   # name need to be formatted in.
@@ -297,11 +297,15 @@ class AdWordsClient(object):
           succeed, to result in a complete failure with no changes made or a
           partial failure with some changes made. Only certain services respect
           this header.
-      cache: A subclass of suds.cache.Cache; defaults to None.
+      cache: A subclass of suds.cache.Cache. If not set, this will default to an
+          instance of suds.cache.FileCache.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
         isn't being used.
       report_downloader_headers: A dict containing optional headers to be used
         by default when making requests with the ReportDownloader.
+      enable_compression: A boolean indicating if you want to enable compression
+        of the SOAP response. If True, the SOAP response will use gzip
+        compression, and will be decompressed for you automatically.
 
     Raises:
       GoogleAdsValueError: If the provided user_agent contains non-ASCII
@@ -327,6 +331,12 @@ class AdWordsClient(object):
     self.proxy_config = (proxy_config if proxy_config else
                          googleads.common.ProxyConfig())
     self.report_download_headers = kwargs.get('report_download_headers', {})
+    self.enable_compression = kwargs.get(
+        googleads.common.ENABLE_COMPRESSION_KEY, False)
+
+    if self.enable_compression:
+      self.user_agent = '%s (gzip)' % self.user_agent
+
     self.message_plugin = googleads.common.LoggingMessagePlugin()
 
   def GetService(self, service_name, version=None, server=None):
@@ -367,15 +377,20 @@ class AdWordsClient(object):
         raise googleads.errors.GoogleAdsValueError(
             msg_fmt % ('version', version, _SERVICE_MAP.keys()))
 
+    kwargs = {'timeout': 3600,
+              'transport': self.proxy_config.GetSudsProxyTransport(),
+              'plugins': [self.message_plugin]}
+
+    if self.cache:
+      kwargs['cache'] = self.cache
+
     client = suds.client.Client(
         self._SOAP_SERVICE_FORMAT %
         (server, version_service_mapping, version, service_name),
-        cache=self.cache, timeout=3600,
-        transport=self.proxy_config.GetSudsProxyTransport(),
-        plugins=[self.message_plugin])
+        **kwargs)
 
     return googleads.common.SudsServiceProxy(
-        client, _AdWordsHeaderHandler(self, version))
+        client, _AdWordsHeaderHandler(self, version, self.enable_compression))
 
   def GetBatchJobHelper(self, version=sorted(_SERVICE_MAP.keys())[-1],
                         server=None):
@@ -446,7 +461,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
   # The content type of report download requests
   _CONTENT_TYPE = 'application/x-www-form-urlencoded'
 
-  def __init__(self, adwords_client, version):
+  def __init__(self, adwords_client, version, enable_compression):
     """Initializes an AdWordsHeaderHandler.
 
     Args:
@@ -455,9 +470,13 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
           handler picks up changes to the client.
       version: A string identifying which version of AdWords this header handler
           will be used for.
+      enable_compression: A boolean indicating if you want to enable compression
+        of the SOAP response. If True, the SOAP response will use gzip
+        compression, and will be decompressed for you automatically.
     """
     self._adwords_client = adwords_client
     self._version = version
+    self.enable_compression = enable_compression
 
   def SetHeaders(self, suds_client):
     """Sets the SOAP and HTTP headers on the given suds client.
@@ -472,9 +491,13 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     header.validateOnly = self._adwords_client.validate_only
     header.partialFailure = self._adwords_client.partial_failure
 
+    http_headers = self._adwords_client.oauth2_client.CreateHttpHeader()
+    if self.enable_compression:
+      http_headers['accept-encoding'] = 'gzip'
+
     suds_client.set_options(
         soapheaders=header,
-        headers=self._adwords_client.oauth2_client.CreateHttpHeader())
+        headers=http_headers)
 
   def GetReportDownloadHeaders(self, **kwargs):
     """Returns a dictionary of headers for a report download request.
@@ -1132,7 +1155,8 @@ class ReportDownloader(object):
     self._adwords_client = adwords_client
     self._namespace = self._NAMESPACE_FORMAT % version
     self._end_point = self._END_POINT_FORMAT % (server, version)
-    self._header_handler = _AdWordsHeaderHandler(adwords_client, version)
+    self._header_handler = _AdWordsHeaderHandler(
+        adwords_client, version, self._adwords_client.enable_compression)
     self.proxy_config = self._adwords_client.proxy_config
     self.url_opener = urllib2.build_opener(*self.proxy_config.GetHandlers())
 
