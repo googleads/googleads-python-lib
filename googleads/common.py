@@ -60,7 +60,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '5.0.0'
+VERSION = '5.1.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'
@@ -701,6 +701,9 @@ class SudsServiceProxy(object):
       except suds.WebFault as e:
         _logger.error('Server raised fault in response.')
         _logger.info('Failure response:\n%s', e.document)
+
+        if not hasattr(e.fault, 'detail'):
+          raise
 
         # Before re-throwing the WebFault exception, an error object needs to be
         # wrapped in a list for safe iteration.

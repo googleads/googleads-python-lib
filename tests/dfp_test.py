@@ -261,7 +261,8 @@ class DfpClientTest(unittest.TestCase):
 
   def testGetService_successWithNoCache(self):
     service = googleads.dfp._SERVICE_MAP[self.version][0]
-    dfp_client = self.CreateDfpClient(cache=suds.cache.NoCache)
+    no_cache = suds.cache.NoCache()
+    dfp_client = self.CreateDfpClient(cache=no_cache)
 
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
@@ -275,7 +276,7 @@ class DfpClientTest(unittest.TestCase):
         mock_client.assert_called_once_with(
             'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
             % (self.version, service), timeout=3600,
-            cache=suds.cache.NoCache, transport=mock_transport.return_value)
+            cache=no_cache, transport=mock_transport.return_value)
         self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_successWithoutProxy(self):

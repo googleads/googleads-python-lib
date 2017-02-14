@@ -46,22 +46,34 @@ def main(client, advertiser_id):
   # Use the image banner with optional third party tracking template.
   creative_template_id = '10000680'
 
+  # Create image asset.
+  file_name = 'image%s.jpg' % uuid.uuid4()
   image_data = open(os.path.join(os.path.split(__file__)[0], '..', '..', 'data',
                                  'medium_rectangle.jpg'), 'r').read()
   image_data = base64.encodestring(image_data)
+  size = {
+      'width': '300',
+      'height': '250'
+  }
+  asset = {
+      'xsi_type': 'CreativeAsset',
+      'fileName': file_name,
+      'assetByteArray': image_data,
+      'size': size
+  }
+
   # Create creative from templates.
   creative = {
       'xsi_type': 'TemplateCreative',
       'name': 'Template Creative #%s' % uuid.uuid4(),
       'advertiserId': advertiser_id,
-      'size': {'width': '300', 'height': '250'},
+      'size': size,
       'creativeTemplateId': creative_template_id,
       'creativeTemplateVariableValues': [
           {
               'xsi_type': 'AssetCreativeTemplateVariableValue',
               'uniqueName': 'Imagefile',
-              'assetByteArray': image_data,
-              'fileName': 'image%s.jpg' % uuid.uuid4()
+              'asset': asset
           },
           {
               'xsi_type': 'LongCreativeTemplateVariableValue',

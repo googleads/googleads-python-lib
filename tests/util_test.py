@@ -18,6 +18,7 @@ import logging
 import os
 import re
 import unittest
+import urllib2
 from xml.etree import ElementTree
 
 
@@ -25,6 +26,7 @@ import googleads.adwords
 import googleads.dfp
 import googleads.util
 import mock
+import suds
 import suds.transport
 
 
@@ -159,6 +161,29 @@ class PatchesTest(unittest.TestCase):
         # The send method would ordinarily fail to decompress the gzip SOAP
         # message without the patch, resulting in an exception being raised.
         cs.get()
+
+  def testSudsJurkoSendWithException(self):
+    """Verifies that the patched HttpTransport.send can escalate HTTPError."""
+    test_dir = os.path.dirname(__file__)
+    cs = self.adwords_client_with_compression.GetService('CampaignService')
+
+    with mock.patch('suds.transport.http.HttpTransport.u2open') as mock_u2open:
+      with open(os.path.join(
+          test_dir, 'test_data/compact_fault_response_envelope.txt'), 'rb'
+               ) as handler:
+        url = 'https://ads.google.com'
+        code = 500
+        msg = ''
+        hdrs = []
+        mock_u2open.side_effect = urllib2.HTTPError(url, code, msg, hdrs,
+                                                    handler)
+        try:
+          cs.get()
+        except suds.WebFault, e:
+          self.assertEqual(
+              'Unmarshalling Error: For input string: '
+              '"INSERT_ADVERTISER_COMPANY_ID_HERE" ',
+              e.fault.faultstring)
 
   def testSingleErrorListIssue90(self):
     """Verifies that issue 90 has been resolved with the patch."""

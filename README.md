@@ -184,7 +184,7 @@ You can also disable caching in similar fashion:
 ```python
 adwords_client = adwords.AdWordsClient(
   developer_token, oauth2_client, user_agent,
-  client_customer_id=client_customer_id, cache=suds.cache.NoCache)
+  client_customer_id=client_customer_id, cache=suds.cache.NoCache())
 ```
 
 ##Timeout Tips

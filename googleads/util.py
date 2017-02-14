@@ -95,17 +95,17 @@ class PatchHelper(object):
       self.proxy = self.options.proxy
       request.headers.update(u2request.headers)
       suds.transport.http.log.debug('sending:\n%s', request)
-      fp = self.u2open(u2request)
-      self.getcookies(fp, u2request)
-      headers = (fp.headers.dict if sys.version_info < (3, 0) else fp.headers)
-
       try:
-        result = suds.transport.Reply(200, headers, fp.read())
+        fp = self.u2open(u2request)
       except urllib2.HTTPError, e:
         if e.code in (202, 204):
-          result = None
+          return None
         else:
           raise suds.transport.TransportError(e.msg, e.code, e.fp)
+
+      self.getcookies(fp, u2request)
+      headers = (fp.headers.dict if sys.version_info < (3, 0) else fp.headers)
+      result = suds.transport.Reply(200, headers, fp.read())
 
       if result.headers.get('content-encoding') == 'gzip':
         # If gzip encoding is used, decompress here.

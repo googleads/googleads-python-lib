@@ -262,7 +262,7 @@ class AdWordsClientTest(unittest.TestCase):
     self.proxy_config = GetProxyConfig(https_host=self.https_proxy_host,
                                        https_port=self.https_proxy_port)
     self.file_cache = suds.cache.FileCache
-    self.no_cache = suds.cache.NoCache
+    self.no_cache = suds.cache.NoCache()
     self.adwords_client = GetAdWordsClient()
     self.aw_client = GetAdWordsClient(
         proxy_config=self.proxy_config)
