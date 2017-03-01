@@ -49,7 +49,7 @@ def CreateAdsWithCustomizations(client, adgroup_ids, feed_name):
     GoogleAdsError: if no TextAds were added.
   """
   # Get the AdGroupAdService
-  adgroup_ad_service = client.GetService('AdGroupAdService')
+  adgroup_ad_service = client.GetService('AdGroupAdService', 'v201605')
 
   text_ad = {
       'xsi_type': 'TextAd',
@@ -91,7 +91,8 @@ def CreateCustomizerFeed(client, feed_name):
     The new AdCustomizerFeed.
   """
   # Get the AdCustomizerFeedService
-  ad_customizer_feed_service = client.GetService('AdCustomizerFeedService')
+  ad_customizer_feed_service = client.GetService('AdCustomizerFeedService',
+                                                 'v201605')
 
   customizer_feed = {
       'feedName': feed_name,
@@ -141,7 +142,7 @@ def CreateCustomizerFeedItems(client, adgroup_ids, ad_customizer_feed):
     GoogleAdsError: if no FeedItems were added.
   """
   # Get the FeedItemService
-  feed_item_service = client.GetService('FeedItemService')
+  feed_item_service = client.GetService('FeedItemService', 'v201605')
   now = datetime.now()
   mars_date = datetime(now.year, now.month, 1, 0, 0)
   venus_date = datetime(now.year, now.month, 15, 0, 0)

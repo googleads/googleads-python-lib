@@ -88,7 +88,8 @@ class PatchHelper(object):
     def PatchedHttpTransportSend(self, request):
       """Patch for HttpTransport.send to enable gzip compression."""
       msg = request.message
-      url = request.url
+      http_transport = suds.transport.http.HttpTransport
+      url = http_transport._HttpTransport__get_request_url(request)
       headers = request.headers
       u2request = urllib2.Request(url, msg, headers)
       self.addcookies(u2request)

@@ -58,7 +58,7 @@ def main(client):
   report_data = StringIO.StringIO()
   stream_data = report_downloader.DownloadReportAsStream(
       report, skip_report_header=False, skip_column_header=False,
-      skip_report_summary=False)
+      skip_report_summary=False, include_zero_impressions=True)
 
   try:
     while True:

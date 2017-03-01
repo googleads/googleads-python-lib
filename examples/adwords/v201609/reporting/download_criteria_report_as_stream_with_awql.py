@@ -55,7 +55,7 @@ def main(client):
 
   print report_downloader.DownloadReportAsStringWithAwql(
       report_query, 'CSV', skip_report_header=False, skip_column_header=False,
-      skip_report_summary=False)
+      skip_report_summary=False, include_zero_impressions=True)
 
   # Retrieve the report stream and print it out
   report_data = StringIO.StringIO()

@@ -107,8 +107,3 @@ Submit bug reports or feature requests to our
 * [App Engine SDK v1.9.11+](https://developers.google.com/appengine/downloads)
 * [Google Ads Python Client Library v2.1.0+](https://github.com/googleads/googleads-python-lib)
 * [Google Account](https://www.google.com/accounts/NewAccount)
-
-
-### Author:
-
-api.msaniscalchi@gmail.com (Mark Saniscalchi)

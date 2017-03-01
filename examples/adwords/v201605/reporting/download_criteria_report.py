@@ -53,7 +53,7 @@ def main(client):
   # we use sys.stdout to write the report to the screen.
   report_downloader.DownloadReport(
       report, sys.stdout, skip_report_header=False, skip_column_header=False,
-      skip_report_summary=False)
+      skip_report_summary=False, include_zero_impressions=True)
 
 
 if __name__ == '__main__':

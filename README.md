@@ -199,9 +199,16 @@ import socket
 socket.setdefaulttimeout(15 * 60)
 ```
 
-##External Dependencies:
+##Requirements
 
+###Python Versions
 
+This library supports both Python 2 and 3. To use this library, you will need to
+have Python 2.7.9 (or higher) or Python 3.4 (or higher) installed.
+
+###External Dependencies:
+
+    - httplib2             -- https://pypi.python.org/pypi/httplib2/
     - oauth2client         -- https://pypi.python.org/pypi/oauth2client/
     - suds-jurko           -- https://pypi.python.org/pypi/suds-jurko/
     - pysocks              -- https://pypi.python.org/pypi/PySocks/

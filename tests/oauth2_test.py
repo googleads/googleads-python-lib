@@ -97,8 +97,8 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
 
     # Mock out oauth2client.client.OAuth2Credentials for testing
     self.oauth2_credentials = mock.Mock(spec=OAuth2Credentials)
-    self.mock_oauth2_credentials = self.oauth2_credentials.return_value = (
-        mock.Mock())
+    self.oauth2_credentials.return_value = mock.Mock()
+    self.mock_oauth2_credentials = (self.oauth2_credentials.return_value)
     self.mock_oauth2_credentials.access_token = self.access_token_unrefreshed
     self.mock_oauth2_credentials.token_expiry = datetime.datetime(1980, 1, 1,
                                                                   12)
@@ -152,7 +152,9 @@ class GoogleServiceAccountTest(unittest.TestCase):
   def setUp(self):
     self.scope = 'scope'
     self.service_account_email = 'email@email.com'
+    self.private_key = 'IT\'S A SECRET TO EVERYBODY.'
     self.private_key_password = 'notasecret'
+    self.delegated_account = 'delegated_account@delegated.com'
     https_proxy_host = 'myproxy.com'
     https_proxy_port = 443
     https_proxy = googleads.common.ProxyConfig.Proxy(https_proxy_host,
@@ -165,11 +167,11 @@ class GoogleServiceAccountTest(unittest.TestCase):
     # Mock out filesystem and file for testing.
     filesystem = fake_filesystem.FakeFilesystem()
     tempfile = fake_tempfile.FakeTempfileModule(filesystem)
-    fake_open = fake_filesystem.FakeFileOpen(filesystem)
-    key_file_path = tempfile.NamedTemporaryFile(delete=False).name
+    self.fake_open = fake_filesystem.FakeFileOpen(filesystem)
+    self.key_file_path = tempfile.NamedTemporaryFile(delete=False).name
 
-    with fake_open(key_file_path, 'w') as file_handle:
-      file_handle.write('IT\'S A SECRET TO EVERYBODY.')
+    with self.fake_open(self.key_file_path, 'w') as file_handle:
+      file_handle.write(self.private_key)
 
     # Mock out httplib2.Http for testing.
     self.http = mock.Mock(spec=httplib2.Http)
@@ -179,13 +181,15 @@ class GoogleServiceAccountTest(unittest.TestCase):
     self.opener.disable_ssl_certificate_valiation = (
         self.proxy_config.disable_certificate_validation)
 
-    # Mock out oauth2client.client.OAuth2Credentials for testing
-    self.oauth2_credentials = mock.Mock(spec=SignedJwtAssertionCredentials)
-    self.mock_oauth2_credentials = self.oauth2_credentials.return_value = (
-        mock.Mock())
+    # Mock out oauth2client.client.SignedJwtAssertionCredentials for
+    # testing.
+    self.oauth2_credentials = mock.Mock(
+        spec=SignedJwtAssertionCredentials)
+    self.oauth2_credentials.return_value = mock.Mock()
+    self.mock_oauth2_credentials = (self.oauth2_credentials.return_value)
     self.mock_oauth2_credentials.access_token = 'x'
-    self.mock_oauth2_credentials.token_expiry = datetime.datetime(1980, 1, 1,
-                                                                  12)
+    self.mock_oauth2_credentials.token_expiry = datetime.datetime(
+        1980, 1, 1, 12)
 
     def apply(headers):
       headers['Authorization'] = ('Bearer %s'
@@ -200,15 +204,159 @@ class GoogleServiceAccountTest(unittest.TestCase):
 
     self.mock_oauth2_credentials.apply = mock.Mock(side_effect=apply)
     self.mock_oauth2_credentials.refresh = mock.Mock(side_effect=refresh)
-    with mock.patch('__builtin__.open', fake_open):
+    with mock.patch('__builtin__.open', self.fake_open):
       with mock.patch('oauth2client.client'
                       '.SignedJwtAssertionCredentials',
                       self.oauth2_credentials):
         self.googleads_client = googleads.oauth2.GoogleServiceAccountClient(
-            self.scope, self.service_account_email, key_file_path,
+            self.scope, self.service_account_email, self.key_file_path,
             self.private_key_password, proxy_config=self.proxy_config)
       # Undo the call count for the auto-refresh
       self.mock_oauth2_credentials.refresh.reset_mock()
+
+  def testCreateGoogleServiceAccountClient_DelegatedJsonOAuth2Client4(self):
+    # Mock out the oauth2client 4.0.0 oauth2client.service_account module to
+    # verify that the correct parts are called.
+    mock_oauth2client_4 = mock.Mock()
+    mock_service_account_module = mock.Mock()
+    mock_service_account_credentials = mock.Mock()
+    mock_service_account_credentials_instance = mock.Mock()
+    mock_from_json_keyfile_name = mock.Mock()
+    mock_create_delegated = mock.Mock()
+    mock_service_account_credentials_instance.create_delegated = (
+        mock_create_delegated)
+    mock_from_json_keyfile_name.return_value = (
+        mock_service_account_credentials_instance)
+    mock_service_account_credentials.from_json_keyfile_name = (
+        mock_from_json_keyfile_name)
+    mock_service_account_module.ServiceAccountCredentials = (
+        mock_service_account_credentials)
+    mock_oauth2client_4.service_account = mock_service_account_module
+    mock_oauth2client_4.__version__ = '4.0.0'
+    with mock.patch('googleads.oauth2.oauth2client',
+                    mock_oauth2client_4):
+      with mock.patch('googleads.oauth2.DEPRECATED_OAUTH2CLIENT', False):
+        mock_oauth2client_4.service_account = mock_service_account_module
+        # Create a GoogleServiceAccountClient and verify that the
+        # ServiceAccountCredentials were correctly instantiated.
+        googleads.oauth2.GoogleServiceAccountClient(
+            self.scope, client_email=None, key_file=self.key_file_path,
+            sub=self.delegated_account)
+        mock_from_json_keyfile_name.assert_called_once_with(
+            self.key_file_path, scopes=self.scope)
+        mock_create_delegated.assert_called_once_with(self.delegated_account)
+
+  def testCreateGoogleServiceAccountClient_DelegatedP12OAuth2Client4(self):
+    # Mock out the oauth2client 4.0.0 oauth2client.service_account module to
+    # verify that the correct parts are called.
+    mock_oauth2client_4 = mock.Mock()
+    mock_service_account_module = mock.Mock()
+    mock_service_account_credentials = mock.Mock()
+    mock_service_account_credentials_instance = mock.Mock()
+    mock_from_p12_keyfile = mock.Mock()
+    mock_create_delegated = mock.Mock()
+    mock_service_account_credentials_instance.create_delegated = (
+        mock_create_delegated)
+    mock_from_p12_keyfile.return_value = (
+        mock_service_account_credentials_instance)
+    mock_service_account_credentials.from_p12_keyfile = (
+        mock_from_p12_keyfile)
+    mock_service_account_module.ServiceAccountCredentials = (
+        mock_service_account_credentials)
+    mock_oauth2client_4.service_account = mock_service_account_module
+    mock_oauth2client_4.__version__ = '4.0.0'
+    with mock.patch('googleads.oauth2.oauth2client',
+                    mock_oauth2client_4):
+      with mock.patch('googleads.oauth2.DEPRECATED_OAUTH2CLIENT', False):
+        mock_oauth2client_4.service_account = mock_service_account_module
+        # Create a GoogleServiceAccountClient and verify that the
+        # ServiceAccountCredentials were correctly instantiated.
+        googleads.oauth2.GoogleServiceAccountClient(
+            self.scope, client_email=self.service_account_email,
+            key_file=self.key_file_path, sub=self.delegated_account)
+        mock_from_p12_keyfile.assert_called_once_with(
+            self.service_account_email, self.key_file_path, scopes=self.scope)
+        mock_create_delegated.assert_called_once_with(self.delegated_account)
+
+  def testCreateGoogleServiceAccountClient_DelegatedP12OAuth2ClientDepr(self):
+    # Mock out the oauth2client 1.4.12 oauth2client.service_account module to
+    # verify that the correct parts are called.
+    with mock.patch('googleads.oauth2.oauth2client.client'
+                    '.SignedJwtAssertionCredentials') as mock_credentials:
+      with mock.patch('%s.open' % googleads.oauth2.__name__, self.fake_open,
+                      create=True):
+        googleads.oauth2.GoogleServiceAccountClient(
+            self.scope, client_email=self.service_account_email,
+            key_file=self.key_file_path, sub=self.delegated_account)
+        mock_credentials.assert_called_once_with(
+            self.service_account_email, self.private_key, self.scope,
+            private_key_password=self.private_key_password,
+            user_agent='Google Ads Python Client Library',
+            token_uri='https://accounts.google.com/o/oauth2/token',
+            sub=self.delegated_account)
+
+  def testCreateGoogleServiceAccountClient_JsonOAuth2Client4(self):
+    # Mock out the oauth2client 4.0.0 oauth2client.service_account module to
+    # verify that the correct parts are called.
+    mock_oauth2client_4 = mock.Mock()
+    mock_service_account_module = mock.Mock()
+    mock_service_account_credentials = mock.Mock()
+    mock_service_account_credentials_instance = mock.Mock()
+    mock_from_json_keyfile_name = mock.Mock()
+    mock_create_delegated = mock.Mock()
+    mock_service_account_credentials_instance.create_delegated = (
+        mock_create_delegated)
+    mock_from_json_keyfile_name.return_value = (
+        mock_service_account_credentials_instance)
+    mock_service_account_credentials.from_json_keyfile_name = (
+        mock_from_json_keyfile_name)
+    mock_service_account_module.ServiceAccountCredentials = (
+        mock_service_account_credentials)
+    mock_oauth2client_4.service_account = mock_service_account_module
+    mock_oauth2client_4.__version__ = '4.0.0'
+    with mock.patch('googleads.oauth2.oauth2client',
+                    mock_oauth2client_4):
+      with mock.patch('googleads.oauth2.DEPRECATED_OAUTH2CLIENT', False):
+        mock_oauth2client_4.service_account = mock_service_account_module
+        # Create a GoogleServiceAccountClient and verify that the
+        # ServiceAccountCredentials were correctly instantiated.
+        googleads.oauth2.GoogleServiceAccountClient(
+            self.scope, client_email=None, key_file=self.key_file_path)
+        mock_from_json_keyfile_name.assert_called_once_with(
+            self.key_file_path, scopes=self.scope)
+        mock_create_delegated.assert_not_called()
+
+  def testCreateGoogleServiceAccountClient_P12OAuth2Client4(self):
+    # Mock out the oauth2client 4.0.0 oauth2client.service_account module to
+    # verify that the correct parts are called.
+    mock_oauth2client_4 = mock.Mock()
+    mock_service_account_module = mock.Mock()
+    mock_service_account_credentials = mock.Mock()
+    mock_service_account_credentials_instance = mock.Mock()
+    mock_from_p12_keyfile = mock.Mock()
+    mock_create_delegated = mock.Mock()
+    mock_service_account_credentials_instance.create_delegated = (
+        mock_create_delegated)
+    mock_from_p12_keyfile.return_value = (
+        mock_service_account_credentials_instance)
+    mock_service_account_credentials.from_p12_keyfile = (
+        mock_from_p12_keyfile)
+    mock_service_account_module.ServiceAccountCredentials = (
+        mock_service_account_credentials)
+    mock_oauth2client_4.service_account = mock_service_account_module
+    mock_oauth2client_4.__version__ = '4.0.0'
+    with mock.patch('googleads.oauth2.oauth2client',
+                    mock_oauth2client_4):
+      with mock.patch('googleads.oauth2.DEPRECATED_OAUTH2CLIENT', False):
+        mock_oauth2client_4.service_account = mock_service_account_module
+        # Create a GoogleServiceAccountClient and verify that the
+        # ServiceAccountCredentials were correctly instantiated.
+        googleads.oauth2.GoogleServiceAccountClient(
+            self.scope, client_email=self.service_account_email,
+            key_file=self.key_file_path)
+        mock_from_p12_keyfile.assert_called_once_with(
+            self.service_account_email, self.key_file_path, scopes=self.scope)
+        mock_create_delegated.assert_not_called()
 
   def testCreateHttpHeader_noRefresh(self):
     header = {'Authorization': 'Bearer %s' % self.access_token_unrefreshed}

@@ -30,6 +30,18 @@ import googleads.errors
 import httplib2
 import oauth2client.client
 
+if oauth2client.__version__ >= '4.0.0':
+  import oauth2client.service_account
+  DEPRECATED_OAUTH2CLIENT = False
+elif (oauth2client.__version__ >= '1.4.12' and
+      oauth2client.__version__ < '2.0.0'):
+  DEPRECATED_OAUTH2CLIENT = True
+else:
+  raise googleads.errors.GoogleAdsError(
+      'Unsupported version of oauth2client is installed. To use this library, '
+      'upgrade to oauth2client 4.0.0.')
+
+
 # The scopes used for authorizing with the APIs supported by this library.
 SCOPES = {'adwords': 'https://www.googleapis.com/auth/adwords',
           'dfp': 'https://www.googleapis.com/auth/dfp'}
@@ -172,14 +184,18 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
   # minutes in advance of its expiration.
   _OAUTH2_REFRESH_MINUTES_IN_ADVANCE = 5
   _USER_AGENT = 'Google Ads Python Client Library'
+  _FILE_NOT_FOUND_TEMPLATE = 'The specified key file (%s) does not exist.'
 
-  def __init__(self, scope, client_email, key_file,
+  def __init__(self, scope, client_email=None, key_file=None,
                private_key_password='notasecret', sub=None, proxy_config=None):
     """Initializes a GoogleServiceAccountClient.
 
     Args:
       scope: The scope of the API you're authorizing for.
-      client_email: A string containing your Service Account's email.
+      client_email: A string containing your Service Account's email. If this is
+        set when using oauth2client 4.0.0, it will be assumed that you are
+        providing a P12 key file. A JSON key file does not require a client
+        email.
       key_file: A string containing the path to your key file.
       [optional]
       private_key_password: A string containing the password for your key file.
@@ -188,21 +204,49 @@ class GoogleServiceAccountClient(GoogleOAuth2Client):
       proxy_config: A googleads.common.ProxyConfig instance.
 
     Raises:
+      GoogleAdsError: If an unsupported version of oauth2client is installed.
       GoogleAdsValueError: If the given key file does not exist.
     """
-    try:
-      with open(key_file, 'rb') as f:
-        private_key = f.read()
-    except IOError:
-      raise googleads.errors.GoogleAdsValueError('The specified key file (%s)'
-                                                 ' does not exist.' % key_file)
+    if DEPRECATED_OAUTH2CLIENT:
+      # Instantiate credentials using oauth2client version < 2.0.0.
+      try:
+        with open(key_file, 'rb') as f:
+          private_key = f.read()
+      except IOError:
+        raise googleads.errors.GoogleAdsValueError(
+            self._FILE_NOT_FOUND_TEMPLATE % key_file)
 
-    self.oauth2credentials = (
-        oauth2client.client.SignedJwtAssertionCredentials(
-            client_email, private_key, scope,
-            private_key_password=private_key_password,
-            user_agent=self._USER_AGENT, token_uri=self._GOOGLE_OAUTH2_ENDPOINT,
-            sub=sub))
+      self.oauth2credentials = (
+          oauth2client.client.SignedJwtAssertionCredentials(
+              client_email, private_key, scope,
+              private_key_password=private_key_password,
+              user_agent=self._USER_AGENT,
+              token_uri=self._GOOGLE_OAUTH2_ENDPOINT,
+              sub=sub))
+    else:
+      # Instantiate credentials using oauth2client 4.0.0.
+      if client_email:
+        # Instantiate credentials for P12 key file.
+        try:
+          self.oauth2credentials = (
+              oauth2client.service_account.ServiceAccountCredentials
+              .from_p12_keyfile(client_email, key_file, scopes=scope))
+        except IOError:
+          raise googleads.errors.GoogleAdsValueError(
+              self._FILE_NOT_FOUND_TEMPLATE % key_file)
+      else:
+        # Instantiate credentials for JSON key file.
+        try:
+          self.oauth2credentials = (
+              oauth2client.service_account.ServiceAccountCredentials
+              .from_json_keyfile_name(key_file, scopes=scope))
+        except IOError:
+          raise googleads.errors.GoogleAdsValueError(
+              self._FILE_NOT_FOUND_TEMPLATE % key_file)
+      # If sub is specified, apply it for domain-wide delegation of authority.
+      if sub:
+        self.oauth2credentials = self.oauth2credentials.create_delegated(sub)
+
     self.proxy_config = (proxy_config if proxy_config else
                          googleads.common.ProxyConfig())
     self.Refresh()

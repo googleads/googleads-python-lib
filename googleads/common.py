@@ -60,7 +60,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '5.1.0'
+VERSION = '5.2.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'
@@ -68,11 +68,21 @@ _PROXY_CONFIG_KEY = 'proxy_config'
 _PYTHON_VERSION = 'Python/%d.%d.%d' % (
     _PY_VERSION_MAJOR, _PY_VERSION_MINOR, _PY_VERSION_MICRO)
 
-# The keys in the authentication dictionary that are used to construct OAuth2
-# credentials.
+# The required keys in the authentication dictionary that are used to construct
+# installed application OAuth2 credentials.
 _OAUTH2_INSTALLED_APP_KEYS = ('client_id', 'client_secret', 'refresh_token')
-_OAUTH2_SERVICE_ACCT_KEYS = ('service_account_email',
-                             'path_to_private_key_file')
+
+# The keys in the authentication dictionary that are used to construct service
+# account OAuth2 credentials. This will differ based on the oauth2client
+# installation.
+if googleads.oauth2.DEPRECATED_OAUTH2CLIENT:
+  _OAUTH2_SERVICE_ACCT_KEYS = ('service_account_email',
+                               'path_to_private_key_file')
+  _OAUTH2_SERVICE_ACCT_KEYS_OPTIONAL = ('delegated_account',)
+else:
+  _OAUTH2_SERVICE_ACCT_KEYS = ('path_to_private_key_file',)
+  _OAUTH2_SERVICE_ACCT_KEYS_OPTIONAL = ('delegated_account',
+                                        'service_account_email')
 
 # The keys in the http_proxy and https_proxy dictionaries that are used to
 # construct a Proxy, HTTPSProxy, and ProxyConfig instances.
@@ -261,6 +271,10 @@ def _ExtractOAuth2Client(product_yaml_key, product_data, proxy_config):
     A GoogleAdsValueError if the OAuth2 configuration for the given product is
     misconfigured.
   """
+  oauth2_kwargs = {
+      'proxy_config': proxy_config
+  }
+
   if all(config in product_data for config in _OAUTH2_INSTALLED_APP_KEYS):
     oauth2_args = [
         product_data['client_id'], product_data['client_secret'],
@@ -272,12 +286,18 @@ def _ExtractOAuth2Client(product_yaml_key, product_data, proxy_config):
   elif all(config in product_data for config in _OAUTH2_SERVICE_ACCT_KEYS):
     oauth2_args = [
         googleads.oauth2.GetAPIScope(product_yaml_key),
-        product_data['service_account_email'],
-        product_data['path_to_private_key_file']
     ]
+    oauth2_kwargs.update({
+        'client_email': product_data.get('service_account_email'),
+        'key_file': product_data['path_to_private_key_file'],
+        'sub': product_data.get('delegated_account')
+    })
     oauth2_client = googleads.oauth2.GoogleServiceAccountClient
     for key in _OAUTH2_SERVICE_ACCT_KEYS:
       del product_data[key]
+    for optional_key in _OAUTH2_SERVICE_ACCT_KEYS_OPTIONAL:
+      if optional_key in product_data:
+        del product_data[optional_key]
   else:
     raise googleads.errors.GoogleAdsValueError(
         'Your yaml file is incorrectly configured for OAuth2. You need to '
@@ -285,7 +305,7 @@ def _ExtractOAuth2Client(product_yaml_key, product_data, proxy_config):
         'or service account flow (%s).' %
         (_OAUTH2_INSTALLED_APP_KEYS, _OAUTH2_SERVICE_ACCT_KEYS))
 
-  return oauth2_client(*oauth2_args, proxy_config=proxy_config)
+  return oauth2_client(*oauth2_args, **oauth2_kwargs)
 
 
 def _ExtractProxyConfig(product_yaml_key, proxy_config_data):

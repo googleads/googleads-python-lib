@@ -37,8 +37,10 @@ class CommonTest(unittest.TestCase):
   # Dictionaries with all the required OAuth2 keys
   _OAUTH_INSTALLED_APP_DICT = {'client_id': 'a', 'client_secret': 'b',
                                'refresh_token': 'c'}
-  _OAUTH_SERVICE_ACCT_DICT = {'service_account_email': 'test@test.com',
-                              'path_to_private_key_file': '/test/test.p12'}
+  _OAUTH_SERVICE_ACCT_DICT = {
+      'service_account_email': 'service_account@example.com',
+      'path_to_private_key_file': '/test/test.p12',
+      'delegated_account': 'delegated_account@example.com'}
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem()
@@ -534,7 +536,7 @@ class CommonTest(unittest.TestCase):
                            rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
-  def testLoadFromString_serviceAccount(self):
+  def testLoadFromString_serviceAccountWithDeprecatedOAuth2Client(self):
     dfp_scope = googleads.oauth2.GetAPIScope('dfp')
     # No optional keys present.
     yaml_doc = self._CreateYamlDoc(
@@ -552,7 +554,8 @@ class CommonTest(unittest.TestCase):
         http_proxy=None, https_proxy=None, cafile=None,
         disable_certificate_validation=False)
     mock_client.assert_called_once_with(
-        dfp_scope, 'test@test.com', '/test/test.p12',
+        dfp_scope, client_email='service_account@example.com',
+        key_file='/test/test.p12', sub='delegated_account@example.com',
         proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
@@ -576,7 +579,8 @@ class CommonTest(unittest.TestCase):
         http_proxy=None, https_proxy=None, cafile=None,
         disable_certificate_validation=False)
     mock_client.assert_called_once_with(
-        dfp_scope, 'test@test.com', '/test/test.p12',
+        dfp_scope, client_email='service_account@example.com',
+        key_file='/test/test.p12', sub='delegated_account@example.com',
         proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,

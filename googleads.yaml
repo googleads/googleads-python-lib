@@ -25,6 +25,7 @@ adwords:
   # The following values configure the client for the service account flow.
   # service_account_email: INSERT_SERVICE_ACCOUNT_EMAIL_HERE
   # path_to_private_key_file: INSERT_PATH_TO_FILE_HERE
+  # delegated_account: INSERT_DOMAIN_WIDE_DELEGATION_ACCOUNT
   #############################################################################
   # ReportDownloader Headers                                                  #
   # Below you may specify boolean values for optional headers that will be    #
@@ -62,6 +63,7 @@ dfp:
   # The following values configure the client for the service account flow.
   # service_account_email: INSERT_SERVICE_ACCOUNT_EMAIL_HERE
   # path_to_private_key_file: INSERT_PATH_TO_FILE_HERE
+  # delegated_account: INSERT_DOMAIN_WIDE_DELEGATION_ACCOUNT
 
 
 # Common configurations:

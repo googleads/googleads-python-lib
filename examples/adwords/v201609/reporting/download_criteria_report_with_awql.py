@@ -46,7 +46,8 @@ def main(client, path):
   with open(path, 'w') as output_file:
     report_downloader.DownloadReportWithAwql(
         report_query, 'CSV', output_file, skip_report_header=False,
-        skip_column_header=False, skip_report_summary=False)
+        skip_column_header=False, skip_report_summary=False,
+        include_zero_impressions=True)
 
   print 'Report was downloaded to \'%s\'.' % path
 

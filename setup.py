@@ -24,7 +24,7 @@ from setuptools import setup
 
 PACKAGES = ['googleads']
 
-DEPENDENCIES = ['httplib2>=0.9.2', 'oauth2client>=1.5.2,<2.0.0',
+DEPENDENCIES = ['httplib2>=0.9.2', 'oauth2client>=4.0.0,<5.0.0',
                 'suds-jurko>=0.6', 'pysocks>=1.5.6', 'pytz>=2015.7',
                 'PyYAML>=3.11', 'xmltodict>=0.9.2']
 
@@ -107,7 +107,7 @@ setup(name='googleads',
       version=GetVersion(),
       description='Google Ads Python Client Library',
       author='Mark Saniscalchi',
-      author_email='msaniscalchi@google.com',
+      author_email='api.msaniscalchi@gmail.com',
       url='https://github.com/googleads/googleads-python-lib',
       license='Apache License 2.0',
       long_description=long_description,
