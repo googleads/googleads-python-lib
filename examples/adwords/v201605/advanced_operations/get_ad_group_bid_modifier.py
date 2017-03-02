@@ -62,7 +62,7 @@ def main(client):
       offset += PAGE_SIZE
       selector['paging']['startIndex'] = str(offset)
     else:
-      print 'No ad group bid modifiers returned.'
+      print ('No ad group bid modifiers returned.')
     more_results = int(page['totalNumEntries']) > offset
 
 

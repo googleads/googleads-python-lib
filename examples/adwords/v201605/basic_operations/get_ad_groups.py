@@ -63,7 +63,7 @@ def main(client, campaign_id):
                'found.' % (ad_group['name'], ad_group['id'],
                            ad_group['status']))
     else:
-      print 'No ad groups were found.'
+      print ('No ad groups were found.')
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])

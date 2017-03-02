@@ -62,7 +62,7 @@ def main(client):
                'found.' % (campaign['id'], campaign['name'],
                            campaign['status']))
     else:
-      print 'No campaigns were found.'
+      print ('No campaigns were found.')
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])
