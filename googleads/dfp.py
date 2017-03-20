@@ -451,7 +451,9 @@ class DataDownloader(object):
       logging.debug('Report has completed successfully')
       return report_job_id
 
-  def DownloadReportToFile(self, report_job_id, export_format, outfile):
+  def DownloadReportToFile(self, report_job_id, export_format, outfile,
+                           include_report_properties=False,
+                           include_totals_row=None, use_gzip_compression=True):
     """Downloads report data and writes it to a file.
 
     The report job must be completed before calling this function.
@@ -460,9 +462,23 @@ class DataDownloader(object):
       report_job_id: The ID of the report job to wait for, as a string.
       export_format: The export format for the report file, as a string.
       outfile: A writeable, file-like object to write to.
+      include_report_properties: Whether or not to include the report
+        properties (e.g. network, user, date generated...)
+        in the generated report.
+      include_totals_row: Whether or not to include the totals row.
+      use_gzip_compression: Whether or not to use gzip compression.
     """
     service = self._GetReportService()
-    report_url = service.getReportDownloadURL(report_job_id, export_format)
+
+    if include_totals_row is None:  # True unless CSV export if not specified
+      include_totals_row = True if export_format != 'CSV_DUMP' else False
+    opts = {
+        'exportFormat': export_format,
+        'includeReportProperties': include_report_properties,
+        'includeTotalsRow': include_totals_row,
+        'useGzipCompression': use_gzip_compression
+    }
+    report_url = service.getReportDownloadUrlWithOptions(report_job_id, opts)
     response = self.url_opener.open(report_url)
     while True:
       chunk = response.read(_CHUNK_SIZE)

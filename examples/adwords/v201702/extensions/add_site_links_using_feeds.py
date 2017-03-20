@@ -38,8 +38,8 @@ from googleads import errors
 PLACEHOLDER_SITELINKS = '1'
 PLACEHOLDER_FIELD_SITELINK_LINK_TEXT = '1'
 PLACEHOLDER_FIELD_SITELINK_FINAL_URLS = '5'
-PLACEHOLDER_FIELD_LINE_1_TEXT = '3'
-PLACEHOLDER_FIELD_LINE_2_TEXT = '4'
+PLACEHOLDER_FIELD_LINE_2_TEXT = '3'
+PLACEHOLDER_FIELD_LINE_3_TEXT = '4'
 
 CAMPAIGN_ID = 'INSERT_CAMPAIGN_ID_HERE'
 
@@ -61,8 +61,8 @@ def main(client, campaign_id):
       'attributes': [
           {'type': 'STRING', 'name': 'Link Text'},
           {'type': 'URL_LIST', 'name': 'Link Final URLs'},
-          {'type': 'STRING', 'name': 'Line 1 Description'},
-          {'type': 'STRING', 'name': 'Line 2 Description'}
+          {'type': 'STRING', 'name': 'Line 2 Description'},
+          {'type': 'STRING', 'name': 'Line 3 Description'}
       ]
   }
 
@@ -74,36 +74,36 @@ def main(client, campaign_id):
     feed = response['value'][0]
     link_text_feed_attribute_id = feed['attributes'][0]['id']
     final_url_feed_attribute_id = feed['attributes'][1]['id']
-    line_1_feed_attribute_id = feed['attributes'][2]['id']
-    line_2_feed_attribute_id = feed['attributes'][3]['id']
+    line_2_feed_attribute_id = feed['attributes'][2]['id']
+    line_3_feed_attribute_id = feed['attributes'][3]['id']
     print ('Feed with name \'%s\' and ID \'%s\' was added with' %
            (feed['name'], feed['id']))
     print ('\tText attribute ID \'%s\' and Final URL attribute ID \'%s\'.' %
            (link_text_feed_attribute_id, final_url_feed_attribute_id))
-    print ('\tLine 1 attribute ID \'%s\' and Line 2 attribute ID \'%s\'.' %
-           (line_1_feed_attribute_id, line_2_feed_attribute_id))
+    print ('\tLine 2 attribute ID \'%s\' and Line 3 attribute ID \'%s\'.' %
+           (line_2_feed_attribute_id, line_3_feed_attribute_id))
     sitelinks_data['feedId'] = feed['id']
     sitelinks_data['linkTextFeedId'] = link_text_feed_attribute_id
     sitelinks_data['finalUrlFeedId'] = final_url_feed_attribute_id
-    sitelinks_data['line1FeedId'] = line_1_feed_attribute_id
     sitelinks_data['line2FeedId'] = line_2_feed_attribute_id
+    sitelinks_data['line3FeedId'] = line_3_feed_attribute_id
   else:
     raise errors.GoogleAdsError('No feeds were added.')
 
   # Create site links feed items.
   items_data = [
       {'text': 'Home', 'finalUrls': 'http://www.example.com',
-       'line1': 'Home line 1', 'line2': 'Home line 2'},
+       'line2': 'Home line 2', 'line3': 'Home line 3'},
       {'text': 'Stores', 'finalUrls': 'http://www.example.com/stores',
-       'line1': 'Stores line 1', 'line2': 'Stores line 2'},
+       'line2': 'Stores line 2', 'line3': 'Stores line 3'},
       {'text': 'On Sale', 'finalUrls': 'http://www.example.com/sale',
-       'line1': 'On Sale line 1', 'line2': 'On Sale line 2'},
+       'line2': 'On Sale line 2', 'line3': 'On Sale line 3'},
       {'text': 'Support', 'finalUrls': 'http://www.example.com/support',
-       'line1': 'Support line 1', 'line2': 'Support line 2'},
+       'line2': 'Support line 2', 'line3': 'Support line 3'},
       {'text': 'Products', 'finalUrls': 'http://www.example.com/products',
-       'line1': 'Products line 1', 'line2': 'Products line 2'},
+       'line2': 'Products line 2', 'line3': 'Products line 3'},
       {'text': 'About Us', 'finalUrls': 'http://www.example.com/about',
-       'line1': 'About line 1', 'line2': 'About line 2', 'locationId': '21137'}
+       'line2': 'About line 2', 'line3': 'About line 3', 'locationId': '21137'}
   ]
 
   feed_items = []
@@ -120,12 +120,12 @@ def main(client, campaign_id):
                 'stringValues': [item['finalUrls']]
             },
             {
-                'feedAttributeId': sitelinks_data['line1FeedId'],
-                'stringValue': item['line1']
-            },
-            {
                 'feedAttributeId': sitelinks_data['line2FeedId'],
                 'stringValue': item['line2']
+            },
+            {
+                'feedAttributeId': sitelinks_data['line3FeedId'],
+                'stringValue': item['line3']
             }
         ],
         # Optional: use the 'startTime' and 'endTime' keys to specify the time
@@ -179,12 +179,12 @@ def main(client, campaign_id):
               'fieldId': PLACEHOLDER_FIELD_SITELINK_FINAL_URLS
           },
           {
-              'feedAttributeId': sitelinks_data['line1FeedId'],
-              'fieldId': PLACEHOLDER_FIELD_LINE_1_TEXT
-          },
-          {
               'feedAttributeId': sitelinks_data['line2FeedId'],
               'fieldId': PLACEHOLDER_FIELD_LINE_2_TEXT
+          },
+          {
+              'feedAttributeId': sitelinks_data['line3FeedId'],
+              'fieldId': PLACEHOLDER_FIELD_LINE_3_TEXT
           }
       ]
   }

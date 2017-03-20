@@ -538,7 +538,7 @@ class DataDownloaderTest(unittest.TestCase):
         self.report_downloader.WaitForReport, {'id': 'obj'})
 
   def testDownloadReportToFile(self):
-    report_format = 'csv'
+    report_format = 'CSV_DUMP'
     report_job_id = 't68t3278y429'
     report_download_url = 'http://google.com/something'
     report_contents = 'THIS IS YOUR REPORT!'
@@ -547,13 +547,21 @@ class DataDownloaderTest(unittest.TestCase):
     fake_request.seek(0)
     outfile = StringIO.StringIO()
 
-    self.report_service.getReportDownloadURL.return_value = report_download_url
+    download_func = self.report_service.getReportDownloadUrlWithOptions
+    download_func.return_value = report_download_url
 
     with mock.patch('urllib2.OpenerDirector.open' if sys.version_info[0] == 2
                     else 'urllib.request.OpenerDirector.open') as mock_open:
       mock_open.return_value = fake_request
       self.report_downloader.DownloadReportToFile(
           report_job_id, report_format, outfile)
+      default_opts = {
+          'exportFormat': report_format,
+          'includeReportProperties': False,
+          'includeTotalsRow': False,
+          'useGzipCompression': True,
+      }
+      download_func.assert_called_once_with(report_job_id, default_opts)
       mock_open.assert_called_once_with(report_download_url)
       self.assertEqual(report_contents, outfile.getvalue())
 

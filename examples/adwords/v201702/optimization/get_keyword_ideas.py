@@ -45,7 +45,7 @@ def main(client):
           {
               # Language setting (optional).
               # The ID can be found in the documentation:
-              #  https://developers.google.com/adwords/api/docs/appendix/languagecodes
+              # https://developers.google.com/adwords/api/docs/appendix/languagecodes
               'xsi_type': 'LanguageSearchParameter',
               'languages': [{'id': '1000'}]
           },

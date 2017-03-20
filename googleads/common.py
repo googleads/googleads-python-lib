@@ -60,7 +60,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '5.2.0'
+VERSION = '5.3.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'

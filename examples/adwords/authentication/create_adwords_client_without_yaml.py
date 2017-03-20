@@ -47,8 +47,14 @@ def main(client_id, client_secret, refresh_token, developer_token, user_agent,
       developer_token, oauth2_client, user_agent,
       client_customer_id=client_customer_id)
 
-  customer = adwords_client.GetService('CustomerService').get()
-  print 'You are logged in as customer: %s' % customer['customerId']
+  customer_service = adwords_client.GetService('CustomerService',
+                                               version='v201702')
+  customers = customer_service.getCustomers()
+
+  print 'You are logged in as a user with access to the following customers:'
+
+  for customer in customers:
+    print '\t%s' % customer['customerId']
 
 
 if __name__ == '__main__':
