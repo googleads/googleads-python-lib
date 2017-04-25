@@ -85,6 +85,13 @@ class PatchHelper(object):
     enabled. For more details on SOAP Compression, see:
     https://developers.google.com/adwords/api/docs/guides/bestpractices?hl=en#use_compression
     """
+    def GetInflateStream(msg):
+      stream = io.BytesIO()
+      stream.write(msg)
+      stream.flush()
+      stream.seek(0)
+      return gzip.GzipFile(fileobj=stream, mode='rb')
+
     def PatchedHttpTransportSend(self, request):
       """Patch for HttpTransport.send to enable gzip compression."""
       msg = request.message
@@ -102,6 +109,12 @@ class PatchHelper(object):
         if e.code in (202, 204):
           return None
         else:
+          if e.headers.get('content-encoding') == 'gzip':
+            # If gzip encoding is used, decompress here.
+            # Need to read and recreate a stream because urllib result objects
+            # don't fully implement the file-like API
+            e.fp = GetInflateStream(e.fp.read())
+
           raise suds.transport.TransportError(e.msg, e.code, e.fp)
 
       self.getcookies(fp, u2request)
@@ -110,11 +123,7 @@ class PatchHelper(object):
 
       if result.headers.get('content-encoding') == 'gzip':
         # If gzip encoding is used, decompress here.
-        stream = io.BytesIO()
-        stream.write(result.message)
-        stream.flush()
-        stream.seek(0)
-        result.message = gzip.GzipFile(fileobj=stream, mode='rb').read()
+        result.message = GetInflateStream(result.message).read()
 
       suds.transport.http.log.debug('received:\n%s', result)
       return result

@@ -1,3 +1,8 @@
+5.4.0 -- 4/25/17:
+* Resolved issues:
+- Issue 200: https://github.com/googleads/googleads-python-lib/issues/200
+- Issue 196: https://github.com/googleads/googleads-python-lib/issues/196
+
 5.3.0 -- 3/20/17:
 * Removed support for AdWords v201605.
 * Removed examples for AdWords v201605.

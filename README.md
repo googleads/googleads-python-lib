@@ -1,4 +1,4 @@
-#The googleads Python client library
+# The googleads Python client library
 
 
 This client library simplifies accessing Google's SOAP Ads APIs - AdWords,
@@ -6,7 +6,7 @@ and DoubleClick for Publishers. The library provides easy ways to store your
 authentication and create SOAP web service clients. It also contains example
 code to help you get started integrating with our APIs.
 
-##Getting started
+## Getting started
 1. Download and install the library
 
    *[setuptools](https://pypi.python.org/pypi/setuptools) is a pre-requisite
@@ -46,7 +46,7 @@ code to help you get started integrating with our APIs.
 
    * [Developing a web application (AdWords or DFP)](https://github.com/googleads/googleads-python-lib/wiki/API-access-on-behalf-of-your-clients-(web-flow))
 
-####Where can I find samples?
+#### Where can I find samples?
 
 You can find code examples for the latest versions of AdWords or DFP on the
 [releases](https://github.com/googleads/googleads-python-lib/releases) page.
@@ -55,11 +55,11 @@ Alternatively, you can find [AdWords](https://github.com/googleads/googleads-pyt
 or [DFP](https://github.com/googleads/googleads-python-lib/tree/master/examples/dfp)
 samples in the examples directory of this repository.
 
-####Where can I find the pydocs?
+#### Where can I find the pydocs?
 
 Our pydocs can be found [here](http://googleads.github.io/googleads-python-lib).
 
-####Caching authentication information
+#### Caching authentication information
 
 It is possible to cache your API authentication information. The library
 includes a sample file showing how to do this named `googleads.yaml`. Fill
@@ -76,7 +76,7 @@ adwords_client = adwords.AdWordsClient.LoadFromStorage()
 dfp_client = dfp.DfpClient.LoadFromStorage('C:\My\Directory\googleads.yaml')
 ```
 
-####How do I change the Client Customer Id at runtime?
+#### How do I change the Client Customer Id at runtime?
 You can change the Client Customer Id with the following:
 
 ```
@@ -85,7 +85,7 @@ adwords_client.SetClientCustomerId('my_client_customer_id')
 ```
 
 
-##Where do I submit bug reports and/or feature requests?
+## Where do I submit bug reports and/or feature requests?
 
 If you have issues directly related to the client library, use the [issue
 tracker](https://github.com/googleads/googleads-python-lib/issues).
@@ -100,7 +100,7 @@ Make sure to subscribe to our [Google Plus page](https://plus.google.com/+Google
 for API change announcements and other news.
 
 
-##How do I log SOAP interactions?
+## How do I log SOAP interactions?
 The library uses Python's built in logging framework. If you wish to log your
 SOAP interactions to stdout, you can do the following:
 ```python
@@ -111,7 +111,7 @@ If you wish to log to a file, you'll need to attach a log handler to this source
 which is configured to write the output to a file.
 
 
-##How do I disable log filters?
+## How do I disable log filters?
 By default, this library will apply log filters to the `googleads.common`,
 `suds.client`, and `suds.transport` loggers in order to omit sensitive data. If
 you need to see this data in your logs, you can disable the filters with the
@@ -126,7 +126,7 @@ logging.getLogger('suds.transport').removeFilter(
 ```
 
 
-##I'm familiar with suds. Can I use suds features with this library?
+## I'm familiar with suds. Can I use suds features with this library?
 Yes, you can. The services returned by the `client.GetService()` functions all
 have a reference to the underlying suds client stored in the `suds_client`
 attribute. You can retrieve the client and use it in familiar ways:
@@ -162,7 +162,7 @@ suds_client.set_options(
 suds_client.service.mutate([operation])
 ```
 
-##How can I configure or disable caching for the suds client?
+## How can I configure or disable caching for the suds client?
 
 By default, the suds clients are cached because reading and digesting the WSDL
 can be expensive. However, the default caching method requires permission to
@@ -187,26 +187,15 @@ adwords_client = adwords.AdWordsClient(
   client_customer_id=client_customer_id, cache=suds.cache.NoCache())
 ```
 
-##Timeout Tips
-The requests sent by this library are sent via urllib, which is consequently
-where the timeout is set. If you set a system timeout elsewhere, the googleads
-library will respect it.
 
-You can do the following if you wish to override the timeout:
+## Requirements
 
-```python
-import socket
-socket.setdefaulttimeout(15 * 60)
-```
-
-##Requirements
-
-###Python Versions
+### Python Versions
 
 This library supports both Python 2 and 3. To use this library, you will need to
 have Python 2.7.9 (or higher) or Python 3.4 (or higher) installed.
 
-###External Dependencies:
+### External Dependencies:
 
     - httplib2             -- https://pypi.python.org/pypi/httplib2/
     - oauth2client         -- https://pypi.python.org/pypi/oauth2client/
@@ -221,5 +210,5 @@ have Python 2.7.9 (or higher) or Python 3.4 (or higher) installed.
                               (only needed to run unit tests)
 
 
-##Authors:
+## Authors:
     Mark Saniscalchi

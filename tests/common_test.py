@@ -15,7 +15,9 @@
 """Unit tests to cover the common module."""
 
 
+import io
 import unittest
+from urllib import addinfourl
 import urllib2
 import warnings
 
@@ -338,6 +340,18 @@ class CommonTest(unittest.TestCase):
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
                       googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+
+  def testHTTPSProxyExtendsSSLSockTimeout(self):
+    with mock.patch('googleads.oauth2.GoogleRefreshTokenClient'):
+      with mock.patch('googleads.common.open', self.fake_open, create=True):
+        with mock.patch('suds.transport.http.'
+                        'HttpTransport.__init__') as mock_transport:
+          proxy_config = googleads.common.ProxyConfig()
+          proxy_config.GetSudsProxyTransport()
+          mock_transport.assert_called_once()
+          # 90 is the default, don't expect an exact value so that we can change
+          # the timeout in the code without returning here.
+          self.assertGreater(mock_transport.call_args_list[0][1]['timeout'], 90)
 
   def testLoadFromString_passesWithHTTPProxy(self):
     yaml_doc = self._CreateYamlDoc(
@@ -983,6 +997,62 @@ class ProxyConfigTest(unittest.TestCase):
         transport = proxy_config.GetSudsProxyTransport()
         t.assert_called_once_with([proxy_handler.return_value])
         self.assertEqual(t.return_value, transport)
+
+
+class TestSudsRequestPatcher(unittest.TestCase):
+
+  class MockHeaders(object):
+
+    def __init__(self, d):
+      self.dict = d
+
+  def testInflateSuccessfulRequestIfGzipped(self):
+    with mock.patch('suds.transport.http.HttpTransport.getcookies'):
+      with mock.patch('urllib2.OpenerDirector.open') as mock_open:
+        with mock.patch('gzip.GzipFile.read') as mock_read:
+          resp_fp = io.BytesIO()
+          resp_fp.write('abc')
+          resp_fp.flush()
+          resp_fp.seek(0)
+          resp = addinfourl(resp_fp, self.MockHeaders(
+              {'content-encoding': 'gzip'}), 'https://example.com', code=200)
+          mock_open.return_value = resp
+
+          req = suds.transport.Request('https://example.com',
+                                       message='hello world')
+          suds.transport.http.HttpTransport().send(req)
+          mock_read.assert_called_once()
+
+  def testInflateFailedRequestIfGzipped(self):
+
+    with mock.patch('suds.transport.http.HttpTransport.getcookies'):
+      with mock.patch('urllib2.OpenerDirector.open') as mock_open:
+        with mock.patch('gzip.GzipFile') as mock_gzip:
+          gzip_instance_mock = mock.MagicMock
+          mock_gzip.return_value = gzip_instance_mock
+          resp_fp = io.BytesIO()
+          resp_fp.write('abc')
+          resp_fp.flush()
+          resp_fp.seek(0)
+          resp = addinfourl(resp_fp,
+                            self.MockHeaders({'content-encoding': 'gzip'}),
+                            'https://example.com', code=200)
+
+          def fail_to_open(*args, **kwargs):
+            raise urllib2.HTTPError(
+                'https://example.com',
+                500,
+                'oops!',
+                {'content-encoding': 'gzip'},
+                resp
+            )
+          mock_open.side_effect = fail_to_open
+
+          req = suds.transport.Request('https://example.com',
+                                       message='hello world')
+          with self.assertRaises(suds.transport.TransportError) as exc:
+            suds.transport.http.HttpTransport().send(req)
+          self.assertEqual(exc.exception.fp, gzip_instance_mock)
 
 
 if __name__ == '__main__':

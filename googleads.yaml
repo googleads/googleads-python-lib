@@ -49,21 +49,22 @@ dfp:
   #############################################################################
   # The network_code is required for all services except NetworkService:
   # network_code: INSERT_NETWORK_CODE_HERE
+  # delegated_account: INSERT_DOMAIN_WIDE_DELEGATION_ACCOUNT
   #############################################################################
   # OAuth2 Configuration                                                      #
   # Below you may provide credentials for either the installed application or #
-  # service account flows. Remove or comment the lines for the flow you're    #
-  # not using.                                                                #
+  # service account (recommended) flows. Remove or comment the lines for the  #
+  # flow you're not using.                                                    #
   #############################################################################
+  # The following values configure the client for the service account flow.
+  path_to_private_key_file: INSERT_PATH_TO_FILE_HERE
+  # Only needed when using P12
+  # service_account_email: INSERT_SERVICE_ACCOUNT_EMAIL_HERE
   # The following values configure the client for the installed application
   # flow.
-  client_id: INSERT_OAUTH_2_CLIENT_ID_HERE
-  client_secret: INSERT_CLIENT_SECRET_HERE
-  refresh_token: INSERT_REFRESH_TOKEN_HERE
-  # The following values configure the client for the service account flow.
-  # service_account_email: INSERT_SERVICE_ACCOUNT_EMAIL_HERE
-  # path_to_private_key_file: INSERT_PATH_TO_FILE_HERE
-  # delegated_account: INSERT_DOMAIN_WIDE_DELEGATION_ACCOUNT
+  # client_id: INSERT_OAUTH_2_CLIENT_ID_HERE
+  # client_secret: INSERT_CLIENT_SECRET_HERE
+  # refresh_token: INSERT_REFRESH_TOKEN_HERE
 
 
 # Common configurations:
