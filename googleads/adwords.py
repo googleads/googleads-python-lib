@@ -298,7 +298,7 @@ class AdWordsClient(object):
           partial failure with some changes made. Only certain services respect
           this header.
       cache: A subclass of suds.cache.Cache. If not set, this will default to an
-          instance of suds.cache.FileCache.
+          instance of suds.cache.ObjectCache.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
         isn't being used.
       report_downloader_headers: A dict containing optional headers to be used

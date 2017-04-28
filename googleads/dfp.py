@@ -215,7 +215,7 @@ class DfpClient(object):
           accessing. All requests other than getAllNetworks and getCurrentUser
           calls require this header to be set.
       cache: A subclass of suds.cache.Cache. If not set, this will default to an
-          instance of suds.cache.FileCache.
+          instance of suds.cache.ObjectCache.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
         isn't being used.
       enable_compression: A boolean indicating if you want to enable compression
