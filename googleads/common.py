@@ -45,11 +45,11 @@ except ImportError:
   pass
 
 
-logging.getLogger('suds.client').addFilter(googleads.util.GetSudsClientFilter())
+logging.getLogger('suds.client').addFilter(googleads.util.SudsClientFilter)
 logging.getLogger('suds.transport.http').addFilter(
-    googleads.util.GetSudsTransportFilter())
+    googleads.util.SudsTransportFilter)
 _logger = logging.getLogger(__name__)
-_logger.addFilter(googleads.util.GetGoogleAdsCommonFilter())
+_logger.addFilter(googleads.util.GoogleAdsCommonFilter)
 
 _PY_VERSION_MAJOR = sys.version_info.major
 _PY_VERSION_MINOR = sys.version_info.minor

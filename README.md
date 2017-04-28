@@ -118,11 +118,11 @@ you need to see this data in your logs, you can disable the filters with the
 following:
 ```python
 logging.getLogger('googleads.common').removeFilter(
-    googleads.util.GetGoogleAdsCommonFilter())
+    googleads.util.GoogleAdsCommonFilter)
 logging.getLogger('suds.client').removeFilter(
-    googleads.util.GetSudsClientFilter())
+    googleads.util.SudsClientFilter)
 logging.getLogger('suds.transport').removeFilter(
-    googleads.util.GetSudsTransportFilter())
+    googleads.util.SudsTransportFilter)
 ```
 
 
