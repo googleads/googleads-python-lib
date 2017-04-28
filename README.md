@@ -174,10 +174,10 @@ You can pass an implementation of `suds.cache.Cache` to the `AdWordsClient` or
 
 For example, configuring a different location and duration of the cache file:
 ```python
-file_cache = suds.cache.FileCache(location=cache_path, days=2)
+doc_cache = suds.cache.DocumentCache(location=cache_path, days=2)
 adwords_client = adwords.AdWordsClient(
   developer_token, oauth2_client, user_agent,
-  client_customer_id=client_customer_id, cache=file_cache)
+  client_customer_id=client_customer_id, cache=doc_cache)
 ```
 
 You can also disable caching in similar fashion:
