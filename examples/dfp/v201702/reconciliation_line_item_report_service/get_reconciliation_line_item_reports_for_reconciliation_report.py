@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2017 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,63 +13,63 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Gets a reconciliation report's data for line items that served through DFP.
+
+"""This example gets all line item reports for a given reconciliation report.
+
+To determine how many reconciliation reports exist,
+run get_all_reconciliation_reports.py.
 """
 
 # Import appropriate modules from the client library.
 from googleads import dfp
 
+# Set the ID of the reconciliation report to query.
 RECONCILIATION_REPORT_ID = 'INSERT_RECONCILIATION_REPORT_ID_HERE'
 
 
-def main(client, reconciliation_report_id):
+def main(client):
   # Initialize appropriate service.
-  reconciliation_line_item_report_service = client.GetService(
-      'ReconciliationLineItemReportService', version='v201702')
-  query = ('WHERE reconciliationReportId = :reconciliationReportId AND '
-           'lineItemId != :lineItemId')
-  values = [
-      {'key': 'reconciliationReportId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': reconciliation_report_id
-       }},
-      {'key': 'lineItemId',
-       'value': {
-           'xsi_type': 'NumberValue',
-           'value': '0'
-       }},
-  ]
+  reconciliation_line_item_report_service = (client.GetService(
+      'ReconciliationLineItemReportService', version='v201702'))
+
   # Create a statement to select reconciliation line item reports.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where(('reconciliationReportId = :reconciliationReportId AND '
+                       'lineItemId != :lineItemId'))
+               .OrderBy('lineItemId', ascending=True)
+               .WithBindVariable('reconciliationReportId',
+                                 RECONCILIATION_REPORT_ID)
+               .WithBindVariable('lineItemId', 0))
 
   # Retrieve a small amount of reconciliation line item reports at a time,
   # paging through until all reconciliation line item reports have been
   # retrieved.
-  while True:
-    response = (
-        reconciliation_line_item_report_service
-        .getReconciliationLineItemReportsByStatement(
-            statement.ToStatement()))
-    if 'results' in response:
-      for reconciliation_line_item_report in response['results']:
-        # Print out some information for each reconciliation line item report.
-        print(
-            'Reconciliation line item report with ID "%d", line item ID "%d", '
-            'reconciliation source "%s", and reconciled volume "%d" was '
-            'found.\n' %
-            (reconciliation_line_item_report['id'],
-             reconciliation_line_item_report['lineItemId'],
-             reconciliation_line_item_report['reconciliationSource'],
-             reconciliation_line_item_report['reconciledVolume']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
-    else:
-      break
+  result_set_size = 0
+  should_continue = True
 
-  print '\nNumber of results found: %s' % response['totalResultSetSize']
+  while should_continue:
+    page = (reconciliation_line_item_report_service
+            .getReconciliationLineItemReportsByStatement(
+                statement.ToStatement()))
+    if 'results' in page:
+      result_set_size += page['totalResultSetSize']
+      # Iterate over individual results in the page.
+      for line_item_report in page['results']:
+        print ('Reconciliation line item report with ID %d, line item ID %d, '
+               'reconciliation source \'%s\', and reconciled volume %d was '
+               'found.' % (line_item_report['id'],
+                           line_item_report['lineItemId'],
+                           line_item_report['reconciliationSource'],
+                           (line_item_report['reconciledVolume']
+                            if 'reconciledVolume' in line_item_report else 0)))
+    # Update statement for next page.
+    statement.offset += statement.limit
+    should_continue = statement.offset < result_set_size
+
+  print 'Number of results found: %d' % result_set_size
 
 
 if __name__ == '__main__':
   # Initialize client object.
   dfp_client = dfp.DfpClient.LoadFromStorage()
-  main(dfp_client, RECONCILIATION_REPORT_ID)
+  main(dfp_client)

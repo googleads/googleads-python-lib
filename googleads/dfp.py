@@ -18,6 +18,7 @@
 import csv
 import datetime
 import logging
+import numbers
 import os
 import time
 import urllib2
@@ -39,27 +40,6 @@ SUGGESTED_PAGE_LIMIT = 500
 _CHUNK_SIZE = 16 * 1024
 # A giant dictionary of DFP versions and the services they support.
 _SERVICE_MAP = {
-    'v201605':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
-         'CompanyService', 'ContactService', 'ContentBundleService',
-         'ContentMetadataKeyHierarchyService', 'ContentService',
-         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
-         'CreativeWrapperService', 'CustomFieldService',
-         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
-         'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService', 'NetworkService',
-         'OrderService', 'PackageService', 'PlacementService',
-         'PremiumRateService', 'ProductService', 'ProductPackageService',
-         'ProductPackageItemService', 'ProductTemplateService',
-         'ProposalLineItemService', 'ProposalService',
-         'PublisherQueryLanguageService', 'RateCardService',
-         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
-         'ReconciliationLineItemReportService',
-         'ReconciliationReportService', 'ReportService',
-         'SuggestedAdUnitService', 'TeamService', 'UserService',
-         'UserTeamAssociationService', 'WorkflowRequestService'),
     'v201608':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
@@ -103,6 +83,28 @@ _SERVICE_MAP = {
          'SuggestedAdUnitService', 'TeamService', 'UserService',
          'UserTeamAssociationService', 'WorkflowRequestService'),
     'v201702':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CompanyService', 'ContactService', 'ContentBundleService',
+         'ContentMetadataKeyHierarchyService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
+         'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService',
+         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
+         'OrderService', 'PackageService', 'PlacementService',
+         'PremiumRateService', 'ProductService', 'ProductPackageService',
+         'ProductPackageItemService', 'ProductTemplateService',
+         'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationLineItemReportService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201705':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
          'CompanyService', 'ContactService', 'ContentBundleService',
@@ -289,7 +291,8 @@ class DfpClient(object):
             'Unrecognized version of the DFP API. Version given: %s Supported '
             'versions: %s' % (version, _SERVICE_MAP.keys()))
 
-    return googleads.common.SudsServiceProxy(client, self._header_handler)
+    return googleads.common.SudsServiceProxy(client, self._header_handler,
+                                             _DFPDateTimePacker)
 
   def GetDataDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
                         server=None):
@@ -318,7 +321,7 @@ class _DfpHeaderHandler(googleads.common.HeaderHandler):
   """Handler which sets the headers for a DFP SOAP call."""
 
   # The library signature for DFP, to be appended to all application_names.
-  _LIB_SIG = googleads.common.GenerateLibSig('DfpApi-Python')
+  _PRODUCT_SIG = 'DfpApi-Python'
   # The name of the WSDL-defined SOAP Header class used in all requests.
   _SOAP_HEADER_CLASS = 'SoapRequestHeader'
 
@@ -340,8 +343,9 @@ class _DfpHeaderHandler(googleads.common.HeaderHandler):
     """Sets the SOAP and HTTP headers on the given suds client."""
     header = suds_client.factory.create(self._SOAP_HEADER_CLASS)
     header.networkCode = self._dfp_client.network_code
-    header.applicationName = ''.join([self._dfp_client.application_name,
-                                      self._LIB_SIG])
+    header.applicationName = ''.join([
+        self._dfp_client.application_name,
+        googleads.common.GenerateLibSig(self._PRODUCT_SIG)])
 
     http_headers = self._dfp_client.oauth2_client.CreateHttpHeader()
     if self.enable_compression:
@@ -352,6 +356,292 @@ class _DfpHeaderHandler(googleads.common.HeaderHandler):
         headers=http_headers)
 
 
+@googleads.common.RegisterUtility('StatementBuilder')
+class StatementBuilder(object):
+  """Provides the ability to programmatically construct PQL queries."""
+
+  class _OrderByPair(object):
+    """Stores and serializes a pair of column/ascending values."""
+
+    def __init__(self, column, ascending):
+      """Initializes a pair of column/ascending values.
+
+      Args:
+        column: a string specifying the column name.
+        ascending: a boolean specifying sort order ascending or descending.
+      """
+      self.column = column
+      self.ascending = ascending
+
+    def __repr__(self):
+      """The string representation of this class is valid PQL."""
+      return '%s %s' % (self.column, 'ASC' if self.ascending else 'DESC')
+
+  _SELECT_PART = 'SELECT %s FROM %s'
+  _WHERE_PART = 'WHERE %s'
+  _ORDER_BY_PART = 'ORDER BY %s'
+  _LIMIT_PART = 'LIMIT %s'
+  _OFFSET_PART = 'OFFSET %s'
+
+  def __init__(self, select_columns=None, from_table=None, where=None,
+               order_by=None, order_ascending=True,
+               limit=SUGGESTED_PAGE_LIMIT, offset=0):
+    """Initializes StatementBuilder.
+
+    Args:
+      select_columns: a comma separated string of column names.
+      from_table: a string specifying the table to select from.
+      where: a string with the where clause.
+      order_by: a string with the order by clause.
+      order_ascending: a boolean specifying sort order ascending or descending.
+      limit: an integer with the limit clause.
+      offset: an integer with the offset clause.
+    """
+    self._select = select_columns
+    self._from_ = from_table
+    self._where = where
+    self.limit = limit
+    self.offset = offset
+    if order_by:
+      self._order_by = self._OrderByPair(column=order_by,
+                                         ascending=order_ascending)
+    else:
+      self._order_by = None
+    self._values = {}  # Use a dict to prevent duplicates
+
+  def ToStatement(self):
+    """Builds a PQL string from the current state.
+
+    Returns:
+      A string representation of the PQL statement.
+    """
+
+    if self._select and not self._from_:
+      raise googleads.errors.GoogleAdsError('FROM clause required with SELECT.')
+
+    if self._from_ and not self._select:
+      raise googleads.errors.GoogleAdsError('SELECT clause required with FROM.')
+
+    query = []
+
+    if self._select:
+      query.append(self._SELECT_PART % (self._select, self._from_))
+
+    if self._where:
+      query.append(self._WHERE_PART % self._where)
+
+    if self._order_by:
+      query.append(self._ORDER_BY_PART % self._order_by)
+
+    if self.limit:
+      query.append(self._LIMIT_PART % self.limit)
+
+    if self.offset is not None:
+      query.append(self._OFFSET_PART % self.offset)
+
+    return {'query': ' '.join(query),
+            'values': (PQLHelper.GetQueryValuesFromDict(self._values)
+                       if self._values else None)}
+
+  def Select(self, columns):
+    """Adds a SELECT clause.
+
+    Args:
+      columns: A comma separated string specifying the columns.
+
+    Returns:
+      A reference to the StatementBuilder.
+    """
+    self._select = columns
+    return self
+
+  def From(self, table):
+    """Adds a FROM clause.
+
+    Args:
+      table: A string specifying the table.
+
+    Returns:
+      A reference to the StatementBuilder
+    """
+    self._from_ = table
+    return self
+
+  def Where(self, clause):
+    """Adds a WHERE clause.
+
+    Args:
+      clause: A string specifying the where clause.
+
+    Returns:
+      A reference to the StatementBuilder.
+    """
+    self._where = clause
+    return self
+
+  def Limit(self, limit=SUGGESTED_PAGE_LIMIT):
+    """Adds a LIMIT clause.
+
+    Args:
+      limit: An integer specifying the limit value.
+
+    Returns:
+      A reference to the StatementBuilder.
+    """
+    self.limit = limit
+    return self
+
+  def Offset(self, value):
+    """Adds an OFFSET clause.
+
+    Args:
+      value: An integer specifying the offset value.
+
+    Returns:
+      A reference to the StatementBuilder.
+    """
+    self.offset = value
+    return self
+
+  def OrderBy(self, column, ascending=True):
+    """Adds an ORDER BY clause.
+
+    Args:
+      column: A string specifying the column to order by.
+      ascending: A bool to indicate ascending vs descending.
+
+    Returns:
+      A reference to the StatementBuilder
+    """
+    self._order_by = self._OrderByPair(column=column,
+                                       ascending=ascending)
+    return self
+
+  def WithBindVariable(self, key, value):
+    """Binds a value to a variable in the statement.
+
+    Args:
+      key: A string identifying the variable.
+      value: A object of an acceptable type specifying the value.
+
+    Returns:
+      A reference to the StatementBuilder.
+    """
+
+    # Make this call to throw the exception here if there is a problem
+    PQLHelper.GetValueRepresentation(value)
+
+    self._values[key] = value
+    return self
+
+
+def _DFPDateTimePacker(value):
+  """Returns dicts formatted for DFP SOAP based on date/datetime.
+
+  Args:
+    value: A date or datetime object to be converted.
+
+  Returns:
+    The value object correctly represented for DFP SOAP.
+  """
+
+  if isinstance(value, datetime.datetime):
+    if value.tzinfo is None:
+      raise googleads.errors.GoogleAdsValueError(
+          'Datetime %s is not timezone aware.' % value
+      )
+
+    return {
+        'date': _DFPDateTimePacker(value.date()),
+        'hour': value.hour,
+        'minute': value.minute,
+        'second': value.second,
+        'timeZoneID': value.tzinfo.zone,
+    }
+  elif isinstance(value, datetime.date):
+    return {'year': value.year, 'month': value.month, 'day': value.day}
+
+
+class PQLHelper(object):
+  """Utility class for PQL."""
+
+  @classmethod
+  def GetQueryValuesFromDict(cls, d):
+    """Converts a dict of python types into a list of PQL types.
+
+    Args:
+      d: A dictionary of variable names to python types.
+
+    Returns:
+      A list of variables formatted for PQL statements.
+    """
+    return [{
+        'key': key,
+        'value': cls.GetValueRepresentation(value)
+    } for key, value in d.iteritems()]
+
+  @classmethod
+  def GetValueRepresentation(cls, value):
+    """Converts a single python value to its PQL representation.
+
+    Args:
+      value: A python value.
+
+    Returns:
+      The value formatted for PQL statements.
+    """
+    if isinstance(value, str) or isinstance(value, unicode):
+      return {'value': value, 'xsi_type': 'TextValue'}
+    elif isinstance(value, bool):
+      return {'value': value, 'xsi_type': 'BooleanValue'}
+    elif isinstance(value, numbers.Number):
+      return {'value': value, 'xsi_type': 'NumberValue'}
+    # It's important that datetime is checked for before date
+    # because isinstance(datetime.datetime.now(), datetime.date) is True
+    elif isinstance(value, datetime.datetime):
+      if value.tzinfo is None:
+        raise googleads.errors.GoogleAdsValueError(
+            'Datetime %s is not timezone aware.' % value
+        )
+
+      return {
+          'xsi_type': 'DateTimeValue',
+          'value': {
+              'date': {
+                  'year': value.year,
+                  'month': value.month,
+                  'day': value.day,
+              },
+              'hour': value.hour,
+              'minute': value.minute,
+              'second': value.second,
+              'timeZoneID': value.tzinfo.zone,
+          }
+      }
+    elif isinstance(value, datetime.date):
+      return {
+          'xsi_type': 'DateValue',
+          'value': {
+              'year': value.year,
+              'month': value.month,
+              'day': value.day,
+          }
+      }
+    elif isinstance(value, list):
+      if value and not all(isinstance(x, type(value[0])) for x in value):
+        raise googleads.errors.GoogleAdsValueError('Cannot pass more than one '
+                                                   'type in a set.')
+
+      return {
+          'xsi_type': 'SetValue',
+          'values': [cls.GetValueRepresentation(v) for v in value]
+      }
+    else:
+      raise googleads.errors.GoogleAdsValueError(
+          'Can\'t represent unknown type: %s.' % type(value))
+
+
+@googleads.common.RegisterUtility('FilterStatement')
 class FilterStatement(object):
   """A statement object for PQL and get*ByStatement queries.
 
@@ -360,8 +650,8 @@ class FilterStatement(object):
   set.
   """
 
-  def __init__(
-      self, where_clause='', values=None, limit=SUGGESTED_PAGE_LIMIT, offset=0):
+  def __init__(self, where_clause='', values=None, limit=SUGGESTED_PAGE_LIMIT,
+               offset=0):
     self.where_clause = where_clause
     self.values = values
     self.limit = limit
@@ -571,16 +861,19 @@ class DataDownloader(object):
                        memory)
       values: list dict of bind values to use with the pql_query.
     """
-    result_set_size = 0
     pql_service = self._GetPqlService()
-    filter_statement = FilterStatement(pql_query, values, SUGGESTED_PAGE_LIMIT)
+    current_offset = 0
 
     while True:
-      response = pql_service.select(filter_statement.ToStatement())
+      query_w_limit_offset = '%s LIMIT %d OFFSET %d' % (pql_query,
+                                                        SUGGESTED_PAGE_LIMIT,
+                                                        current_offset)
+      response = pql_service.select({'query': query_w_limit_offset,
+                                     'values': values})
 
       if 'rows' in response:
         # Write the header row only on first pull
-        if filter_statement.offset == 0:
+        if current_offset == 0:
           header = response['columnTypes']
           output_function([label['labelName'] for label in header])
 
@@ -591,7 +884,7 @@ class DataDownloader(object):
           output_function([self._ConvertValueForCsv(value) for value
                            in entity['values']])
 
-        filter_statement.offset += result_set_size
+        current_offset += result_set_size
         if result_set_size != SUGGESTED_PAGE_LIMIT:
           break
       else:

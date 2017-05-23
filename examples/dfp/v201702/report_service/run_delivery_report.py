@@ -43,7 +43,7 @@ def main(client, order_id):
                       'values': values}
 
   # Set the start and end dates of the report to run (past 8 days).
-  end_date = datetime.now()
+  end_date = datetime.now().date()
   start_date = end_date - timedelta(days=8)
 
   # Create report job.
@@ -57,12 +57,8 @@ def main(client, order_id):
                       'AD_SERVER_CTR', 'AD_SERVER_CPM_AND_CPC_REVENUE',
                       'AD_SERVER_WITHOUT_CPD_AVERAGE_ECPM'],
           'dateRangeType': 'CUSTOM_DATE',
-          'startDate': {'year': start_date.year,
-                        'month': start_date.month,
-                        'day': start_date.day},
-          'endDate': {'year': end_date.year,
-                      'month': end_date.month,
-                      'day': end_date.day}
+          'startDate': start_date,
+          'endDate': end_date
       }
   }
 

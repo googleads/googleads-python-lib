@@ -135,6 +135,9 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     self.validate_only = True
     self.partial_failure = False
     self.enable_compression = False
+    self.utility_name = 'TestUtility'
+    self.default_sig_template = ' (%s, %s, %s)'
+    self.util_sig_template = ' (%s, %s, %s, %s)'
     self.aw_client = GetAdWordsClient(
         ccid=self.ccid, dev_token=self.dev_token, user_agent=self.user_agent,
         oauth2_client=self.oauth2_client, validate_only=self.validate_only,
@@ -142,6 +145,14 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         report_downloader_headers=self.report_downloader_headers)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.aw_client, CURRENT_VERSION, self.enable_compression)
+
+    @googleads.common.RegisterUtility(self.utility_name)
+    class TestUtility(object):
+
+      def Test(self):
+        pass
+
+    self.test_utility = TestUtility()
 
   def testSetHeaders(self):
     suds_client = mock.Mock()
@@ -155,13 +166,80 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
     self.assertEqual(self.dev_token, soap_header.developerToken)
     self.assertEqual(
         ''.join([self.user_agent,
-                 googleads.adwords._AdWordsHeaderHandler._LIB_SIG]),
+                 googleads.common.GenerateLibSig(
+                     googleads.adwords._AdWordsHeaderHandler._PRODUCT_SIG)]),
         soap_header.userAgent)
     self.assertEqual(self.validate_only, soap_header.validateOnly)
     self.assertEqual(self.partial_failure, soap_header.partialFailure)
     # Check that the suds client has the correct values.
     suds_client.set_options.assert_any_call(
         soapheaders=soap_header, headers=self.oauth_header)
+
+  def testSetHeadersUserAgentWithUtility(self):
+    suds_client = mock.Mock()
+
+    with mock.patch('googleads.common._COMMON_LIB_SIG') as mock_common_sig:
+      with mock.patch('googleads.common._PYTHON_VERSION') as mock_py_ver:
+        self.test_utility.Test()  # This will register TestUtility.
+        self.header_handler.SetHeaders(suds_client)
+        soap_header = suds_client.factory.create.return_value
+
+        self.assertEqual(
+            ''.join([self.user_agent,
+                     self.util_sig_template % (
+                         googleads.adwords._AdWordsHeaderHandler._PRODUCT_SIG,
+                         mock_common_sig,
+                         mock_py_ver,
+                         self.utility_name)
+                    ]),
+            soap_header.userAgent)
+
+  def testSetHeadersUserAgentWithAndWithoutUtility(self):
+    suds_client = mock.Mock()
+
+    with mock.patch('googleads.common._COMMON_LIB_SIG') as mock_common_sig:
+      with mock.patch('googleads.common._PYTHON_VERSION') as mock_py_ver:
+        # Check headers when utility registered.
+        self.test_utility.Test()  # This will register TestUtility.
+        self.header_handler.SetHeaders(suds_client)
+        soap_header = suds_client.factory.create.return_value
+
+        self.assertEqual(
+            ''.join([self.user_agent,
+                     self.util_sig_template % (
+                         googleads.adwords._AdWordsHeaderHandler._PRODUCT_SIG,
+                         mock_common_sig,
+                         mock_py_ver,
+                         self.utility_name)
+                    ]),
+            soap_header.userAgent)
+
+        # Check headers when no utility should be registered.
+        self.header_handler.SetHeaders(suds_client)
+        soap_header = suds_client.factory.create.return_value
+        self.assertEqual(
+            ''.join([self.user_agent,
+                     self.default_sig_template % (
+                         googleads.adwords._AdWordsHeaderHandler._PRODUCT_SIG,
+                         mock_common_sig,
+                         mock_py_ver)
+                    ]),
+            soap_header.userAgent)
+
+        # Verify that utility is registered in subsequent uses.
+        self.test_utility.Test()  # This will register TestUtility.
+        self.header_handler.SetHeaders(suds_client)
+        soap_header = suds_client.factory.create.return_value
+
+        self.assertEqual(
+            ''.join([self.user_agent,
+                     self.util_sig_template % (
+                         googleads.adwords._AdWordsHeaderHandler._PRODUCT_SIG,
+                         mock_common_sig,
+                         mock_py_ver,
+                         self.utility_name)
+                    ]),
+            soap_header.userAgent)
 
   def testGetReportDownloadHeadersOverrideDefaults(self):
     self.aw_client.report_downloader_headers = {
@@ -173,7 +251,9 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         'clientCustomerId': self.ccid,
         'Authorization': 'header',
         'User-Agent': ''.join([
-            self.user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            self.user_agent,
+            googleads.common.GenerateLibSig(
+                googleads.adwords._AdWordsHeaderHandler._PRODUCT_SIG),
             ',gzip']),
         'skipReportHeader': 'False',
         'skipColumnHeader': 'True',
@@ -197,7 +277,9 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         'clientCustomerId': self.ccid,
         'Authorization': 'header',
         'User-Agent': ''.join([
-            self.user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            self.user_agent,
+            googleads.common.GenerateLibSig(
+                googleads.adwords._AdWordsHeaderHandler._PRODUCT_SIG),
             ',gzip']),
         'skipReportHeader': 'True',
         'skipColumnHeader': 'False',
@@ -220,7 +302,9 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         'clientCustomerId': updated_ccid,
         'Authorization': 'header',
         'User-Agent': ''.join([
-            self.user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            self.user_agent,
+            googleads.common.GenerateLibSig(
+                googleads.adwords._AdWordsHeaderHandler._PRODUCT_SIG),
             ',gzip']),
         'skipReportHeader': 'True',
         'skipColumnHeader': 'True',
@@ -244,7 +328,9 @@ class AdWordsHeaderHandlerTest(unittest.TestCase):
         'clientCustomerId': self.ccid,
         'Authorization': 'header',
         'User-Agent': ''.join([
-            self.user_agent, googleads.adwords._AdWordsHeaderHandler._LIB_SIG,
+            self.user_agent,
+            googleads.common.GenerateLibSig(
+                googleads.adwords._AdWordsHeaderHandler._PRODUCT_SIG),
             ',gzip'])
     }
     self.assertEqual(expected_return_value,

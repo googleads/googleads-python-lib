@@ -13,12 +13,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """Gets a reconciliation report's rows for line items that served through DFP.
 """
 
 # Import appropriate modules from the client library.
 from googleads import dfp
 
+# Set the ID of the reconciliation report row.
 RECONCILIATION_REPORT_ID = 'INSERT_RECONCILIATION_REPORT_ID_HERE'
 
 
@@ -28,13 +30,13 @@ def main(client, reconciliation_report_id):
       'ReconciliationReportRowService', version='v201702')
   query = ('WHERE reconciliationReportId = %s AND '
            'lineItemId != :lineItemId') % reconciliation_report_id
-  values = [
-      {'key': 'lineItemId',
-       'value': {
-           'xsi_type': 'NumberValue',
-           'value': '0'
-       }},
-  ]
+  values = [{
+      'key': 'lineItemId',
+      'value': {
+          'xsi_type': 'NumberValue',
+          'value': '0'
+      }
+  }]
   # Create a statement to select reconciliation report rows.
   statement = dfp.FilterStatement(query, values)
 

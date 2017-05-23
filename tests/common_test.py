@@ -15,6 +15,7 @@
 """Unit tests to cover the common module."""
 
 
+import datetime
 import io
 import unittest
 from urllib import addinfourl
@@ -779,6 +780,29 @@ class CommonTest(unittest.TestCase):
     factory.create.assert_any_call('ns0:EliteCampaign')
     self.assertEqual('Sales', rval.name)
 
+  def testPackForSuds_datetime_packer(self):
+    factory = mock.Mock()
+    factory.create.return_value = mock.MagicMock()
+    factory.create.return_value.__iter__.return_value = iter(
+        [('abc', 0)])
+
+    def sample_packer(dt):
+      return {'xsi_type': 'abc', 'test': dt.year}
+
+    # Test that our packer function is called for datetimes
+    rval = googleads.common._PackForSuds(
+        {'param': datetime.datetime(2017, 1, 1, 0, 0, 0)},
+        factory, datetime_packer=sample_packer)
+
+    self.assertEqual(2017, rval['param'].test)
+
+    # Test that our packer function is called for dates
+    rval = googleads.common._PackForSuds(
+        {'param': datetime.date(2017, 1, 1)},
+        factory, datetime_packer=sample_packer)
+
+    self.assertEqual(2017, rval['param'].test)
+
 
 class SudsServiceProxyTest(unittest.TestCase):
   """Tests for the googleads.common.SudsServiceProxy class."""
@@ -791,8 +815,9 @@ class SudsServiceProxyTest(unittest.TestCase):
     self.services.ports = [self.port]
     self.client = mock.Mock()
     self.client.wsdl.services = [self.services]
+    self.datetime_packer = mock.Mock()
     self.suds_service_wrapper = googleads.common.SudsServiceProxy(
-        self.client, self.header_handler)
+        self.client, self.header_handler, self.datetime_packer)
 
   def testSudsServiceProxy(self):
     self.assertEqual(self.suds_service_wrapper.SoapMethod,
@@ -803,7 +828,8 @@ class SudsServiceProxyTest(unittest.TestCase):
     with mock.patch('googleads.common._PackForSuds') as mock_pack_for_suds:
       mock_pack_for_suds.return_value = 'modified_test'
       self.suds_service_wrapper.SoapMethod('test')
-      mock_pack_for_suds.assert_called_once_with('test', self.client.factory)
+      mock_pack_for_suds.assert_called_once_with('test', self.client.factory,
+                                                 self.datetime_packer)
 
     self.client.service.SoapMethod.assert_called_once_with('modified_test')
     self.header_handler.SetHeaders.assert_called_once_with(self.client)

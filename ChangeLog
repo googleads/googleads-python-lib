@@ -1,3 +1,9 @@
+5.5.0 -- 5/23/17:
+* Added more expressive python utility to build DFP PQL statements.
+* Support building DFP SOAP entities with native python date/datetime objects.
+* Added support and examples for DFP v201705.
+* Removed support and examples for DFP v201605.
+
 5.4.0 -- 4/25/17:
 * Resolved issues:
 - Issue 200: https://github.com/googleads/googleads-python-lib/issues/200

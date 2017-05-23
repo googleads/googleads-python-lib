@@ -453,7 +453,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
   """Handler which generates the headers for AdWords requests."""
 
   # The library signature for AdWords, to be appended to all user agents.
-  _LIB_SIG = googleads.common.GenerateLibSig('AwApi-Python')
+  _PRODUCT_SIG = 'AwApi-Python'
   # The name of the WSDL-defined SOAP Header class used in all SOAP requests.
   # The namespace needs the version of AdWords being used to be templated in.
   _SOAP_HEADER_CLASS = (
@@ -487,7 +487,9 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     header = suds_client.factory.create(self._SOAP_HEADER_CLASS % self._version)
     header.clientCustomerId = self._adwords_client.client_customer_id
     header.developerToken = self._adwords_client.developer_token
-    header.userAgent = ''.join([self._adwords_client.user_agent, self._LIB_SIG])
+    header.userAgent = ''.join([
+        self._adwords_client.user_agent,
+        googleads.common.GenerateLibSig(self._PRODUCT_SIG)])
     header.validateOnly = self._adwords_client.validate_only
     header.partialFailure = self._adwords_client.partial_failure
 
@@ -538,8 +540,10 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
         'developerToken': str(self._adwords_client.developer_token),
         'clientCustomerId': str(kwargs.get(
             'client_customer_id', self._adwords_client.client_customer_id)),
-        'User-Agent': ''.join([self._adwords_client.user_agent, self._LIB_SIG,
-                               ',gzip'])
+        'User-Agent': ''.join([
+            self._adwords_client.user_agent,
+            googleads.common.GenerateLibSig(self._PRODUCT_SIG),
+            ',gzip'])
     })
 
     updated_kwargs = dict(self._adwords_client.report_download_headers)

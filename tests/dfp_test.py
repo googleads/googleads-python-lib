@@ -15,12 +15,14 @@
 """Unit tests to cover the dfp module."""
 
 
+import datetime
 import StringIO
 import sys
 import unittest
 
 
 import mock
+import pytz
 import suds.transport
 
 import googleads.dfp
@@ -112,29 +114,112 @@ class DfpHeaderHandlerTest(unittest.TestCase):
     self.enable_compression = False
     self.header_handler = googleads.dfp._DfpHeaderHandler(
         self.dfp_client, self.enable_compression)
+    self.utility_name = 'TestUtility'
+    self.default_sig_template = ' (%s, %s, %s)'
+    self.util_sig_template = ' (%s, %s, %s, %s)'
+    self.network_code = 'my network code is code'
+    self.app_name = 'application name'
+    self.oauth_header = {'oauth', 'header'}
+
+    @googleads.common.RegisterUtility(self.utility_name)
+    class TestUtility(object):
+
+      def Test(self):
+        pass
+
+    self.test_utility = TestUtility()
 
   def testSetHeaders(self):
     suds_client = mock.Mock()
-    network_code = 'my network code is code'
-    app_name = 'application name'
-    oauth_header = {'oauth', 'header'}
-    self.dfp_client.network_code = network_code
-    self.dfp_client.application_name = app_name
-    self.dfp_client.oauth2_client.CreateHttpHeader.return_value = oauth_header
+    self.dfp_client.network_code = self.network_code
+    self.dfp_client.application_name = self.app_name
+    self.dfp_client.oauth2_client.CreateHttpHeader.return_value = (
+        self.oauth_header)
 
     self.header_handler.SetHeaders(suds_client)
 
     # Check that the SOAP header has the correct values.
     suds_client.factory.create.assert_called_once_with('SoapRequestHeader')
     soap_header = suds_client.factory.create.return_value
-    self.assertEqual(network_code, soap_header.networkCode)
-    self.assertEqual(''.join([app_name,
-                              googleads.dfp._DfpHeaderHandler._LIB_SIG]),
-                     soap_header.applicationName)
+    self.assertEqual(self.network_code, soap_header.networkCode)
+    self.assertEqual(
+        ''.join([
+            self.app_name,
+            googleads.common.GenerateLibSig(
+                googleads.dfp._DfpHeaderHandler._PRODUCT_SIG)]),
+        soap_header.applicationName)
 
     # Check that the suds client has the correct values.
     suds_client.set_options.assert_any_call(soapheaders=soap_header,
-                                            headers=oauth_header)
+                                            headers=self.oauth_header)
+
+  def testSetHeadersUserAgentWithUtility(self):
+    suds_client = mock.Mock()
+    self.dfp_client.network_code = self.network_code
+    self.dfp_client.application_name = self.app_name
+    self.dfp_client.oauth2_client.CreateHttpHeader.return_value = (
+        self.oauth_header)
+
+    with mock.patch('googleads.common._COMMON_LIB_SIG') as mock_common_sig:
+      with mock.patch('googleads.common._PYTHON_VERSION') as mock_py_ver:
+        self.test_utility.Test()  # This will register TestUtility.
+        self.header_handler.SetHeaders(suds_client)
+        soap_header = suds_client.factory.create.return_value
+        self.assertEqual(
+            ''.join([self.app_name,
+                     self.util_sig_template % (
+                         googleads.dfp._DfpHeaderHandler._PRODUCT_SIG,
+                         mock_common_sig,
+                         mock_py_ver,
+                         self.utility_name)]),
+            soap_header.applicationName)
+
+  def testSetHeadersUserAgentWithAndWithoutUtility(self):
+    suds_client = mock.Mock()
+
+    self.dfp_client.network_code = self.network_code
+    self.dfp_client.application_name = self.app_name
+    self.dfp_client.oauth2_client.CreateHttpHeader.return_value = (
+        self.oauth_header)
+
+    with mock.patch('googleads.common._COMMON_LIB_SIG') as mock_common_sig:
+      with mock.patch('googleads.common._PYTHON_VERSION') as mock_py_ver:
+        # Check headers when utility registered.
+        self.test_utility.Test()  # This will register TestUtility.
+        self.header_handler.SetHeaders(suds_client)
+        soap_header = suds_client.factory.create.return_value
+        self.assertEqual(
+            ''.join([self.app_name,
+                     self.util_sig_template % (
+                         googleads.dfp._DfpHeaderHandler._PRODUCT_SIG,
+                         mock_common_sig,
+                         mock_py_ver,
+                         self.utility_name)]),
+            soap_header.applicationName)
+
+        # Check headers when no utility should be registered.
+        self.header_handler.SetHeaders(suds_client)
+        soap_header = suds_client.factory.create.return_value
+        self.assertEqual(
+            ''.join([self.app_name,
+                     self.default_sig_template % (
+                         googleads.dfp._DfpHeaderHandler._PRODUCT_SIG,
+                         mock_common_sig,
+                         mock_py_ver)]),
+            soap_header.applicationName)
+
+        # Verify that utility is registered in subsequent uses.
+        self.test_utility.Test()  # This will register TestUtility.
+        self.header_handler.SetHeaders(suds_client)
+        soap_header = suds_client.factory.create.return_value
+        self.assertEqual(
+            ''.join([self.app_name,
+                     self.util_sig_template % (
+                         googleads.dfp._DfpHeaderHandler._PRODUCT_SIG,
+                         mock_common_sig,
+                         mock_py_ver,
+                         self.utility_name)]),
+            soap_header.applicationName)
 
 
 
@@ -231,14 +316,23 @@ class DfpClientTest(unittest.TestCase):
     with mock.patch('suds.client.Client') as mock_client:
       with mock.patch('googleads.common.'
                       'ProxyConfig._SudsProxyTransport') as mock_transport:
-        mock_transport.return_value = mock.Mock()
-        suds_service = dfp_client.GetService(service, self.version, server)
+        with mock.patch('googleads.common.'
+                        'SudsServiceProxy') as mock_service_proxy:
+          mock_service_proxy.return_value = mock.Mock()
+          mock_transport.return_value = mock.Mock()
+          mock_client.return_value = mock.Mock()
+          mock_client.return_value.sd.__getitem__ = mock.Mock()
+          suds_service = dfp_client.GetService(service, self.version, server)
 
-        mock_client.assert_called_once_with(
-            'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
-            % (self.version, service), timeout=3600,
-            transport=mock_transport.return_value)
-        self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+          mock_client.assert_called_once_with(
+              'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
+              % (self.version, service), timeout=3600,
+              transport=mock_transport.return_value)
+          self.assertEqual(suds_service, mock_service_proxy.return_value)
+          mock_service_proxy.assert_called_once_with(
+              mock_client.return_value,
+              dfp_client._header_handler,
+              googleads.dfp._DFPDateTimePacker)
 
   def testGetService_successWithFileCache(self):
     service = googleads.dfp._SERVICE_MAP[self.version][0]
@@ -321,6 +415,27 @@ class DfpClientTest(unittest.TestCase):
       mock_client.side_effect = suds.transport.TransportError('', '')
       self.assertRaises(suds.transport.TransportError,
                         dfp_client.GetService, service, self.version)
+
+
+class DateTimePackerTest(unittest.TestCase):
+
+  def testUnwrapDate(self):
+    input_date = datetime.date(2017, 1, 2)
+    result = googleads.dfp._DFPDateTimePacker(input_date)
+    self.assertEqual(result, {'year': 2017, 'month': 1, 'day': 2})
+
+  def testUnwrapDateTime(self):
+    input_date = datetime.datetime(2017, 1, 2, 3, 4, 5)
+    input_date = pytz.timezone('America/New_York').localize(input_date)
+    result = googleads.dfp._DFPDateTimePacker(input_date)
+    self.assertEqual(result, {'date': {'year': 2017, 'month': 1, 'day': 2},
+                              'hour': 3, 'minute': 4, 'second': 5,
+                              'timeZoneID': 'America/New_York'})
+
+  def testUnwrapDateTimeNeedsTimeZone(self):
+    input_date = datetime.datetime(2017, 1, 2, 3, 4, 5)
+    self.assertRaises(googleads.errors.GoogleAdsValueError,
+                      googleads.dfp._DFPDateTimePacker, input_date)
 
 
 class DataDownloaderTest(unittest.TestCase):
@@ -580,6 +695,264 @@ class DataDownloaderTest(unittest.TestCase):
     self.report_downloader._GetPqlService()
     self.report_downloader._dfp_client.GetService.assert_called_once_with(
         'PublisherQueryLanguageService', self.version, 'https://ads.google.com')
+
+
+class StatementBuilderTest(unittest.TestCase):
+  """Tests for the StatementBuilder class."""
+
+  def testBuildBasicSelectFrom(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    select_call_result = test_statement.Select('Id')
+    from_call_result = test_statement.From('Line_Item')
+
+    self.assertEqual(select_call_result, test_statement)
+    self.assertEqual(from_call_result, test_statement)
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': ('SELECT Id FROM Line_Item LIMIT %s OFFSET 0' %
+                                googleads.dfp.SUGGESTED_PAGE_LIMIT),
+                      'values': None})
+
+  def testLimitClause(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    limit_call_result = (test_statement
+                         .Select('Id')
+                         .From('Line_Item')
+                         .Limit(5))
+
+    self.assertEqual(limit_call_result, test_statement)
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': 'SELECT Id FROM Line_Item LIMIT 5 OFFSET 0',
+                      'values': None})
+
+    limit_call_result.Limit(None)
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': 'SELECT Id FROM Line_Item OFFSET 0',
+                      'values': None})
+
+  def testOffsetClause(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    offset_call_result = (
+        test_statement
+        .Select('Id')
+        .From('Line_Item')
+        .Offset(100)
+    )
+
+    self.assertEqual(offset_call_result, test_statement)
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': ('SELECT Id FROM Line_Item LIMIT %s OFFSET 100' %
+                                googleads.dfp.SUGGESTED_PAGE_LIMIT),
+                      'values': None})
+
+  def testOrderByClause(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    order_call_result = (
+        test_statement
+        .Select('Id')
+        .From('Line_Item')
+        .OrderBy('Id')
+    )
+
+    self.assertEqual(order_call_result, test_statement)
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': ('SELECT Id FROM Line_Item '
+                                'ORDER BY Id ASC '
+                                'LIMIT %s OFFSET 0' %
+                                googleads.dfp.SUGGESTED_PAGE_LIMIT),
+                      'values': None})
+
+    test_statement.OrderBy('Id', ascending=False)
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': ('SELECT Id FROM Line_Item '
+                                'ORDER BY Id DESC '
+                                'LIMIT %s OFFSET 0' %
+                                googleads.dfp.SUGGESTED_PAGE_LIMIT),
+                      'values': None})
+
+  def testConstructorArgs(self):
+    test_statement = googleads.dfp.StatementBuilder(select_columns='Id',
+                                                    from_table='Line_Item',
+                                                    where='abc = 123',
+                                                    order_by='Id',
+                                                    order_ascending=False,)
+
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': ('SELECT Id FROM Line_Item '
+                                'WHERE abc = 123 '
+                                'ORDER BY Id DESC '
+                                'LIMIT %s OFFSET 0' %
+                                googleads.dfp.SUGGESTED_PAGE_LIMIT),
+                      'values': None})
+
+  def testWhereWithStringVariable(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    where_call_result = (
+        test_statement
+        .Select('Id')
+        .From('Line_Item')
+        .Where('key = :test_key')
+    )
+    bind_call_result = test_statement.WithBindVariable('test_key', 'test_value')
+
+    target_values = [{
+        'key': 'test_key',
+        'value': {
+            'xsi_type': 'TextValue',
+            'value': 'test_value'
+        }
+    }]
+    self.assertEqual(where_call_result, test_statement)
+    self.assertEqual(bind_call_result, test_statement)
+    self.assertEqual(test_statement.ToStatement(),
+                     {'query': (
+                         'SELECT Id FROM Line_Item '
+                         'WHERE key = :test_key '
+                         'LIMIT %s '
+                         'OFFSET 0' % googleads.dfp.SUGGESTED_PAGE_LIMIT),
+                      'values': target_values})
+
+  def testWhereWithOtherTypes(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    test_statement.Where((
+        'bool_key = :test_bool_key '
+        'AND number_key = :test_number_key '
+        'AND date_key = :test_date_key '
+        'AND datetime_key = :test_datetime_key '
+        'AND set_key = :test_set_key'
+    ))
+
+    test_statement.WithBindVariable('test_bool_key', True)
+    test_statement.WithBindVariable('test_number_key', 5)
+    test_statement.WithBindVariable('test_date_key', datetime.date(2017, 1, 2))
+    test_dt = datetime.datetime(2017, 1, 2,
+                                hour=3, minute=4, second=5,
+                               )
+    test_dt = pytz.timezone('America/New_York').localize(test_dt)
+    test_statement.WithBindVariable('test_datetime_key', test_dt)
+    test_statement.WithBindVariable('test_set_key', [1, 2])
+
+    target_values = [{
+        'key': 'test_bool_key',
+        'value': {
+            'xsi_type': 'BooleanValue',
+            'value': True,
+        }
+    }, {
+        'key': 'test_number_key',
+        'value': {
+            'xsi_type': 'NumberValue',
+            'value': 5,
+        }
+    }, {
+        'key': 'test_date_key',
+        'value': {
+            'xsi_type': 'DateValue',
+            'value': {
+                'year': 2017,
+                'month': 1,
+                'day': 2,
+            },
+        }
+    }, {
+        'key': 'test_datetime_key',
+        'value': {
+            'xsi_type': 'DateTimeValue',
+            'value': {
+                'date': {
+                    'year': 2017,
+                    'month': 1,
+                    'day': 2,
+                },
+                'hour': 3,
+                'minute': 4,
+                'second': 5,
+                'timeZoneID': 'America/New_York'
+            },
+        }
+    }, {
+        'key': 'test_set_key',
+        'value': {
+            'xsi_type': 'SetValue',
+            'values': [
+                {'xsi_type': 'NumberValue', 'value': 1},
+                {'xsi_type': 'NumberValue', 'value': 2},
+            ],
+        }
+    }]
+    target_values.sort(key=lambda v: v['key'])
+
+    statement_result = test_statement.ToStatement()
+    self.assertEqual(statement_result['query'],
+                     ('WHERE bool_key = :test_bool_key '
+                      'AND number_key = :test_number_key '
+                      'AND date_key = :test_date_key '
+                      'AND datetime_key = :test_datetime_key '
+                      'AND set_key = :test_set_key '
+                      'LIMIT %s '
+                      'OFFSET 0' % googleads.dfp.SUGGESTED_PAGE_LIMIT
+                     ))
+
+    # The output order doesn't matter, and it's stored internally as a dict
+    # until rendered, which is fine, but we need to lock it down for this test.
+    self.assertEqual(
+        sorted(statement_result['values'], key=lambda v: v['key']),
+        target_values
+    )
+
+  def testBreakWithSetOfMultipleTypes(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    test_statement.Where('key = :test_key')
+
+    self.assertRaises(
+        googleads.errors.GoogleAdsValueError,
+        test_statement.WithBindVariable,
+        'key', [1, 'a']
+    )
+
+  def testMutateVar(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    test_statement.Where('key = :test_key')
+    test_statement.WithBindVariable('key', 'abc')
+    test_statement.WithBindVariable('key', '123')
+
+    statement_result = test_statement.ToStatement()
+    self.assertEqual(len(statement_result['values']), 1)
+    self.assertEqual(statement_result['values'][0]['value']['value'], '123')
+
+  def testBreakWithNoTZ(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    test_statement.Where('key = :test_key')
+
+    self.assertRaises(
+        googleads.errors.GoogleAdsValueError,
+        test_statement.WithBindVariable,
+        'key', datetime.datetime.now().replace(tzinfo=None)
+    )
+
+  def testBreakWithUnknownType(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    test_statement.Where('key = :test_key')
+
+    class RandomType(object):
+      pass
+
+    self.assertRaises(
+        googleads.errors.GoogleAdsValueError,
+        test_statement.WithBindVariable,
+        'key', RandomType()
+    )
+
+  def testBreakWithBadSelectFrom(self):
+    test_statement = googleads.dfp.StatementBuilder()
+    test_statement.Select('Id')
+
+    self.assertRaises(googleads.errors.GoogleAdsError,
+                      test_statement.ToStatement)
+
+    test_statement.Select(None).From('Line_Item')
+
+    self.assertRaises(googleads.errors.GoogleAdsError,
+                      test_statement.ToStatement)
 
 
 class FilterStatementTest(unittest.TestCase):

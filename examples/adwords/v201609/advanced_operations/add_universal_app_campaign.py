@@ -157,7 +157,6 @@ def CreateBudget(client):
 
   # Create the budget and return its ID.
   budget_id = budget_service.mutate(budget_operations)['value'][0]['budgetId']
-  # [END createBudget] MOE_strip_line
 
   return budget_id
 

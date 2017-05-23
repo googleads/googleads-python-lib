@@ -48,7 +48,7 @@ def main(client, campaign_id):
                           final_mobile_url='http://m.example.com/scrubs'),
       CreatePriceTableRow('Hair Cuts', 'Once a month',
                           'https://www.example.com/haircuts',
-                          75 * MICROS_PER_DOLLAR, 'USD', 'PER_MONTH',
+                         75 * MICROS_PER_DOLLAR, 'USD', 'PER_MONTH',
                           final_mobile_url='http://m.example.com/haircuts'),
       CreatePriceTableRow('Skin Care Package', 'Four times a month',
                           'https://www.examples.com/skincarepackage',

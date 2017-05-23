@@ -24,10 +24,11 @@ create_line_items.py for an example of how to create more complex targeting.
 """
 
 
-from datetime import date
+import datetime
 
 # Import appropriate modules from the client library.
 from googleads import dfp
+import pytz
 
 # Set the ID of the advertiser (company) to forecast for. Setting an advertiser
 # will cause the forecast to apply the appropriate unified blocking rules.
@@ -41,6 +42,9 @@ def main(client, advertiser_id):
 
   # get the root ad unit ID to target the entire network.
   root_ad_unit_id = network_service.getCurrentNetwork()['effectiveRootAdUnitId']
+
+  end_datetime = datetime.datetime.now(tz=pytz.timezone('America/New_York'))
+  end_datetime += datetime.timedelta(days=30)
 
   # Create prospective line item.
   line_item = {
@@ -70,17 +74,7 @@ def main(client, advertiser_id):
       ],
       'lineItemType': 'SPONSORSHIP',
       'startDateTimeType': 'IMMEDIATELY',
-      'endDateTime': {
-          'date': {
-              'year': str(date.today().year + 1),
-              'month': '9',
-              'day': '30'
-          },
-          'hour': '0',
-          'minute': '0',
-          'second': '0',
-          'timeZoneID': 'America/New_York'
-      },
+      'endDateTime': end_datetime,
       'costType': 'CPM',
       'costPerUnit': {
           'currencyCode': 'USD',
