@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Copyright 2017 Google Inc. All Rights Reserved.
 #
@@ -34,7 +34,7 @@ def main(client):
   base_rate_service = client.GetService('BaseRateService', version='v201705')
 
   # Create a base rate for a product package item.
-  base_rate = {
+  product_package_item_base_rate = {
       'xsi_type': 'ProductPackageItemBaseRate',
       # Set the rate card ID that the product package item base rate
       # belongs to.
@@ -51,7 +51,7 @@ def main(client):
   }
 
   # Create the product package item base rate on the server.
-  result = base_rate_service.createBaseRates([base_rate])
+  result = base_rate_service.createBaseRates([product_package_item_base_rate])
 
   for new_base_rate in result:
     print ('A product package item base rate with ID %d and rate %f %s '

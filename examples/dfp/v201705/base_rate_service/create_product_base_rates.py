@@ -36,7 +36,9 @@ def main(client, product_id, rate_card_id):
   # Create a product base rate.
   product_base_rate = {
       'xsi_type': 'ProductBaseRate',
+      # Set the rate card ID that the product base rate belongs to.
       'rateCardId': rate_card_id,
+      # Set the product id the base rate will be applied to.
       'productId': product_id,
       # Set the rate to be $2.
       'rate': {
@@ -45,7 +47,7 @@ def main(client, product_id, rate_card_id):
       }
   }
 
-  # Create base rates on the server.
+  # Create the product base rate on the server.
   base_rates = base_rate_service.createBaseRates(
       [product_base_rate])
 

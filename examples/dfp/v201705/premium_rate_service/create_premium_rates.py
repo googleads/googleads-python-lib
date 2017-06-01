@@ -57,7 +57,10 @@ def main(client, rate_card_id):
       'adjustmentType': 'ABSOLUTE_VALUE'
   }
 
-  # Create premium_rate objects.
+  # Create premium rate.
+  # Associate premium rate with the rate card and set premium information.
+  # This premium will apply for proposal line items targeting 'any' ad unit
+  # for both CPM and CPC rate types.
   premium_rate = {
       'rateCardId': rate_card_id,
       'pricingMethod': 'ANY_VALUE',

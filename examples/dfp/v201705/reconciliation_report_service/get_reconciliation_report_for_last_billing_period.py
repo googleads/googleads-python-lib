@@ -31,16 +31,10 @@ def main(client):
   first_of_the_month = date.today().replace(day=1)
   last_month = first_of_the_month - timedelta(days=1)
 
-  query = 'WHERE startDate = :startDate'
-  values = [
-      {'key': 'startDate',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': last_month.strftime('%Y-%m-01')
-       }},
-  ]
   # Create a statement to select reconciliation reports.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('startDate = :startDate')
+               .WithBindVariable('startDate', last_month))
 
   # Retrieve a small amount of reconciliation reports at a time, paging
   # through until all reconciliation reports have been retrieved.

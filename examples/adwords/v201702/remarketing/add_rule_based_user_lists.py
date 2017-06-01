@@ -117,7 +117,7 @@ def main(client):
       'rule': rule,
       # Optional: Set the populationStatus to REQUESTED to include past users in
       # the user list.
-      'populationStatus': 'REQUESTED'
+      'prepopulationStatus': 'REQUESTED'
   }
 
   # Create the user list restricted to users who visit your site within the next
