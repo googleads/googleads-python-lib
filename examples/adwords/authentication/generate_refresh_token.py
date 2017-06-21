@@ -22,6 +22,12 @@ import sys
 
 from oauth2client import client
 
+# raw_input was renamed to input in python3
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
 # Your OAuth2 Client ID and Secret. If you do not have an ID and Secret yet,
 # please go to https://console.developers.google.com and create a set.
 DEFAULT_CLIENT_ID = None
