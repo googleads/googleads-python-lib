@@ -66,7 +66,7 @@ def main(client_id, client_secret, scopes):
 
   try:
     credential = flow.step2_exchange(code)
-  except client.FlowExchangeError, e:
+  except client.FlowExchangeError as e:
     print 'Authentication has failed: %s' % e
     sys.exit(1)
   else:
