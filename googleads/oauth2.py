@@ -70,11 +70,7 @@ def GetAPIScope(api_name):
 
 
 class GoogleOAuth2Client(object):
-  """An OAuth2 client for use with Google APIs.
-
-  This interface assumes all responsibilty for refreshing credentials when
-  necessary.
-  """
+  """An OAuth2 client for use with Google APIs."""
   # The web address for generating OAuth2 credentials at Google.
   _GOOGLE_OAUTH2_ENDPOINT = 'https://accounts.google.com/o/oauth2/token'
   # We will refresh an OAuth2 credential _OAUTH2_REFRESH_MINUTES_IN_ADVANCE
@@ -97,12 +93,68 @@ class GoogleOAuth2Client(object):
     """
     raise NotImplementedError('You must subclass GoogleOAuth2Client.')
 
+
+class GoogleRefreshableOAuth2Client(GoogleOAuth2Client):
+  """A refreshable OAuth2 client for use with Google APIs.
+
+  This interface assumes all responsibility for refreshing credentials when
+  necessary.
+  """
+
   def Refresh(self):
     """Refreshes the access token used by the client."""
-    raise NotImplementedError('You must subclass GoogleOAuth2Client.')
+    raise NotImplementedError(
+        'You must subclass GoogleRefreshableOAuth2Client.')
 
 
-class GoogleRefreshTokenClient(GoogleOAuth2Client):
+class GoogleAccessTokenClient(GoogleOAuth2Client):
+  """A simple client for using OAuth2 for Google APIs with an access token.
+
+  This class is not capable of supporting any flows other than taking an
+  existing, active access token. It does not matter which of Google's OAuth2
+  flows you used to generate the access token (installed application, web flow,
+  etc.).
+
+  When the provided access token expires, a GoogleAdsError will be raised.
+  """
+
+  def __init__(self, access_token, token_expiry):
+    """Initializes a GoogleAccessTokenClient.
+
+    Args:
+      access_token: A string containing your access token.
+      token_expiry: A datetime instance indicating when the given access token
+      expires.
+    """
+    self.oauth2credentials = oauth2client.client.OAuth2Credentials(
+        access_token, None, None, None, token_expiry,
+        self._GOOGLE_OAUTH2_ENDPOINT, self._USER_AGENT)
+
+  def CreateHttpHeader(self):
+    """Creates an OAuth2 HTTP header.
+
+    The OAuth2 credentials will be refreshed as necessary. In the event that
+    the credentials fail to refresh, a message is logged but no exception is
+    raised.
+
+    Returns:
+      A dictionary containing one entry: the OAuth2 Bearer header under the
+      'Authorization' key.
+
+    Raises:
+      GoogleAdsError: If the access token has expired.
+    """
+    oauth2_header = {}
+
+    if (self.oauth2credentials.token_expiry - datetime.datetime.utcnow()
+        < datetime.timedelta(0)):
+      raise googleads.errors.GoogleAdsError('Access token has expired.')
+
+    self.oauth2credentials.apply(oauth2_header)
+    return oauth2_header
+
+
+class GoogleRefreshTokenClient(GoogleRefreshableOAuth2Client):
   """A simple client for using OAuth2 for Google APIs with a refresh token.
 
   This class is not capable of supporting any flows other than taking an
@@ -114,24 +166,28 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
     proxy_info: A ProxyInfo instance used for refresh requests.
   """
 
-  def __init__(self, client_id, client_secret, refresh_token,
-               proxy_config=None):
+  def __init__(self, client_id, client_secret, refresh_token, **kwargs):
     """Initializes a GoogleRefreshTokenClient.
 
     Args:
       client_id: A string containing your client ID.
       client_secret: A string containing your client secret.
       refresh_token: A string containing your refresh token.
-      [optional]
+      **kwargs: Keyword arguments.
+
+    Keyword Arguments:
+      access_token: A string containing your access token.
+      token_expiry: A datetime instance indicating when the given access token
+      expires.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
         isn't being used.
     """
     self.oauth2credentials = oauth2client.client.OAuth2Credentials(
-        None, client_id, client_secret, refresh_token,
-        datetime.datetime(1980, 1, 1, 12), self._GOOGLE_OAUTH2_ENDPOINT,
-        self._USER_AGENT)
-    self.proxy_config = (proxy_config if proxy_config else
-                         googleads.common.ProxyConfig())
+        kwargs.get('access_token'), client_id, client_secret, refresh_token,
+        kwargs.get('token_expiry', datetime.datetime(1980, 1, 1, 12)),
+        self._GOOGLE_OAUTH2_ENDPOINT, self._USER_AGENT)
+    self.proxy_config = kwargs.get('proxy_config',
+                                   googleads.common.ProxyConfig())
 
   def CreateHttpHeader(self):
     """Creates an OAuth2 HTTP header.
@@ -170,7 +226,7 @@ class GoogleRefreshTokenClient(GoogleOAuth2Client):
             self.proxy_config.disable_certificate_validation)))
 
 
-class GoogleServiceAccountClient(GoogleOAuth2Client):
+class GoogleServiceAccountClient(GoogleRefreshableOAuth2Client):
   """A simple client for using OAuth2 for Google APIs with a service account.
 
   This class is not capable of supporting any flows other than generating

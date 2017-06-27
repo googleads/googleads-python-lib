@@ -101,7 +101,7 @@ def main(client, line_item_id, key_id1, key_id2, key_id3, value_id1, value_id2,
 
   # Display results.
   if line_item:
-    print ('Line item with id \'%s\' updated with custom criteria targeting:'
+    print ('Line item with id "%s" updated with custom criteria targeting:'
            % line_item['id'])
     pprint.pprint(line_item['targeting']['customTargeting'])
   else:

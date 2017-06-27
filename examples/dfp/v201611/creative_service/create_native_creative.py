@@ -125,7 +125,7 @@ def main(client, advertiser_id):
   creative = creative_service.createCreatives([creative])[0]
 
   # Display results.
-  print ('Native creative with id \'%s\' and name \'%s\' was '
+  print ('Native creative with id "%s" and name "%s" was '
          'created and can be previewed at %s.'
          % (creative['id'], creative['name'], creative['previewUrl']))
 

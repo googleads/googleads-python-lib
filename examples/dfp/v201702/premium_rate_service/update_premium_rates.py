@@ -76,9 +76,9 @@ def main(client, premium_rate_id):
     # Display results.
     if premium_rates:
       for premium_rate in premium_rates:
-        print ('Premium rate with ID \'%s\', associated with rate card id'
-               ' \'%s\' was updated.' % (premium_rate['id'],
-                                         premium_rate['rateCardId']))
+        print ('Premium rate with ID "%s", associated with rate card id'
+               ' "%s" was updated.' % (premium_rate['id'],
+                                       premium_rate['rateCardId']))
     else:
       print 'No premium rates were updated.'
   else:

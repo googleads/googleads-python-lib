@@ -46,7 +46,7 @@ def main(client, placement_id):
       statement.ToStatement())
 
   for placement in placements:
-    print ('Placement with id \'%s\', name \'%s\', and status \'%s\' will be '
+    print ('Placement with id "%s", name "%s", and status "%s" will be '
            'deactivated.' % (placement['id'], placement['name'],
                              placement['status']))
 

@@ -51,7 +51,7 @@ def main(client):
     if 'results' in response:
       # Display results.
       for order in response['results']:
-        print ('Order with id \'%s\', name \'%s\', and status \'%s\' will be '
+        print ('Order with id "%s", name "%s", and status "%s" will be '
                'approved.' % (order['id'], order['name'], order['status']))
       # Perform action.
       result = order_service.performOrderAction(

@@ -58,7 +58,7 @@ def main(client, label_id):
     labels = label_service.updateLabels(updated_labels)
 
     for label in labels:
-      print ('Label with id \'%s\' and name \'%s\' was updated.'
+      print ('Label with id "%s" and name "%s" was updated.'
              % (label['id'], label['name']))
   else:
     print 'No labels found to update.'

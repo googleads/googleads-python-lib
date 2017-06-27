@@ -61,6 +61,10 @@ class CommonTest(unittest.TestCase):
     self.test2_name = 'Test2'
     self.test2_version = 'testing'
 
+    locale_patcher = mock.patch('googleads.common.locale.getdefaultlocale',
+                                return_value=('en_us', 'UTF-8'))
+    self.locale_patcher = locale_patcher.start()
+
     @googleads.common.RegisterUtility(self.test1_name)
     class Test1(object):
 
@@ -77,10 +81,29 @@ class CommonTest(unittest.TestCase):
     self.test1 = Test1
     self.test2 = Test2
 
+  def tearDown(self):
+    self.locale_patcher.stop()
+
+  def testShouldWarnWithBadEncoding(self):
+    self.locale_patcher.return_value = (None, None)
+    yaml_doc = self._CreateYamlDoc({'one': {'needed': 'd', 'keys': 'e'}},
+                                   'one', self._OAUTH_INSTALLED_APP_DICT)
+    test_major_value = 2
+    test_minor_value = 6
+    test_micro_value = 9
+    with mock.patch('googleads.common._PY_VERSION_MAJOR', test_major_value):
+      with mock.patch('googleads.common._PY_VERSION_MINOR', test_minor_value):
+        with mock.patch('googleads.common._PY_VERSION_MICRO', test_micro_value):
+          with mock.patch('googleads.common._logger') as mock_logger:
+            with mock.patch(
+                'googleads.common.open', self.fake_open, create=True):
+              googleads.common.LoadFromString(yaml_doc, 'one',
+                                              ['needed', 'keys'], ['other'])
+              mock_logger.warn.assert_called_once()
+
   def _CreateYamlFile(self, data, insert_oauth2_key=None, oauth_dict=None):
     """Return the filename of a yaml file created for testing."""
     yaml_file = self.tempfile.NamedTemporaryFile(delete=False)
-
     with self.fake_open(yaml_file.name, 'w') as yaml_handle:
       for key in data:
         if key is insert_oauth2_key:
@@ -116,8 +139,9 @@ class CommonTest(unittest.TestCase):
 
   def testLoadFromStorage(self):
     # No optional keys present.
-    yaml_fname = self._CreateYamlFile({'one': {'needed': 'd', 'keys': 'e'}},
-                                      'one', self._OAUTH_INSTALLED_APP_DICT)
+    yaml_fname = self._CreateYamlFile(
+        {'one': {'needed': 'd', 'keys': 'e'}}, 'one',
+        self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
@@ -136,27 +160,31 @@ class CommonTest(unittest.TestCase):
                            rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
-    # The optional key is present.
-    yaml_fname = self._CreateYamlFile({'one': {'needed': 'd', 'keys': 'e',
-                                               'other': 'f'}}, 'one',
-                                      self._OAUTH_INSTALLED_APP_DICT)
+    # Optional logging configuration key is present.
+    logging_config = {'foo': 'bar'}
+    yaml_fname = self._CreateYamlFile(
+        {'one': {'needed': 'd', 'keys': 'e', 'other': 'f'},
+         googleads.common._LOGGING_KEY: logging_config},
+        'one', self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
-          proxy_config.return_value = mock.Mock()
-          rval = googleads.common.LoadFromStorage(
-              yaml_fname, 'one', ['needed', 'keys'], ['other'])
-          proxy_config.assert_called_once_with(
-              http_proxy=None, https_proxy=None, cafile=None,
-              disable_certificate_validation=False)
-          mock_client.assert_called_once_with(
-              'a', 'b', 'c', proxy_config=proxy_config.return_value)
-          self.assertEqual({'oauth2_client': mock_client.return_value,
-                            'needed': 'd', 'keys': 'e', 'other': 'f',
-                            'proxy_config': proxy_config.return_value,
-                            googleads.common.ENABLE_COMPRESSION_KEY: False},
-                           rval)
-          self.assertTrue(googleads.common._utility_registry._enabled)
+          with mock.patch('logging.config.dictConfig') as mock_dict_config:
+            proxy_config.return_value = mock.Mock()
+            rval = googleads.common.LoadFromStorage(
+                yaml_fname, 'one', ['needed', 'keys'], ['other'])
+            proxy_config.assert_called_once_with(
+                http_proxy=None, https_proxy=None, cafile=None,
+                disable_certificate_validation=False)
+            mock_client.assert_called_once_with(
+                'a', 'b', 'c', proxy_config=proxy_config.return_value)
+            mock_dict_config.assert_called_once_with(logging_config)
+            self.assertEqual({'oauth2_client': mock_client.return_value,
+                              'needed': 'd', 'keys': 'e', 'other': 'f',
+                              'proxy_config': proxy_config.return_value,
+                              googleads.common.ENABLE_COMPRESSION_KEY: False},
+                             rval)
+            self.assertTrue(googleads.common._utility_registry._enabled)
 
   def testLoadFromStorage_relativePath(self):
     fake_os = fake_filesystem.FakeOsModule(self.filesystem)
@@ -191,6 +219,147 @@ class CommonTest(unittest.TestCase):
       if key is insert_oauth2_key:
         data[key].update(oauth_dict)
     return yaml.dump(data)
+
+  def testExtractRequestSummaryFieldsForAdWords(self):
+    root = suds.sax.element.Element('root', parent=None)
+    client_customer_id = '111-222-3333'
+    ccid_element = suds.sax.element.Element('clientCustomerId', parent=None)
+    ccid_element.text = client_customer_id
+    request_header_element = suds.sax.element.Element('RequestHeader',
+                                                      parent=None)
+    header_element = suds.sax.element.Element('Header', parent=None)
+    method_name = 'someMethodName'
+    method_element = suds.sax.element.Element(method_name)
+    body = suds.sax.element.Element('Body', parent=None)
+    request_header_element.append(ccid_element)
+    header_element.append(request_header_element)
+    body.append(method_element)
+    root.append((header_element, body))
+    expected_result = {
+        'methodName': method_name,
+        'clientCustomerId': client_customer_id
+    }
+
+    self.assertEqual(expected_result,
+                     googleads.common._ExtractRequestSummaryFields(root))
+
+  def testExtractRequestSummaryFieldsForDfp(self):
+    root = suds.sax.element.Element('root', parent=None)
+    network_code = '111111111'
+    nc_element = suds.sax.element.Element('networkCode', parent=None)
+    nc_element.text = network_code
+    request_header_element = suds.sax.element.Element('RequestHeader',
+                                                      parent=None)
+    header_element = suds.sax.element.Element('Header', parent=None)
+    method_name = 'someMethodName'
+    method_element = suds.sax.element.Element(method_name)
+    body = suds.sax.element.Element('Body', parent=None)
+    request_header_element.append(nc_element)
+    header_element.append(request_header_element)
+    body.append(method_element)
+    root.append((header_element, body))
+    expected_result = {
+        'methodName': method_name,
+        'networkCode': network_code
+    }
+
+    self.assertEqual(expected_result,
+                     googleads.common._ExtractRequestSummaryFields(root))
+
+  def testExtractResponseSummaryFieldsWithAdWordsFields(self):
+    root = suds.sax.element.Element('Envelope', parent=None)
+    doc = suds.sax.document.Document(root=root)
+    request_id = '0'
+    response_time = '1000'
+    service_name = 'SomeService'
+    method_name = 'someMethodName'
+    operations = '0'
+    rid_element = suds.sax.element.Element('requestId', parent=None)
+    rid_element.text = request_id
+    rt_element = suds.sax.element.Element('responseTime', parent=None)
+    rt_element.text = response_time
+    service_element = suds.sax.element.Element('serviceName', parent=None)
+    service_element.text = service_name
+    method_element = suds.sax.element.Element('methodName', parent=None)
+    method_element.text = method_name
+    ops_element = suds.sax.element.Element('operations', parent=None)
+    ops_element.text = operations
+    response_header_element = suds.sax.element.Element('ResponseHeader',
+                                                       parent=None)
+    header_element = suds.sax.element.Element('Header', parent=None)
+    body = suds.sax.element.Element('Body', parent=None)
+    response_header_element.append((rid_element, rt_element, service_element,
+                                    method_element, ops_element))
+    header_element.append(response_header_element)
+    root.append((header_element, body))
+    expected_result = {
+        'requestId': request_id,
+        'responseTime': response_time,
+        'isFault': False,
+        'serviceName': service_name,
+        'methodName': method_name,
+        'operations': operations
+    }
+
+    self.assertEqual(expected_result,
+                     googleads.common._ExtractResponseSummaryFields(doc))
+
+  def testExtractResponseSummaryFieldsWithFault(self):
+    root = suds.sax.element.Element('Envelope', parent=None)
+    doc = suds.sax.document.Document(root=root)
+    request_id = '0'
+    response_time = '1000'
+    fault_string = 'I AM ERROR'
+    rid_element = suds.sax.element.Element('requestId', parent=None)
+    rid_element.text = suds.sax.text.Text(request_id)
+    rt_element = suds.sax.element.Element('responseTime', parent=None)
+    rt_element.text = suds.sax.text.Text(response_time)
+    response_header_element = suds.sax.element.Element('ResponseHeader',
+                                                       parent=None)
+    header_element = suds.sax.element.Element('Header', parent=None)
+    response_header_element.append((rid_element, rt_element))
+    header_element.append(response_header_element)
+    fault_element = suds.sax.element.Element('Fault', parent=None)
+    fault_string_element = suds.sax.element.Element('faultstring', parent=None)
+    fault_string_element.text = suds.sax.text.Text(fault_string)
+    body = suds.sax.element.Element('Body', parent=None)
+    fault_element.append(fault_string_element)
+    body.append(fault_element)
+    root.append((header_element, body))
+    expected_result = {
+        'requestId': request_id,
+        'responseTime': response_time,
+        'isFault': True,
+        'faultMessage': fault_string
+    }
+
+    self.assertEqual(expected_result,
+                     googleads.common._ExtractResponseSummaryFields(doc))
+
+  def testExtractResponseSummaryFieldsWithoutFault(self):
+    root = suds.sax.element.Element('Envelope', parent=None)
+    doc = suds.sax.document.Document(root=root)
+    request_id = '0'
+    response_time = '1000'
+    rid_element = suds.sax.element.Element('requestId', parent=None)
+    rid_element.text = request_id
+    rt_element = suds.sax.element.Element('responseTime', parent=None)
+    rt_element.text = response_time
+    response_header_element = suds.sax.element.Element('ResponseHeader',
+                                                       parent=None)
+    header_element = suds.sax.element.Element('Header', parent=None)
+    body = suds.sax.element.Element('Body', parent=None)
+    response_header_element.append((rid_element, rt_element))
+    header_element.append(response_header_element)
+    root.append((header_element, body))
+    expected_result = {
+        'requestId': request_id,
+        'responseTime': response_time,
+        'isFault': False
+    }
+
+    self.assertEqual(expected_result,
+                     googleads.common._ExtractResponseSummaryFields(doc))
 
   def testLoadFromString_deprecatedWarningLoggerByMicroValue(self):
     yaml_doc = self._CreateYamlDoc({
@@ -843,6 +1012,31 @@ class HeaderHandlerTest(unittest.TestCase):
     self.assertRaises(
         NotImplementedError, googleads.common.HeaderHandler().SetHeaders,
         mock.Mock())
+
+
+class LoggingMessagePluginTest(unittest.TestCase):
+  """Tests for the googleads.common.LoggingMessagePlugin class."""
+
+  def setUp(self):
+    self.logging_message_plugin = googleads.common.LoggingMessagePlugin()
+
+  def testMarshalled(self):
+    envelope = 'envelope'
+    marshalled_context = mock.Mock()
+    marshalled_context.envelope = envelope
+
+    with mock.patch('googleads.common._ExtractRequestSummaryFields') as mk_ext:
+      self.logging_message_plugin.marshalled(marshalled_context)
+      mk_ext.assert_called_once_with(envelope)
+
+  def testParsed(self):
+    reply = 'reply'
+    parsed_context = mock.Mock()
+    parsed_context.reply = reply
+
+    with mock.patch('googleads.common._ExtractResponseSummaryFields') as mk_ext:
+      self.logging_message_plugin.parsed(parsed_context)
+      mk_ext.assert_called_once_with(reply)
 
 
 class ProxyConfigTest(unittest.TestCase):

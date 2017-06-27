@@ -48,7 +48,7 @@ def main(client, product_id):
         statement.ToStatement())
     if 'results' in response:
       for product in response['results']:
-        print ('Product with id \'%s\' and name \'%s\' will be '
+        print ('Product with id "%s" and name "%s" will be '
                'published.' % (product['id'],
                                product['name']))
 

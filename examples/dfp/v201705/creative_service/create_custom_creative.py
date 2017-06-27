@@ -49,7 +49,7 @@ def main(client, advertiser_id):
   image_data = base64.encodestring(image_data)
 
   # Create the HTML snippet used in the custom creative.
-  html_snippet = ('<a href=\'%s%s\'><img src=\'%s\'/></a><br>Click above for '
+  html_snippet = ('<a href=\'%s%s\'><img src="%s"/></a><br>Click above for '
                   'great deals!') % ('%%CLICK_URL_UNESC%%', '%%DEST_URL%%',
                                      '%%FILE:IMAGE_ASSET%%')
 
@@ -79,7 +79,7 @@ def main(client, advertiser_id):
   # Display results.
   if creatives:
     creative = creatives[0]
-    print ('Template creative with id \'%s\', name \'%s\', and type \'%s\' was '
+    print ('Template creative with id "%s", name "%s", and type "%s" was '
            'created and can be previewed at %s.'
            % (creative['id'], creative['name'], dfp.DfpClassType(creative),
               creative['previewUrl']))

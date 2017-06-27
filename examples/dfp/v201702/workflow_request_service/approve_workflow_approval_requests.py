@@ -71,7 +71,7 @@ def main(client, proposal_id):
     if 'results' in response:
       # Display results.
       for workflow_approval_request in response['results']:
-        print ('Workflow approval request with id \'%s\' will be'
+        print ('Workflow approval request with id "%s" will be'
                ' approved.' % workflow_approval_request['id'])
       # Perform action.
       result = workflow_request_service.performWorkflowRequestAction(

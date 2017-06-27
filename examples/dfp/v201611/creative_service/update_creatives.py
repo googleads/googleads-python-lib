@@ -69,7 +69,7 @@ def main(client, image_creative_id):
 
     # Display results.
     for creative in creatives:
-      print ('Image creative with id \'%s\' and destination URL \'%s\' was '
+      print ('Image creative with id "%s" and destination URL "%s" was '
              'updated.' % (creative['id'], creative['destinationUrl']))
   else:
     print 'No creatives found to update.'

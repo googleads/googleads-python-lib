@@ -80,7 +80,7 @@ def main(client, advertiser_id):
 
   # Display results.
   for creative in creatives:
-    print ('Image creative with id \'%s\', name \'%s\', and type \'%s\' was '
+    print ('Image creative with id "%s", name "%s", and type "%s" was '
            'created and can be previewed at %s.'
            % (creative['id'], creative['name'], dfp.DfpClassType(creative),
               creative['previewUrl']))

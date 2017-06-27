@@ -67,8 +67,8 @@ def main(client, order_id):
     # Display results.
     if line_items:
       for line_item in line_items:
-        print ('Line item with id \'%s\', belonging to order id \'%s\', named '
-               '\'%s\', and delivery rate \'%s\' was updated.'
+        print ('Line item with id "%s", belonging to order id "%s", named '
+               '"%s", and delivery rate "%s" was updated.'
                % (line_item['id'], line_item['orderId'], line_item['name'],
                   line_item['deliveryRateType']))
     else:

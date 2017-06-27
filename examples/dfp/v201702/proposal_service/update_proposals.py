@@ -58,8 +58,8 @@ def main(client, proposal_id):
     # Display results.
     if proposals:
       for proposal in proposals:
-        print ('Proposal with id \'%s\', name \'%s\', and '
-               'notes \'%s\' was updated.'
+        print ('Proposal with id "%s", name "%s", and '
+               'notes "%s" was updated.'
                % (proposal['id'], proposal['name'], proposal['internalNotes']))
     else:
       print 'No proposals were updated.'

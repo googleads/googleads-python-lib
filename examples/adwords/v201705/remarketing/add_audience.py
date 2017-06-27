@@ -85,7 +85,7 @@ def main(client):
         conversions_map[conversion_tracker['id']] = conversion_tracker
 
     for user_list in result['value']:
-      print ('User list with name \'%s\' and ID \'%s\' was added.'
+      print ('User list with name "%s" and ID "%s" was added.'
              % (user_list['name'], user_list['id']))
       if user_list['conversionTypes']:
         for conversion_type in user_list['conversionTypes']:

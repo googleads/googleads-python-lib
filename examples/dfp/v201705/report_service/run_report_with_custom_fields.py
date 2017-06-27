@@ -94,7 +94,7 @@ def main(client, order_id):
   report_file.close()
 
   # Display results.
-  print 'Report job with id \'%s\' downloaded to:\n%s' % (
+  print 'Report job with id "%s" downloaded to:\n%s' % (
       report_job_id, report_file.name)
 
 if __name__ == '__main__':

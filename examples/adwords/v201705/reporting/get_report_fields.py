@@ -38,7 +38,7 @@ def main(client, report_type):
   fields = report_definition_service.getReportFields(report_type)
 
   # Display results.
-  print 'Report type \'%s\' contains the following fields:' % report_type
+  print 'Report type "%s" contains the following fields:' % report_type
   for field in fields:
     print ' - %s (%s)' % (field['fieldName'], field['fieldType'])
     if 'enumValues' in field:

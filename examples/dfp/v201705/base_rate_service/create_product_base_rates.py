@@ -53,7 +53,7 @@ def main(client, product_id, rate_card_id):
 
   if base_rates:
     for base_rate in base_rates:
-      print ('A product base rate with ID \'%s\' and rate \'%.2f\' %s was '
+      print ('A product base rate with ID "%s" and rate \'%.2f\' %s was '
              'created.' % (base_rate['id'],
                            base_rate['rate']['microAmount'],
                            base_rate['rate']['currencyCode']))

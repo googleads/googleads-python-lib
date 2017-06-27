@@ -49,7 +49,7 @@ def main(client, placement_id):
   updated_placements = placement_service.updatePlacements([placement])
 
   for placement in updated_placements:
-    print ("Placement with id \'%s\' and name '%s' was updated."
+    print ('Placement with id "%s" and name "%s" was updated.'
            % (placement['id'], placement['name']))
 
 if __name__ == '__main__':

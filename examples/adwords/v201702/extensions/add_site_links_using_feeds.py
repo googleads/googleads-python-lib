@@ -76,11 +76,11 @@ def main(client, campaign_id):
     final_url_feed_attribute_id = feed['attributes'][1]['id']
     line_2_feed_attribute_id = feed['attributes'][2]['id']
     line_3_feed_attribute_id = feed['attributes'][3]['id']
-    print ('Feed with name \'%s\' and ID \'%s\' was added with' %
+    print ('Feed with name "%s" and ID "%s" was added with' %
            (feed['name'], feed['id']))
-    print ('\tText attribute ID \'%s\' and Final URL attribute ID \'%s\'.' %
+    print ('\tText attribute ID "%s" and Final URL attribute ID "%s".' %
            (link_text_feed_attribute_id, final_url_feed_attribute_id))
-    print ('\tLine 2 attribute ID \'%s\' and Line 3 attribute ID \'%s\'.' %
+    print ('\tLine 2 attribute ID "%s" and Line 3 attribute ID "%s".' %
            (line_2_feed_attribute_id, line_3_feed_attribute_id))
     sitelinks_data['feedId'] = feed['id']
     sitelinks_data['linkTextFeedId'] = link_text_feed_attribute_id

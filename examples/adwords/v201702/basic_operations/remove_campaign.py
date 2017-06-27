@@ -47,7 +47,7 @@ def main(client, campaign_id):
 
   # Display results.
   for campaign in result['value']:
-    print ('Campaign with name \'%s\' and id \'%s\' was deleted.'
+    print ('Campaign with name "%s" and id "%s" was deleted.'
            % (campaign['name'], campaign['id']))
 
 

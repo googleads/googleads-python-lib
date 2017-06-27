@@ -61,8 +61,8 @@ def main(client, label_id):
     if 'results' in response:
       # Display results.
       for creative_wrapper in response['results']:
-        print ('Creative wrapper with ID \'%s\' applying to label \'%s\' with '
-               'status \'%s\' will be deactivated.' %
+        print ('Creative wrapper with ID "%s" applying to label "%s" with '
+               'status "%s" will be deactivated.' %
                (creative_wrapper['id'],
                 creative_wrapper['labelId'],
                 creative_wrapper['status']))

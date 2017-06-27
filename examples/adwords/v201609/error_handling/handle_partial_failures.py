@@ -94,8 +94,8 @@ def main(client, ad_group_id):
   # Display results.
   for criterion in result['value']:
     if criterion['AdGroupCriterion.Type'] == 'BiddableAdGroupCriterion':
-      print ('Added keyword ad group criterion with ad group id \'%s\', '
-             'criterion id \'%s\', text \'%s\', and match type \'%s\' was '
+      print ('Added keyword ad group criterion with ad group id "%s", '
+             'criterion id "%s", text "%s", and match type "%s" was '
              'added.'
              % (criterion['adGroupId'], criterion['criterion']['id'],
                 criterion['criterion']['text'],
@@ -104,13 +104,13 @@ def main(client, ad_group_id):
   for error in result['partialFailureErrors']:
     index = re.findall(r'operations\[(.*)\]\.', error['fieldPath'])
     if index:
-      print ('Keyword ad group criterion with ad group id \'%s\' and text '
-             '\'%s\' triggered a failure for the following reason: \'%s\'.'
+      print ('Keyword ad group criterion with ad group id "%s" and text '
+             '"%s" triggered a failure for the following reason: "%s".'
              % (keywords[int(index[0])]['adGroupId'],
                 keywords[int(index[0])]['criterion']['text'],
                 error['errorString']))
     else:
-      print 'The following failure has occurred: \'%s\'.' % error['errorString']
+      print 'The following failure has occurred: "%s".' % error['errorString']
 
 
 if __name__ == '__main__':

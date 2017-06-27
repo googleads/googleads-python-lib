@@ -75,6 +75,27 @@ dfp:
 ###############################################################################
 # enable_compression: False
 ###############################################################################
+# Logging configuration (optional)                                            #
+# Below you may specify the logging configuration. This will be provided as   #
+# an input to logging.config.dictConfig.                                      #
+###############################################################################
+# logging:
+  # version: 1
+  # disable_existing_loggers: False
+  # formatters:
+    # default_fmt:
+      # format: ext://googleads.util.LOGGER_FORMAT
+  # handlers:
+    # default_handler:
+      # class: logging.StreamHandler
+      # formatter: default_fmt
+      # level: INFO
+  # loggers:
+    # Configure root logger
+    # "":
+      # handlers: [default_handler]
+      # level: INFO
+###############################################################################
 # Proxy configurations (optional)                                             #
 # Below you may specify an HTTP or HTTPS Proxy to be used when making API     #
 # requests.                                                                   #

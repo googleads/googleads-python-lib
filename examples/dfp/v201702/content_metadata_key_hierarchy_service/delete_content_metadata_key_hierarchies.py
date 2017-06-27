@@ -64,7 +64,7 @@ def main(client, content_metadata_key_hierarchy_id):
   # Display results.
   if content_metadata_key_hierarchies:
     for content_metadata_key_hierarchy in content_metadata_key_hierarchies:
-      print ('Content metadata key hierarchy with ID \'%s\' and name \'%s\' '
+      print ('Content metadata key hierarchy with ID "%s" and name "%s" '
              'will be deleted.' % (content_metadata_key_hierarchy['id'],
                                    content_metadata_key_hierarchy['name']))
 

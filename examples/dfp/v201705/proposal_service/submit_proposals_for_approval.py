@@ -50,7 +50,7 @@ def main(client, proposal_id):
     if 'results' in response:
       # Display results.
       for proposal in response['results']:
-        print ('Proposal with id \'%s\', name \'%s\', and status \'%s\' will be'
+        print ('Proposal with id "%s", name "%s", and status "%s" will be'
                ' approved.' % (proposal['id'], proposal['name'],
                                proposal['status']))
       # Perform action.

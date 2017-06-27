@@ -71,8 +71,8 @@ def main(client, proposal_id):
     if 'results' in response:
       # Display results.
       for workflow_request in response['results']:
-        print ('Workflow external condition request with id \'%s\' for %s '
-               'with id \'%s\' will be triggered.' %
+        print ('Workflow external condition request with id "%s" for %s '
+               'with id "%s" will be triggered.' %
                (workflow_request['id'],
                 workflow_request['entityType'],
                 workflow_request['entityId']))

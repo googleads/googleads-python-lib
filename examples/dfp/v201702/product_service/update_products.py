@@ -58,8 +58,8 @@ def main(client, product_id):
     # Display results.
     if products:
       for product in products:
-        print ('Product with id \'%s\', name \'%s\', and '
-               'notes \'%s\' was updated.'
+        print ('Product with id "%s", name "%s", and '
+               'notes "%s" was updated.'
                % (product['id'], product['name'], product['notes']))
     else:
       print 'No products were updated.'

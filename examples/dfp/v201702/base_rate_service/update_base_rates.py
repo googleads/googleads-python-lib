@@ -64,8 +64,8 @@ def main(client, base_rate_id):
     # Display results.
     if base_rates:
       for base_rate in base_rates:
-        print ('Base rate with ID \'%s\' and type \'%s\' belonging to '
-               'rate card ID \'%s\' was updated.' % (
+        print ('Base rate with ID "%s" and type "%s" belonging to '
+               'rate card ID "%s" was updated.' % (
                    base_rate['id'],
                    dfp.DfpClassType(base_rate),
                    base_rate['rateCardId']))

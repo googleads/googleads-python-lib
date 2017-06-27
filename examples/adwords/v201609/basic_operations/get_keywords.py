@@ -67,8 +67,8 @@ def main(client, adgroup_id):
     # Display results.
     if 'entries' in page:
       for keyword in page['entries']:
-        print ('Keyword ID \'%d\', type \'%s\', text \'%s\', and match type '
-               '\'%s\' was found.' % (
+        print ('Keyword ID "%s", type "%s", text "%s", and match type '
+               '"%s" was found.' % (
                    keyword['criterion']['id'],
                    keyword['criterion']['type'],
                    keyword['criterion']['text'],

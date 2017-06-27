@@ -40,7 +40,7 @@ def main(client):
   network = network_service.makeTestNetwork()
 
   # Display results.
-  print ('Test network with network code \'%s\' and display name \'%s\' '
+  print ('Test network with network code "%s" and display name "%s" '
          'created.' % (network['networkCode'], network['displayName']))
   print ('You may now sign in at http://www.google.com/dfp/main?networkCode=%s'
          % network['networkCode'])

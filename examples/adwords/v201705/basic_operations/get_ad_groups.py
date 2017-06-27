@@ -59,7 +59,7 @@ def main(client, campaign_id):
     # Display results.
     if 'entries' in page:
       for ad_group in page['entries']:
-        print ('Ad group with name \'%s\', id \'%s\' and status \'%s\' was '
+        print ('Ad group with name "%s", id "%s" and status "%s" was '
                'found.' % (ad_group['name'], ad_group['id'],
                            ad_group['status']))
     else:

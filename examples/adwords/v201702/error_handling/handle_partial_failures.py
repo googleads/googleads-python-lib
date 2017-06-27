@@ -93,8 +93,8 @@ def main(client, ad_group_id):
   # Display results.
   for criterion in result['value']:
     if criterion['AdGroupCriterion.Type'] == 'BiddableAdGroupCriterion':
-      print ('Added keyword ad group criterion with ad group id \'%s\', '
-             'criterion id \'%s\', text \'%s\', and match type \'%s\' was '
+      print ('Added keyword ad group criterion with ad group id "%s", '
+             'criterion id "%s", text "%s", and match type "%s" was '
              'added.'
              % (criterion['adGroupId'], criterion['criterion']['id'],
                 criterion['criterion']['text'],

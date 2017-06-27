@@ -67,7 +67,7 @@ def main(client, advertiser_id, primary_salesperson_id,
 
   # Display results.
   for proposal in proposals:
-    print ('Proposal with id \'%s\' and name \'%s\' was created.'
+    print ('Proposal with id "%s" and name "%s" was created.'
            % (proposal['id'], proposal['name']))
 
 if __name__ == '__main__':

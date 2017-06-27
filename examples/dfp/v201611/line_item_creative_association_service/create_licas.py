@@ -45,8 +45,8 @@ def main(client, line_item_id, creative_ids):
   # Display results.
   if licas:
     for lica in licas:
-      print ('LICA with line item id \'%s\', creative id \'%s\', and '
-             'status \'%s\' was created.' %
+      print ('LICA with line item id "%s", creative id "%s", and '
+             'status "%s" was created.' %
              (lica['lineItemId'], lica['creativeId'], lica['status']))
   else:
     print 'No LICAs created.'

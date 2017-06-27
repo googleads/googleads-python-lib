@@ -272,7 +272,7 @@ class GoogleAdsCommonFilterTest(unittest.TestCase):
 
   def setUp(self):
     self.filter = googleads.util.GetGoogleAdsCommonFilter()
-    self.omitted_text = 'OMITTED'
+    self.redacted_text = 'REDACTED'
     self.dev_token_template = ('<tns:developerToken>%s</tns:developerToken>')
 
   def testGetGoogleAdsCommonFilter(self):
@@ -284,7 +284,7 @@ class GoogleAdsCommonFilterTest(unittest.TestCase):
     record.args = [self.dev_token_template % 'test']
     self.filter.filter(record)
     self.assertEqual(
-        record.args, (self.dev_token_template % self.omitted_text,))
+        record.args, (self.dev_token_template % self.redacted_text,))
 
   def testFilterAtUnfilteredLevel(self):
     expected_args = (1, 2, 3, 4, 5)
@@ -300,7 +300,7 @@ class SudsClientFilterTest(unittest.TestCase):
 
   def setUp(self):
     self.filter = googleads.util.GetSudsClientFilter()
-    self.omitted_text = 'OMITTED'
+    self.redacted_text = 'REDACTED'
     self.dev_token_template = 'DevToken'
     self.location = 'https://www.google.com'
     test_dir = os.path.dirname(__file__)
@@ -321,7 +321,7 @@ class SudsClientFilterTest(unittest.TestCase):
     self.filter.filter(record)
     self.assertEqual(record.args, (self.location,
                                    (self.test_request_envelope_template
-                                    % self.omitted_text)))
+                                    % self.redacted_text)))
 
   def testFilterWithSudsClientHeadersMessage(self):
     record = mock.Mock()
@@ -329,9 +329,178 @@ class SudsClientFilterTest(unittest.TestCase):
     record.args = {'Content-Type': 'text/xml; charset=utf-8',
                    'Authorization': 'Bearer abc123doremi'}
     expected_args = {'Content-Type': 'text/xml; charset=utf-8',
-                     'Authorization': self.omitted_text}
+                     'Authorization': self.redacted_text}
     self.filter.filter(record)
     self.assertEqual(record.args, expected_args)
+
+
+class SudsMXCoreFilterTest(unittest.TestCase):
+  """Tests for the SudsMXCoreFilter utility."""
+
+  _DEVELOPER_TOKEN = 'developerToken'
+  _REQUEST_HEADER = 'RequestHeader'
+
+  def setUp(self):
+    self.filter = googleads.util.GetSudsMXCoreFilter()
+    self.redacted_text = 'REDACTED'
+    self.developer_token_value = 'abc123doremi'
+
+  def testGetSudsMXCoreFilter(self):
+    self.assertIs(self.filter, googleads.util.GetSudsMXCoreFilter())
+
+  def testFilterWithContentDeveloperToken(self):
+    content = suds.mx.Content(tag=self._DEVELOPER_TOKEN,
+                              value=self.developer_token_value)
+
+    record = mock.Mock()
+    record.args = [content]
+
+    self.filter.filter(record)
+    # Verify that the original copy wasn't modified.
+    self.assertEqual(content.value, self.developer_token_value)
+    # Verify that the args were modified.
+    self.assertEqual(record.args[0].value, self.redacted_text)
+
+  def testFilterWithContentRequestHeader(self):
+    request_header_value = {
+        self._DEVELOPER_TOKEN: self.developer_token_value
+    }
+    expected_filtered_value = {
+        self._DEVELOPER_TOKEN: self.redacted_text
+    }
+    content = suds.mx.Content(tag=self._REQUEST_HEADER,
+                              value=request_header_value)
+
+    record = mock.Mock()
+    record.args = [content]
+
+    self.filter.filter(record)
+    # Verify that the original copy wasn't modified.
+    self.assertEqual(request_header_value[self._DEVELOPER_TOKEN],
+                     self.developer_token_value)
+    # Verify that the args were modified.
+    self.assertEqual(record.args[0].value, expected_filtered_value)
+
+  def testFilterWithElementRequestHeader(self):
+    request_header_element = suds.sax.element.Element(
+        self._REQUEST_HEADER, parent=None)
+    child = suds.sax.element.Element(self._DEVELOPER_TOKEN, parent=None)
+    child.text = suds.sax.text.Text(self.developer_token_value)
+    request_header_element.append(child)
+
+    record = mock.Mock()
+    record.args = [request_header_element]
+
+    self.filter.filter(record)
+    # Verify that the original copy wasn't modified.
+    self.assertEqual(child.text, suds.sax.text.Text(self.developer_token_value))
+    # Verify that the args were modified.
+    self.assertEqual(record.args[0].getChild(self._DEVELOPER_TOKEN).text,
+                     suds.sax.text.Text(self.redacted_text))
+
+  def testFilterWithNoArgs(self):
+    record = mock.Mock()
+    record.args = []
+    self.filter.filter(record)
+
+  def testFilterWithNoRequestHeader(self):
+    foo_value = 'bar'
+    lorem_value = 'ipsum'
+    potayto_value = 'potahto'
+    request_header_value = {
+        'foo': foo_value,
+        'lorem': lorem_value,
+        'potayto': potayto_value
+    }
+    content = suds.mx.Content(tag=self._REQUEST_HEADER,
+                              value=request_header_value)
+
+    record = mock.Mock()
+    record.args = [content]
+
+    self.filter.filter(record)
+    # Verify that the original copy wasn't modified.
+    self.assertEqual(request_header_value['foo'], foo_value)
+    self.assertEqual(request_header_value['lorem'], lorem_value)
+    self.assertEqual(request_header_value['potayto'], potayto_value)
+    # Verify that the args weren't modified.
+    self.assertEqual(record.args[0].value, request_header_value)
+
+
+class SudsMXLiteralFilterTest(unittest.TestCase):
+  """Tests for the SudsMXLiteralFilter utility."""
+
+  _DEVELOPER_TOKEN = 'developerToken'
+  _REQUEST_HEADER = 'RequestHeader'
+
+  def setUp(self):
+    self.filter = googleads.util.GetSudsMXLiteralFilter()
+    self.redacted_text = 'REDACTED'
+    self.developer_token_value = 'abc123doremi'
+
+  def testGetSudsMXLiteralFilter(self):
+    self.assertIs(self.filter, googleads.util.GetSudsMXLiteralFilter())
+
+  def testFilterWithContentDeveloperToken(self):
+    content = suds.mx.Content(tag=self._DEVELOPER_TOKEN,
+                              value=self.developer_token_value)
+
+    record = mock.Mock()
+    record.args = [content]
+
+    self.filter.filter(record)
+    # Verify that the original copy wasn't modified.
+    self.assertEqual(content.value, self.developer_token_value)
+    # Verify that the args were modified.
+    self.assertEqual(record.args[0].value, self.redacted_text)
+
+  def testFilterWithContentRequestHeader(self):
+    request_header_value = {
+        self._DEVELOPER_TOKEN: self.developer_token_value
+    }
+    expected_filtered_value = {
+        self._DEVELOPER_TOKEN: self.redacted_text
+    }
+    content = suds.mx.Content(tag=self._REQUEST_HEADER,
+                              value=request_header_value)
+
+    record = mock.Mock()
+    record.args = [content]
+
+    self.filter.filter(record)
+    # Verify that the original copy wasn't modified.
+    self.assertEqual(request_header_value[self._DEVELOPER_TOKEN],
+                     self.developer_token_value)
+    # Verify that the args were modified.
+    self.assertEqual(record.args[0].value, expected_filtered_value)
+
+  def testFilterWithNoArgs(self):
+    record = mock.Mock()
+    record.args = []
+    self.filter.filter(record)
+
+  def testFilterWithNoRequestHeader(self):
+    foo_value = 'bar'
+    lorem_value = 'ipsum'
+    potayto_value = 'potahto'
+    request_header_value = {
+        'foo': foo_value,
+        'lorem': lorem_value,
+        'potayto': potayto_value
+    }
+    content = suds.mx.Content(tag=self._REQUEST_HEADER,
+                              value=request_header_value)
+
+    record = mock.Mock()
+    record.args = [content]
+
+    self.filter.filter(record)
+    # Verify that the original copy wasn't modified.
+    self.assertEqual(request_header_value['foo'], foo_value)
+    self.assertEqual(request_header_value['lorem'], lorem_value)
+    self.assertEqual(request_header_value['potayto'], potayto_value)
+    # Verify that the args weren't modified.
+    self.assertEqual(record.args[0].value, request_header_value)
 
 
 class SudsTransportFilterTest(unittest.TestCase):
@@ -339,7 +508,7 @@ class SudsTransportFilterTest(unittest.TestCase):
 
   def setUp(self):
     self.filter = googleads.util.GetSudsTransportFilter()
-    self.omitted_text = 'OMITTED'
+    self.redacted_text = 'REDACTED'
     self.dev_token_template = 'DevToken'
     self.location = 'https://www.google.com'
     test_dir = os.path.dirname(__file__)
@@ -357,13 +526,13 @@ class SudsTransportFilterTest(unittest.TestCase):
     request_instance.message = (self.test_request_envelope_template %
                                 self.dev_token_template)
     expected_headers = {'User-Agent': 'user-agent',
-                        'Authorization': self.omitted_text}
+                        'Authorization': self.redacted_text}
     record = mock.Mock()
     record.args = (request_instance,)
     self.filter.filter(record)
     self.assertEqual(record.args[0].headers, expected_headers)
     self.assertEqual(record.args[0].message,
-                     self.test_request_envelope_template % self.omitted_text)
+                     self.test_request_envelope_template % self.redacted_text)
 
 
 if __name__ == '__main__':

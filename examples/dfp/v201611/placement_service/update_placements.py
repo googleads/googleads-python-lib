@@ -55,8 +55,8 @@ def main(client, placement_id):
   placements = placement_service.updatePlacements(placements)
 
   for placement in placements:
-    print ('Placement with id \'%s\', name \'%s\', and AdSense targeting '
-           'enabled \'%s\' was updated.'
+    print ('Placement with id "%s", name "%s", and AdSense targeting '
+           'enabled "%s" was updated.'
            % (placement['id'], placement['name'],
               placement['isAdSenseTargetingEnabled']))
 

@@ -65,7 +65,7 @@ def main(client):
       print 'Most recent changes: %s' % account_changes['lastChangeTimestamp']
     if account_changes['changedCampaigns']:
       for data in account_changes['changedCampaigns']:
-        print ('Campaign with id \'%s\' has change status \'%s\'.'
+        print ('Campaign with id "%s" has change status "%s".'
                % (data['campaignId'], data['campaignChangeStatus']))
         if (data['campaignChangeStatus'] != 'NEW' and
             data['campaignChangeStatus'] != 'FIELDS_UNCHANGED'):
@@ -77,7 +77,7 @@ def main(client):
                    data['removedCampaignCriteria'])
           if 'changedAdGroups' in data:
             for ad_group_data in data['changedAdGroups']:
-              print ('  Ad group with id \'%s\' has change status \'%s\'.'
+              print ('  Ad group with id "%s" has change status "%s".'
                      % (ad_group_data['adGroupId'],
                         ad_group_data['adGroupChangeStatus']))
               if ad_group_data['adGroupChangeStatus'] != 'NEW':

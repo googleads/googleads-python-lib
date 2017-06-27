@@ -16,6 +16,7 @@
 
 from collections import namedtuple
 import io
+import logging
 import os
 import re
 import sys
@@ -32,55 +33,15 @@ import yaml
 import googleads.common
 import googleads.errors
 
+
+_report_logger = logging.getLogger('%s.%s' % (__name__, 'report_downloader'))
+_batch_job_logger = logging.getLogger('%s.%s'
+                                      % (__name__, 'batch_job_helper'))
+
+
 # A giant dictionary of AdWords versions, the services they support, and which
 # namespace those services are in.
 _SERVICE_MAP = {
-    'v201607': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'BatchJobService': 'cm',
-        'BiddingStrategyService': 'cm',
-        'BudgetOrderService': 'billing',
-        'BudgetService': 'cm',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerFeedService': 'cm',
-        'CustomerService': 'mcm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'DraftAsyncErrorService': 'cm',
-        'DraftService': 'cm',
-        'ExperimentService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'LabelService': 'cm',
-        'LocationCriterionService': 'cm',
-        'ManagedCustomerService': 'mcm',
-        'MediaService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-        'TrialAsyncErrorService': 'cm',
-        'TrialService': 'cm'
-    },
     'v201609': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
@@ -256,9 +217,6 @@ class AdWordsClient(object):
         succeed, to result in a complete failure with no changes made or a
         partial failure with some changes made. Only certain services respect
         this header.
-    https_proxy: A string identifying the URL of a proxy that all HTTPS requests
-        should be routed through. Modifying this value will not affect any SOAP
-        service clients you've already created.
   """
 
   # The key in the storage yaml which contains AdWords data.
@@ -362,7 +320,6 @@ class AdWordsClient(object):
     """
     self.developer_token = developer_token
     self.oauth2_client = oauth2_client
-    self.oauth2_client.Refresh()
     self.client_customer_id = kwargs.get('client_customer_id')
     self.user_agent = user_agent
     # Verify that the provided user_agent contains only ASCII characters. In
@@ -455,8 +412,8 @@ class AdWordsClient(object):
           in future releases to point to what is then the latest version.
       server: A string identifying the webserver hosting the AdWords API.
 
-      Returns:
-        An initialized BatchJobHelper tied to this client.
+    Returns:
+      An initialized BatchJobHelper tied to this client.
     """
     if not server:
       server = _DEFAULT_ENDPOINT
@@ -765,13 +722,14 @@ class BatchJobHelper(object):
       new_content_length += padded_request_length
       request_body += ' ' * padding_length
       req.get_method = lambda: 'PUT'  # Modify this into a PUT request.
+      req.data = request_body.encode('utf-8')
       req.add_header('Content-Length', padded_request_length)
       req.add_header('Content-Range', 'bytes %s-%s/%s' % (
           current_content_length,
           new_content_length - 1,
           new_content_length if is_last else '*'
       ))
-      req.data = request_body.encode('utf-8')
+
       return req
 
     def _BuildUploadRequestBody(self, operations, has_prefix=True,
@@ -1157,13 +1115,50 @@ class IncrementalUploadHelper(object):
     # Make the request, ignoring the urllib2.HTTPError raised due to HTTP status
     # code 308 (for resumable uploads).
     try:
+      _batch_job_logger.debug('Outgoing request: %s %s %s',
+                              req.get_full_url(), req.headers, req.data)
+
       self._url_opener.open(req)
+
+      if _batch_job_logger.isEnabledFor(logging.INFO):
+        _batch_job_logger.info('Request summary: %s',
+                               self._ExtractRequestSummaryFields(req))
     except urllib2.HTTPError as e:
       if e.code != 308:
+        if _batch_job_logger.isEnabledFor(logging.WARNING):
+          _batch_job_logger.warning(
+              'Request summary: %s',
+              self._ExtractRequestSummaryFields(req, error=e))
         raise
     # Update upload status.
     self._current_content_length += len(req.data)
     self._is_last = is_last
+
+  def _ExtractRequestSummaryFields(self, request, error=None):
+    """Extract fields used in the summary logs.
+
+    Args:
+      request:  a urllib2.Request instance configured to make the request.
+      [optional]
+      error: a urllib2.HttpError instance used to retrieve error details.
+
+    Returns:
+      A dict containing the fields to be output in the summary logs.
+    """
+    headers = request.headers
+    summary_fields = {
+        'server': request.get_full_url(),
+        'contentRange': headers['Content-range'],
+        'contentLength': headers['Content-length']
+    }
+
+    if error:
+      summary_fields['isError'] = True
+      summary_fields['errorMessage'] = error.reason
+    else:
+      summary_fields['isError'] = False
+
+    return summary_fields
 
 
 @googleads.common.RegisterUtility(
@@ -1187,6 +1182,8 @@ class ReportDownloader(object):
   _SCHEMA_FORMAT = '/'.join([_END_POINT_FORMAT, 'reportDefinition.xsd'])
   # The name of the complex type representing a report definition.
   _REPORT_DEFINITION_NAME = 'reportDefinition'
+  # Used to extract the reporting URL for logging.
+  _SERVER_PATTERN = re.compile('https?://(.+?)/.*')
 
   def __init__(self, adwords_client, version=sorted(_SERVICE_MAP.keys())[-1],
                server=None):
@@ -1229,7 +1226,7 @@ class ReportDownloader(object):
     is_valid_gzip_mode = 'b' in mode and ('+' in mode or 'w' in mode)
 
     if (file_format.startswith('GZIPPED_')
-        and not (is_valid_gzip_mode or type(output) is io.BytesIO)):
+        and not (is_valid_gzip_mode or isinstance(output, io.BytesIO))):
       raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
                                                  ' output for GZIPPED formats.')
 
@@ -1592,13 +1589,100 @@ class ReportDownloader(object):
     """
     if sys.version_info[0] == 3:
       post_body = bytes(post_body, 'utf8')
+
     request = urllib2.Request(
         self._end_point, post_body,
         self._header_handler.GetReportDownloadHeaders(**kwargs))
     try:
-      return self.url_opener.open(request)
+      if _report_logger.isEnabledFor(logging.DEBUG):
+        _report_logger.debug('Outgoing request: %s %s',
+                             self._SanitizeRequestHeaders(request.headers),
+                             post_body)
+
+      response = self.url_opener.open(request)
+
+      if _report_logger.isEnabledFor(logging.INFO):
+        _report_logger.info(
+            'Request Summary: %s', self._ExtractRequestSummaryFields(request))
+
+      if _report_logger.isEnabledFor(logging.DEBUG):
+        _report_logger.debug('Incoming response: %s %s %s REDACTED REPORT DATA',
+                             self._ExtractResponseHeaders(response.headers),
+                             response.code, response.msg)
+      return response
     except urllib2.HTTPError as e:
+      if _report_logger.isEnabledFor(logging.WARNING):
+        _report_logger.warning(
+            'Request Summary: %s', self._ExtractRequestSummaryFields(
+                request, error=e))
       raise self._ExtractError(e)
+
+  def _SanitizeRequestHeaders(self, headers):
+    """Removes sensitive data from request headers for use in logging.
+
+    Args:
+      headers: a dict containing the headers to be sanitized.
+
+    Returns:
+      A  dict containing a sanitized copy of the provided headers.
+    """
+    sanitized_headers = dict(headers)
+
+    sanitized_headers['Developertoken'] = 'REDACTED'
+    sanitized_headers['Authorization'] = 'REDACTED'
+
+    return sanitized_headers
+
+  def _ExtractResponseHeaders(self, headers):
+    """Extracts the given headers to a dict for logging.
+
+    Args:
+      headers: a httplib.HTTPMessage instance containing response headers.
+
+    Returns:
+      A dict containing the contents of the response headers.
+    """
+    header_lines = str(headers).split('\n')
+    headers = {}
+
+    for header_line in header_lines:
+      if header_line:
+        k, v = header_line.split(': ')
+        headers[k] = v
+
+    return headers
+
+  def _ExtractRequestSummaryFields(self, request, error=None):
+    """Extract fields used in the summary logs.
+
+    Args:
+      request:  a urllib2.Request instance.
+      [optional]
+      error: a urllib2.HttpError instance used to retrieve error details.
+
+    Returns:
+      A dict containing the fields to be output in the summary logs.
+    """
+    server = (self._SERVER_PATTERN.search(request.get_full_url())
+              .group(1))
+    headers = request.headers
+
+    summary_fields = {
+        'clientCustomerId': headers.get('Clientcustomerid'),
+        'includeZeroImpressions': headers.get('Includezeroimpressions', False),
+        'server': server,
+        'skipColumnHeader': headers.get('Skipcolumnheader', False),
+        'skipReportHeader': headers.get('Skipreportheader', False),
+        'skipReportSummary': headers.get('Skipreportsummary', False),
+    }
+
+    if error:
+      summary_fields['isError'] = True
+      summary_fields['errorMessage'] = error.read()
+    else:
+      summary_fields['isError'] = False
+
+    return summary_fields
 
   def _SerializeAwql(self, query, file_format):
     """Serializes an AWQL query and file format for transport.

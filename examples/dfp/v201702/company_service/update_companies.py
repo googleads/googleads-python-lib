@@ -62,7 +62,7 @@ def main(client, company_id):
 
     # Display results.
     for company in companies:
-      print (('Company with ID \'%s\', name \'%s\', and comment \'%s\''
+      print (('Company with ID "%s", name "%s", and comment "%s"'
               'was updated.')
              % (company['id'], company['name'], company['comment']))
   else:

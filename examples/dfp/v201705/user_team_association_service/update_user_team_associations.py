@@ -71,9 +71,9 @@ def main(client, user_id):
     # Display results.
     if user_team_associations:
       for user_team_association in user_team_associations:
-        print ('User team association between user with ID \'%s\' and team with'
-               ' ID \'%s\' was updated.' % (user_team_association['userId'],
-                                            user_team_association['teamId']))
+        print ('User team association between user with ID "%s" and team with'
+               ' ID "%s" was updated.' % (user_team_association['userId'],
+                                          user_team_association['teamId']))
     else:
       print 'No user team associations were updated.'
   else:

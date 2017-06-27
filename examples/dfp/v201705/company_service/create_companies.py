@@ -53,7 +53,7 @@ def main(client):
 
   # Display results.
   for company in companies:
-    print ('Company with ID \'%s\', name \'%s\', and type \'%s\' was created.'
+    print ('Company with ID "%s", name "%s", and type "%s" was created.'
            % (company['id'], company['name'], company['type']))
 
 if __name__ == '__main__':

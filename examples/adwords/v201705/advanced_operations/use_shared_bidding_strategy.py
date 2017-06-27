@@ -77,7 +77,7 @@ def CreateBiddingStrategy(client):
   response = bidding_strategy_service.mutate([operation])
   new_bidding_strategy = response['value'][0]
 
-  print ('Shared bidding strategy with name \'%s\' and ID \'%s\' of type \'%s\''
+  print ('Shared bidding strategy with name "%s" and ID "%s" of type "%s"'
          'was created.' %
          (new_bidding_strategy['name'], new_bidding_strategy['id'],
           new_bidding_strategy['biddingScheme']['BiddingScheme.Type']))
@@ -107,7 +107,7 @@ def CreateSharedBudget(client):
       'isExplicitlyShared': 'true'
   }
 
-    # Create operation.
+  # Create operation.
   operation = {
       'operator': 'ADD',
       'operand': budget
@@ -157,7 +157,7 @@ def CreateCampaignWithBiddingStrategy(client, bidding_strategy_id, budget_id):
   response = campaign_service.mutate([operation])
   new_campaign = response['value'][0]
 
-  print ('Campaign with name \'%s\', ID \'%s\' and bidding scheme ID \'%s\' '
+  print ('Campaign with name "%s", ID "%s" and bidding scheme ID "%s" '
          'was created.' %
          (new_campaign['name'], new_campaign['id'],
           new_campaign['biddingStrategyConfiguration']['biddingStrategyId']))

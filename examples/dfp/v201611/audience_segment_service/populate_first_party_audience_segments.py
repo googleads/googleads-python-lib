@@ -57,7 +57,7 @@ def main(client, audience_segment_id):
 
     for segment in segments:
       print (
-          'Audience segment with id \'%s\' and name \'%s\' will be populated.'
+          'Audience segment with id "%s" and name "%s" will be populated.'
           % (segment['id'], segment['name']))
 
     action = {

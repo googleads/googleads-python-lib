@@ -78,7 +78,7 @@ def main(client, ad_unit_id):
       ad_unit_sizes = ['{%s x %s}' % (size['size']['width'],
                                       size['size']['height'])
                        for size in ad_unit['adUnitSizes']]
-      print ('Ad unit with ID \'%s\', name \'%s\', and sizes [%s] was updated'
+      print ('Ad unit with ID "%s", name "%s", and sizes [%s] was updated'
              % (ad_unit['id'], ad_unit['name'], ','.join(ad_unit_sizes)))
 
 if __name__ == '__main__':

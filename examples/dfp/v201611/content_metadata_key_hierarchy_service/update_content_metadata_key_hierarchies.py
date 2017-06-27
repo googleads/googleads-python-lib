@@ -83,7 +83,7 @@ def main(client, content_metadata_key_hierarchy_id, custom_targeting_key_id):
 
     # Display results.
     for content_metadata_key_hierarchy in content_metadata_key_hierarchies:
-      print ('Content metadata key hierarchy with id \'%s\' and name \'%s\''
+      print ('Content metadata key hierarchy with id "%s" and name "%s"'
              ' was updated.' % (content_metadata_key_hierarchy['id'],
                                 content_metadata_key_hierarchy['name']))
 

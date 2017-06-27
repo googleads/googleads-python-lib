@@ -124,9 +124,9 @@ def main(client, order_id, targeted_video_ad_unit_id,
   line_item = line_item_service.createLineItem(line_item)
 
   # Display results.
-  print ('Video line item with id \'%s\', belonging to order id \'%s\', and '
-         'named \'%s\' was created.' % (line_item['id'], line_item['orderId'],
-                                        line_item['name']))
+  print ('Video line item with id "%s", belonging to order id "%s", and '
+         'named "%s" was created.' % (line_item['id'], line_item['orderId'],
+                                      line_item['name']))
 
 if __name__ == '__main__':
   # Initialize client object.

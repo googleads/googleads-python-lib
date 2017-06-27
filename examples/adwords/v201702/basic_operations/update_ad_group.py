@@ -47,7 +47,7 @@ def main(client, ad_group_id):
 
   # Display results.
   for ad_group in ad_groups['value']:
-    print ('Ad group with name \'%s\' and id \'%s\' was updated.'
+    print ('Ad group with name "%s" and id "%s" was updated.'
            % (ad_group['name'], ad_group['id']))
 
 

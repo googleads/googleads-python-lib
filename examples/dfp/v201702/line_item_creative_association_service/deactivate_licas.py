@@ -57,8 +57,8 @@ def main(client, line_item_id):
         statement.ToStatement())
     if 'results' in response:
       for lica in response['results']:
-        print ('LICA with line item id \'%s\', creative id \'%s\', and status'
-               ' \'%s\' will be deactivated.' %
+        print ('LICA with line item id "%s", creative id "%s", and status'
+               ' "%s" will be deactivated.' %
                (lica['lineItemId'], lica['creativeId'], lica['status']))
 
       # Perform action.

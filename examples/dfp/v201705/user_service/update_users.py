@@ -54,7 +54,7 @@ def main(client, user_id):
     # Update users on server.
     users = user_service.updateUsers(users)
     for user in users:
-      print ('User with id \'%s\' and name \'%s\' was updated.'
+      print ('User with id "%s" and name "%s" was updated.'
              % (user['id'], user['name']))
   else:
     print 'No users found to update.'

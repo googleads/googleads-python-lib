@@ -62,8 +62,8 @@ def main(client, custom_field_id):
 
     # Display results.
     for custom_field in custom_fields:
-      print (('Custom field with ID \'%s\', name \'%s\', and '
-              'description \'%s\' was updated.')
+      print (('Custom field with ID "%s", name "%s", and '
+              'description "%s" was updated.')
              % (custom_field['id'], custom_field['name'],
                 custom_field['description']))
   else:

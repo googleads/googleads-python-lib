@@ -56,7 +56,7 @@ def main(client):
       # Iterate over individual results in the page.
       for line_item_report in page['results']:
         print ('Reconciliation line item report with ID %d, line item ID %d, '
-               'reconciliation source \'%s\', and reconciled volume %d was '
+               'reconciliation source "%s", and reconciled volume %d was '
                'found.' % (line_item_report['id'],
                            line_item_report['lineItemId'],
                            line_item_report['reconciliationSource'],

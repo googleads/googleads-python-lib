@@ -13,3 +13,7 @@ handlers:
   script: demo.main.app
   login: required
   secure: always
+
+libraries:
+- name: ssl
+  version: latest

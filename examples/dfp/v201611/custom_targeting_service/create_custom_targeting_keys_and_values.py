@@ -63,9 +63,9 @@ def main(client):
   # Display results.
   if keys:
     for key in keys:
-      print ('A custom targeting key with id \'%s\', name \'%s\', and display '
-             'name \'%s\' was created.' % (key['id'], key['name'],
-                                           key['displayName']))
+      print ('A custom targeting key with id "%s", name "%s", and display '
+             'name "%s" was created.' % (key['id'], key['name'],
+                                         key['displayName']))
   else:
     print 'No keys were created.'
 
@@ -119,8 +119,8 @@ def main(client):
   # Display results.
   if values:
     for value in values:
-      print ('A custom targeting value with id \'%s\', belonging to key with id'
-             ' \'%s\', name \'%s\', and display name \'%s\' was created.'
+      print ('A custom targeting value with id "%s", belonging to key with id'
+             ' "%s", name "%s", and display name "%s" was created.'
              % (value['id'], value['customTargetingKeyId'], value['name'],
                 value['displayName']))
   else:

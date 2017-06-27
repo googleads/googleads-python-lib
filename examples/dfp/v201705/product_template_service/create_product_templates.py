@@ -99,7 +99,7 @@ def main(client):
 
   if product_templates:
     for product_template in product_templates:
-      print ('A product template with ID \'%s\' and name \'%s\' was '
+      print ('A product template with ID "%s" and name "%s" was '
              'created.' % (product_template['id'], product_template['name']))
 
 

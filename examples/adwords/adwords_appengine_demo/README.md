@@ -36,19 +36,19 @@ prepared your OAuth2 Credentials via the Google Developers Console.
 1. Install Python v2.7, which you can get
    [here](https://www.python.org/downloads).
 
-2. Install [pip](http://pip.readthedocs.org/en/latest/installing.html),
+1. Install [pip](http://pip.readthedocs.org/en/latest/installing.html),
    if you have not done so already.
 
-3. If you don't have one already,
+1. If you don't have one already,
    [sign up for a Google Account](https://www.google.com/accounts/NewAccount).
    This account will be used to access your AdWords credentials used in making
    API requests.
 
-4. Download the latest version of the
+1. Download the latest version of the
    [App Engine SDK](https://developers.google.com/appengine/downloads) and
    unpack its content. This demo should be compatible with  v1.9.11+.
 
-5. Install googleads with the following command:
+1. Install googleads with the following command:
 
    `$ pip install googleads`
 
@@ -57,36 +57,42 @@ prepared your OAuth2 Credentials via the Google Developers Console.
    should also have installed the dependencies referred to in the following
    steps.
 
-6. Copy the httplib2 package from your Python installation's dist-packages
+1. Copy the httplib2 package from your Python installation's dist-packages
    directory into this project.
 
-7. Copy the oauth2client package from your Python installation's dist-packages
+1. Copy the oauth2client package from your Python installation's dist-packages
    directory into this project.
 
-8. Copy the pytz package from your Python installation's dist-packages
+1. Copy the pyasn1 package from your Python installation's dist-packages
    directory into this project.
 
-9. Copy socks.py from the PySocks tarball found in your Python installation's
+1. Copy socks.py from the PySocks tarball found in your Python installation's
    dist-packages directory into this project.
 
-10. Copy the suds package from your Python installation's dist-packages
+1. Copy the rsa package from your Python installation's dist-packages
+   into this project.
+
+1. Copy the suds package from your Python installation's dist-packages
+   into this project.
+
+1. Copy xmltodict.py from your Python installation's dist-packages directory
    directory into this project.
 
-11. Create an App Engine application in the
+1. Create an App Engine application in the
    [Google App Engine Console](https://appengine.google.com/).
 
-12. Go to this project's app.yaml, and enter in your application name for the
+1. Go to this project's app.yaml, and enter in your application name for the
    "application" field.
 
-13. You can now deploy this project by running the following command:
+1. You can now deploy this project by running the following command:
 
     `python $APPENGINE_SDK_DIR/appcfg --oauth2 update .`
 
-14. When you go to your App for the first time, you will need to log in and
+1. When you go to your App for the first time, you will need to log in and
     provide OAuth2 and AdWords API credentials. You can use credentials
     generated via the generate_refresh_token.py example.
 
-15. With all information entered, you can now use the UI to view and modify
+1. With all information entered, you can now use the UI to view and modify
     your account details.
 
 

@@ -61,10 +61,10 @@ def main(client, conversion_name, click_id, conversion_time, conversion_value):
       [offline_conversion_operation])
   new_feed = offline_conversion_response['value']
 
-  print ('Uploaded offline conversion value of \'%s\' for Google Click ID '
-         '\'%s\' to \'%s\'.' % (new_feed['conversionValue'],
-                                new_feed['googleClickId'],
-                                new_feed['conversionName']))
+  print ('Uploaded offline conversion value of "%s" for Google Click ID '
+         '"%s" to "%s".' % (new_feed['conversionValue'],
+                            new_feed['googleClickId'],
+                            new_feed['conversionName']))
 
 
 if __name__ == '__main__':

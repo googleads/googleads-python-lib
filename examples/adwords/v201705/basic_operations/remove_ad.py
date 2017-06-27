@@ -16,7 +16,7 @@
 
 """This example deletes an ad using the 'REMOVE' operator.
 
-To get ads, run get_text_ads.py.
+To get ads, run get_expanded_text_ads.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -51,7 +51,7 @@ def main(client, ad_group_id, ad_id):
 
   # Display results.
   for ad in result['value']:
-    print ('Ad with id \'%s\' and type \'%s\' was deleted.'
+    print ('Ad with id "%s" and type "%s" was deleted.'
            % (ad['ad']['id'], ad['ad']['Ad.Type']))
 
 

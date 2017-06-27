@@ -63,14 +63,14 @@ def main(client):
         except AttributeError:
           dimensions = {'FULL': {'height': 0, 'width': 0}}
         if image['type'] == 'IMAGE':
-          print ('%s with id \'%s\', dimensions \'%sx%s\', and MimeType \'%s\''
+          print ('%s with id "%s", dimensions \'%sx%s\', and MimeType "%s"'
                  ' was found.' % (image['type'], image['mediaId'],
                                   dimensions['FULL']['height'],
                                   dimensions['FULL']['width'],
                                   image['mimeType']))
         elif image['type'] == 'VIDEO':
-          print ('%s with id \'%s\' was found.' % (image['type'],
-                                                   image['mediaId']))
+          print ('%s with id "%s" was found.' % (image['type'],
+                                                 image['mediaId']))
     else:
       print 'No images/videos were found.'
     offset += PAGE_SIZE

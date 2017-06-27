@@ -60,8 +60,8 @@ def main(client, key_id):
 
       # Display results.
       for value in values:
-        print ('Custom targeting value with id \'%s\', name \'%s\', and display'
-               ' name \'%s\' was updated.'
+        print ('Custom targeting value with id "%s", name "%s", and display'
+               ' name "%s" was updated.'
                % (value['id'], value['name'], value['displayName']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:

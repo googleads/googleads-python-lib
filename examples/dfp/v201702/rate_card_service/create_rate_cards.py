@@ -48,7 +48,7 @@ def main(client):
   result = rate_card_service.createRateCards([rate_card])
 
   for new_rate_card in result:
-    print ('A rate card with ID %s, name \'%s\', and currency code \'%s\' '
+    print ('A rate card with ID %s, name "%s", and currency code "%s" '
            'was created.' % (new_rate_card['id'],
                              new_rate_card['name'],
                              new_rate_card['currencyCode']))

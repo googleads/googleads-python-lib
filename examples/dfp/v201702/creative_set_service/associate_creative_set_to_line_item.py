@@ -46,7 +46,7 @@ def main(client, creative_set_id, line_item_id):
   lica = lica_service.createLineItemCreativeAssociations([lica])
 
   # Display results.
-  print (('LICA with line item ID \'%s\' and creative set ID \'%s\' was '
+  print (('LICA with line item ID "%s" and creative set ID "%s" was '
           'created.') % (lica['lineItemId'], lica['creativeSetId']))
 
 if __name__ == '__main__':

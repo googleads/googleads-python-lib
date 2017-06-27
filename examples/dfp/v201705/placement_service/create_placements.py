@@ -98,7 +98,7 @@ def main(client):
     ad_unit_ids = ''
     if 'targetedAdUnitIds' in placement:
       ad_unit_ids = ', '.join(placement['targetedAdUnitIds'])
-    print ('A Placement with ID \'%s\', name \'%s\', and containing ad units '
+    print ('A Placement with ID "%s", name "%s", and containing ad units '
            '{%s} was created.' % (placement['id'], placement['name'],
                                   ad_unit_ids))
 

@@ -64,11 +64,37 @@ class GoogleOAuth2ClientTest(unittest.TestCase):
         NotImplementedError,
         googleads.oauth2.GoogleOAuth2Client().CreateHttpHeader)
 
+
+class GoogleRefreshableOAuth2ClientTest(unittest.TestCase):
+  """Tests for the googleads.oauth2.GoogleRefreshableOAuth2Client class."""
+
   def testRefresh(self):
     """For coverage."""
     self.assertRaises(
         NotImplementedError,
-        googleads.oauth2.GoogleOAuth2Client().Refresh)
+        googleads.oauth2.GoogleRefreshableOAuth2Client().Refresh)
+
+
+class GoogleAccessTokenClientTest(unittest.TestCase):
+  """Tests for the googleads.oauth2.GoogleAccessTokenClient class."""
+
+  def setUp(self):
+    self.access_token = 'a'
+    self.token_expiry = (datetime.datetime.utcnow() +
+                         datetime.timedelta(seconds=3600))
+    self.expired_token_expiry = datetime.datetime(1980, 1, 1, 12)
+
+  def testCreateHttpHeader(self):
+    client = googleads.oauth2.GoogleAccessTokenClient(
+        self.access_token, self.token_expiry)
+    expected_header = {'Authorization': 'Bearer %s' % self.access_token}
+    self.assertEqual(client.CreateHttpHeader(), expected_header)
+
+  def testCreateHttpHeaderWithExpiredToken(self):
+    expired_client = googleads.oauth2.GoogleAccessTokenClient(
+        self.access_token, self.expired_token_expiry)
+    self.assertRaises(googleads.errors.GoogleAdsError,
+                      expired_client.CreateHttpHeader)
 
 
 class GoogleRefreshTokenClientTest(unittest.TestCase):
@@ -117,7 +143,9 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
                     self.oauth2_credentials):
       self.googleads_client = googleads.oauth2.GoogleRefreshTokenClient(
           self.client_id, self.client_secret, self.refresh_token,
-          self.proxy_config)
+          proxy_config=self.proxy_config,
+          access_token=self.access_token_unrefreshed,
+          token_expiry=self.mock_oauth2_credentials.token_expiry)
 
   def testCreateHttpHeader_noRefresh(self):
     header = {'Authorization': 'Bearer %s' % self.access_token_unrefreshed}

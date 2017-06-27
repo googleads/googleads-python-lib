@@ -57,7 +57,7 @@ def main(client, parent_id):
         statement.ToStatement())
     if 'results' in response:
       for ad_unit in response['results']:
-        print ('Ad unit with ID \'%s\' and name \'%s\' will be archived.'
+        print ('Ad unit with ID "%s" and name "%s" will be archived.'
                % (ad_unit['id'], ad_unit['name']))
       # Perform action.
       result = inventory_service.performAdUnitAction(

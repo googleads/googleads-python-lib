@@ -119,7 +119,7 @@ def main(client, ad_group_id):
       ads = response['value']
       print 'Added %s ad(s) to ad group %s.' % (len(ads), ad_group_id)
       for ad in ads:
-        print ('  Ad id is %s, type is %s and status is \'%s\'.' %
+        print ('  Ad id is %s, type is %s and status is "%s".' %
                (ad['ad']['id'], ad['ad']['Ad.Type'], ad['status']))
     else:
       print 'No ads were added.'
@@ -151,7 +151,7 @@ def HandleAPIError(error, operation):
 
   if is_exemptable:
     # Add exemption request to the operation.
-    print ('Adding exemption request for policy name \'%s\' on text \'%s\'.'
+    print ('Adding exemption request for policy name "%s" on text "%s".'
            % (error['key']['policyName'], error['key']['violatingText']))
     if 'exemptionRequests' not in operation:
       operation['exemptionRequests'] = []

@@ -56,7 +56,7 @@ def main(client, campaign_id):
   # Display results.
   if 'entries' in ads:
     for ad in ads['entries']:
-      print ('Ad with id \'%s\' was disapproved for the following reasons: '
+      print ('Ad with id "%s" was disapproved for the following reasons: '
              % (ad['ad']['id']))
       if ad['ad'].get('disapprovalReasons'):
         for reason in ad['ad']['disapprovalReasons']:

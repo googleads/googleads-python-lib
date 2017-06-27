@@ -94,7 +94,7 @@ def main(client, ad_group_id):
 
   # Display results.
   for ad in ads['value']:
-    print ('New HTML5 Ad with id \'%s\' and of display url \'%s\' was added.'
+    print ('New HTML5 Ad with id "%s" and of display url "%s" was added.'
            % (ad['ad']['id'], ad['ad']['displayUrl']))
 
 

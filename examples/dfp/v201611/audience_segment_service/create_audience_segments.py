@@ -84,7 +84,7 @@ def main(client, custom_targeting_key_id, custom_targeting_value_id):
       audience_segment_service.createAudienceSegments(audience_segment))
 
   for created_audience_segment in audience_segments:
-    print ('An audience segment with ID \'%s\', name \'%s\', and type \'%s\' '
+    print ('An audience segment with ID "%s", name "%s", and type "%s" '
            'was created.' % (created_audience_segment['id'],
                              created_audience_segment['name'],
                              created_audience_segment['type']))

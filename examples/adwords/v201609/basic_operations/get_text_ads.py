@@ -62,7 +62,7 @@ def main(client, ad_group_id):
     # Display results.
     if 'entries' in page:
       for ad in page['entries']:
-        print ('Ad with id \'%s\', status \'%s\', and of type \'%s\' was found.'
+        print ('Ad with id "%s", status "%s", and of type "%s" was found.'
                % (ad['ad']['id'], ad['status'], ad['ad']['Ad.Type']))
     else:
       print 'No ads were found.'

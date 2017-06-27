@@ -84,7 +84,7 @@ def main(client, product_template_id):
     # Display results.
     if product_templates:
       for product_template in product_templates:
-        print ('Product template with id \'%s\' and name \'%s\' was '
+        print ('Product template with id "%s" and name "%s" was '
                'updated.' % (product_template['id'], product_template['name']))
     else:
       print 'No product templates were updated.'

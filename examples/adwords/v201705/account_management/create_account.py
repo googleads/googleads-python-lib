@@ -53,7 +53,7 @@ def main(client):
 
   # Display results.
   for account in accounts['value']:
-    print ('Account with customer ID \'%s\' was successfully created.'
+    print ('Account with customer ID "%s" was successfully created.'
            % account['customerId'])
 
 

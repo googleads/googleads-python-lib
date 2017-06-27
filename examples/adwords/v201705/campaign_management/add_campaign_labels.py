@@ -56,7 +56,7 @@ def main(client, campaign_id1, campaign_id2, label_id):
 
   # Display results.
   for label in result['value']:
-    print ('CampaignLabel with campaignId \'%s\' and labelId \'%s\' was added.'
+    print ('CampaignLabel with campaignId "%s" and labelId "%s" was added.'
            % (label['campaignId'], label['labelId']))
 
 

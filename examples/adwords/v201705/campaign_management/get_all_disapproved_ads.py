@@ -45,6 +45,11 @@ def main(client, ad_group_id):
               'field': 'AdGroupId',
               'operator': 'EQUALS',
               'values': [ad_group_id]
+          },
+          {
+              'field': 'CombinedApprovalStatus',
+              'operator': 'EQUALS',
+              'values': 'DISAPPROVED'
           }
       ],
       'paging': {
@@ -62,14 +67,10 @@ def main(client, ad_group_id):
 
     if 'entries' in page:
       for ad in page['entries']:
+        disapproved_count += 1
         policy_summary = ad['policySummary']
 
-        if policy_summary['combinedApprovalStatus'] != 'DISAPPROVED':
-          continue  # Skip ads that are not disapproved.
-
-        disapproved_count += 1
-
-        print ('Ad with id \'%s\' was disapproved with the following policy '
+        print ('Ad with id "%s" was disapproved with the following policy '
                'topic entries:' % (ad['ad']['id']))
 
         for policy_topic_entry in policy_summary['policyTopicEntries']:

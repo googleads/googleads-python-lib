@@ -80,8 +80,8 @@ def main(client):
         for attribute in result['data']:
           attributes[attribute['key']] = getattr(attribute['value'], 'value',
                                                  '0')
-        print ('Keyword with \'%s\' text and average monthly search volume '
-               '\'%s\' was found with Products and Services categories: %s.'
+        print ('Keyword with "%s" text and average monthly search volume '
+               '"%s" was found with Products and Services categories: %s.'
                % (attributes['KEYWORD_TEXT'],
                   attributes['SEARCH_VOLUME'],
                   attributes['CATEGORY_PRODUCTS_AND_SERVICES']))

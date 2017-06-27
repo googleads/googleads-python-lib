@@ -47,7 +47,7 @@ def main(client, campaign_id):
 
   # Display results.
   for campaign in campaigns['value']:
-    print ('Campaign with name \'%s\' and id \'%s\' was updated.'
+    print ('Campaign with name "%s" and id "%s" was updated.'
            % (campaign['name'], campaign['id']))
 
 

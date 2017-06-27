@@ -51,7 +51,7 @@ def main(client, ad_group_id, ad_id):
 
   # Display results.
   for ad in result['value']:
-    print ('Ad with id \'%s\' and type \'%s\' was deleted.'
+    print ('Ad with id "%s" and type "%s" was deleted.'
            % (ad['ad']['id'], ad['ad']['Ad.Type']))
 
 

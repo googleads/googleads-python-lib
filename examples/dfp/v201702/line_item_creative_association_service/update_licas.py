@@ -50,9 +50,9 @@ def main(client):
 
       # Display results.
       for lica in licas:
-        print ('LICA with line item id \'%s\', creative id \'%s\', and status '
-               '\'%s\' was updated.' % (lica['lineItemId'], lica['creativeId'],
-                                        lica['status']))
+        print ('LICA with line item id "%s", creative id "%s", and status '
+               '"%s" was updated.' % (lica['lineItemId'], lica['creativeId'],
+                                      lica['status']))
       statement.offset += dfp.SUGGESTED_PAGE_LIMIT
     else:
       break

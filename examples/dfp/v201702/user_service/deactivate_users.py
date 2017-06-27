@@ -50,7 +50,7 @@ def main(client, user_id):
   users = response['results'] if 'results' in response else []
 
   for user in users:
-    print ('User with id \'%s\', email \'%s\', and status \'%s\' will be '
+    print ('User with id "%s", email "%s", and status "%s" will be '
            'deactivated.'
            % (user['id'], user['email'],
               {'true': 'ACTIVE', 'false': 'INACTIVE'}[user['isActive']]))

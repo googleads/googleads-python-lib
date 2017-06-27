@@ -52,7 +52,7 @@ def main(client):
     if 'results' in response:
       # Print suggested ad units that will be approved.
       for suggested_ad_unit in response['results']:
-        print ('Suggested ad unit with id \'%s\', and number of requests \'%s\''
+        print ('Suggested ad unit with id "%s", and number of requests "%s"'
                ' will be approved.' % (suggested_ad_unit['id'],
                                        suggested_ad_unit['numRequests']))
 

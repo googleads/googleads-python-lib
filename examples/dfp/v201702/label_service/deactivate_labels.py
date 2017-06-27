@@ -47,7 +47,7 @@ def main(client):
     response = label_service.getLabelsByStatement(statement.ToStatement())
     if 'results' in response:
       for label in response['results']:
-        print ('Label with id \'%s\' and name \'%s\' will be '
+        print ('Label with id "%s" and name "%s" will be '
                'deactivated.' % (label['id'], label['name']))
       # Perform action.
       result = label_service.performLabelAction(

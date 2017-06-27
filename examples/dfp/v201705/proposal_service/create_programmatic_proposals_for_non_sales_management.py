@@ -51,7 +51,7 @@ def main(client, programmatic_buyer_id, primary_salesperson_id,
 
   # Display results.
   for proposal in proposals:
-    print('Programmatic proposal with id \'%s\' and name \'%s\' was created.' %
+    print('Programmatic proposal with id "%s" and name "%s" was created.' %
           (proposal['id'], proposal['name']))
 
 

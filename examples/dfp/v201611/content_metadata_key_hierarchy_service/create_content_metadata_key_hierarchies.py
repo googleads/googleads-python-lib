@@ -68,7 +68,7 @@ def main(client, hierarchy_level_one_key_id, hierarchy_level_two_key_id):
 
   # Display results.
   for content_metadata_key_hierarchy in content_metadata_key_hierarchies:
-    print ('Content metadata key hierarchy with id \'%s\' and name \'%s\''
+    print ('Content metadata key hierarchy with id "%s" and name "%s"'
            ' was created.' % (content_metadata_key_hierarchy['id'],
                               content_metadata_key_hierarchy['name']))
 

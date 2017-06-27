@@ -73,8 +73,8 @@ def main(client, rate_card_id):
 
   # Display results.
   for premium_rate in premium_rates:
-    print ('A premium rate for \'%s\' was added to the rate card with ID'
-           ' of \'%s\'.\n'
+    print ('A premium rate for "%s" was added to the rate card with ID'
+           ' of "%s".\n'
            % (dfp.DfpClassType(premium_rate['premiumFeature']),
               premium_rate['id']))
 

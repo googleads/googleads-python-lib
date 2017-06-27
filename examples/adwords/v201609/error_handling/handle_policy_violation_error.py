@@ -72,14 +72,14 @@ def main(client, ad_group_id):
         if operation_index:
           index = int(operation_index[0])
           operation = operations[index]
-          print ('Ad with headline \'%s\' violated %s policy \'%s\'.' %
+          print ('Ad with headline "%s" violated %s policy "%s".' %
                  (operation['operand']['ad']['headline'],
                   'exemptable' if error['isExemptable'] else 'non-exemptable',
                   error['externalPolicyName']))
           if error['isExemptable'].lower() == 'true':
             # Add exemption request to the operation.
-            print ('Adding exemption request for policy name \'%s\' on text '
-                   '\'%s\'.' %
+            print ('Adding exemption request for policy name "%s" on text '
+                   '"%s".' %
                    (error['key']['policyName'], error['key']['violatingText']))
             if 'exemptionRequests' not in operation:
               operation['exemptionRequests'] = []
@@ -104,7 +104,7 @@ def main(client, ad_group_id):
       ads = response['value']
       print 'Added %s ad(s) to ad group %s.' % (len(ads), ad_group_id)
       for ad in ads:
-        print ('  Ad id is %s, type is %s and status is \'%s\'.' %
+        print ('  Ad id is %s, type is %s and status is "%s".' %
                (ad['ad']['id'], ad['ad']['Ad.Type'], ad['status']))
     else:
       print 'No ads were added.'

@@ -28,7 +28,7 @@ def main(client):
 
   # Print out some information for each role.
   for role in roles:
-    print('Role with id \'%s\' and name \'%s\' was found.' %
+    print('Role with id "%s" and name "%s" was found.' %
           (role['id'], role['name']))
 
   print '\nNumber of results found: %s' % len(roles)

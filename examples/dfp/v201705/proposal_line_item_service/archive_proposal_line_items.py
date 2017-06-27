@@ -52,9 +52,9 @@ def main(client, proposal_line_item_id):
         statement.ToStatement())
     if 'results' in response:
       for proposal_line_item in response['results']:
-        print ('Proposal line item with id \'%s\', '
-               'belonging to proposal id \'%s\', and '
-               'name \'%s\' will be archived.' %
+        print ('Proposal line item with id "%s", '
+               'belonging to proposal id "%s", and '
+               'name "%s" will be archived.' %
                (proposal_line_item['id'], proposal_line_item['proposalId'],
                 proposal_line_item['name']))
 

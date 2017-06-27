@@ -62,7 +62,7 @@ def main(client, team_id):
 
     # Display results.
     for team in teams:
-      print ('Team with id \'%s\' and name \'%s\' was updated.'
+      print ('Team with id "%s" and name "%s" was updated.'
              % (team['id'], team['name']))
   else:
     print 'No teams found to update.'

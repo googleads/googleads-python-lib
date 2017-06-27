@@ -101,8 +101,12 @@ for API change announcements and other news.
 
 
 ## How do I log SOAP interactions?
-The library uses Python's built in logging framework. If you wish to log your
-SOAP interactions to stdout, you can do the following:
+The library uses Python's built in logging framework. You can specify your
+configuration via the configuration file; see [googleads.yaml](https://github.com/googleads/googleads-python-lib/blob/master/googleads.yaml)
+for an example.
+
+Alternatively, you can manually specify your logging configuration. For example,
+if you want to log your SOAP interactions to stdout, you can do the following:
 ```python
 logging.basicConfig(level=logging.INFO, format=googleads.util.LOGGER_FORMAT)
 logging.getLogger('suds.transport').setLevel(logging.DEBUG)
@@ -121,6 +125,10 @@ logging.getLogger('googleads.common').removeFilter(
     googleads.util.GetGoogleAdsCommonFilter())
 logging.getLogger('suds.client').removeFilter(
     googleads.util.GetSudsClientFilter())
+logging.getLogger('suds.mx.core').removeFilter(
+    googleads.util.GetSudsMXCoreFilter())
+logging.getLogger('suds.mx.literal').removeFilter(
+    googleads.util.GetSudsMXLiteralFilter())
 logging.getLogger('suds.transport').removeFilter(
     googleads.util.GetSudsTransportFilter())
 ```

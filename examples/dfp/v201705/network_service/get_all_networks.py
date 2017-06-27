@@ -28,7 +28,7 @@ def main(client):
 
   # Print out some information for each network.
   for network in networks:
-    print('Network with network code \'%s\' and display name \'%s\' was found.'
+    print('Network with network code "%s" and display name "%s" was found.'
           % (network['networkCode'], network['displayName']))
 
   print '\nNumber of results found: %s' % len(networks)

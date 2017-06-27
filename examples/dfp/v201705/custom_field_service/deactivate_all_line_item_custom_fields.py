@@ -64,7 +64,7 @@ def main(client):
     if 'results' in response:
       # Display results.
       for custom_field in response['results']:
-        print ('Custom field with ID \'%s\' and name \'%s\' will'
+        print ('Custom field with ID "%s" and name "%s" will'
                ' be deactivated.' % (custom_field['id'], custom_field['name']))
         result = custom_field_service.performCustomFieldAction(
             {'xsi_type': 'DeactivateCustomFields'}, statement.ToStatement())

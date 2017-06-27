@@ -48,7 +48,7 @@ def main(client, email, name):
 
   # Display results.
   for user in users:
-    print ('User with id \'%s\', email \'%s\', and role \'%s\' was created.'
+    print ('User with id "%s", email "%s", and role "%s" was created.'
            % (user['id'], user['email'], user['roleName']))
 
 if __name__ == '__main__':

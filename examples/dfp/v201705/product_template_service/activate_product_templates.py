@@ -52,7 +52,7 @@ def main(client, product_template_id):
         statement.ToStatement())
     if 'results' in response:
       for product_template in response['results']:
-        print ('Product template with id \'%s\' and name \'%s\' will be '
+        print ('Product template with id "%s" and name "%s" will be '
                'activated.' % (product_template['id'],
                                product_template['name']))
 

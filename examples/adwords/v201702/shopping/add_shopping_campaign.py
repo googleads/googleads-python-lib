@@ -75,7 +75,7 @@ def main(client, budget_id, merchant_id):
   result = campaign_service.mutate(campaign_operations)
 
   for campaign in result['value']:
-    print ('Campaign with name \'%s\' and ID \'%s\' was added.'
+    print ('Campaign with name "%s" and ID "%s" was added.'
            % (campaign['name'], campaign['id']))
 
   # Create the AdGroup
@@ -93,7 +93,7 @@ def main(client, budget_id, merchant_id):
   ad_group_result = ad_group_service.mutate(adgroup_operations)
 
   for adgroup in ad_group_result['value']:
-    print ('AdGroup with name \'%s\' and ID \'%s\' was added.'
+    print ('AdGroup with name "%s" and ID "%s" was added.'
            % (adgroup['name'], adgroup['id']))
 
   # Create an AdGroup Ad
@@ -115,7 +115,7 @@ def main(client, budget_id, merchant_id):
   ad_result = ad_group_ad_service.mutate([ad_operation])
 
   for adgroup_ad in ad_result['value']:
-    print 'ProductAd with ID \'%s\' was added.' % adgroup_ad['ad']['id']
+    print 'ProductAd with ID "%s" was added.' % adgroup_ad['ad']['id']
 
 
 if __name__ == '__main__':

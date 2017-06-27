@@ -47,7 +47,7 @@ def main(client, ad_group_id):
 
   # Display results.
   for ad_group in result['value']:
-    print ('Ad group with name \'%s\' and id \'%s\' was deleted.'
+    print ('Ad group with name "%s" and id "%s" was deleted.'
            % (ad_group['name'], ad_group['id']))
 
 

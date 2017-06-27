@@ -41,7 +41,7 @@ def main(client):
   result = product_package_service.createProductPackages([product_package])
 
   for new_product_package in result:
-    print ('A product package with ID %d and name \'%s\' was created.' %
+    print ('A product package with ID %d and name "%s" was created.' %
            (new_product_package['id'], new_product_package['name']))
 
 

@@ -49,7 +49,7 @@ def main(client, path):
         skip_column_header=False, skip_report_summary=False,
         include_zero_impressions=True)
 
-  print 'Report was downloaded to \'%s\'.' % path
+  print 'Report was downloaded to "%s".' % path
 
 
 if __name__ == '__main__':

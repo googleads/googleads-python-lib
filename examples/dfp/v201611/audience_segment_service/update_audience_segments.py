@@ -55,7 +55,7 @@ def main(client, audience_segment_id):
   if 'results' in response:
     updated_audience_segments = []
     for audience_segment in response['results']:
-      print ('Audience segment with id \'%s\' and name \'%s\' will be updated.'
+      print ('Audience segment with id "%s" and name "%s" will be updated.'
              % (audience_segment['id'], audience_segment['name']))
 
       audience_segment['membershipExpirationDays'] = '180'
@@ -65,7 +65,7 @@ def main(client, audience_segment_id):
         updated_audience_segments)
 
     for audience_segment in audience_segments:
-      print ('Audience segment with id \'%s\' and name \'%s\' was updated' %
+      print ('Audience segment with id "%s" and name "%s" was updated' %
              (audience_segment['id'], audience_segment['name']))
   else:
     print 'No audience segment found to update.'

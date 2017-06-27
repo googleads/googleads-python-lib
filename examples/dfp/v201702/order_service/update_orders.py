@@ -60,8 +60,8 @@ def main(client, order_id):
     # Display results.
     if orders:
       for order in orders:
-        print ('Order with id \'%s\', name \'%s\', advertiser id \'%s\', and '
-               'notes \'%s\' was updated.'
+        print ('Order with id "%s", name "%s", advertiser id "%s", and '
+               'notes "%s" was updated.'
                % (order['id'], order['name'], order['advertiserId'],
                   order['notes']))
     else:

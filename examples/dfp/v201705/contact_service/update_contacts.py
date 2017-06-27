@@ -63,7 +63,7 @@ def main(client, contact_id):
 
     # Display results.
     for contact in contacts:
-      print (('Contact with ID \'%s\', name \'%s\', and address \'%s\' '
+      print (('Contact with ID "%s", name "%s", and address "%s" '
               'was updated.')
              % (contact['id'], contact['name'], contact['address']))
   else:

@@ -60,8 +60,8 @@ def main(client, order_id):
         statement.ToStatement())
     if 'results' in response:
       for line_item in response['results']:
-        print ('Line item with id \'%s\', belonging to order id \'%s\', and '
-               'name \'%s\' will be activated.' %
+        print ('Line item with id "%s", belonging to order id "%s", and '
+               'name "%s" will be activated.' %
                (line_item['id'], line_item['orderId'], line_item['name']))
 
       # Perform action.

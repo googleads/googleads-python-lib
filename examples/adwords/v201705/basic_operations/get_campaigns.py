@@ -58,7 +58,7 @@ def main(client):
     # Display results.
     if 'entries' in page:
       for campaign in page['entries']:
-        print ('Campaign with id \'%s\', name \'%s\', and status \'%s\' was '
+        print ('Campaign with id "%s", name "%s", and status "%s" was '
                'found.' % (campaign['id'], campaign['name'],
                            campaign['status']))
     else:

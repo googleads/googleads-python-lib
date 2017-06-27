@@ -56,8 +56,8 @@ def main(client):
 
   # Display results.
   for conversion_tracker in conversion_trackers['value']:
-    print ('Conversion tracker with id \'%s\', name \'%s\', status \'%s\' '
-           'and category \'%s\' and snippet \n\'%s\'\n was added.\n' %
+    print ('Conversion tracker with id "%s", name "%s", status "%s" '
+           'and category "%s" and snippet \n"%s"\n was added.\n' %
            (conversion_tracker['id'], conversion_tracker['name'],
             conversion_tracker['status'], conversion_tracker['category'],
             conversion_tracker['snippet']))

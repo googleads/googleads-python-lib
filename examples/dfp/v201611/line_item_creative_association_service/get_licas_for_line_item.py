@@ -46,8 +46,8 @@ def main(client, line_item_id):
       for lica in response['results']:
         # Print out some information for each line item creative association.
         if 'creativeSetId' in lica:
-          print('LICA with line item ID \'%s\', creative set ID \'%s\', and '
-                'status \'%s\' was found.' %
+          print('LICA with line item ID "%s", creative set ID "%s", and '
+                'status "%s" was found.' %
                 (lica['lineItemId'], lica['creativeSetId'], lica['status']))
         else:
           print('Line item creative association with line item ID "%d" and '

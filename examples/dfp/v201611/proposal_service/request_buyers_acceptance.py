@@ -48,10 +48,10 @@ def main(client, proposal_id):
     if 'results' in response:
       # Display results.
       for proposal in response['results']:
-        print ('Programmatic proposal with id \'%s\', name \'%s\', and status '
-               '\'%s\' will be pushed to Marketplace.' % (proposal['id'],
-                                                          proposal['name'],
-                                                          proposal['status']))
+        print ('Programmatic proposal with id "%s", name "%s", and status '
+               '"%s" will be pushed to Marketplace.' % (proposal['id'],
+                                                        proposal['name'],
+                                                        proposal['status']))
       # Perform action.
       result = proposal_service.performProposalAction(
           {'xsi_type': 'RequestBuyerAcceptance'}, statement.ToStatement())

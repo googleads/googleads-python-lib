@@ -61,8 +61,8 @@ def main(client, proposal_line_item_id):
     # Display results.
     if proposal_line_items:
       for proposal_line_item in proposal_line_items:
-        print ('Line item with id \'%s\', belonging to proposal id \'%s\' and,'
-               ' named \'%s\' was updated.' % (
+        print ('Line item with id "%s", belonging to proposal id "%s" and,'
+               ' named "%s" was updated.' % (
                    proposal_line_item['id'], proposal_line_item['proposalId'],
                    proposal_line_item['name']))
     else:

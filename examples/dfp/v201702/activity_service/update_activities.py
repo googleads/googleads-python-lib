@@ -61,7 +61,7 @@ def main(client, activity_id):
     activities = activity_service.updateActivities(updated_activities)
 
     for updated_activity in activities:
-      print (('Activity with ID \'%s\' and name \'%s\' was updated.')
+      print (('Activity with ID "%s" and name "%s" was updated.')
              % (updated_activity['id'], updated_activity['name']))
   else:
     print 'No activities found to update.'

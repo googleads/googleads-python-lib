@@ -43,14 +43,14 @@ def InitUser():
 
 
 def UpdateUserCredentials(client_id, client_secret, refresh_token,
-                          manager_account_id, developer_token):
+                          adwords_manager_cid, developer_token):
   """Update the credentials associated with application user.
 
   Args:
     client_id: str Client Id retrieved from the developer's console.
     client_secret: str Client Secret retrieved from the developer's console.
     refresh_token: str Refresh token generated with the above client id/secret.
-    manager_account_id: str Customer Id for the AdWords manager account.
+    adwords_manager_cid: str Customer Id for the AdWords manager account.
     developer_token: str Developer Token for the AdWords account.
   """
   app_user = AppUser.query(AppUser.user == users.get_current_user()).fetch()[0]
@@ -58,7 +58,7 @@ def UpdateUserCredentials(client_id, client_secret, refresh_token,
   app_user.client_id = client_id
   app_user.client_secret = client_secret
   app_user.refresh_token = refresh_token
-  app_user.manager_account_id = manager_account_id
+  app_user.adwords_manager_cid = adwords_manager_cid
   app_user.developer_token = developer_token
 
   app_user.put()

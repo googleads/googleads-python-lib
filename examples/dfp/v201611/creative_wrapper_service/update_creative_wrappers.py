@@ -65,7 +65,7 @@ def main(client, creative_wrapper_id):
 
     # Display results.
     for creative_wrapper in creative_wrappers:
-      print (('Creative wrapper with ID \'%s\' and wrapping order \'%s\' '
+      print (('Creative wrapper with ID "%s" and wrapping order "%s" '
               'was updated.') % (creative_wrapper['id'],
                                  creative_wrapper['ordering']))
   else:

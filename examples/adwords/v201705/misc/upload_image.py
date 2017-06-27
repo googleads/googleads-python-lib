@@ -52,7 +52,7 @@ def main(client, image_filename):
   if media:
     dimensions = dict([(entry['key'], entry['value'])
                        for entry in media['dimensions']])
-    print ('Image with id \'%s\', dimensions \'%sx%s\', and MimeType \'%s\' was'
+    print ('Image with id "%s", dimensions \'%sx%s\', and MimeType "%s" was'
            ' uploaded.' % (media['mediaId'], dimensions['FULL']['height'],
                            dimensions['FULL']['width'], media['mimeType']))
   else:

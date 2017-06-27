@@ -65,7 +65,7 @@ def main(client, activity_group_id, advertiser_company_id):
         updated_activity_groups)
 
     for activity_group in activity_groups:
-      print (('Activity group with ID \'%s\' and name \'%s\' was updated.')
+      print (('Activity group with ID "%s" and name "%s" was updated.')
              % (activity_group['id'], activity_group['name']))
   else:
     print 'No activity groups found to update.'

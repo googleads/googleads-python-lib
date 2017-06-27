@@ -65,7 +65,7 @@ def main(client, creative_set_id, companion_creative_id):
 
     # Display results.
     for creative_set in creative_sets:
-      print (('Creative set with ID \'%s\', master creative ID \'%s\', and '
+      print (('Creative set with ID "%s", master creative ID "%s", and '
               'companion creative IDs {%s} was updated.')
              % (creative_set['id'], creative_set['masterCreativeId'],
                 ','.join(creative_set['companionCreativeIds'])))

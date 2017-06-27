@@ -59,7 +59,7 @@ def main(client, activity_group_id):
 
   # Display results.
   for activity in activities:
-    print ('An activity with ID \'%s\', name \'%s\', and type \'%s\' was '
+    print ('An activity with ID "%s", name "%s", and type "%s" was '
            'created.' % (activity['id'], activity['name'], activity['type']))
 
 if __name__ == '__main__':

@@ -559,6 +559,8 @@ class BatchJobHelperTest(unittest.TestCase):
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.Mock()
       mock_request.data = 'in disguise.'
+      mock_request.get_full_url.return_value = 'https://google.com/'
+      mock_request.headers = {'Content-range': 0, 'Content-length': 0}
       mock_build_request.return_value = mock_request
       with mock.patch('googleads.adwords.IncrementalUploadHelper'
                       '._InitializeURL') as mock_init:
@@ -1405,6 +1407,26 @@ class IncrementalUploadHelperTest(unittest.TestCase):
         self.incremental_uploader.UploadOperations([[]], True)
         mock_open.assert_called_with(mock_request)
 
+  def testUploadOperationsWithError(self):
+    error_url = 'https://google.com/'
+    error_code = '404'
+    error_message = 'I AM ERROR'
+    error_headers = {}
+    http_error = urllib2.HTTPError(
+        error_url, error_code, error_message, error_headers, None)
+
+    with mock.patch('googleads.adwords.BatchJobHelper.'
+                    '_SudsUploadRequestBuilder.'
+                    'BuildUploadRequest') as mock_build_request:
+      mock_request = mock.MagicMock()
+      mock_build_request.return_value = mock_request
+      with mock.patch('urllib2.OpenerDirector.open') as mock_open:
+        mock_open.side_effect = http_error
+        self.assertRaises(
+            urllib2.HTTPError, self.incremental_uploader.UploadOperations,
+            [[]], True)
+        mock_open.assert_called_with(mock_request)
+
   def testUploadOperationsAfterFinished(self):
     with mock.patch('googleads.adwords.BatchJobHelper.'
                     '_SudsUploadRequestBuilder.'
@@ -1534,15 +1556,24 @@ class ReportDownloaderTest(unittest.TestCase):
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
-    content = u'CONTENT STRING 广告客户'
-    fake_request = io.StringIO() if PYTHON2 else io.BytesIO()
-    fake_request.write(content if PYTHON2 else bytes(content, 'utf-8'))
-    fake_request.seek(0)
+    report_data = u'CONTENT STRING 广告客户'
+    report_contents = io.StringIO() if PYTHON2 else io.BytesIO()
+    report_contents.write(report_data if PYTHON2
+                          else bytes(report_data, 'utf-8'))
+    report_contents.seek(0)
+    fake_response = mock.Mock()
+    fake_response.read = report_contents.read
+    fake_response.msg = 'fake message'
+    fake_response.code = '200'
     self.marshaller.process.return_value = serialized_report
 
     with mock.patch('suds.mx.Content') as mock_content:
       with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        self.opener.open.return_value = fake_request
+        mock_request_instance = mock.Mock()
+        mock_request.return_value = mock_request_instance
+        mock_request_instance.get_full_url.return_value = 'https://google.com/'
+        mock_request_instance.headers = {}
+        self.opener.open.return_value = fake_response
         self.report_downloader.DownloadReport(report_definition, output_file,
                                               skip_report_header=True,
                                               use_raw_enum_values=False)
@@ -1552,9 +1583,54 @@ class ReportDownloaderTest(unittest.TestCase):
         self.opener.open.assert_called_once_with(mock_request.return_value)
         self.marshaller.process.assert_called_once_with(
             mock_content.return_value)
-        self.assertEqual(content, output_file.getvalue())
+        self.assertEqual(report_data, output_file.getvalue())
         self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
             skip_report_header=True, use_raw_enum_values=False)
+
+  def testDownloadReportWithAllLoggingEnabled(self):
+    output_file = io.StringIO()
+    report_definition = {'table': 'campaigns',
+                         'downloadFormat': 'CSV'}
+    serialized_report = 'nuinbwuign'
+    post_body = urllib.urlencode({'__rdxml': serialized_report})
+    if not PYTHON2:
+      post_body = bytes(post_body, 'utf-8')
+    headers = {'Authorization': 'ya29.something'}
+    self.header_handler.GetReportDownloadHeaders.return_value = headers
+    report_data = u'CONTENT STRING 广告客户'
+    report_contents = io.StringIO() if PYTHON2 else io.BytesIO()
+    report_contents.write(report_data if PYTHON2
+                          else bytes(report_data, 'utf-8'))
+    report_contents.seek(0)
+    fake_response = mock.Mock()
+    fake_response.read = report_contents.read
+    fake_response.headers = '\nsomekey: somevalue\n'
+    fake_response.msg = 'fake message'
+    fake_response.code = '200'
+    self.marshaller.process.return_value = serialized_report
+
+    with mock.patch('suds.mx.Content') as mock_content:
+      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+        with mock.patch('googleads.adwords._report_logger') as mock_logger:
+          mock_logger.isEnabledFor.return_value = True
+          mock_request_instance = mock.Mock()
+          mock_request.return_value = mock_request_instance
+          mock_request_instance.get_full_url.return_value = (
+              'https://google.com/')
+          mock_request_instance.headers = {}
+          self.opener.open.return_value = fake_response
+          self.report_downloader.DownloadReport(report_definition, output_file,
+                                                skip_report_header=True,
+                                                use_raw_enum_values=False)
+          mock_request.assert_called_once_with(
+              ('https://adwords.google.com/api/adwords/reportdownload/%s'
+               % self.version), post_body, headers)
+          self.opener.open.assert_called_once_with(mock_request.return_value)
+          self.marshaller.process.assert_called_once_with(
+              mock_content.return_value)
+          self.assertEqual(report_data, output_file.getvalue())
+          self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
+              skip_report_header=True, use_raw_enum_values=False)
 
   def testDownloadReportAsString(self):
     report_definition = {'table': 'campaigns',
@@ -1565,16 +1641,25 @@ class ReportDownloaderTest(unittest.TestCase):
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
-    content = u'CONTENT STRING アングリーバード'
-    fake_request = io.BytesIO()
-    fake_request.write(content.encode('utf-8') if PYTHON2
-                       else bytes(content, 'utf-8'))
-    fake_request.seek(0)
+    report_data = u'CONTENT STRING アングリーバード'
+    report_contents = io.BytesIO()
+    report_contents.write(report_data.encode('utf-8') if PYTHON2
+                          else bytes(report_data, 'utf-8'))
+    report_contents.seek(0)
+    fake_response = mock.Mock()
+    fake_response.read = report_contents.read
+    fake_response.msg = 'fake message'
+    fake_response.code = '200'
     self.marshaller.process.return_value = serialized_report
 
     with mock.patch('suds.mx.Content') as mock_content:
       with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        self.opener.open.return_value = fake_request
+        mock_request_instance = mock.Mock()
+        mock_request.return_value = mock_request_instance
+        mock_request_instance.get_full_url.return_value = (
+            'https://google.com/')
+        mock_request_instance.headers = {}
+        self.opener.open.return_value = fake_response
         s = self.report_downloader.DownloadReportAsString(report_definition)
         mock_request.assert_called_once_with(
             ('https://adwords.google.com/api/adwords/reportdownload/%s'
@@ -1582,7 +1667,7 @@ class ReportDownloaderTest(unittest.TestCase):
         self.opener.open.assert_called_once_with(mock_request.return_value)
         self.marshaller.process.assert_called_once_with(
             mock_content.return_value)
-        self.assertEqual(content, s)
+        self.assertEqual(report_data, s)
         self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
 
   def testDownloadReportAsStringWithAwql(self):
@@ -1593,13 +1678,22 @@ class ReportDownloaderTest(unittest.TestCase):
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
-    content = u'CONTENT STRING アングリーバード'
-    fake_request = io.BytesIO()
-    fake_request.write(content.encode('utf-8') if PYTHON2
-                       else bytes(content, 'utf-8'))
-    fake_request.seek(0)
+    report_data = u'CONTENT STRING アングリーバード'
+    report_contents = io.BytesIO()
+    report_contents.write(report_data.encode('utf-8') if PYTHON2
+                          else bytes(report_data, 'utf-8'))
+    report_contents.seek(0)
+    fake_response = mock.Mock()
+    fake_response.read = report_contents.read
+    fake_response.msg = 'fake message'
+    fake_response.code = '200'
+
     with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-      self.opener.open.return_value = fake_request
+      mock_request_instance = mock.Mock()
+      mock_request.return_value = mock_request_instance
+      mock_request_instance.get_full_url.return_value = 'https://google.com/'
+      mock_request_instance.headers = {}
+      self.opener.open.return_value = fake_response
       s = self.report_downloader.DownloadReportAsStringWithAwql(
           query, file_format, include_zero_impressions=True,
           use_raw_enum_values=False)
@@ -1607,7 +1701,7 @@ class ReportDownloaderTest(unittest.TestCase):
           ('https://adwords.google.com/api/adwords/reportdownload/%s'
            % self.version), post_body, headers)
       self.opener.open.assert_called_once_with(mock_request.return_value)
-    self.assertEqual(content, s)
+    self.assertEqual(report_data, s)
     self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
         include_zero_impressions=True, use_raw_enum_values=False)
 
@@ -1676,16 +1770,25 @@ class ReportDownloaderTest(unittest.TestCase):
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
-    content = u'Page not found. :-('
-    fake_request = io.StringIO() if PYTHON2 else io.BytesIO()
-    fake_request.write(content if PYTHON2 else bytes(content, 'utf-8'))
-    fake_request.seek(0)
-    error = urllib2.HTTPError('', 400, 'Bad Request', {}, fp=fake_request)
+    report_data = u'Page not found. :-('
+    report_contents = io.StringIO() if PYTHON2 else io.BytesIO()
+    report_contents.write(report_data if PYTHON2 else bytes(report_data,
+                                                            'utf-8'))
+    report_contents.seek(0)
+    fake_response = mock.Mock()
+    fake_response.read = report_contents.read
+    fake_response.msg = 'fake message'
+    fake_response.code = '200'
+    error = urllib2.HTTPError('', 400, 'Bad Request', {}, fp=fake_response)
 
     self.marshaller.process.return_value = serialized_report
 
     with mock.patch('suds.mx.Content') as mock_content:
       with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+        mock_request_instance = mock.Mock()
+        mock_request.return_value = mock_request_instance
+        mock_request_instance.get_full_url.return_value = 'https://google.com/'
+        mock_request_instance.headers = {}
         self.opener.open.side_effect = error
         self.assertRaises(
             googleads.errors.AdWordsReportError,
@@ -1710,13 +1813,22 @@ class ReportDownloaderTest(unittest.TestCase):
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
-    content = u'CONTENT STRING 广告客户'
-    fake_request = io.StringIO() if PYTHON2 else io.BytesIO()
-    fake_request.write(content if PYTHON2 else bytes(content, 'utf-8'))
-    fake_request.seek(0)
+    report_data = u'CONTENT STRING 广告客户'
+    report_contents = io.StringIO() if PYTHON2 else io.BytesIO()
+    report_contents.write(report_data if PYTHON2 else bytes(report_data,
+                                                            'utf-8'))
+    report_contents.seek(0)
+    fake_response = mock.Mock()
+    fake_response.read = report_contents.read
+    fake_response.msg = 'fake message'
+    fake_response.code = '200'
 
     with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-      self.opener.open.return_value = fake_request
+      mock_request_instance = mock.Mock()
+      mock_request.return_value = mock_request_instance
+      mock_request_instance.get_full_url.return_value = 'https://google.com/'
+      mock_request_instance.headers = {}
+      self.opener.open.return_value = fake_response
       self.report_downloader.DownloadReportWithAwql(
           query, file_format, output_file)
 
@@ -1725,7 +1837,7 @@ class ReportDownloaderTest(unittest.TestCase):
            % self.version), post_body, headers)
       self.opener.open.assert_called_once_with(mock_request.return_value)
 
-    self.assertEqual(content, output_file.getvalue())
+    self.assertEqual(report_data, output_file.getvalue())
     self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
 
   def testDownloadReportWithBytesIO(self):
@@ -1738,16 +1850,24 @@ class ReportDownloaderTest(unittest.TestCase):
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
-    content = u'CONTENT STRING 广告客户'
-    fake_request = io.BytesIO()
-    fake_request.write(content.encode('utf-8') if PYTHON2
-                       else bytes(content, 'utf-8'))
-    fake_request.seek(0)
+    report_data = u'CONTENT STRING 广告客户'
+    report_contents = io.BytesIO()
+    report_contents.write(report_data.encode('utf-8') if PYTHON2
+                          else bytes(report_data, 'utf-8'))
+    report_contents.seek(0)
+    fake_response = mock.Mock()
+    fake_response.read = report_contents.read
+    fake_response.msg = 'fake message'
+    fake_response.code = '200'
     self.marshaller.process.return_value = serialized_report
 
     with mock.patch('suds.mx.Content') as mock_content:
       with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        self.opener.open.return_value = fake_request
+        mock_request_instance = mock.Mock()
+        mock_request.return_value = mock_request_instance
+        mock_request_instance.get_full_url.return_value = 'https://google.com/'
+        mock_request_instance.headers = {}
+        self.opener.open.return_value = fake_response
         self.report_downloader.DownloadReport(report_definition, output_file)
         mock_request.assert_called_once_with(
             ('https://adwords.google.com/api/adwords/reportdownload/%s'
@@ -1755,7 +1875,7 @@ class ReportDownloaderTest(unittest.TestCase):
         self.opener.open.assert_called_once_with(mock_request.return_value)
         self.marshaller.process.assert_called_once_with(
             mock_content.return_value)
-        self.assertEqual(content, output_file.getvalue().decode('utf-8'))
+        self.assertEqual(report_data, output_file.getvalue().decode('utf-8'))
         self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
 
   def testExtractError_badRequest(self):
@@ -1817,6 +1937,33 @@ class ReportDownloaderTest(unittest.TestCase):
     self.assertEqual(response, rval.error)
     self.assertEqual(content, rval.content)
     self.assertIsInstance(rval, googleads.errors.AdWordsReportError)
+
+  def testSanitizeRequestHeaders(self):
+    redacted_text = 'REDACTED'
+    headers = {
+        'foo': 'bar',
+        'Developertoken': 'abc123doremi',
+        'Authorization': 'Authorization',
+        'lorem': 'ipsum'
+    }
+
+    sanitized_headers = self.report_downloader._SanitizeRequestHeaders(headers)
+
+    self.assertNotEqual(headers, sanitized_headers)
+    self.assertEqual(sanitized_headers['Developertoken'], redacted_text)
+    self.assertEqual(sanitized_headers['Authorization'], redacted_text)
+
+  def testExtractResponseHeaders(self):
+    headers = '\n\n\nfoo: bar\nlorem: ipsum\ntomayto: tomahto\n'
+    expected_headers = {
+        'foo': 'bar',
+        'lorem': 'ipsum',
+        'tomayto': 'tomahto'
+    }
+
+    dict_headers = self.report_downloader._ExtractResponseHeaders(headers)
+
+    self.assertEqual(dict_headers, expected_headers)
 
 
 if __name__ == '__main__':

@@ -56,9 +56,9 @@ def main(client, user_id):
   user_team_associations = response['results'] if 'results' in response else []
 
   for user_team_association in user_team_associations:
-    print ('User team association between user with ID \'%s\' and team with '
-           'ID \'%s\' will be deleted.' % (user_team_association['userId'],
-                                           user_team_association['teamId']))
+    print ('User team association between user with ID "%s" and team with '
+           'ID "%s" will be deleted.' % (user_team_association['userId'],
+                                         user_team_association['teamId']))
   print ('Number of teams that the user will be removed from: %s' %
          len(user_team_associations))
 

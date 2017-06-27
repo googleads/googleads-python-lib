@@ -46,7 +46,7 @@ def main(client):
 
   # Display results.
   for label in labels:
-    print ('Label with id \'%s\', name \'%s\', and types {%s} was found.'
+    print ('Label with id "%s", name "%s", and types {%s} was found.'
            % (label['id'], label['name'], ','.join(label['types'])))
 
 if __name__ == '__main__':

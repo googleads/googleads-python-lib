@@ -44,7 +44,7 @@ def main(client_id, client_secret, refresh_token, application_name):
 
   networks = dfp_client.GetService('NetworkService').getAllNetworks()
   for network in networks:
-    print ('Network with network code \'%s\' and display name \'%s\' was found.'
+    print ('Network with network code "%s" and display name "%s" was found.'
            % (network['networkCode'], network['displayName']))
 
 

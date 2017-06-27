@@ -41,7 +41,7 @@ class UpdateCredentials(webapp2.RequestHandler):
       UpdateUserCredentials(self.request.get('client_id'),
                             self.request.get('client_secret'),
                             self.request.get('refresh_token'),
-                            self.request.get('manager_account_id'),
+                            self.request.get('adwords_manager_cid'),
                             self.request.get('dev_token'))
       self.redirect('/showCredentials')
     except Exception, e:

@@ -51,7 +51,7 @@ def main(client, ad_group_id, ad_id):
 
   # Display results.
   for ad in ads['value']:
-    print 'Ad with id \'%s\' was updated.'% ad['ad']['id']
+    print 'Ad with id "%s" was updated.'% ad['ad']['id']
 
 
 if __name__ == '__main__':

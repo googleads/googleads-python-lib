@@ -34,11 +34,12 @@ PAGE_SIZE = 100
 
 def main(client, ad_group_id):
   # Initialize appropriate service.
-  ad_group_ad_service = client.GetService('AdGroupAdService', version='v201705')
+  ad_group_ad_service = client.GetService('AdGroupAdService',
+                                          version='v201705')
 
   # Construct query and get all ads for a given campaign.
   query = ('SELECT Id, PolicySummary '
-           'WHERE AdGroupId = %s '
+           'WHERE AdGroupId = %s AND CombinedApprovalStatus = DISAPPROVED '
            'ORDER BY Id' % ad_group_id)
   more_pages = True
   disapproved_count = 0
@@ -51,14 +52,10 @@ def main(client, ad_group_id):
 
     if 'entries' in page:
       for ad in page['entries']:
+        disapproved_count += 1
         policy_summary = ad['policySummary']
 
-        if policy_summary['combinedApprovalStatus'] != 'DISAPPROVED':
-          continue  # Skip ads that are not disapproved.
-
-        disapproved_count += 1
-
-        print ('Ad with id \'%s\' was disapproved with the following policy '
+        print ('Ad with id "%s" was disapproved with the following policy '
                'topic entries:' % (ad['ad']['id']))
 
         for policy_topic_entry in policy_summary['policyTopicEntries']:

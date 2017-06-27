@@ -137,14 +137,14 @@ def main(client, custom_field_id, drop_down_custom_field_id,
       for value in line_item['customFieldValues']:
         if dfp.DfpClassType(value) == 'CustomFieldValue':
           custom_field_value_string = (
-              '{ID: \'%s\', value: \'%s\'}'
+              '{ID: "%s", value: "%s"}'
               % (value['customFieldId'], value['value']['value']))
         elif dfp.DfpClassType(value) == 'DropDownCustomFieldValue':
           custom_field_value_string = (
-              '{ID: \'%s\', custom field option ID: \'%s\'}'
+              '{ID: "%s", custom field option ID: "%s"}'
               % (value['customFieldId'], value['customFieldOptionId']))
         custom_field_value_strings.append(custom_field_value_string)
-      print ('Line item with ID \'%s\' set with custom field values %s.'
+      print ('Line item with ID "%s" set with custom field values %s.'
              % (line_item['id'], ','.join(custom_field_value_strings)))
   else:
     print 'Line item or custom field not found.'

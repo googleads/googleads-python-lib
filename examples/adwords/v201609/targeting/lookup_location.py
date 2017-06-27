@@ -64,8 +64,8 @@ def main(client):
       parent_string = ', '.join([GetLocationString(parent)for parent in
                                  location_criterion['location']
                                  ['parentLocations']])
-    print ('The search term \'%s\' returned the location \'%s\' of type \'%s\''
-           ' with parent locations \'%s\', reach \'%s\' and id \'%s\' (%s)'
+    print ('The search term "%s" returned the location "%s" of type "%s"'
+           ' with parent locations "%s", reach "%s" and id "%s" (%s)'
            % (location_criterion['searchTerm'],
               location_criterion['location']['locationName'],
               location_criterion['location']['displayType'], parent_string,

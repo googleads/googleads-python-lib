@@ -113,8 +113,8 @@ def main(client, campaign_id, location_feed_id=None):
 
   # Display the resulting campaign criteria.
   for campaign_criterion in result['value']:
-    print ('Campaign criterion with campaign id \'%s\', criterion id \'%s\', '
-           'and type \'%s\' was added.'
+    print ('Campaign criterion with campaign id "%s", criterion id "%s", '
+           'and type "%s" was added.'
            % (campaign_criterion['campaignId'],
               campaign_criterion['criterion']['id'],
               campaign_criterion['criterion']['type']))

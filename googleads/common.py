@@ -18,7 +18,9 @@
 import datetime
 from functools import wraps
 import inspect
+import locale
 import logging
+import logging.config
 import os
 import ssl
 import sys
@@ -47,10 +49,13 @@ except ImportError:
 
 
 logging.getLogger('suds.client').addFilter(googleads.util.GetSudsClientFilter())
+logging.getLogger('suds.mx.core').addFilter(
+    googleads.util.GetSudsMXCoreFilter())
+logging.getLogger('suds.mx.literal').addFilter(
+    googleads.util.GetSudsMXLiteralFilter())
 logging.getLogger('suds.transport.http').addFilter(
     googleads.util.GetSudsTransportFilter())
 _logger = logging.getLogger(__name__)
-_logger.addFilter(googleads.util.GetGoogleAdsCommonFilter())
 
 _PY_VERSION_MAJOR = sys.version_info.major
 _PY_VERSION_MINOR = sys.version_info.minor
@@ -61,8 +66,9 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '5.6.0'
+VERSION = '6.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
+_LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
 _HTTPS_PROXY_YAML_KEY = 'https_proxy'
 _PROXY_CONFIG_KEY = 'proxy_config'
@@ -149,6 +155,12 @@ def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
     information necessary to instantiate a client object - either a
     required_client_values key was missing or an OAuth2 key was missing.
   """
+  data = yaml.safe_load(yaml_doc) or {}
+
+  logging_config = data.get(_LOGGING_KEY)
+  if logging_config:
+    logging.config.dictConfig(logging_config)
+
   # Warn users on deprecated Python versions on initialization.
   if _PY_VERSION_MAJOR == 2:
     if _PY_VERSION_MINOR == 7 and _PY_VERSION_MICRO < 9:
@@ -158,7 +170,11 @@ def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
       _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
                       _PY_VERSION_MINOR, _PY_VERSION_MICRO)
 
-  data = yaml.safe_load(yaml_doc) or {}
+  # Warn users about using non-utf8 encoding
+  _, encoding = locale.getdefaultlocale()
+  if encoding is None or encoding.lower() != 'utf-8':
+    _logger.warn('Your default encoding, %s, is not UTF-8. Please run this'
+                 ' script with UTF-8 encoding to avoid errors.', encoding)
 
   try:
     product_data = data[product_yaml_key]
@@ -472,7 +488,7 @@ def _RecurseOverObject(obj, factory, parent=None):
 
 def _IsSudsIterable(obj):
   """A short helper method to determine if a field is iterable for Suds."""
-  return (obj and not isinstance(obj, basestring) and hasattr(obj, '__iter__'))
+  return obj and not isinstance(obj, basestring) and hasattr(obj, '__iter__')
 
 
 def IncludeUtilitiesInUserAgent(value):
@@ -725,13 +741,17 @@ class SudsServiceProxy(object):
     def MakeSoapRequest(*args):
       """Perform a SOAP call."""
       self._header_handler.SetHeaders(self.suds_client)
+
       try:
         return soap_service_method(
             *[_PackForSuds(arg, self.suds_client.factory,
                            self._datetime_packer) for arg in args])
       except suds.WebFault as e:
-        _logger.error('Server raised fault in response.')
-        _logger.info('Failure response:\n%s', e.document)
+        if _logger.isEnabledFor(logging.WARNING):
+          _logger.warning('Response summary - %s',
+                          _ExtractResponseSummaryFields(e.document))
+
+        _logger.info('SOAP response:\n%s', e.document)
 
         if not hasattr(e.fault, 'detail'):
           raise
@@ -763,5 +783,89 @@ class HeaderHandler(object):
 class LoggingMessagePlugin(suds.plugin.MessagePlugin):
   """A MessagePlugin used to log request summaries."""
 
-  def sending(self, context):
-    _logger.info('Request made.')
+  def marshalled(self, context):
+    if _logger.isEnabledFor(logging.INFO):
+      _logger.info('Request summary - %s',
+                   _ExtractRequestSummaryFields(context.envelope))
+
+  def parsed(self, context):
+    if _logger.isEnabledFor(logging.INFO):
+      _logger.info('Response summary - %s',
+                   _ExtractResponseSummaryFields(context.reply))
+
+
+def _ExtractRequestSummaryFields(document):
+  """Extract logging fields from the request's suds.sax.element.Element.
+
+  Args:
+    document: A suds.sax.element.Element instance containing the API request.
+
+  Returns:
+    A dict mapping logging field names to their corresponding value.
+  """
+  headers = document.childAtPath('Header/RequestHeader')
+  body = document.childAtPath('Body')
+
+  summary_fields = {
+      'methodName': body.getChildren()[0].name
+  }
+
+  # Extract AdWords-specific fields if they exist.
+  # Note: We need to check if None because this will always evaluate False.
+  client_customer_id = headers.getChild('clientCustomerId')
+  if client_customer_id is not None:
+    summary_fields['clientCustomerId'] = client_customer_id.text
+
+  # Extract DFP-specific fields if they exist.
+  # Note: We need to check if None because this will always evaluate False.
+  network_code = headers.getChild('networkCode')
+  if network_code is not None:
+    summary_fields['networkCode'] = network_code.text
+
+  return summary_fields
+
+
+def _ExtractResponseSummaryFields(document):
+  """Extract logging fields from the response's suds.sax.document.Document.
+
+  Args:
+    document: A suds.sax.document.Document instance containing the parsed
+      API response for a given API request.
+
+  Returns:
+    A dict mapping logging field names to their corresponding value.
+  """
+  headers = document.childAtPath('Envelope/Header/ResponseHeader')
+  body = document.childAtPath('Envelope/Body')
+  summary_fields = {}
+
+  if headers is not None:
+    summary_fields['requestId'] = headers.getChild('requestId').text
+    summary_fields['responseTime'] = headers.getChild('responseTime').text
+
+    # Extract AdWords-specific summary fields if they are present.
+    # Note: We need to check if None because this will always evaluate False.
+    service_name = headers.getChild('serviceName')
+    if service_name is not None:
+      summary_fields['serviceName'] = service_name.text
+
+    method_name = headers.getChild('methodName')
+    if method_name is not None:
+      summary_fields['methodName'] = method_name.text
+
+    operations = headers.getChild('operations')
+    if operations is not None:
+      summary_fields['operations'] = operations.text
+
+  if body is not None:
+    # Extract fault if it exists.
+    fault = body.getChild('Fault')
+    if fault is not None:
+      summary_fields['isFault'] = True
+      # Cap length of faultstring to 16k characters for summary.
+      summary_fields['faultMessage'] = fault.getChild(
+          'faultstring').text[:16000]
+    else:
+      summary_fields['isFault'] = False
+
+  return summary_fields

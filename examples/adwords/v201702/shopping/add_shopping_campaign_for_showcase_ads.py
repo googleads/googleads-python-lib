@@ -229,7 +229,7 @@ def CreateShoppingCampaign(client, budget_id, merchant_id):
   }]
 
   campaign = campaign_service.mutate(campaign_operations)['value'][0]
-  print ('Campaign with name \'%s\' and ID \'%s\' was added.'
+  print ('Campaign with name "%s" and ID "%s" was added.'
          % (campaign['name'], campaign['id']))
 
   return campaign

@@ -102,7 +102,7 @@ def main(client, advertiser_id):
   creative = creative_service.createCreatives([creative])[0]
 
   # Display results.
-  print ('Template creative with id \'%s\', name \'%s\', and type \'%s\' was '
+  print ('Template creative with id "%s", name "%s", and type "%s" was '
          'created and can be previewed at %s.'
          % (creative['id'], creative['name'], dfp.DfpClassType(creative),
             creative['previewUrl']))

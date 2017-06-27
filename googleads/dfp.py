@@ -38,6 +38,12 @@ DEFAULT_ENDPOINT = 'https://ads.google.com'
 SUGGESTED_PAGE_LIMIT = 500
 # The chunk size used for report downloads.
 _CHUNK_SIZE = 16 * 1024
+
+
+_data_downloader_logger = logging.getLogger(
+    '%s.%s' % (__name__, 'data_downloader'))
+
+
 # A giant dictionary of DFP versions and the services they support.
 _SERVICE_MAP = {
     'v201608':
@@ -140,9 +146,6 @@ class DfpClient(object):
     network_code: A string identifying the network code of the network you are
         accessing. All requests other than some NetworkService calls require
         this header to be set.
-    https_proxy: A string identifying the URL of a proxy that all HTTPS requests
-        should be routed through. Modifying this value will not affect any SOAP
-        service clients you've already created.
   """
 
   # The key in the storage yaml which contains DFP data.
@@ -151,8 +154,7 @@ class DfpClient(object):
   _REQUIRED_INIT_VALUES = ('application_name',)
   # A list of values which may optionally be provided when using DFP.
   _OPTIONAL_INIT_VALUES = (
-      'network_code', 'https_proxy',
-      googleads.common.ENABLE_COMPRESSION_KEY)
+      'network_code', googleads.common.ENABLE_COMPRESSION_KEY)
   # The format of SOAP service WSDLs. A server, version, and service name need
   # to be formatted in.
   _SOAP_SERVICE_FORMAT = '%s/apis/ads/publisher/%s/%s?wsdl'
@@ -240,6 +242,8 @@ class DfpClient(object):
     if enable_compression:
       self.application_name = '%s (gzip)' % self.application_name
 
+    self.message_plugin = googleads.common.LoggingMessagePlugin()
+
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
                  server=None):
@@ -267,7 +271,8 @@ class DfpClient(object):
     server = server[:-1] if server[-1] == '/' else server
 
     kwargs = {'timeout': 3600,
-              'transport': self.proxy_config.GetSudsProxyTransport()}
+              'transport': self.proxy_config.GetSudsProxyTransport(),
+              'plugins': [self.message_plugin]}
 
     if self.cache:
       kwargs['cache'] = self.cache
@@ -728,7 +733,7 @@ class DataDownloader(object):
       status = service.getReportJob(report_job_id)['reportJobStatus']
 
     while status != 'COMPLETED' and status != 'FAILED':
-      logging.debug('Report job status: %s', status)
+      _data_downloader_logger.debug('Report job status: %s', status)
       time.sleep(30)
       if self._version > 'v201502':
         status = service.getReportJobStatus(report_job_id)
@@ -738,7 +743,7 @@ class DataDownloader(object):
     if status == 'FAILED':
       raise googleads.errors.DfpReportError(report_job_id)
     else:
-      logging.debug('Report has completed successfully')
+      _data_downloader_logger.debug('Report has completed successfully')
       return report_job_id
 
   def DownloadReportToFile(self, report_job_id, export_format, outfile,
@@ -769,7 +774,15 @@ class DataDownloader(object):
         'useGzipCompression': use_gzip_compression
     }
     report_url = service.getReportDownloadUrlWithOptions(report_job_id, opts)
+    _data_downloader_logger.info('Request Summary: Report job ID: %s, %s',
+                                 report_job_id, opts)
+
     response = self.url_opener.open(report_url)
+
+    _data_downloader_logger.debug(
+        'Incoming response: %s %s REDACTED REPORT DATA', response.code,
+        response.msg)
+
     while True:
       chunk = response.read(_CHUNK_SIZE)
       if not chunk: break
