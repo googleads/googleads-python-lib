@@ -31,7 +31,7 @@ def main(client):
       'LineItemCreativeAssociationService', version='v201702')
 
   # Create statement object to get all LICAs.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   while True:
     # Get LICAs by statement.
@@ -53,7 +53,7 @@ def main(client):
         print ('LICA with line item id "%s", creative id "%s", and status '
                '"%s" was updated.' % (lica['lineItemId'], lica['creativeId'],
                                       lica['status']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

@@ -25,7 +25,7 @@ def main(client):
   rate_card_service = client.GetService('RateCardService', version='v201705')
 
   # Create a statement to select rate cards.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of rate cards at a time, paging
   # through until all rate cards have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         print('Rate card with ID "%d", name "%s", and currency code "%s" was '
               'found.\n' %
               (rate_card['id'], rate_card['name'], rate_card['currencyCode']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

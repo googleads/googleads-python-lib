@@ -25,7 +25,7 @@ def main(client):
   proposal_service = client.GetService('ProposalService', version='v201702')
 
   # Create a statement to select proposals.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of proposals at a time, paging
   # through until all proposals have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each proposal.
         print('Proposal with ID "%d" and name "%s" was found.\n' %
               (proposal['id'], proposal['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

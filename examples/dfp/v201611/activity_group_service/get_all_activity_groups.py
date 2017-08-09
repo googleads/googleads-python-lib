@@ -26,7 +26,7 @@ def main(client):
       'ActivityGroupService', version='v201611')
 
   # Create a statement to select activity groups.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of activity groups at a time, paging
   # through until all activity groups have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         # Print out some information for each activity group.
         print('Activity group with ID "%d" and name "%s" was found.\n' %
               (activity_group['id'], activity_group['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

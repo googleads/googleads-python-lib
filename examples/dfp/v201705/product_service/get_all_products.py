@@ -25,7 +25,7 @@ def main(client):
   product_service = client.GetService('ProductService', version='v201705')
 
   # Create a statement to select products.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of products at a time, paging
   # through until all products have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each product.
         print('Product with ID "%d" and name "%s" was found.\n' %
               (product['id'], product['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

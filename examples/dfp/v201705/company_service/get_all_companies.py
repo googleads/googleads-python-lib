@@ -25,7 +25,7 @@ def main(client):
   company_service = client.GetService('CompanyService', version='v201705')
 
   # Create a statement to select companies.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of companies at a time, paging
   # through until all companies have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each company.
         print('Company with ID "%d", name "%s", and type "%s" was found.\n' %
               (company['id'], company['name'], company['type']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

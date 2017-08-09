@@ -25,7 +25,7 @@ def main(client):
   base_rate_service = client.GetService('BaseRateService', version='v201705')
 
   # Create a statement to select base rates.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of base rates at a time, paging
   # through until all base rates have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         print('Base rate with ID "%d", type "%s", and rate card ID "%d" was '
               'found.\n' % (base_rate['id'], dfp.DfpClassType(base_rate),
                             base_rate['rateCardId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

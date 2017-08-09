@@ -26,7 +26,7 @@ def main(client):
       'ProposalLineItemService', version='v201705')
 
   # Create a statement to select proposal line items.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of proposal line items at a time, paging
   # through until all proposal line items have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         # Print out some information for each proposal line item.
         print('Proposal line item with ID "%d" and name "%s" was found.\n' %
               (proposal_line_item['id'], proposal_line_item['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

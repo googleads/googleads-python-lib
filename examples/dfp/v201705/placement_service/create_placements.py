@@ -55,7 +55,7 @@ def main(client):
   placement_list = []
 
   # Create statement to get all the ad units.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   while True:
     response = inventory_service.getAdUnitsByStatement(
@@ -76,7 +76,7 @@ def main(client):
             elif size['width'] == '468' and size['height'] == '60':
               banner_ad_unit_placement['targetedAdUnitIds'].append(
                   ad_unit['id'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

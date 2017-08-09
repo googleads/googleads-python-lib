@@ -26,7 +26,7 @@ def main(client):
       'UserTeamAssociationService', version='v201611')
 
   # Create a statement to select user team associations.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of user team associations at a time, paging
   # through until all user team associations have been retrieved.
@@ -39,7 +39,7 @@ def main(client):
         print('User team association with team id "%d" and user id "%d" was '
               'found.\n' % (user_team_association['teamId'],
                             user_team_association['userId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

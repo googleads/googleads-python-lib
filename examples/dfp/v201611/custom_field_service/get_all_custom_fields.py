@@ -26,7 +26,7 @@ def main(client):
       'CustomFieldService', version='v201611')
 
   # Create a statement to select custom fields.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of custom fields at a time, paging
   # through until all custom fields have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         # Print out some information for each custom field.
         print('Custom field with ID "%d" and name "%s" was found.\n' %
               (custom_field['id'], custom_field['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

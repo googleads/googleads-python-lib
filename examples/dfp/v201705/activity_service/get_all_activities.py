@@ -25,7 +25,7 @@ def main(client):
   activity_service = client.GetService('ActivityService', version='v201705')
 
   # Create a statement to select activities.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of activities at a time, paging
   # through until all activities have been retrieved.
@@ -37,7 +37,7 @@ def main(client):
         # Print out some information for each activity.
         print('Activity with ID "%d" and name "%s" was found.\n' %
               (activity['id'], activity['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

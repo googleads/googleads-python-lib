@@ -25,7 +25,7 @@ def main(client):
   team_service = client.GetService('TeamService', version='v201611')
 
   # Create a statement to select teams.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of teams at a time, paging
   # through until all teams have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each team.
         print('Team with ID "%d" and name "%s" was found.\n' % (team['id'],
                                                                 team['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

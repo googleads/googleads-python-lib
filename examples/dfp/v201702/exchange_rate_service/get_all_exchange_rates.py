@@ -26,7 +26,7 @@ def main(client):
       'ExchangeRateService', version='v201702')
 
   # Create a statement to select exchange rates.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of exchange rates at a time, paging
   # through until all exchange rates have been retrieved.
@@ -41,7 +41,7 @@ def main(client):
             'and exchange rate "%d" was found.\n' %
             (exchange_rate['id'], exchange_rate['currencyCode'],
              exchange_rate['direction'], exchange_rate['exchangeRate']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

@@ -26,7 +26,7 @@ def main(client):
       'LineItemCreativeAssociationService', version='v201705')
 
   # Create a statement to select line item creative associations.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of line item creative associations at a time, paging
   # through until all line item creative associations have been retrieved.
@@ -44,7 +44,7 @@ def main(client):
           print('Line item creative association with line item ID "%d" and '
                 'creative ID "%d" was found.\n' %
                 (lica['lineItemId'], lica['creativeId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

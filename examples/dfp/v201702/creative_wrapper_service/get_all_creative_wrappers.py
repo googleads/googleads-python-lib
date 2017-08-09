@@ -26,7 +26,7 @@ def main(client):
       'CreativeWrapperService', version='v201702')
 
   # Create a statement to select creative wrappers.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of creative wrappers at a time, paging
   # through until all creative wrappers have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         # Print out some information for each creative wrapper.
         print('Creative wrapper with ID "%d" and label id "%d" was found.\n' %
               (creative_wrapper['id'], creative_wrapper['labelId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

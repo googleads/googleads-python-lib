@@ -26,7 +26,7 @@ def main(client):
       'AudienceSegmentService', version='v201702')
 
   # Create a statement to select audience segments.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of audience segments at a time, paging
   # through until all audience segments have been retrieved.
@@ -39,7 +39,7 @@ def main(client):
         print('Audience segment with ID "%d", name "%s", and size "%d" was '
               'found.\n' % (audience_segment['id'], audience_segment['name'],
                             audience_segment['size']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

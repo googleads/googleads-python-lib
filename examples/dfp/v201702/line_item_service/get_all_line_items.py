@@ -25,7 +25,7 @@ def main(client):
   line_item_service = client.GetService('LineItemService', version='v201702')
 
   # Create a statement to select line items.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of line items at a time, paging
   # through until all line items have been retrieved.
@@ -37,7 +37,7 @@ def main(client):
         # Print out some information for each line item.
         print('Line item with ID "%d" and name "%s" was found.\n' %
               (line_item['id'], line_item['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

@@ -26,7 +26,7 @@ def main(client):
       'CustomTargetingService', version='v201611')
 
   # Create statement to get all targeting keys.
-  targeting_key_statement = dfp.FilterStatement()
+  targeting_key_statement = dfp.StatementBuilder()
 
   all_keys = []
 
@@ -36,7 +36,7 @@ def main(client):
         targeting_key_statement.ToStatement())
     if 'results' in response:
       all_keys.extend(response['results'])
-      targeting_key_statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      targeting_key_statement.offset += targeting_key_statement.limit
     else:
       break
 

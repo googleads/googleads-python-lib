@@ -25,7 +25,7 @@ def main(client):
   user_service = client.GetService('UserService', version='v201611')
 
   # Create a statement to select users.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of users at a time, paging
   # through until all users have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each user.
         print('User with ID "%d" and name "%s" was found.\n' % (user['id'],
                                                                 user['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

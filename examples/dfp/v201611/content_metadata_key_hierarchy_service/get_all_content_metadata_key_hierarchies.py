@@ -26,7 +26,7 @@ def main(client):
       'ContentMetadataKeyHierarchyService', version='v201611')
 
   # Create a statement to select content metadata key hierarchies.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of content metadata key hierarchies at a time,
   # paging through until all content metadata key hierarchies have been
@@ -42,7 +42,7 @@ def main(client):
         print('Content metadata key hierarchy with ID "%d" and name "%s" was '
               'found.\n' % (content_metadata_key_hierarchy['id'],
                             content_metadata_key_hierarchy['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

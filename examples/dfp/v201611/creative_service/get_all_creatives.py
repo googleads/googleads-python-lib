@@ -25,7 +25,7 @@ def main(client):
   creative_service = client.GetService('CreativeService', version='v201611')
 
   # Create a statement to select creatives.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of creatives at a time, paging
   # through until all creatives have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each creative.
         print('Creative with ID "%d" and name "%s" was found.\n' %
               (creative['id'], creative['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

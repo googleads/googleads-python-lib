@@ -25,7 +25,7 @@ def main(client):
   contact_service = client.GetService('ContactService', version='v201702')
 
   # Create a statement to select contacts.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of contacts at a time, paging
   # through until all contacts have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each contact.
         print('Contact with ID "%d" and name "%s" was found.\n' %
               (contact['id'], contact['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

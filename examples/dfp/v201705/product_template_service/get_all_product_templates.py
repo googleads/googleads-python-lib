@@ -26,7 +26,7 @@ def main(client):
       'ProductTemplateService', version='v201705')
 
   # Create a statement to select product templates.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of product templates at a time, paging
   # through until all product templates have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         # Print out some information for each product template.
         print('Product template with ID "%d" and name "%s" was found.\n' %
               (product_template['id'], product_template['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

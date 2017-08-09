@@ -26,7 +26,7 @@ def main(client):
       'ReconciliationReportService', version='v201705')
 
   # Create a statement to select reconciliation reports.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of reconciliation reports at a time, paging
   # through until all reconciliation reports have been retrieved.
@@ -43,7 +43,7 @@ def main(client):
             ' found.\n' % (reconciliation_report['id'],
                            reconciliation_report['startDate']['month'],
                            reconciliation_report['startDate']['year']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

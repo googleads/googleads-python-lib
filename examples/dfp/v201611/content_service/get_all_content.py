@@ -25,7 +25,7 @@ def main(client):
   content_service = client.GetService('ContentService', version='v201611')
 
   # Create a statement to select content.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of content at a time, paging
   # through until all content have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each content.
         print('Content with ID "%d" and name "%s" was found.\n' %
               (content['id'], content['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

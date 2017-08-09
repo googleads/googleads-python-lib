@@ -26,7 +26,7 @@ def main(client):
       'PremiumRateService', version='v201611')
 
   # Create a statement to select premium rates.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of premium rates at a time, paging
   # through until all premium rates have been retrieved.
@@ -40,7 +40,7 @@ def main(client):
               'id "%d" was found.\n' % (premium_rate['id'],
                                         dfp.DfpClassType(premium_rate),
                                         premium_rate['rateCardId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

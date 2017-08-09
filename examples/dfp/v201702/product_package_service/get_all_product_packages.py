@@ -26,7 +26,7 @@ def main(client):
       'ProductPackageService', version='v201702')
 
   # Create a statement to select product packages.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of product packages at a time, paging
   # through until all product packages have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         # Print out some information for each product package.
         print('Product package with ID "%d" and name "%s" was found.\n' %
               (product_package['id'], product_package['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

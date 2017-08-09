@@ -25,7 +25,7 @@ def main(client):
   pkg_service = client.GetService('PackageService', version='v201705')
 
   # Create a statement to select packages.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of packages at a time, paging
   # through until all packages have been retrieved.
@@ -37,7 +37,7 @@ def main(client):
         print(
             'Package with ID "%d", name "%s", and proposal id "%d" was found.\n'
             % (pkg['id'], pkg['name'], pkg['proposalId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

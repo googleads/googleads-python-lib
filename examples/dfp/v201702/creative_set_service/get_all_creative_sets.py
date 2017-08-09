@@ -26,7 +26,7 @@ def main(client):
       'CreativeSetService', version='v201702')
 
   # Create a statement to select creative sets.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of creative sets at a time, paging
   # through until all creative sets have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         # Print out some information for each creative set.
         print('Creative set with ID "%d" and name "%s" was found.\n' %
               (creative_set['id'], creative_set['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

@@ -25,7 +25,7 @@ def main(client):
   order_service = client.GetService('OrderService', version='v201705')
 
   # Create a statement to select orders.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of orders at a time, paging
   # through until all orders have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each order.
         print('Order with ID "%d" and name "%s" was found.\n' % (order['id'],
                                                                  order['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

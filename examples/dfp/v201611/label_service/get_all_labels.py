@@ -25,7 +25,7 @@ def main(client):
   label_service = client.GetService('LabelService', version='v201611')
 
   # Create a statement to select labels.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of labels at a time, paging
   # through until all labels have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each label.
         print('Label with ID "%d" and name "%s" was found.\n' % (label['id'],
                                                                  label['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

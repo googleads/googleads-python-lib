@@ -25,7 +25,7 @@ def main(client):
   ad_unit_service = client.GetService('InventoryService', version='v201705')
 
   # Create a statement to select ad units.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of ad units at a time, paging
   # through until all ad units have been retrieved.
@@ -36,7 +36,7 @@ def main(client):
         # Print out some information for each ad unit.
         print('Ad unit with ID "%s" and name "%s" was found.\n' %
               (ad_unit['id'], ad_unit['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

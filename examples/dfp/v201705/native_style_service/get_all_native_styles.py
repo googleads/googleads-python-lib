@@ -26,7 +26,7 @@ def main(client):
                                            version='v201705')
 
   # Create a statement to select native styles.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of native styles at a time, paging
   # through until all native styles have been retrieved.
@@ -38,7 +38,7 @@ def main(client):
         # Print out some information for each native style.
         print('Native style with ID "%d" and name "%s" was found.\n' %
               (native_style['id'], native_style['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 
