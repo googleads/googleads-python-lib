@@ -1,3 +1,7 @@
+7.0.0 -- 8/15/17
+* Added support and examples for DFP v201708.
+* Removed support and examples for DFP v201608.
+
 6.1.0 -- 8/9/17:
 * Added support for AdWords v201708.
 
