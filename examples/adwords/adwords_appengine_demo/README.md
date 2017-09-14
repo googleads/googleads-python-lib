@@ -44,39 +44,19 @@ prepared your OAuth2 Credentials via the Google Developers Console.
    This account will be used to access your AdWords credentials used in making
    API requests.
 
-1. Download the latest version of the
-   [App Engine SDK](https://developers.google.com/appengine/downloads) and
-   unpack its content. This demo should be compatible with  v1.9.11+.
+1. Install Google Cloud SDK (https://cloud.google.com/appengine/docs/flexible/python/download).
 
-1. Install googleads with the following command:
+   `$ curl --capath /etc/ssl/certs https://sdk.cloud.google.com | bash`
 
-   `$ pip install googleads`
+1. Install googleads with the following command, executed from this file's
+   parent directory:
+
+   `$ pip install -r requirements.txt lib`
 
    Then copy the googleads package from your Python installation's
    dist-packages directory into this project. The installation of googleads
    should also have installed the dependencies referred to in the following
    steps.
-
-1. Copy the httplib2 package from your Python installation's dist-packages
-   directory into this project.
-
-1. Copy the oauth2client package from your Python installation's dist-packages
-   directory into this project.
-
-1. Copy the pyasn1 package from your Python installation's dist-packages
-   directory into this project.
-
-1. Copy socks.py from the PySocks tarball found in your Python installation's
-   dist-packages directory into this project.
-
-1. Copy the rsa package from your Python installation's dist-packages
-   into this project.
-
-1. Copy the suds package from your Python installation's dist-packages
-   into this project.
-
-1. Copy xmltodict.py from your Python installation's dist-packages directory
-   directory into this project.
 
 1. Create an App Engine application in the
    [Google App Engine Console](https://appengine.google.com/).
@@ -86,7 +66,7 @@ prepared your OAuth2 Credentials via the Google Developers Console.
 
 1. You can now deploy this project by running the following command:
 
-    `python $APPENGINE_SDK_DIR/appcfg --oauth2 update .`
+    `gcloud app deploy app.yaml -v v1`
 
 1. When you go to your App for the first time, you will need to log in and
     provide OAuth2 and AdWords API credentials. You can use credentials
