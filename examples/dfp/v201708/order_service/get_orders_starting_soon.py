@@ -21,33 +21,22 @@ from datetime import datetime
 from datetime import timedelta
 
 from googleads import dfp
+import pytz
 
 
 def main(client):
   # Initialize appropriate service.
   order_service = client.GetService('OrderService', version='v201708')
-  query = ('WHERE status = :status and startDateTime >= :now and startDateTime '
-           '<= :soon')
-  values = [
-      {'key': 'status',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'APPROVED'
-       }},
-      {'key': 'now',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-       }},
-      {'key': 'soon',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': (datetime.now() + timedelta(days=5))
-                    .strftime('%Y-%m-%dT%H:%M:%S')
-       }},
-  ]
+  now = datetime.now(tz=pytz.timezone('America/New_York'))
+  soon = now + timedelta(days=5)
+
   # Create a statement to select orders.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where(('status = :status AND startDateTime >= :now '
+                       'AND startDateTime <= :soon'))
+               .WithBindVariable('status', 'APPROVED')
+               .WithBindVariable('now', now)
+               .WithBindVariable('soon', soon))
 
   # Retrieve a small amount of orders at a time, paging
   # through until all orders have been retrieved.

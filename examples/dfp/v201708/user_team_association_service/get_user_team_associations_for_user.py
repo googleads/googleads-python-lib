@@ -26,16 +26,10 @@ def main(client, user_id):
   # Initialize appropriate service.
   user_team_association_service = client.GetService(
       'UserTeamAssociationService', version='v201708')
-  query = 'WHERE userId = :userId'
-  values = [
-      {'key': 'userId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': user_id
-       }},
-  ]
   # Create a statement to select user team associations.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('userId = :userId')
+               .WithBindVariable('userId', long(user_id)))
 
   # Retrieve a small amount of user team associations at a time, paging
   # through until all user team associations have been retrieved.

@@ -34,15 +34,11 @@ def main(client):
       network_service.getCurrentNetwork()['effectiveRootAdUnitId'])
 
   # Set filter statement and bind value for reportQuery.
-  values = [{
-      'key': 'parent_ad_unit_id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': root_ad_unit_id
-      }
-  }]
-  filter_statement = {'query': 'WHERE PARENT_AD_UNIT_ID = :parent_ad_unit_id',
-                      'values': values}
+  statement = (dfp.StatementBuilder()
+               .Where('PARENT_AD_UNIT_ID = :parentAdUnitId')
+               .WithBindVariable('parentAdUnitId', long(root_ad_unit_id))
+               .Limit(None)  # No limit or offset for reports
+               .Offset(None))
 
   # Create report job.
   report_job = {
@@ -55,7 +51,7 @@ def main(client):
                       'TOTAL_INVENTORY_LEVEL_IMPRESSIONS',
                       'TOTAL_INVENTORY_LEVEL_CPM_AND_CPC_REVENUE'],
           'dateRangeType': 'LAST_WEEK',
-          'statement': filter_statement
+          'statement': statement.ToStatement()
       }
   }
 

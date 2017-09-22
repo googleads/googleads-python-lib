@@ -24,16 +24,10 @@ def main(client):
   # Initialize appropriate service.
   activity_group_service = client.GetService(
       'ActivityGroupService', version='v201708')
-  query = 'WHERE status = :status'
-  values = [
-      {'key': 'status',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'ACTIVE'
-       }},
-  ]
   # Create a statement to select activity groups.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('status = :status')
+               .WithBindVariable('status', 'ACTIVE'))
 
   # Retrieve a small amount of activity groups at a time, paging
   # through until all activity groups have been retrieved.

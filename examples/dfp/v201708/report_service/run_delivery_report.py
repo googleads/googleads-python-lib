@@ -32,15 +32,11 @@ ORDER_ID = 'INSERT_ORDER_ID_HERE'
 
 def main(client, order_id):
   # Create statement object to filter for an order.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': order_id
-      }
-  }]
-  filter_statement = {'query': 'WHERE ORDER_ID = :id',
-                      'values': values}
+  statement = (dfp.StatementBuilder()
+               .Where('ORDER_ID = :id')
+               .WithBindVariable('id', long(order_id))
+               .Limit(None)  # No limit or offset for reports
+               .Offset(None))
 
   # Set the start and end dates of the report to run (past 8 days).
   end_date = datetime.now().date()
@@ -52,7 +48,7 @@ def main(client, order_id):
           'dimensions': ['ORDER_ID', 'ORDER_NAME'],
           'dimensionAttributes': ['ORDER_TRAFFICKER', 'ORDER_START_DATE_TIME',
                                   'ORDER_END_DATE_TIME'],
-          'statement': filter_statement,
+          'statement': statement.ToStatement(),
           'columns': ['AD_SERVER_IMPRESSIONS', 'AD_SERVER_CLICKS',
                       'AD_SERVER_CTR', 'AD_SERVER_CPM_AND_CPC_REVENUE',
                       'AD_SERVER_WITHOUT_CPD_AVERAGE_ECPM'],

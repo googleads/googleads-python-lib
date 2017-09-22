@@ -26,16 +26,10 @@ def main(client, master_creative_id):
   # Initialize appropriate service.
   creative_set_service = client.GetService(
       'CreativeSetService', version='v201708')
-  query = 'WHERE masterCreativeId = :masterCreativeId'
-  values = [
-      {'key': 'masterCreativeId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': master_creative_id
-       }},
-  ]
   # Create a statement to select creative sets.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('masterCreativeId = :masterCreativeId')
+               .WithBindVariable('masterCreativeId', master_creative_id))
 
   # Retrieve a small amount of creative sets at a time, paging
   # through until all creative sets have been retrieved.

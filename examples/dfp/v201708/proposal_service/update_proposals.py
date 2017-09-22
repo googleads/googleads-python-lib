@@ -31,16 +31,11 @@ def main(client, proposal_id):
   proposal_service = client.GetService('ProposalService', version='v201708')
 
   # Create statement object to select a single proposal by an ID.
-  values = [{
-      'key': 'proposalId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': proposal_id
-      }
-  }]
-  query = 'WHERE id = :proposalId'
 
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :proposalId')
+               .WithBindVariable('proposalId', long(proposal_id))
+               .Limit(1))
 
   # Get proposals by statement.
   response = proposal_service.getProposalsByStatement(statement.ToStatement())
@@ -65,6 +60,7 @@ def main(client, proposal_id):
       print 'No proposals were updated.'
   else:
     print 'No proposals found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

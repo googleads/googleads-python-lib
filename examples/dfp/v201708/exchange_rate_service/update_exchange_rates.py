@@ -33,16 +33,10 @@ def main(client, exchange_rate_id):
                                             version='v201708')
 
   # Create a statement to get an exchange rate by its ID.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': exchange_rate_id
-      }
-  }]
-  query = 'WHERE id = :id'
-  # Create a filter statement.
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .WithBindVariable('id', long(exchange_rate_id))
+               .Limit(1))
 
   # Get rate cards by statement.
   response = exchange_rate_service.getExchangeRatesByStatement(

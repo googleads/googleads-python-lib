@@ -42,52 +42,6 @@ _batch_job_logger = logging.getLogger('%s.%s'
 # A giant dictionary of AdWords versions, the services they support, and which
 # namespace those services are in.
 _SERVICE_MAP = {
-    'v201609': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'BatchJobService': 'cm',
-        'BiddingStrategyService': 'cm',
-        'BudgetOrderService': 'billing',
-        'BudgetService': 'cm',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerFeedService': 'cm',
-        'CustomerService': 'mcm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'DraftAsyncErrorService': 'cm',
-        'DraftService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'LabelService': 'cm',
-        'LocationCriterionService': 'cm',
-        'ManagedCustomerService': 'mcm',
-        'MediaService': 'cm',
-        'OfflineCallConversionFeedService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-        'TrialAsyncErrorService': 'cm',
-        'TrialService': 'cm'
-    },
     'v201702': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
@@ -249,7 +203,7 @@ _DEFAULT_ENDPOINT = 'https://adwords.google.com'
 _DEFAULT_USER_AGENT = 'unknown'
 
 
-class AdWordsClient(object):
+class AdWordsClient(googleads.common.CommonClient):
   """A central location to set headers and create web service clients.
 
   Attributes:
@@ -368,6 +322,8 @@ class AdWordsClient(object):
       GoogleAdsValueError: If the provided user_agent contains non-ASCII
         characters.
     """
+    super(AdWordsClient, self).__init__()
+
     self.developer_token = developer_token
     self.oauth2_client = oauth2_client
     self.client_customer_id = kwargs.get('client_customer_id')
@@ -1661,7 +1617,6 @@ class ReportDownloader(object):
                              response.code, response.msg)
       return response
     except urllib2.HTTPError as e:
-      # Content from HTTPError instance can be read only one time.
       error = self._ExtractError(e)
       if _report_logger.isEnabledFor(logging.WARNING):
         _report_logger.warning(
@@ -1710,7 +1665,9 @@ class ReportDownloader(object):
     Args:
       request:  a urllib2.Request instance.
       [optional]
-      error: a AdWordsReportError instance used to retrieve error details.
+      error: a googleads.errors.AdWordsReportError instance or subclass used to
+          retrieve error details. This should only be present when an error
+          occurred, otherwise it should be set to None for successful requests.
 
     Returns:
       A dict containing the fields to be output in the summary logs.

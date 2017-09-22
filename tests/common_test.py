@@ -86,8 +86,6 @@ class CommonTest(unittest.TestCase):
 
   def testShouldWarnWithBadEncoding(self):
     self.locale_patcher.return_value = (None, None)
-    yaml_doc = self._CreateYamlDoc({'one': {'needed': 'd', 'keys': 'e'}},
-                                   'one', self._OAUTH_INSTALLED_APP_DICT)
     test_major_value = 2
     test_minor_value = 6
     test_micro_value = 9
@@ -95,11 +93,8 @@ class CommonTest(unittest.TestCase):
       with mock.patch('googleads.common._PY_VERSION_MINOR', test_minor_value):
         with mock.patch('googleads.common._PY_VERSION_MICRO', test_micro_value):
           with mock.patch('googleads.common._logger') as mock_logger:
-            with mock.patch(
-                'googleads.common.open', self.fake_open, create=True):
-              googleads.common.LoadFromString(yaml_doc, 'one',
-                                              ['needed', 'keys'], ['other'])
-              mock_logger.warn.assert_called_once()
+            googleads.common.CommonClient()
+            mock_logger.warn.assert_called_once()
 
   def _CreateYamlFile(self, data, insert_oauth2_key=None, oauth_dict=None):
     """Return the filename of a yaml file created for testing."""
@@ -361,13 +356,7 @@ class CommonTest(unittest.TestCase):
     self.assertEqual(expected_result,
                      googleads.common._ExtractResponseSummaryFields(doc))
 
-  def testLoadFromString_deprecatedWarningLoggerByMicroValue(self):
-    yaml_doc = self._CreateYamlDoc({
-        'one': {
-            'needed': 'd',
-            'keys': 'e'
-        }
-    }, 'one', self._OAUTH_INSTALLED_APP_DICT)
+  def testCommonClient_deprecatedWarningLoggerByMicroValue(self):
     test_major_value = 2
     test_minor_value = 7
     test_micro_value = 6
@@ -375,17 +364,12 @@ class CommonTest(unittest.TestCase):
       with mock.patch('googleads.common._PY_VERSION_MINOR', test_minor_value):
         with mock.patch('googleads.common._PY_VERSION_MICRO', test_micro_value):
           with mock.patch('googleads.common._logger') as mock_logger:
-            with mock.patch(
-                'googleads.common.open', self.fake_open, create=True):
-              googleads.common.LoadFromString(yaml_doc, 'one',
-                                              ['needed', 'keys'], ['other'])
-              mock_logger.warning.assert_called_once_with(
-                  googleads.common._DEPRECATED_VERSION_TEMPLATE,
-                  test_major_value, test_minor_value, test_micro_value)
+            googleads.common.CommonClient()
+            mock_logger.warning.assert_called_once_with(
+                googleads.common._DEPRECATED_VERSION_TEMPLATE,
+                test_major_value, test_minor_value, test_micro_value)
 
   def testLoadFromString_deprecatedWarningLoggerByMinorValue(self):
-    yaml_doc = self._CreateYamlDoc({'one': {'needed': 'd', 'keys': 'e'}},
-                                   'one', self._OAUTH_INSTALLED_APP_DICT)
     test_major_value = 2
     test_minor_value = 6
     test_micro_value = 9
@@ -393,13 +377,10 @@ class CommonTest(unittest.TestCase):
       with mock.patch('googleads.common._PY_VERSION_MINOR', test_minor_value):
         with mock.patch('googleads.common._PY_VERSION_MICRO', test_micro_value):
           with mock.patch('googleads.common._logger') as mock_logger:
-            with mock.patch(
-                'googleads.common.open', self.fake_open, create=True):
-              googleads.common.LoadFromString(yaml_doc, 'one',
-                                              ['needed', 'keys'], ['other'])
-              mock_logger.warning.assert_called_once_with(
-                  googleads.common._DEPRECATED_VERSION_TEMPLATE,
-                  test_major_value, test_minor_value, test_micro_value)
+            googleads.common.CommonClient()
+            mock_logger.warning.assert_called_once_with(
+                googleads.common._DEPRECATED_VERSION_TEMPLATE,
+                test_major_value, test_minor_value, test_micro_value)
 
   def testLoadFromString_emptyYamlString(self):
     yaml_doc = ''

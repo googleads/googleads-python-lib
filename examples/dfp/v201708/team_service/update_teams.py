@@ -37,15 +37,9 @@ def main(client, team_id):
   team_service = client.GetService('TeamService', version='v201708')
 
   # Create a filter statement to select a single team by ID.
-  values = [{
-      'key': 'teamId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': team_id
-      }
-  }]
-  query = 'WHERE id = :teamId'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :teamId')
+               .WithBindVariable('teamId', long(team_id)))
 
   # Get teams by statement.
   response = team_service.getTeamsByStatement(statement.ToStatement())
@@ -66,6 +60,7 @@ def main(client, team_id):
              % (team['id'], team['name']))
   else:
     print 'No teams found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

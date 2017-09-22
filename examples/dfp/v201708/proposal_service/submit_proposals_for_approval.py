@@ -31,17 +31,9 @@ def main(client, proposal_id):
   proposal_service = client.GetService('ProposalService', version='v201708')
 
   # Create query.
-  values = [{
-      'key': 'proposalId',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': proposal_id
-      }
-  }]
-  query = 'WHERE id = :proposalId'
-
-  # Create a filter statement.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :proposalId')
+               .WithBindVariable('proposalId', proposal_id))
   proposals_approved = 0
 
   # Get proposals by statement.
@@ -67,6 +59,7 @@ def main(client, proposal_id):
     print '\nNumber of proposals approved: %s' % proposals_approved
   else:
     print '\nNo proposals were approved.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

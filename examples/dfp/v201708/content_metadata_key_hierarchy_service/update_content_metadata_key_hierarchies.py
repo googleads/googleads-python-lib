@@ -45,16 +45,12 @@ def main(client, content_metadata_key_hierarchy_id, custom_targeting_key_id):
       'ContentMetadataKeyHierarchyService', version='v201708')
 
   # Create a query to select a single content metadata key hierarchy.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': content_metadata_key_hierarchy_id
-      }
-  }]
 
-  query = 'WHERE id = :id ORDER BY id ASC'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .OrderBy('id', ascending=True)
+               .WithBindVariable('id', long(content_metadata_key_hierarchy_id))
+               .Limit(1))
 
   # Get a single content metadata key hierarchy by statement.
   response = (content_metadata_key_hierarchy_service
@@ -89,6 +85,7 @@ def main(client, content_metadata_key_hierarchy_id, custom_targeting_key_id):
 
   else:
     print 'No content metadata key hierarchies were found'
+
 
 if __name__ == '__main__':
   # Initialize client object.

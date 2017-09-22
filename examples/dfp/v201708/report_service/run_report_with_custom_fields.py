@@ -33,17 +33,9 @@ def main(client, order_id):
   report_downloader = client.GetDataDownloader(version='v201708')
 
   # Filter for line items of a given order.
-  values = [{
-      'key': 'orderId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': order_id
-      }
-  }]
-  query = 'WHERE orderId = :orderId'
-
-  # Create a filter statement.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('orderId = :orderId')
+               .WithBindVariable('orderId', long(order_id)))
 
   # Collect all line item custom field IDs for an order.
   custom_field_ids = set()
@@ -62,14 +54,16 @@ def main(client, order_id):
     else:
       break
 
-  # Create statement object to filter for an order.
-  filter_statement = {'query': query, 'values': values}
+  # Modify statement for reports
+  statement.limit = None
+  statement.offset = None
+  statement.Where('ORDER_ID = :orderId')
 
   # Create report job.
   report_job = {
       'reportQuery': {
           'dimensions': ['LINE_ITEM_ID', 'LINE_ITEM_NAME'],
-          'statement': filter_statement,
+          'statement': statement.ToStatement(),
           'columns': ['AD_SERVER_IMPRESSIONS'],
           'dateRangeType': 'LAST_MONTH',
           'customFieldIds': list(custom_field_ids)

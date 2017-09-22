@@ -32,17 +32,9 @@ def main(client, label_id):
   label_service = client.GetService('LabelService', version='v201708')
 
   # Create a statement to select only active labels.
-  values = [
-      {
-          'key': 'labelId',
-          'value': {
-              'xsi_type': 'NumberValue',
-              'value': label_id
-          }
-      }
-  ]
-  query = 'WHERE id = :labelId'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :labelId')
+               .WithBindVariable('labelId', long(label_id)))
 
   # Get labels by filter.
   response = label_service.getLabelsByStatement(statement.ToStatement())
@@ -62,6 +54,7 @@ def main(client, label_id):
              % (label['id'], label['name']))
   else:
     print 'No labels found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

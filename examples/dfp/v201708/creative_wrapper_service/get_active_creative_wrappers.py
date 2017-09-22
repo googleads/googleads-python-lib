@@ -24,16 +24,10 @@ def main(client):
   # Initialize appropriate service.
   creative_wrapper_service = client.GetService(
       'CreativeWrapperService', version='v201708')
-  query = 'WHERE status = :status'
-  values = [
-      {'key': 'status',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'ACTIVE'
-       }},
-  ]
   # Create a statement to select creative wrappers.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('status = :status')
+               .WithBindVariable('status', 'ACTIVE'))
 
   # Retrieve a small amount of creative wrappers at a time, paging
   # through until all creative wrappers have been retrieved.

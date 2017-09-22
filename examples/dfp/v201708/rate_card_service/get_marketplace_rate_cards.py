@@ -24,16 +24,10 @@ from googleads import dfp
 def main(client):
   # Initialize appropriate service.
   rate_card_service = client.GetService('RateCardService', version='v201708')
-  query = 'WHERE forMarketplace = :forMarketplace'
-  values = [
-      {'key': 'forMarketplace',
-       'value': {
-           'xsi_type': 'BooleanValue',
-           'value': 'true'
-       }},
-  ]
   # Create a statement to select rate cards.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('forMarketplace = :forMarketplace')
+               .WithBindVariable('forMarketplace', True))
 
   # Retrieve a small amount of rate cards at a time, paging
   # through until all rate cards have been retrieved.

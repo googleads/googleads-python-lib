@@ -26,16 +26,10 @@ def main(client, currency_code):
   # Initialize appropriate service.
   exchange_rate_service = client.GetService(
       'ExchangeRateService', version='v201708')
-  query = 'WHERE currencyCode = :currencyCode'
-  values = [
-      {'key': 'currencyCode',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': currency_code
-       }},
-  ]
   # Create a statement to select exchange rates.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('currencyCode = :currencyCode')
+               .WithBindVariable('currencyCode', currency_code))
 
   # Retrieve a small amount of exchange rates at a time, paging
   # through until all exchange rates have been retrieved.

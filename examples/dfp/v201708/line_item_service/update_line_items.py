@@ -32,22 +32,13 @@ def main(client, order_id):
   line_item_service = client.GetService('LineItemService', version='v201708')
 
   # Create statement object to only select line items with even delivery rates.
-  values = [{
-      'key': 'deliveryRateType',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': 'EVENLY'
-      }
-  }, {
-      'key': 'orderId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': order_id
-      }
-  }]
 
-  query = 'WHERE deliveryRateType = :deliveryRateType and orderId = :orderId'
-  statement = dfp.FilterStatement(query, values, 500)
+  statement = (dfp.StatementBuilder()
+               .Where(('deliveryRateType = :deliveryRateType AND '
+                       'orderId = :orderId'))
+               .WithBindVariable('orderId', long(order_id))
+               .WithBindVariable('deliveryRateType', 'EVENLY')
+               .Limit(500))
 
   # Get line items by statement.
   response = line_item_service.getLineItemsByStatement(
@@ -75,6 +66,7 @@ def main(client, order_id):
       print 'No line items were updated.'
   else:
     print 'No line items found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

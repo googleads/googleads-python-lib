@@ -24,16 +24,10 @@ def main(client):
   # Initialize appropriate service.
   product_template_service = client.GetService(
       'ProductTemplateService', version='v201708')
-  query = 'WHERE lineItemType = :lineItemType'
-  values = [
-      {'key': 'lineItemType',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'SPONSORSHIP'
-       }},
-  ]
   # Create a statement to select product templates.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('lineItemType = :lineItemType')
+               .WithBindVariable('lineItemType', 'SPONSORSHIP'))
 
   # Retrieve a small amount of product templates at a time, paging
   # through until all product templates have been retrieved.

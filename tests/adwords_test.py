@@ -1774,6 +1774,7 @@ class ReportDownloaderTest(unittest.TestCase):
     report_contents = io.StringIO() if PYTHON2 else io.BytesIO()
     report_contents.write(report_data if PYTHON2 else bytes(report_data,
                                                             'utf-8'))
+    logger_request_summary_template = 'Request Summary: %s'
     report_contents.seek(0)
     fake_response = mock.Mock()
     fake_response.read = report_contents.read
@@ -1783,30 +1784,40 @@ class ReportDownloaderTest(unittest.TestCase):
 
     self.marshaller.process.return_value = serialized_report
 
-    request = mock.patch(URL_REQUEST_PATH + '.Request')
-    logger = mock.patch('googleads.adwords._report_logger')
-
     with mock.patch('suds.mx.Content') as mock_content:
-      with request as mock_request, logger as mock_logger:
-        mock_logger.isEnabledFor.return_value = True
-        mock_request_instance = mock.Mock()
-        mock_request.return_value = mock_request_instance
-        mock_request_instance.get_full_url.return_value = 'https://google.com/'
-        mock_request_instance.headers = {}
-        self.opener.open.side_effect = error
+      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+        with mock.patch('googleads.adwords._report_logger') as mock_logger:
+          with mock.patch('googleads.adwords.ReportDownloader'
+                          '._ExtractRequestSummaryFields') as mock_extract_fds:
+            mock_logger.isEnabledFor.return_value = True
+            mock_extract_fds_return_value = mock.Mock()
+            mock_extract_fds.return_value = mock_extract_fds_return_value
+            mock_request_instance = mock.Mock()
+            mock_request.return_value = mock_request_instance
+            mock_request_instance.get_full_url.return_value = (
+                'https://google.com/')
+            mock_request_instance.headers = {}
+            self.opener.open.side_effect = error
 
-        with self.assertRaises(googleads.errors.AdWordsReportError) as ex:
-          self.report_downloader.DownloadReport(report_definition, output_file)
-        self.assertEqual(ex.exception.content, report_data)
+            try:
+              self.report_downloader.DownloadReport(
+                  report_definition, output_file)
+            except googleads.errors.AdWordsReportError as ex:
+              mock_extract_fds.assert_called_once_with(
+                  mock_request_instance, error=ex)
+              mock_logger.warning.assert_called_once_with(
+                  logger_request_summary_template,
+                  mock_extract_fds_return_value)
 
-        mock_request.assert_called_once_with(
-            ('https://adwords.google.com/api/adwords/reportdownload/%s'
-             % self.version), post_body, headers)
-        self.opener.open.assert_called_once_with(mock_request.return_value)
-        self.marshaller.process.assert_called_once_with(
-            mock_content.return_value)
-        self.assertEqual('', output_file.getvalue())
-        self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
+            mock_request.assert_called_once_with(
+                ('https://adwords.google.com/api/adwords/reportdownload/%s'
+                 % self.version), post_body, headers)
+            self.opener.open.assert_called_once_with(mock_request.return_value)
+            self.marshaller.process.assert_called_once_with(
+                mock_content.return_value)
+            self.assertEqual('', output_file.getvalue())
+            h_handler = self.header_handler
+            h_handler.GetReportDownloadHeaders.assert_called_once_with()
 
   def testDownloadReportWithAwql(self):
     output_file = io.StringIO()

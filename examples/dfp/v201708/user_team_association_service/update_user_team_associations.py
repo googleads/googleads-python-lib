@@ -40,17 +40,9 @@ def main(client, user_id):
       'UserTeamAssociationService', version='v201708')
 
   # Create filter text to select user team associations by the user ID.
-  values = [{
-      'key': 'userId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': user_id
-      }
-  }]
-  query = 'WHERE userId = :userId'
-
-  # Create a filter statement.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('userId = :userId')
+               .WithBindVariable('userId', long(user_id)))
 
   # Get user team associations by statement.
   response = user_team_association_service.getUserTeamAssociationsByStatement(
@@ -78,6 +70,7 @@ def main(client, user_id):
       print 'No user team associations were updated.'
   else:
     print 'No user team associations found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns0="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="https://adwords.google.com/api/adwords/cm/v201509" xmlns:tns="https://adwords.google.com/api/adwords/cm/v201509" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <ns0:Quotes>
+     <ns1:Quote>Die monster. You don't belong in this world!</ns1:Quote>
+   </ns0:Quotes>
+   <ns0:Quotes>
+     <ns1:Quote>What is a man? A miserable little pile of secrets. But enough talk... Have at you!</ns1:Quote>
+   </ns0:Quotes>
+</SOAP-ENV:Envelope>

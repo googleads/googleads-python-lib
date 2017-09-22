@@ -66,7 +66,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '7.0.0'
+VERSION = '8.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
@@ -128,6 +128,26 @@ def GenerateLibSig(short_name):
     return ' (%s, %s, %s)' % (short_name, _COMMON_LIB_SIG, _PYTHON_VERSION)
 
 
+class CommonClient(object):
+  """Contains shared startup code between DFP and AdWords clients."""
+
+  def __init__(self):
+    # Warn users on deprecated Python versions on initialization.
+    if _PY_VERSION_MAJOR == 2:
+      if _PY_VERSION_MINOR == 7 and _PY_VERSION_MICRO < 9:
+        _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
+                        _PY_VERSION_MINOR, _PY_VERSION_MICRO)
+      elif _PY_VERSION_MINOR < 7:
+        _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
+                        _PY_VERSION_MINOR, _PY_VERSION_MICRO)
+
+    # Warn users about using non-utf8 encoding
+    _, encoding = locale.getdefaultlocale()
+    if encoding is None or encoding.lower() != 'utf-8':
+      _logger.warn('Your default encoding, %s, is not UTF-8. Please run this'
+                   ' script with UTF-8 encoding to avoid errors.', encoding)
+
+
 def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
                    optional_product_values):
   """Loads the data necessary for instantiating a client from file storage.
@@ -160,21 +180,6 @@ def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
   logging_config = data.get(_LOGGING_KEY)
   if logging_config:
     logging.config.dictConfig(logging_config)
-
-  # Warn users on deprecated Python versions on initialization.
-  if _PY_VERSION_MAJOR == 2:
-    if _PY_VERSION_MINOR == 7 and _PY_VERSION_MICRO < 9:
-      _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
-                      _PY_VERSION_MINOR, _PY_VERSION_MICRO)
-    elif _PY_VERSION_MINOR < 7:
-      _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
-                      _PY_VERSION_MINOR, _PY_VERSION_MICRO)
-
-  # Warn users about using non-utf8 encoding
-  _, encoding = locale.getdefaultlocale()
-  if encoding is None or encoding.lower() != 'utf-8':
-    _logger.warn('Your default encoding, %s, is not UTF-8. Please run this'
-                 ' script with UTF-8 encoding to avoid errors.', encoding)
 
   try:
     product_data = data[product_yaml_key]
@@ -751,7 +756,7 @@ class SudsServiceProxy(object):
           _logger.warning('Response summary - %s',
                           _ExtractResponseSummaryFields(e.document))
 
-        _logger.info('SOAP response:\n%s', e.document)
+        _logger.info('SOAP response:\n%s', e.document.str())
 
         if not hasattr(e.fault, 'detail'):
           raise

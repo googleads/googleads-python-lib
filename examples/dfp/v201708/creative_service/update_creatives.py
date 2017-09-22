@@ -37,21 +37,11 @@ def main(client, image_creative_id):
   creative_service = client.GetService('CreativeService', version='v201708')
 
   # Create statement object to get all image creatives.
-  values = [{
-      'key': 'type',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': 'ImageCreative'
-      }
-  }, {
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': image_creative_id
-      }
-  }]
-  query = 'WHERE creativeType = :type AND id = :id'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('creativeType = :type AND id = :id')
+               .WithBindVariable('type', 'ImageCreative')
+               .WithBindVariable('id', long(image_creative_id))
+               .Limit(1))
 
   # Get creatives by statement.
   response = creative_service.getCreativesByStatement(
@@ -73,6 +63,7 @@ def main(client, image_creative_id):
              'updated.' % (creative['id'], creative['destinationUrl']))
   else:
     print 'No creatives found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

@@ -26,16 +26,10 @@ def main(client, product_template_id):
   # Initialize appropriate service.
   product_service = client.GetService('ProductService', version='v201708')
 
-  query = 'WHERE productTemplateId = :productTemplateId'
-  values = [
-      {'key': 'productTemplateId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': product_template_id
-       }},
-  ]
   # Create a statement to select products.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('productTemplateId = :productTemplateId')
+               .WithBindVariable('productTemplateId', product_template_id))
 
   # Retrieve a small amount of products at a time, paging
   # through until all products have been retrieved.

@@ -39,15 +39,10 @@ def main(client, creative_wrapper_id):
                                                version='v201708')
 
   # Create statement to get a creative wrapper by ID.
-  values = [{
-      'key': 'creativeWrapperId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': creative_wrapper_id
-      }
-  }]
-  query = 'WHERE id = :creativeWrapperId'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :creativeWrapperId')
+               .WithBindVariable('creativeWrapperId',
+                                 long(creative_wrapper_id)))
 
   # Get creative wrappers.
   response = creative_wrapper_service.getCreativeWrappersByStatement(
@@ -70,6 +65,7 @@ def main(client, creative_wrapper_id):
                                  creative_wrapper['ordering']))
   else:
     print 'No creative wrappers found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

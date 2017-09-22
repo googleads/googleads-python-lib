@@ -25,16 +25,10 @@ EMAIL_ADDRESS = 'INSERT_EMAIL_ADDRESS_HERE'
 def main(client, email_address):
   # Initialize appropriate service.
   user_service = client.GetService('UserService', version='v201708')
-  query = 'WHERE email = :email'
-  values = [
-      {'key': 'email',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': email_address
-       }},
-  ]
   # Create a statement to select users.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('email = :email')
+               .WithBindVariable('email', email_address))
 
   # Retrieve a small amount of users at a time, paging
   # through until all users have been retrieved.

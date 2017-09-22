@@ -38,15 +38,10 @@ def main(client, company_id):
   company_service = client.GetService('CompanyService', version='v201708')
 
   # Create statement object to only select a single company by ID.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': company_id
-      }
-  }]
-  query = 'WHERE id = :id'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .WithBindVariable('id', long(company_id))
+               .Limit(1))
 
   # Get companies by statement.
   response = company_service.getCompaniesByStatement(
@@ -67,6 +62,7 @@ def main(client, company_id):
              % (company['id'], company['name'], company['comment']))
   else:
     print 'No companies found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

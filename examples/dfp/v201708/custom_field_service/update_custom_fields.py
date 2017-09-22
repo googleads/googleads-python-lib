@@ -39,15 +39,9 @@ def main(client, custom_field_id):
       'CustomFieldService', version='v201708')
 
   # Create statement to get a custom field.
-  values = [{
-      'key': 'customFieldId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': custom_field_id
-      }
-  }]
-  query = 'WHERE id = :customFieldId'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :customFieldId')
+               .WithBindVariable('customFieldId', long(custom_field_id)))
 
   # Get custom field.
   custom_fields = custom_field_service.getCustomsFieldByStatement(
@@ -68,6 +62,7 @@ def main(client, custom_field_id):
                 custom_field['description']))
   else:
     print 'No custom fields found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

@@ -37,23 +37,10 @@ def main(client):
 
   # Create statement to select only active custom fields that apply to
   # line items.
-  values = [
-      {
-          'key': 'entityType',
-          'value': {
-              'xsi_type': 'TextValue',
-              'value': 'LINE_ITEM'
-          }
-      }, {
-          'key': 'isActive',
-          'value': {
-              'xsi_type': 'BooleanValue',
-              'value': 'true'
-          }
-      }
-  ]
-  query = 'WHERE entityType = :entityType and isActive = :isActive'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('entityType = :entityType and isActive = :isActive')
+               .WithBindVariable('entityType', 'LINE_ITEM')
+               .WithBindVariable('isActive', True))
 
   custom_fields_deactivated = 0
 
@@ -78,6 +65,7 @@ def main(client):
     print 'Number of custom fields deactivated: %s' % custom_fields_deactivated
   else:
     print 'No custom fields were deactivated.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

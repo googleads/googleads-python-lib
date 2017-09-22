@@ -136,7 +136,7 @@ _SERVICE_MAP = {
 }
 
 
-class DfpClient(object):
+class DfpClient(googleads.common.CommonClient):
   """A central location to set headers and create web service clients.
 
   Attributes:
@@ -227,6 +227,8 @@ class DfpClient(object):
         of the SOAP response. If True, the SOAP response will use gzip
         compression, and will be decompressed for you automatically.
     """
+    super(DfpClient, self).__init__()
+
     if not application_name or (DEFAULT_APPLICATION_NAME in application_name):
       raise googleads.errors.GoogleAdsValueError(
           'Application name must be set and not contain the default [%s]' %

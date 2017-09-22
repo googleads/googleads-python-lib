@@ -40,17 +40,10 @@ def main(client, activity_group_id, advertiser_company_id):
                                              version='v201708')
 
   # Create statement object to select a single activity groups by ID.
-  values = [{
-      'key': 'activityGroupId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': activity_group_id
-      }
-  }]
-  query = 'WHERE id = :activityGroupId'
-
-  # Create a filter statement.
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :activityGroupId')
+               .WithBindVariable('activityGroupId', long(activity_group_id))
+               .Limit(1))
 
   # Get activity groups by statement.
   response = activity_group_service.getActivityGroupsByStatement(
@@ -69,6 +62,7 @@ def main(client, activity_group_id, advertiser_company_id):
              % (activity_group['id'], activity_group['name']))
   else:
     print 'No activity groups found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

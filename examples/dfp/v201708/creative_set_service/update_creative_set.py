@@ -40,15 +40,9 @@ def main(client, creative_set_id, companion_creative_id):
                                            version='v201708')
 
   # Create statement to select a single creative set by ID.
-  values = [{
-      'key': 'creativeSetId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': creative_set_id
-      }
-  }]
-  query = 'WHERE id = :creativeSetId'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :creativeSetId')
+               .WithBindVariable('creativeSetId', long(creative_set_id)))
 
   # Get creative set.
   response = creative_set_service.getCreativeSetsByStatement(
@@ -71,6 +65,7 @@ def main(client, creative_set_id, companion_creative_id):
                 ','.join(creative_set['companionCreativeIds'])))
   else:
     print 'No creative sets found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

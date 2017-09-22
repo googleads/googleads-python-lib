@@ -33,50 +33,21 @@ def main(client):
   # Initialize appropriate service.
   pql_service = client.GetService('PublisherQueryLanguageService', 'v201708')
 
-  end_date = date.today()
+  end_date = datetime.now(tz=pytz.timezone('America/New_York'))
   start_date = end_date - timedelta(days=1)
-  initial_query = (
-      'SELECT Id, ChangeDateTime, EntityId, EntityType, Operation, UserId '
-      'FROM Change_History '
-      'WHERE ChangeDateTime > :startDateTime '
-      'AND ChangeDateTime < :endDateTime '
-      'ORDER BY ChangeDateTime DESC')
-  pagination_query = (
-      'SELECT Id, ChangeDateTime, EntityId, EntityType, Operation, UserId '
-      'FROM Change_History '
-      'WHERE Id < :id '
-      'AND ChangeDateTime > :startDateTime AND ChangeDateTime < :endDateTime '
-      'ORDER BY ChangeDateTime DESC')
-  values = [
-      {
-          'key': 'startDateTime',
-          'value': {
-              'xsi_type': 'DateTimeValue',
-              'value': {
-                  'date': {
-                      'year': start_date.year,
-                      'month': start_date.month,
-                      'day': start_date.day
-                  }
-              }
-          }
-      },
-      {
-          'key': 'endDateTime',
-          'value': {
-              'xsi_type': 'DateTimeValue',
-              'value': {
-                  'date': {
-                      'year': end_date.year,
-                      'month': end_date.month,
-                      'day': end_date.day
-                  }
-              }
-          }
-      }
-  ]
+  initial_query = ('ChangeDateTime > :startDateTime '
+                   'AND ChangeDateTime < :endDateTime')
+  pagination_query = 'Id < :id AND ' + initial_query
 
-  statement = dfp.FilterStatement(initial_query, values)
+  statement = (dfp.StatementBuilder()
+               .Select(('Id, ChangeDateTime, EntityId, EntityType, '
+                        'Operation, UserId'))
+               .From('Change_History')
+               .Where(initial_query)
+               .OrderBy('ChangeDateTime', ascending=False)
+               .WithBindVariable('startDateTime', start_date)
+               .WithBindVariable('endDateTime', end_date))
+
   keep_iterating = True
   i = 0
   total_rows = []
@@ -94,8 +65,11 @@ def main(client):
       last_row = rows[-1]
       last_id = last_row['values'][0]['value']
       i += 1
-      statement = UpdateFilterStatement(
-          statement, pagination_query, values, last_id)
+
+      # Update the statement using the earliest row in the previous result.
+      statement.Where(pagination_query)
+      statement.WithBindVariable('id', last_id)
+
       print ('%d) %d changes prior to ID "%s" were found.\n'
              % (i, rows_length, last_id))
 
@@ -107,34 +81,6 @@ def main(client):
   # Print out every row
   for row in total_rows:
     print ConvertValueForCsv(row)
-
-
-def UpdateFilterStatement(statement, query, values, last_id):
-  """Updates the FilterStatement in order to page through results.
-
-  Args:
-    statement: an instantiated FilterStatement.
-    query: a str query that will be used to update the FilterStatement.
-    values: a list of bind variables to be updated.
-    last_id: a str representing the earliest change ID in a result set.
-
-  Returns:
-    FilterStatement the updated statement.
-  """
-  # Use the earliest change ID in the result set to page.
-  updated_values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': last_id
-      }
-  }]
-  updated_values.extend(values)
-
-  statement.where_clause = query
-  statement.values = updated_values
-
-  return statement
 
 
 def ConvertValueForCsv(pql_value):

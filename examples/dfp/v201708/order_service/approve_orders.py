@@ -30,19 +30,12 @@ def main(client):
   # Initialize appropriate service.
   order_service = client.GetService('OrderService', version='v201708')
 
-  # Create query.
-  values = [{
-      'key': 'today',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': datetime.date.today().strftime('%Y-%m-%dT%H:%M:%S')
-      }
-  }]
-  query = ('WHERE status in (\'DRAFT\', \'PENDING_APPROVAL\')'
-           ' AND endDateTime >= :today AND isArchived = FALSE')
-
   # Create a filter statement.
-  statement = dfp.FilterStatement(query, values)
+  today = datetime.date.today()
+  statement = (dfp.StatementBuilder()
+               .Where(('status in (\'DRAFT\', \'PENDING_APPROVAL\') '
+                       'AND endDateTime >= :today AND isArchived = FALSE'))
+               .WithBindVariable('today', today))
   orders_approved = 0
 
   # Get orders by statement.

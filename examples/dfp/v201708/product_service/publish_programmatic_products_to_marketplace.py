@@ -30,15 +30,10 @@ def main(client, product_id):
   product_service = client.GetService('ProductService', version='v201708')
 
   # Create query.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': product_id
-      }
-  }]
-  query = 'WHERE id = :id'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .WithBindVariable('id', long(product_id))
+               .Limit(1))
 
   products_published = 0
 

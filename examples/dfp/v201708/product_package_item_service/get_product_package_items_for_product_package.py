@@ -26,16 +26,10 @@ def main(client, product_package_id):
   # Initialize appropriate service.
   product_package_item_service = client.GetService(
       'ProductPackageItemService', version='v201708')
-  query = 'WHERE productPackageId = :productPackageId'
-  values = [
-      {'key': 'productPackageId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': product_package_id
-       }},
-  ]
   # Create a statement to select product package items.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('productPackageId = :productPackageId')
+               .WithBindVariable('productPackageId', product_package_id))
 
   # Retrieve a small amount of product package items at a time, paging
   # through until all product package items have been retrieved.

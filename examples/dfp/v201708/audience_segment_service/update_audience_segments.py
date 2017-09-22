@@ -32,21 +32,12 @@ def main(client, audience_segment_id):
       'AudienceSegmentService', version='v201708')
 
   # Create statement object to get the specified first party audience segment.
-  values = (
-      [{'key': 'type',
-        'value': {
-            'xsi_type': 'TextValue',
-            'value': 'FIRST_PARTY'
-            }
-       },
-       {'key': 'audience_segment_id',
-        'value': {
-            'xsi_type': 'NumberValue',
-            'value': audience_segment_id
-            }
-       }])
-  query = 'WHERE Type = :type AND Id = :audience_segment_id'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('Type = :type AND Id = :audience_segment_id')
+               .WithBindVariable('audience_segment_id',
+                                 long(audience_segment_id))
+               .WithBindVariable('type', 'FIRST_PARTY')
+               .Limit(1))
 
   # Get audience segments by statement.
   response = audience_segment_service.getAudienceSegmentsByStatement(

@@ -25,16 +25,10 @@ RATE_CARD_ID = 'INSERT_RATE_CARD_ID_HERE'
 def main(client, rate_card_id):
   # Initialize appropriate service.
   base_rate_service = client.GetService('BaseRateService', version='v201708')
-  query = 'WHERE rateCardId = :rateCardId'
-  values = [
-      {'key': 'rateCardId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': rate_card_id
-       }},
-  ]
   # Create a statement to select base rates.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('rateCardId = :rateCardId')
+               .WithBindVariable('rateCardId', rate_card_id))
 
   # Retrieve a small amount of base rates at a time, paging
   # through until all base rates have been retrieved.

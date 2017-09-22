@@ -38,15 +38,10 @@ def main(client, activity_id):
   activity_service = client.GetService('ActivityService', version='v201708')
 
   # Create statement object to select one activity by ID to update.
-  values = [{
-      'key': 'activityId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': activity_id
-      }
-  }]
-  query = 'WHERE id = :activityId'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :activityId')
+               .WithBindVariable('activityId', long(activity_id))
+               .Limit(1))
 
   # Get activities by statement.
   response = activity_service.getActivitiesByStatement(
@@ -65,6 +60,7 @@ def main(client, activity_id):
              % (updated_activity['id'], updated_activity['name']))
   else:
     print 'No activities found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

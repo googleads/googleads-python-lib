@@ -21,22 +21,20 @@ from datetime import datetime
 from datetime import timedelta
 
 from googleads import dfp
+import pytz
 
 
 def main(client):
   # Initialize appropriate service.
   line_item_service = client.GetService('LineItemService', version='v201708')
-  query = 'WHERE lastModifiedDateTime >= :lastModifiedDateTime'
-  values = [
-      {'key': 'lastModifiedDateTime',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': (datetime.now() - timedelta(days=1))
-                    .strftime('%Y-%m-%dT%H:%M:%S')
-       }},
-  ]
+
+  last_modified = (datetime.now(tz=pytz.timezone('America/New_York'))
+                   - timedelta(days=1))
+
   # Create a statement to select line items.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('lastModifiedDateTime >= :lastModifiedDateTime')
+               .WithBindVariable('lastModifiedDateTime', last_modified))
 
   # Retrieve a small amount of line items at a time, paging
   # through until all line items have been retrieved.

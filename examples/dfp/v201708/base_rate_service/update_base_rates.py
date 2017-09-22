@@ -32,15 +32,11 @@ def main(client, base_rate_id):
   base_rate_service = client.GetService('BaseRateService', version='v201708')
 
   # Create a filter statement for base rates for a single rate card.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': base_rate_id
-      }
-  }]
-  query = 'where id = :id ORDER BY id ASC'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .OrderBy('id', ascending=True)
+               .Limit(1)
+               .WithBindVariable('id', long(base_rate_id)))
 
   # Get single base rate by statement.
   response = base_rate_service.getBaseRatesByStatement(

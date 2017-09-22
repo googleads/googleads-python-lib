@@ -38,15 +38,9 @@ def main(client, key_name):
   custom_targeting_service = client.GetService(
       'CustomTargetingService', version='v201708')
 
-  values = [{
-      'key': 'name',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': key_name
-      }
-  }]
-  query = 'WHERE name = :name'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('name = :name')
+               .WithBindVariable('name', key_name))
 
   deleted_custom_targeting_keys = 0
 
@@ -75,6 +69,7 @@ def main(client, key_name):
            % deleted_custom_targeting_keys)
   else:
     print 'No custom targeting keys were deleted.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

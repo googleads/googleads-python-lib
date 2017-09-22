@@ -32,15 +32,10 @@ def main(client, product_id):
   product_service = client.GetService('ProductService', version='v201708')
 
   # Create statement object to select a single product by an ID.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': product_id
-      }
-  }]
-  query = 'WHERE id = :id'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .WithBindVariable('id', long(product_id))
+               .Limit(1))
 
   # Get products by statement.
   response = product_service.getProductsByStatement(statement.ToStatement())
@@ -65,6 +60,7 @@ def main(client, product_id):
       print 'No products were updated.'
   else:
     print 'No products found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.
