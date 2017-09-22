@@ -1661,11 +1661,13 @@ class ReportDownloader(object):
                              response.code, response.msg)
       return response
     except urllib2.HTTPError as e:
+      # Content from HTTPError instance can be read only one time.
+      error = self._ExtractError(e)
       if _report_logger.isEnabledFor(logging.WARNING):
         _report_logger.warning(
             'Request Summary: %s', self._ExtractRequestSummaryFields(
-                request, error=e))
-      raise self._ExtractError(e)
+                request, error=error))
+      raise error
 
   def _SanitizeRequestHeaders(self, headers):
     """Removes sensitive data from request headers for use in logging.
@@ -1708,7 +1710,7 @@ class ReportDownloader(object):
     Args:
       request:  a urllib2.Request instance.
       [optional]
-      error: a urllib2.HttpError instance used to retrieve error details.
+      error: a AdWordsReportError instance used to retrieve error details.
 
     Returns:
       A dict containing the fields to be output in the summary logs.
@@ -1728,7 +1730,7 @@ class ReportDownloader(object):
 
     if error:
       summary_fields['isError'] = True
-      summary_fields['errorMessage'] = error.read()
+      summary_fields['errorMessage'] = error.content
     else:
       summary_fields['isError'] = False
 

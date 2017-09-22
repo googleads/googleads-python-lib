@@ -1783,17 +1783,21 @@ class ReportDownloaderTest(unittest.TestCase):
 
     self.marshaller.process.return_value = serialized_report
 
+    request = mock.patch(URL_REQUEST_PATH + '.Request')
+    logger = mock.patch('googleads.adwords._report_logger')
+
     with mock.patch('suds.mx.Content') as mock_content:
-      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+      with request as mock_request, logger as mock_logger:
+        mock_logger.isEnabledFor.return_value = True
         mock_request_instance = mock.Mock()
         mock_request.return_value = mock_request_instance
         mock_request_instance.get_full_url.return_value = 'https://google.com/'
         mock_request_instance.headers = {}
         self.opener.open.side_effect = error
-        self.assertRaises(
-            googleads.errors.AdWordsReportError,
-            self.report_downloader.DownloadReport, report_definition,
-            output_file)
+
+        with self.assertRaises(googleads.errors.AdWordsReportError) as ex:
+          self.report_downloader.DownloadReport(report_definition, output_file)
+        self.assertEqual(ex.exception.content, report_data)
 
         mock_request.assert_called_once_with(
             ('https://adwords.google.com/api/adwords/reportdownload/%s'
