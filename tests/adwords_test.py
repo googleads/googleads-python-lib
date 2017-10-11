@@ -539,6 +539,25 @@ class AdWordsClientTest(unittest.TestCase):
     self.assertEqual(ccid, soap_header.clientCustomerId)
 
 
+class AdWordsClientIntegrationTest(unittest.TestCase):
+  """Integration tests for googleads.adwords.AdWordsClient."""
+
+  def testServiceMap(self):
+    server = googleads.adwords._DEFAULT_ENDPOINT
+    service_map = googleads.adwords._SERVICE_MAP
+    wsdl_url_template = googleads.adwords.AdWordsClient._SOAP_SERVICE_FORMAT
+
+    for version, services in service_map.items():
+      for service, mapping in services.items():
+        wsdl_url = wsdl_url_template % (server, mapping, version, service)
+        try:
+          urllib2.urlopen(wsdl_url)
+        except urllib2.HTTPError:
+          raise ValueError('AdWords API %s does not contain "%s" with mapping '
+                           '"%s". The generated WSDL URL does not exist:\n%s'
+                           % (version, service, mapping, wsdl_url))
+
+
 class BatchJobHelperTest(unittest.TestCase):
 
   """Test suite for BatchJobHelper utility."""

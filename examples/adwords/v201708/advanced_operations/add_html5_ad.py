@@ -101,7 +101,8 @@ def main(client, ad_group_id):
 def GetBase64EncodedHTML5ZipFromUrl(url):
   """Retrieve zip file from the given URL."""
   response = urllib2.urlopen(url)
-  return base64.b64encode(response.read())
+  # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
+  return base64.b64encode(response.read()).decode('utf-8')
 
 
 if __name__ == '__main__':

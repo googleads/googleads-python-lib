@@ -40,7 +40,7 @@ def main(client):
       'rateType': 'CPM',
       'lineItemType': 'STANDARD',
       'priority': 8,
-      'environment': 'BROWSER',
+      'environmentType': 'BROWSER',
       'rate': {
           'currencyCode': 'USD',
           'microAmount': '6000000'
@@ -61,10 +61,10 @@ def main(client):
       ],
       'builtInTargeting': {
           'inventoryTargeting': {
-              'adUnitTargeting': {
+              'targetedAdUnits': {
                   'adUnitId': network_service.getCurrentNetwork()[
                       'effectiveRootAdUnitId'],
-                  'includeDescendents': 'true'
+                  'includeDescendants': 'true'
               }
           }
       },

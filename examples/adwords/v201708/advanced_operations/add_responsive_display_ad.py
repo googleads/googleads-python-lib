@@ -113,7 +113,8 @@ def _CreateImage(media_service, opener, url):
   Returns:
     The image that was successfully uploaded.
   """
-  image_data = base64.b64encode(opener.open(url).read())
+  # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
+  image_data = base64.b64encode(opener.open(url).read()).decode('utf-8')
   image = {
       'type': 'IMAGE',
       'data': image_data,

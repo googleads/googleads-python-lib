@@ -43,7 +43,9 @@ def main(client, ad_group_id):
   # BASE64 encoded form. Here we download a demo image and encode it for this
   # ad.
   opener = urllib2.build_opener(*client.proxy_config.GetHandlers())
-  image_data = base64.b64encode(opener.open('http://goo.gl/9JmyKk').read())
+  # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
+  image_data = (base64.b64encode(opener.open('http://goo.gl/9JmyKk').read())
+                .decode('utf-8'))
 
   # Create the template elements for the ad. You can refer to
   #     https://developers.google.com/adwords/api/docs/appendix/templateads
