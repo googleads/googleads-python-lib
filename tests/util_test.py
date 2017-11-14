@@ -168,22 +168,24 @@ class PatchesTest(unittest.TestCase):
     cs = self.adwords_client_with_compression.GetService('CampaignService')
 
     with mock.patch('suds.transport.http.HttpTransport.u2open') as mock_u2open:
-      with open(os.path.join(
-          test_dir, 'test_data/compact_fault_response_envelope.txt'), 'rb'
-               ) as handler:
-        url = 'https://ads.google.com'
-        code = 500
-        msg = ''
-        hdrs = []
-        mock_u2open.side_effect = urllib2.HTTPError(url, code, msg, hdrs,
-                                                    handler)
-        try:
-          cs.get()
-        except suds.WebFault, e:
-          self.assertEqual(
-              'Unmarshalling Error: For input string: '
-              '"INSERT_ADVERTISER_COMPANY_ID_HERE" ',
-              e.fault.faultstring)
+      with mock.patch('httplib.HTTPMessage') as mock_headers:
+        mock_headers.get.return_value = None
+        with open(os.path.join(
+            test_dir, 'test_data/compact_fault_response_envelope.txt'), 'rb'
+                 ) as handler:
+          url = 'https://ads.google.com'
+          code = 500
+          msg = ''
+          hdrs = mock_headers
+          mock_u2open.side_effect = urllib2.HTTPError(url, code, msg, hdrs,
+                                                      handler)
+          try:
+            cs.get()
+          except suds.WebFault, e:
+            self.assertEqual(
+                'Unmarshalling Error: For input string: '
+                '"INSERT_ADVERTISER_COMPANY_ID_HERE" ',
+                e.fault.faultstring)
 
   def testSingleErrorListIssue90(self):
     """Verifies that issue 90 has been resolved with the patch."""
@@ -281,7 +283,11 @@ class GoogleAdsCommonFilterTest(unittest.TestCase):
   def testFilterAtInfoLevel(self):
     record = mock.Mock()
     record.levelno = logging.INFO
-    record.args = [self.dev_token_template % 'test']
+
+    doc = mock.Mock()
+    doc.str.return_value = self.dev_token_template % 'test'
+
+    record.args = [doc]
     self.filter.filter(record)
     self.assertEqual(
         record.args, (self.dev_token_template % self.redacted_text,))

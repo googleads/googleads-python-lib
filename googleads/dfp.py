@@ -46,27 +46,6 @@ _data_downloader_logger = logging.getLogger(
 
 # A giant dictionary of DFP versions and the services they support.
 _SERVICE_MAP = {
-    'v201611':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
-         'CompanyService', 'ContactService', 'ContentBundleService',
-         'ContentMetadataKeyHierarchyService', 'ContentService',
-         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
-         'CreativeWrapperService', 'CustomFieldService',
-         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
-         'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService',
-         'MobileApplicationService', 'NetworkService', 'OrderService',
-         'PackageService', 'PlacementService', 'PremiumRateService',
-         'ProductService', 'ProductPackageService', 'ProductPackageItemService',
-         'ProductTemplateService', 'ProposalLineItemService', 'ProposalService',
-         'PublisherQueryLanguageService', 'RateCardService',
-         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
-         'ReconciliationLineItemReportService',
-         'ReconciliationReportService', 'ReportService',
-         'SuggestedAdUnitService', 'TeamService', 'UserService',
-         'UserTeamAssociationService', 'WorkflowRequestService'),
     'v201702':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
@@ -120,6 +99,28 @@ _SERVICE_MAP = {
          'CreativeWrapperService', 'CustomFieldService',
          'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
          'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService',
+         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
+         'OrderService', 'PackageService', 'PlacementService',
+         'PremiumRateService', 'ProductService', 'ProductPackageService',
+         'ProductPackageItemService', 'ProductTemplateService',
+         'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationLineItemReportService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201711':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CdnConfigurationService', 'CompanyService', 'ContactService',
+         'ContentBundleService', 'ContentMetadataKeyHierarchyService',
+         'ContentService', 'CreativeService', 'CreativeSetService',
+         'CreativeTemplateService', 'CreativeWrapperService',
+         'CustomFieldService', 'CustomTargetingService', 'ExchangeRateService',
+         'ForecastService', 'InventoryService', 'LabelService',
          'LineItemCreativeAssociationService', 'LineItemService',
          'LineItemTemplateService', 'LiveStreamEventService',
          'MobileApplicationService', 'NativeStyleService', 'NetworkService',
@@ -217,8 +218,8 @@ class DfpClient(googleads.common.CommonClient):
           application
       [optional]
       network_code: A string identifying the network code of the network you are
-          accessing. All requests other than getAllNetworks and getCurrentUser
-          calls require this header to be set.
+          accessing. All requests other than getAllNetworks require this header
+          to be set.
       cache: A subclass of suds.cache.Cache. If not set, this will default to an
           instance of suds.cache.ObjectCache.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
@@ -300,7 +301,7 @@ class DfpClient(googleads.common.CommonClient):
             'versions: %s' % (version, _SERVICE_MAP.keys()))
 
     return googleads.common.SudsServiceProxy(client, self._header_handler,
-                                             _DFPDateTimePacker)
+                                             packer=_DfpPacker)
 
   def GetDataDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
                         server=None):
@@ -362,6 +363,53 @@ class _DfpHeaderHandler(googleads.common.HeaderHandler):
     suds_client.set_options(
         soapheaders=header,
         headers=http_headers)
+
+
+class _DfpPacker(googleads.common.SudsPacker):
+  """A utility applying customized packing logic for DFP."""
+
+  @classmethod
+  def Pack(cls, obj):
+    """Pack the given object using DFP-specific logic.
+
+    Args:
+      obj: an object to be packed for suds using DFP-specific logic, if
+          applicable.
+
+    Returns:
+      The given object packed with DFP-specific logic for suds, if applicable.
+      Otherwise, returns the given object unmodified.
+    """
+    if isinstance(obj, (datetime.datetime, datetime.date)):
+      return cls.DfpDateTimePacker(obj)
+    return obj
+
+  @classmethod
+  def DfpDateTimePacker(cls, value):
+    """Returns dicts formatted for DFP SOAP based on date/datetime.
+
+    Args:
+      value: A date or datetime object to be converted.
+
+    Returns:
+      The value object correctly represented for DFP SOAP.
+    """
+
+    if isinstance(value, datetime.datetime):
+      if value.tzinfo is None:
+        raise googleads.errors.GoogleAdsValueError(
+            'Datetime %s is not timezone aware.' % value
+        )
+
+      return {
+          'date': cls.DfpDateTimePacker(value.date()),
+          'hour': value.hour,
+          'minute': value.minute,
+          'second': value.second,
+          'timeZoneID': value.tzinfo.zone,
+      }
+    elif isinstance(value, datetime.date):
+      return {'year': value.year, 'month': value.month, 'day': value.day}
 
 
 @googleads.common.RegisterUtility('StatementBuilder')
@@ -541,33 +589,6 @@ class StatementBuilder(object):
 
     self._values[key] = value
     return self
-
-
-def _DFPDateTimePacker(value):
-  """Returns dicts formatted for DFP SOAP based on date/datetime.
-
-  Args:
-    value: A date or datetime object to be converted.
-
-  Returns:
-    The value object correctly represented for DFP SOAP.
-  """
-
-  if isinstance(value, datetime.datetime):
-    if value.tzinfo is None:
-      raise googleads.errors.GoogleAdsValueError(
-          'Datetime %s is not timezone aware.' % value
-      )
-
-    return {
-        'date': _DFPDateTimePacker(value.date()),
-        'hour': value.hour,
-        'minute': value.minute,
-        'second': value.second,
-        'timeZoneID': value.tzinfo.zone,
-    }
-  elif isinstance(value, datetime.date):
-    return {'year': value.year, 'month': value.month, 'day': value.day}
 
 
 class PQLHelper(object):
@@ -798,7 +819,8 @@ class DataDownloader(object):
       pql_query: str a statement filter to apply (the query should not include
                  the limit or the offset)
       [optional]
-      values: list dict of bind values to use with the pql_query.
+      values: A dict of python objects or a list of raw SOAP values to bind
+              to the pql_query.
 
     Returns:
       a list of lists with the first being the header row and each subsequent
@@ -816,7 +838,8 @@ class DataDownloader(object):
                  the limit or the offset)
       file_handle: file the file object to write to.
       [optional]
-      values: list dict of bind values to use with the pql_query.
+      values: A dict of python objects or a list of raw SOAP values to bind
+              to the pql_query.
     """
     pql_writer = csv.writer(file_handle, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
@@ -875,8 +898,12 @@ class DataDownloader(object):
                  the limit or the offset)
       output_function: the function to call to output the results (csv or in
                        memory)
-      values: list dict of bind values to use with the pql_query.
+      values: A dict of python objects or a list of raw SOAP values to bind
+              to the pql_query.
     """
+    if isinstance(values, dict):
+      values = PQLHelper.GetQueryValuesFromDict(values)
+
     pql_service = self._GetPqlService()
     current_offset = 0
 

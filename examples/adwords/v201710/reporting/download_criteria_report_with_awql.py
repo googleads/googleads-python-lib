@@ -34,11 +34,14 @@ def main(client):
   report_downloader = client.GetReportDownloader(version='v201710')
 
   # Create report query.
-  report_query = ('SELECT CampaignId, AdGroupId, Id, Criteria, CriteriaType, '
-                  'FinalUrls, Impressions, Clicks, Cost '
-                  'FROM CRITERIA_PERFORMANCE_REPORT '
-                  'WHERE Status IN [ENABLED, PAUSED] '
-                  'DURING LAST_7_DAYS')
+  report_query = (adwords.ReportQueryBuilder()
+                  .Select('CampaignId', 'AdGroupId', 'Id', 'Criteria',
+                          'CriteriaType', 'FinalUrls', 'Impressions', 'Clicks',
+                          'Cost')
+                  .From('CRITERIA_PERFORMANCE_REPORT')
+                  .Where('Status').In('ENABLED', 'PAUSED')
+                  .During('LAST_7_DAYS')
+                  .Build())
 
   # You can provide a file object to write the output to. For this
   # demonstration we use sys.stdout to write the report to the screen.

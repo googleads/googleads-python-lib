@@ -38,17 +38,18 @@ def main(client, ad_group_id):
                                           version='v201710')
 
   # Construct query and get all ads for a given campaign.
-  query = ('SELECT Id, PolicySummary '
-           'WHERE AdGroupId = %s AND CombinedApprovalStatus = DISAPPROVED '
-           'ORDER BY Id' % ad_group_id)
-  more_pages = True
+  query = (adwords.ServiceQueryBuilder()
+           .Select('Id', 'PolicySummary')
+           .Where('AdGroupId').EqualTo(ad_group_id)
+           .Where('CombinedApprovalStatus').EqualTo('DISAPPROVED')
+           .OrderBy('Id')
+           .Limit(0, PAGE_SIZE)
+           .Build())
   disapproved_count = 0
-  offset = 0
 
   # Display results.
-  while more_pages:
-    page = ad_group_ad_service.query(query + ' LIMIT %s, %s' % (
-        offset, PAGE_SIZE))
+  while True:
+    page = ad_group_ad_service.query(query)
 
     if 'entries' in page:
       for ad in page['entries']:
@@ -63,8 +64,8 @@ def main(client, ad_group_id):
               policy_topic_entry['policyTopicId'],
               policy_topic_entry['policyTopicName'])
           # Display the attributes and values that triggered the policy topic.
-          policy_topic_evidences = policy_topic_entry['policyTopicEvidences']
-          if policy_topic_evidences:
+          if ('policyTopicEvidences' in policy_topic_entry
+              and policy_topic_entry['policyTopicEvidences']):
             for evidence in policy_topic_entry['policyTopicEvidences']:
               print ('    evidence type: %s'
                      % evidence['policyTopicEvidenceType'])
@@ -73,8 +74,9 @@ def main(client, ad_group_id):
                 for index, evidence_text in enumerate(evidence_text_list):
                   print '      evidence text[%d]: %s' % (index, evidence_text)
 
-    offset += PAGE_SIZE
-    more_pages = offset < int(page['totalNumEntries'])
+    if not query.HasNext(page):
+      break
+    query.NextPage()
 
   print '%d disapproved ads were found.' % disapproved_count
 

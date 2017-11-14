@@ -15,7 +15,6 @@
 """Common client library functions and classes used by all products."""
 
 
-import datetime
 from functools import wraps
 import inspect
 import locale
@@ -66,7 +65,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '8.1.0'
+VERSION = '9.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
@@ -396,7 +395,7 @@ def _ExtractProxy(proxy_yaml_key, proxy_config_data):
   return proxy
 
 
-def _PackForSuds(obj, factory, datetime_packer=None):
+def _PackForSuds(obj, factory, packer=None):
   """Packs SOAP input into the format we want for suds.
 
   The main goal here is to pack dictionaries with an 'xsi_type' key into
@@ -411,15 +410,17 @@ def _PackForSuds(obj, factory, datetime_packer=None):
         for instances of unpacked dictionaries or lists.
     factory: The suds.client.Factory object which can create instances of the
         classes generated from the WSDL.
-    datetime_packer: A product specific function to unwrap date/datetimes.
+    packer: An optional subclass of googleads.common.SudsPacker that provides
+        customized packing logic.
 
   Returns:
     If the given obj was a dictionary that contained the 'xsi_type' key, this
     will be an instance of a class generated from the WSDL. Otherwise, this will
     be the same data type as the input obj was.
   """
-  if datetime_packer and isinstance(obj, (datetime.datetime, datetime.date)):
-    obj = datetime_packer(obj)
+  if packer:
+    obj = packer.Pack(obj)
+
   if obj in ({}, None):
     # Force suds to serialize empty objects. There are legitimate use cases for
     # this, for example passing in an empty SearchCriteria object to a DFA
@@ -450,16 +451,16 @@ def _PackForSuds(obj, factory, datetime_packer=None):
       for key in obj:
         if key == 'xsi_type': continue
         setattr(new_obj, key, _PackForSuds(obj[key], factory,
-                                           datetime_packer=datetime_packer))
+                                           packer=packer))
     else:
       new_obj = {}
       for key in obj:
         new_obj[key] = _PackForSuds(obj[key], factory,
-                                    datetime_packer=datetime_packer)
+                                    packer=packer)
     return new_obj
   elif isinstance(obj, (list, tuple)):
     return [_PackForSuds(item, factory,
-                         datetime_packer=datetime_packer) for item in obj]
+                         packer=packer) for item in obj]
   else:
     _RecurseOverObject(obj, factory)
     return obj
@@ -694,6 +695,18 @@ class ProxyConfig(object):
       return return_handlers
 
 
+class SudsPacker(object):
+  """A utility class to be passed to _PackForSuds for customized packing.
+
+  A subclass should be used in cases where custom logic is needed to pack a
+  given object in _PackForSuds.
+  """
+
+  @classmethod
+  def Pack(cls, obj):
+    raise NotImplementedError('You must subclass SudsPacker.')
+
+
 class SudsServiceProxy(object):
   """Wraps a suds service object, allowing custom logic to be injected.
 
@@ -708,7 +721,7 @@ class SudsServiceProxy(object):
         the client and its factory,
   """
 
-  def __init__(self, suds_client, header_handler, datetime_packer=None):
+  def __init__(self, suds_client, header_handler, packer=None):
     """Initializes a suds service proxy.
 
     Args:
@@ -717,12 +730,13 @@ class SudsServiceProxy(object):
         object.
       header_handler: A HeaderHandler responsible for setting the SOAP and HTTP
           headers on the service client.
-      datetime_packer: A product specific function to unwrap date/datetimes.
+      packer: An optional subclass of googleads.common.SudsPacker that provides
+        customized packing logic.
     """
     self.suds_client = suds_client
     self._header_handler = header_handler
     self._method_proxies = {}
-    self._datetime_packer = datetime_packer
+    self._packer = packer
 
   def __getattr__(self, attr):
     if attr in self.suds_client.wsdl.services[0].ports[0].methods:
@@ -750,7 +764,7 @@ class SudsServiceProxy(object):
       try:
         return soap_service_method(
             *[_PackForSuds(arg, self.suds_client.factory,
-                           self._datetime_packer) for arg in args])
+                           self._packer) for arg in args])
       except suds.WebFault as e:
         if _logger.isEnabledFor(logging.WARNING):
           _logger.warning('Response summary - %s',

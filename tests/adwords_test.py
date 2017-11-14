@@ -16,8 +16,10 @@
 
 """Unit tests to cover the adwords module."""
 
+import datetime
 import io
 import os
+import re
 import StringIO
 import sys
 import tempfile
@@ -30,6 +32,7 @@ from xml.etree import ElementTree
 import googleads.adwords
 import googleads.common
 import googleads.errors
+import testing
 import mock
 import suds
 
@@ -121,7 +124,7 @@ def GetProxyConfig(http_host=None, http_port=None, https_host=None,
       disable_certificate_validation=disable_certificate_validation)
 
 
-class AdWordsHeaderHandlerTest(unittest.TestCase):
+class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
   """Tests for the googleads.adwords._AdWordsHeaderHandler class."""
 
   def setUp(self):
@@ -407,21 +410,30 @@ class AdWordsClientTest(unittest.TestCase):
     server = 'https://testing.test.com/'
 
     with mock.patch('googleads.common.LoggingMessagePlugin') as mock_plugin:
-      with mock.patch('suds.client.Client') as mock_client:
-        with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
-                       ) as mock_transport:
-          mock_plugin.return_value = mock.Mock()
-          mock_transport.return_value = mock.Mock()
-          client = GetAdWordsClient()
-          suds_service = client.GetService(
-              service, CURRENT_VERSION, server)
+      with mock.patch('googleads.adwords._AdWordsHeaderHandler') as mock_awhh:
+        with mock.patch('suds.client.Client') as mock_client:
+          with mock.patch('googleads.common.'
+                          'SudsServiceProxy') as mock_service_proxy:
+            with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
+                           ) as mock_transport:
+              mock_plugin.return_value = mock.Mock()
+              mock_awhh.return_value = mock.Mock()
+              mock_service_proxy.return_value = mock.Mock()
+              mock_transport.return_value = mock.Mock()
+              client = GetAdWordsClient()
+              suds_service = client.GetService(
+                  service, CURRENT_VERSION, server)
 
-          mock_client.assert_called_once_with(
-              'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
-              % (namespace, CURRENT_VERSION, service),
-              transport=mock_transport.return_value, timeout=3600,
-              plugins=[mock_plugin.return_value])
-      self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+              mock_client.assert_called_once_with(
+                  'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
+                  % (namespace, CURRENT_VERSION, service),
+                  transport=mock_transport.return_value, timeout=3600,
+                  plugins=[mock_plugin.return_value])
+              self.assertEqual(suds_service, mock_service_proxy.return_value)
+              mock_service_proxy.assert_called_once_with(
+                  mock_client.return_value,
+                  mock_awhh.return_value,
+                  packer=googleads.adwords._AdWordsPacker)
 
   def testGetService_successWithFileCache(self):
     service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
@@ -558,7 +570,31 @@ class AdWordsClientIntegrationTest(unittest.TestCase):
                            % (version, service, mapping, wsdl_url))
 
 
-class BatchJobHelperTest(unittest.TestCase):
+class AdWordsPackerTest(unittest.TestCase):
+  """Tests for the googleads.adwords._AdWordsPacker class."""
+
+  def setUp(self):
+    self.packer = googleads.adwords._AdWordsPacker
+
+  def testAdWordsPackerForServiceQuery(self):
+    query = (googleads.adwords.ServiceQueryBuilder()
+             .Select('Id', 'Name', 'Status')
+             .Where('Status').EqualTo('ENABLED')
+             .OrderBy('Name')
+             .Limit(0, 100)
+             .Build())
+
+    query_regex = (r'SELECT (.*) WHERE Status = "ENABLED"'
+                   r' ORDER BY Name ASC LIMIT 0,100')
+
+    self.assertRegexpMatches(self.packer.Pack(query), query_regex)
+
+  def testAdWordsPackerForUnsupportedObjectType(self):
+    obj = object()
+    self.assertEqual(self.packer.Pack(obj), obj)
+
+
+class BatchJobHelperTest(testing.CleanUtilityRegistryTestCase):
 
   """Test suite for BatchJobHelper utility."""
 
@@ -589,7 +625,7 @@ class BatchJobHelperTest(unittest.TestCase):
           mock_open.assert_called_with(mock_request)
 
 
-class BatchJobUploadRequestBuilderTest(unittest.TestCase):
+class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
 
   """Test suite for the BatchJobUploadRequestBuilder."""
 
@@ -1358,7 +1394,7 @@ class BatchJobUploadRequestBuilderTest(unittest.TestCase):
         self.assertTrue(increment == self.request_body_start)
 
 
-class IncrementalUploadHelperTest(unittest.TestCase):
+class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
 
   """Test suite for the IncrementalUploadHelper."""
 
@@ -1459,7 +1495,7 @@ class IncrementalUploadHelperTest(unittest.TestCase):
             self.incremental_uploader.UploadOperations, {})
 
 
-class ResponseParserTest(unittest.TestCase):
+class ResponseParserTest(testing.CleanUtilityRegistryTestCase):
   """Test suite for the ResponseParser."""
 
   def setUp(self):
@@ -1541,7 +1577,7 @@ class ResponseParserTest(unittest.TestCase):
     self.assertTrue(campaign['name'] == name)
 
 
-class ReportDownloaderTest(unittest.TestCase):
+class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
   """Tests for the googleads.adwords.ReportDownloader class."""
 
   def setUp(self):
@@ -1840,7 +1876,10 @@ class ReportDownloaderTest(unittest.TestCase):
 
   def testDownloadReportWithAwql(self):
     output_file = io.StringIO()
-    query = 'SELECT Id FROM Campaign WHERE NAME LIKE \'%Test%\''
+    query = (googleads.adwords.ReportQueryBuilder()
+             .Select('CampaignId').From('CAMPAIGN_PERFORMANCE_REPORT')
+             .Where('CampaignStatus').EqualTo('ENABLED')
+             .Build())
     file_format = 'CSV'
     post_body = urllib.urlencode({'__fmt': file_format, '__rdquery': query})
     if not PYTHON2:
@@ -1998,6 +2037,430 @@ class ReportDownloaderTest(unittest.TestCase):
     dict_headers = self.report_downloader._ExtractResponseHeaders(headers)
 
     self.assertEqual(dict_headers, expected_headers)
+
+
+class QueryBuilderTest(testing.CleanUtilityRegistryTestCase):
+  """Tests for the googleads.adwords._QueryBuilder class."""
+
+  def testSelect(self):
+    with self.assertRaises(NotImplementedError):
+      googleads.adwords._QueryBuilder().Select()
+
+  def testFailUsingCopyConstructor(self):
+    with self.assertRaises(googleads.errors.GoogleAdsValueError):
+      (googleads.adwords
+       ._QueryBuilder('SELECT Id FROM CAMPAIGN_PERFORMANCE_REPORT'))
+
+
+class ReportQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
+  """Tests for the googleads.adwords.ReportQueryBuilder class."""
+
+  def testCopyConstructor(self):
+    # Test using date range.
+    expected_awql = ('SELECT CampaignId, CampaignName FROM'
+                     ' CAMPAIGN_PERFORMANCE_REPORT'
+                     ' WHERE CampaignStatus = "ENABLED" DURING YESTERDAY')
+    previous_query_builder = (googleads.adwords.ReportQueryBuilder()
+                              .Select('CampaignId', 'CampaignName')
+                              .From('CAMPAIGN_PERFORMANCE_REPORT')
+                              .Where('CampaignStatus').EqualTo('ENABLED')
+                              .During('YESTERDAY'))
+    actual_query = (googleads.adwords.ReportQueryBuilder(previous_query_builder)
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+    # Test using start and end dates.
+    expected_awql = ('SELECT CampaignId, CampaignName FROM'
+                     ' CAMPAIGN_PERFORMANCE_REPORT'
+                     ' WHERE CampaignStatus = "ENABLED"'
+                     ' DURING 20170101,20170131')
+    previous_query_builder = (googleads.adwords.ReportQueryBuilder()
+                              .Select('CampaignId', 'CampaignName')
+                              .From('CAMPAIGN_PERFORMANCE_REPORT')
+                              .Where('CampaignStatus').EqualTo('ENABLED')
+                              .During(start_date='20170101',
+                                      end_date='20170131'))
+    actual_query = (googleads.adwords.ReportQueryBuilder(previous_query_builder)
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testFailUsingCopyConstructor(self):
+    builder = googleads.adwords._QueryBuilder()
+    builder.select = 'Id'
+    with self.assertRaises(googleads.errors.GoogleAdsValueError):
+      googleads.adwords.ReportQueryBuilder(builder)
+
+  def testBuild(self):
+    expected_awql = ('SELECT CampaignId, CampaignName FROM'
+                     ' CAMPAIGN_PERFORMANCE_REPORT')
+    actual_query = (googleads.adwords.ReportQueryBuilder()
+                    .Select('CampaignId', 'CampaignName')
+                    .From('CAMPAIGN_PERFORMANCE_REPORT')
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testBuild_stringWhereValue(self):
+    expected_awql = ('SELECT CampaignId, CampaignName FROM'
+                     ' CAMPAIGN_PERFORMANCE_REPORT'
+                     ' WHERE CampaignStatus = "ENABLED" DURING YESTERDAY')
+    actual_query = (googleads.adwords.ReportQueryBuilder()
+                    .Select('CampaignId', 'CampaignName')
+                    .From('CAMPAIGN_PERFORMANCE_REPORT')
+                    .Where('CampaignStatus').EqualTo('ENABLED')
+                    .During('YESTERDAY')
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testBuild_numericWhereValue(self):
+    expected_awql = ('SELECT CampaignId, CampaignName FROM'
+                     ' ADGROUP_PERFORMANCE_REPORT'
+                     ' WHERE AverageCpm >= 5.6 DURING TODAY')
+    actual_query = (googleads.adwords.ReportQueryBuilder()
+                    .Select('CampaignId', 'CampaignName')
+                    .From('ADGROUP_PERFORMANCE_REPORT')
+                    .Where('AverageCpm').GreaterThanOrEqualTo(5.6)
+                    .During('TODAY')
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testBuild_multipleStringWhereValues(self):
+    expected_awql = ('SELECT Id, CampaignId, CampaignName FROM'
+                     ' AD_PERFORMANCE_REPORT'
+                     ' WHERE CampaignName CONTAINS_ALL ["white", "black"]'
+                     ' DURING LAST_WEEK')
+    actual_query = (googleads.adwords.ReportQueryBuilder()
+                    .Select('Id', 'CampaignId', 'CampaignName')
+                    .From('AD_PERFORMANCE_REPORT')
+                    .Where('CampaignName').ContainsAll('white', 'black')
+                    .During('LAST_WEEK')
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testBuild_multipleNumericWhereValues(self):
+    expected_awql = ('SELECT Id, CampaignId, CampaignName FROM'
+                     ' AD_PERFORMANCE_REPORT'
+                     ' WHERE CampaignId IN [1234, 5678] DURING LAST_WEEK')
+    actual_query = (googleads.adwords.ReportQueryBuilder()
+                    .Select('Id', 'CampaignId', 'CampaignName')
+                    .From('AD_PERFORMANCE_REPORT')
+                    .Where('CampaignId').In(1234, 5678)
+                    .During('LAST_WEEK')
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testBuild_multipleWhereConditions(self):
+    expected_awql = ('SELECT CampaignId, CampaignName FROM'
+                     ' ADGROUP_PERFORMANCE_REPORT'
+                     ' WHERE Clicks >= 500 AND CampaignName'
+                     ' CONTAINS_IGNORE_CASE "promotion"'
+                     ' AND AdGroupName STARTS_WITH "adwords_"'
+                     ' AND BiddingStrategyName STARTS_WITH_IGNORE_CASE "europe"'
+                     ' AND CustomerDescriptiveName CONTAINS "goog"'
+                     ' AND CustomerDescriptiveName DOES_NOT_CONTAIN "asia"'
+                     ' AND AccountDescriptiveName DOES_NOT_CONTAIN_IGNORE_CASE'
+                     ' "group 3" AND CampaignStatus != "REMOVED"'
+                     ' AND AdGroupStatus NOT_IN ["REMOVED", "PAUSED"]'
+                     ' AND AdNetworkType1 CONTAINS_ANY ["SEARCH", "DISPLAY"]'
+                     ' AND AdNetworkType2 CONTAINS_NONE'
+                     ' ["YOUTUBE_SEARCH", "UNKNOWN"] AND AverageCpv > 20.7'
+                     ' AND AllConversions < 100.6'
+                     ' DURING 20170601,20170630')
+    actual_query = (googleads.adwords.ReportQueryBuilder()
+                    .Select('CampaignId', 'CampaignName')
+                    .From('ADGROUP_PERFORMANCE_REPORT')
+                    .Where('Clicks').GreaterThanOrEqualTo(500)
+                    .Where('CampaignName').ContainsIgnoreCase('promotion')
+                    .Where('AdGroupName').StartsWith('adwords_')
+                    .Where('BiddingStrategyName').StartsWithIgnoreCase('europe')
+                    .Where('CustomerDescriptiveName').Contains('goog')
+                    .Where('CustomerDescriptiveName').DoesNotContain('asia')
+                    .Where('AccountDescriptiveName').DoesNotContainIgnoreCase(
+                        'group 3')
+                    .Where('CampaignStatus').NotEqualTo('REMOVED')
+                    .Where('AdGroupStatus').NotIn('REMOVED', 'PAUSED')
+                    .Where('AdNetworkType1').ContainsAny('SEARCH', 'DISPLAY')
+                    .Where('AdNetworkType2').ContainsNone('YOUTUBE_SEARCH',
+                                                          'UNKNOWN')
+                    .Where('AverageCpv').GreaterThan(20.7)
+                    .Where('AllConversions').LessThan(100.6)
+                    .During(start_date='20170601', end_date='20170630')
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testBuild_noWhereClause(self):
+    expected_awql = ('SELECT CampaignId, CampaignName FROM'
+                     ' ADGROUP_PERFORMANCE_REPORT DURING TODAY')
+    actual_query = (googleads.adwords.ReportQueryBuilder()
+                    .Select('CampaignId', 'CampaignName')
+                    .From('ADGROUP_PERFORMANCE_REPORT')
+                    .During('TODAY')
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testBuild_noDuringClause(self):
+    expected_awql = ('SELECT CampaignId, CampaignName FROM'
+                     ' ADGROUP_PERFORMANCE_REPORT'
+                     ' WHERE Clicks <= 500')
+    actual_query = (googleads.adwords.ReportQueryBuilder()
+                    .Select('CampaignId', 'CampaignName')
+                    .From('ADGROUP_PERFORMANCE_REPORT')
+                    .Where('Clicks').LessThanOrEqualTo(500)
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testBuild_selectIsNone(self):
+    with self.assertRaises(ValueError):
+      googleads.adwords.ReportQueryBuilder().Build()
+
+  def testBuild_fromIsNone(self):
+    with self.assertRaises(ValueError):
+      googleads.adwords.ReportQueryBuilder().Select('Id').Build()
+
+  def testDuring_usingPythonDateTime(self):
+    expected_awql = ('SELECT CampaignId, CampaignName FROM'
+                     ' CAMPAIGN_PERFORMANCE_REPORT'
+                     ' WHERE CampaignStatus = "ENABLED"'
+                     ' DURING 20170501,20170531')
+    start_date = datetime.date(2017, 5, 1)
+    end_date = start_date + datetime.timedelta(days=30)
+    actual_query = (googleads.adwords.ReportQueryBuilder()
+                    .Select('CampaignId', 'CampaignName')
+                    .From('CAMPAIGN_PERFORMANCE_REPORT')
+                    .Where('CampaignStatus').EqualTo('ENABLED')
+                    .During(start_date=start_date, end_date=end_date)
+                    .Build())
+    self.assertEqual(expected_awql, str(actual_query))
+
+  def testDuring_allParametersNone(self):
+    with self.assertRaises(ValueError):
+      googleads.adwords.ReportQueryBuilder().During()
+
+  def testDuring_allParametersNotNone(self):
+    with self.assertRaises(ValueError):
+      googleads.adwords.ReportQueryBuilder().During('TODAY', '20170101',
+                                                    '20170131')
+
+  def testDuring_startOrEndDateNone(self):
+    with self.assertRaises(ValueError):
+      googleads.adwords.ReportQueryBuilder().During(start_date='20170101')
+    with self.assertRaises(ValueError):
+      googleads.adwords.ReportQueryBuilder().During(end_date='20170131')
+
+
+class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
+  """Tests for the googleads.adwords.ServiceQueryBuilder class."""
+
+  def testCopyConstructor(self):
+    awql_regex = (r'SELECT (.*) WHERE Status = "ENABLED"'
+                  r' ORDER BY Name ASC LIMIT 0,100')
+    selected_fields = ['Id', 'Name']
+    previous_query_builder = (googleads.adwords.ServiceQueryBuilder()
+                              .Select(*selected_fields)
+                              .Where('Status').EqualTo('ENABLED')
+                              .OrderBy('Name')
+                              .Limit(0, 100))
+
+    actual_query = googleads.adwords.ServiceQueryBuilder(
+        previous_query_builder).Build()
+    match = re.match(awql_regex, str(actual_query))
+
+    # The SELECT clause can show fields listed in any orders.
+    self.assertItemsEqual(selected_fields,
+                          [field.strip() for field
+                           in match.group(1).split(',')])
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+  def testFailUsingCopyConstructor(self):
+    builder = googleads.adwords._QueryBuilder()
+    builder.select = 'Id'
+    with self.assertRaises(googleads.errors.GoogleAdsValueError):
+      googleads.adwords.ServiceQueryBuilder(builder)
+
+  def testBuild(self):
+    awql_regex = (r'SELECT (.*) LIMIT 0,100')
+    selected_fields = ['Id', 'Name']
+    actual_query = (googleads.adwords.ServiceQueryBuilder()
+                    .Select(*selected_fields)
+                    .Limit(0, 100)
+                    .Build())
+    match = re.match(awql_regex, str(actual_query))
+
+    # The SELECT clause can show fields listed in any orders.
+    self.assertItemsEqual(selected_fields,
+                          [field.strip() for field
+                           in match.group(1).split(',')])
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+  def testBuild_duplicateSelectedFieldsRetainOnlyUnique(self):
+    awql_regex = (r'SELECT (.*) LIMIT 0,100')
+    selected_fields = ['Id', 'Name', 'Name']
+    actual_query = (googleads.adwords.ServiceQueryBuilder()
+                    .Select(*selected_fields)
+                    .Limit(0, 100)
+                    .Build())
+    match = re.match(awql_regex, str(actual_query))
+
+    # The SELECT clause retains only unique fields.
+    self.assertItemsEqual(set(selected_fields),
+                          [field.strip() for field
+                           in match.group(1).split(',')])
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+  def testBuild_whereConditions(self):
+    awql_regex = (r'SELECT (.*)'
+                  r' WHERE Name CONTAINS_IGNORE_CASE "promotion"'
+                  r' AND Status NOT_IN \["REMOVED", "PAUSED"\]'
+                  r' ORDER BY Name ASC'
+                  r' LIMIT 100,100')
+    selected_fields = ['Id', 'Name', 'Status']
+    actual_query = (googleads.adwords.ServiceQueryBuilder()
+                    .Select(*selected_fields)
+                    .Where('Name').ContainsIgnoreCase('promotion')
+                    .Where('Status').NotIn('REMOVED', 'PAUSED')
+                    .OrderBy('Name')
+                    .Limit(100, 100)
+                    .Build())
+    match = re.match(awql_regex, str(actual_query))
+
+    # The SELECT clause can show fields listed in any orders.
+    self.assertItemsEqual(selected_fields,
+                          [field.strip() for field
+                           in match.group(1).split(',')])
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+  def testBuild_orderByDesc(self):
+    awql_regex = (r'SELECT (.*)'
+                  r' ORDER BY Name DESC'
+                  r' LIMIT 100,100')
+    selected_fields = ['Id', 'Name', 'Status']
+    actual_query = (googleads.adwords.ServiceQueryBuilder()
+                    .Select(*selected_fields)
+                    .OrderBy('Name', ascending=False)
+                    .Limit(100, 100)
+                    .Build())
+    match = re.match(awql_regex, str(actual_query))
+
+    # The SELECT clause can show fields listed in any orders.
+    self.assertItemsEqual(selected_fields,
+                          [field.strip() for field
+                           in match.group(1).split(',')])
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+  def testBuild_selectIsNone(self):
+    with self.assertRaises(ValueError):
+      googleads.adwords.ServiceQueryBuilder().Build()
+
+  def testBuild_limitStartIndexOrPageSizeIsNoneButNotTheOther(self):
+    # A page size is not specified.
+    with self.assertRaises(ValueError):
+      (googleads.adwords.ServiceQueryBuilder()
+       .Select('Id')
+       .OrderBy('Name', ascending=False)
+       .Limit(100, None)
+       .Build())
+    # A start index is not specified.
+    with self.assertRaises(ValueError):
+      (googleads.adwords.ServiceQueryBuilder()
+       .Select('Id')
+       .OrderBy('Name', ascending=False)
+       .Limit(None, 100)
+       .Build())
+
+
+class ServiceQueryTest(testing.CleanUtilityRegistryTestCase):
+  """Tests for the googleads.adwords.ServiceQuery class."""
+
+  def testNextPage(self):
+    selected_fields = ['Id', 'Name']
+    actual_query = (googleads.adwords.ServiceQueryBuilder()
+                    .Select(*selected_fields)
+                    .Limit(0, 100)
+                    .Build())
+    # Do next page and check if the LIMIT clause is modified correctly.
+    awql_regex = (r'SELECT (.*) LIMIT 100,100')
+    actual_query.NextPage()
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+  def testNextPage_userProvidedPage(self):
+    selected_fields = ['Id', 'Name']
+    actual_query = (googleads.adwords.ServiceQueryBuilder()
+                    .Select(*selected_fields)
+                    .Limit(0, 100)
+                    .Build())
+    # Do next page and check if the LIMIT clause is modified correctly.
+    awql_regex = (r'SELECT (.*) LIMIT 50,100')
+    actual_query.NextPage(50)
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+  def testNextPageFail(self):
+    actual_query = googleads.adwords.ServiceQuery('SELECT Id, Name', None, 100)
+
+    with self.assertRaises(ValueError):
+      actual_query.NextPage()
+
+  def testHasNext(self):
+    selected_fields = ['Id', 'Name']
+    actual_query = (googleads.adwords.ServiceQueryBuilder()
+                    .Select(*selected_fields)
+                    .Limit(0, 1)
+                    .Build())
+    awql_regex = (r'SELECT (.*) LIMIT 0,1')
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+    page = {'totalNumEntries': 3}
+
+    self.assertTrue(actual_query.HasNext(page))
+    awql_regex = (r'SELECT (.*) LIMIT 1,1')
+    actual_query.NextPage()
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+    self.assertTrue(actual_query.HasNext(page))
+    awql_regex = (r'SELECT (.*) LIMIT 2,1')
+    actual_query.NextPage()
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+    self.assertFalse(actual_query.HasNext(page))
+
+  def testHasNext_userProvidedPage(self):
+    selected_fields = ['Id', 'Name']
+    actual_query = (googleads.adwords.ServiceQueryBuilder()
+                    .Select(*selected_fields)
+                    .Limit(0, 1)
+                    .Build())
+    awql_regex = (r'SELECT (.*) LIMIT 0,1')
+    self.assertRegexpMatches(str(actual_query), awql_regex)
+
+    page = {'totalNumEntries': 80}
+    self.assertFalse(actual_query.HasNext(page, 100))
+
+  def testHasNextFail(self):
+    actual_query = googleads.adwords.ServiceQuery('SELECT Id, Name', None, 100)
+
+    page = {'totalNumEntries': 10}
+    with self.assertRaises(ValueError):
+      actual_query.HasNext(page)
+
+  def testPager(self):
+    service = 'CampaignService'
+    fake_page = {'totalNumEntries': 3}
+
+    with mock.patch('suds.client.Client'):
+      client = GetAdWordsClient(cache=suds.cache.FileCache)
+      service = client.GetService(service, CURRENT_VERSION)
+      with mock.patch.object(service, 'query',
+                             return_value=fake_page, autospec=True):
+        query = (googleads.adwords.ServiceQueryBuilder()
+                 .Select('Id', 'Name')
+                 .Limit(0, 1)
+                 .Build())
+        i = 0
+        for page in query.Pager(service):
+          self.assertEqual(fake_page['totalNumEntries'],
+                           page['totalNumEntries'])
+          i += 1
+        # Pager should return the number of page equal to the 'totalNumEntries'
+        # returned by a service.
+        self.assertEqual(fake_page['totalNumEntries'], i)
 
 
 if __name__ == '__main__':

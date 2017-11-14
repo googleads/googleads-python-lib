@@ -38,13 +38,14 @@ def main(client):
   campaign_service = client.GetService('CampaignService', version='v201710')
 
   # Construct query and get all campaigns.
-  offset = 0
-  query = 'SELECT Id, Name, Status ORDER BY Name'
+  query = (adwords.ServiceQueryBuilder()
+           .Select('Id', 'Name', 'Status')
+           .Where('Status').EqualTo('ENABLED')
+           .OrderBy('Name')
+           .Limit(0, PAGE_SIZE)
+           .Build())
 
-  more_pages = True
-  while more_pages:
-    page = campaign_service.query(query + ' LIMIT %s, %s' % (offset, PAGE_SIZE))
-
+  for page in query.Pager(campaign_service):
     # Display results.
     if 'entries' in page:
       for campaign in page['entries']:
@@ -53,8 +54,6 @@ def main(client):
                            campaign['status']))
     else:
       print 'No campaigns were found.'
-    offset += PAGE_SIZE
-    more_pages = offset < int(page['totalNumEntries'])
     time.sleep(1)
 
 

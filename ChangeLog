@@ -1,3 +1,11 @@
+9.0.0 -- 11/14/17
+* Added support and examples for DFP v201711
+* Removed support and examples for DFP v201611
+* DFP PQL queries can now accept simple python dicts for variable substitution.
+* Resolved issues:
+- Issue 230: https://github.com/googleads/googleads-python-lib/issues/230
+
+
 8.1.0 -- 10/11/17
 * Added support for AdWords v201710.
 * Resolved issues:
