@@ -55,13 +55,13 @@ def main(client_id, client_secret, scopes):
 
   print ('Log into the Google Account you use to access your AdWords account'
          'and go to the following URL: \n%s\n' % (authorize_url))
-  print 'After approving the token enter the verification code (if specified).'
+  print ('After approving the token enter the verification code (if specified).')
   code = raw_input('Code: ').strip()
 
   try:
     credential = flow.step2_exchange(code)
-  except client.FlowExchangeError, e:
-    print 'Authentication has failed: %s' % e
+  except client.FlowExchangeError as e:
+    print ('Authentication has failed: %s' % e)
     sys.exit(1)
   else:
     print ('OAuth2 authorization successful!\n\n'
