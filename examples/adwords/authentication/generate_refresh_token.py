@@ -56,7 +56,13 @@ def main(client_id, client_secret, scopes):
   print ('Log into the Google Account you use to access your AdWords account'
          'and go to the following URL: \n%s\n' % (authorize_url))
   print ('After approving the token enter the verification code (if specified).')
-  code = raw_input('Code: ').strip()
+
+  # fix: python3 raw_input is not defined
+  code = ''
+  try:
+    code = raw_input('Code: ').strip()
+  except NameError:
+    code = input('Code: ').strip()
 
   try:
     credential = flow.step2_exchange(code)
