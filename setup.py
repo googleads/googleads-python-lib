@@ -28,7 +28,9 @@ DEPENDENCIES = ['httplib2>=0.9.2,<1.0.0', 'oauth2client>=4.0.0,<5.0.0',
                 'suds-jurko>=0.6,<0.7', 'pysocks>=1.5.6,<2.0.0', 'pytz>=2015.7',
                 'PyYAML>=3.11,<4.0', 'xmltodict>=0.9.2,<1.0.0']
 
-TEST_DEPENDENCIES = ['mock>=2.0.0,<3.0.0', 'pyfakefs>=3.2,<4.0']
+# Note: Breaking change introduced in pyfakefs 3.3.
+TEST_DEPENDENCIES = ['mock>=2.0.0,<3.0.0', 'pyfakefs>=3.2,<3.3',
+                     'six>=1.11.0,<2.0.0']
 
 CLASSIFIERS = [
     'Intended Audience :: Developers',

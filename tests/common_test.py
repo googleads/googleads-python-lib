@@ -15,26 +15,26 @@
 """Unit tests to cover the common module."""
 
 
-import io
 import numbers
 import os
 import ssl
 import unittest
-from urllib import addinfourl
-import urllib2
 import warnings
-
 
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_tempfile
 import mock
+import six
 import suds
 import yaml
 
 import googleads.common
 import googleads.errors
 import googleads.oauth2
-import testing
+from . import testing
+
+
+URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
 
 
 class CommonTest(testing.CleanUtilityRegistryTestCase):
@@ -1068,7 +1068,7 @@ class ProxyConfigTest(unittest.TestCase):
 
   def testProxyConfigGetHandlersWithNoProxyOrSSLContext(self):
     proxy_config = googleads.common.ProxyConfig()
-    with mock.patch('urllib2.HTTPSHandler') as https_handler:
+    with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
       https_handler_instance = mock.Mock()
       https_handler.return_value = https_handler_instance
       self.assertIn(https_handler_instance, proxy_config.GetHandlers())
@@ -1076,11 +1076,11 @@ class ProxyConfigTest(unittest.TestCase):
   def testProxyConfigGetHandlersWithProxy(self):
     http_proxy = googleads.common.ProxyConfig.Proxy(self.proxy_host1,
                                                     self.proxy_port1)
-    with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+    with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
       proxy_handler_instance = mock.Mock()
       proxy_handler.return_value = proxy_handler_instance
       proxy_config = googleads.common.ProxyConfig(http_proxy=http_proxy)
-      with mock.patch('urllib2.HTTPSHandler') as https_handler:
+      with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
         https_handler_instance = mock.Mock()
         https_handler.return_value = https_handler_instance
         self.assertEqual(proxy_config.GetHandlers(),
@@ -1093,9 +1093,9 @@ class ProxyConfigTest(unittest.TestCase):
                                                      self.proxy_port1)
     with mock.patch('googleads.common.ProxyConfig._InitSSLContext') as ssl_ctxt:
       ssl_ctxt.return_value = 'CONTEXT'
-      with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+      with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
         proxy_handler.return_value = mock.Mock()
-        with mock.patch('urllib2.HTTPSHandler') as https_handler:
+        with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
           https_handler.return_value = mock.Mock()
           proxy_config = googleads.common.ProxyConfig(https_proxy=https_proxy)
           self.assertEqual(proxy_config.GetHandlers(),
@@ -1110,7 +1110,7 @@ class ProxyConfigTest(unittest.TestCase):
     proxy_config = googleads.common.ProxyConfig()
     self.assertEqual(proxy_config.proxy_info, None)
 
-    with mock.patch('urllib2.HTTPSHandler') as https_handler:
+    with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
       https_handler_instance = mock.Mock()
       https_handler.return_value = https_handler_instance
       self.assertEqual(proxy_config.GetHandlers(),
@@ -1120,7 +1120,7 @@ class ProxyConfigTest(unittest.TestCase):
 
     with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
       t.return_value = mock.Mock()
-      with mock.patch('urllib2.HTTPSHandler') as https_handler:
+      with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
         https_handler_instance = mock.Mock()
         https_handler.return_value = https_handler_instance
         transport = proxy_config.GetSudsProxyTransport()
@@ -1144,10 +1144,10 @@ class ProxyConfigTest(unittest.TestCase):
 
     with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
       t.return_value = mock.Mock()
-      with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+      with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
         proxy_handler_instance = mock.Mock()
         proxy_handler.return_value = proxy_handler_instance
-        with mock.patch('urllib2.HTTPSHandler') as https_handler:
+        with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
           https_handler_instance = mock.Mock()
           https_handler.return_value = https_handler_instance
           self.assertEqual(proxy_config.GetHandlers(),
@@ -1178,10 +1178,10 @@ class ProxyConfigTest(unittest.TestCase):
 
     with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
       t.return_value = mock.Mock()
-      with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+      with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
         proxy_handler_instance = mock.Mock()
         proxy_handler.return_value = proxy_handler_instance
-        with mock.patch('urllib2.HTTPSHandler') as https_handler:
+        with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
           https_handler_instance = mock.Mock()
           https_handler.return_value = https_handler_instance
           self.assertEqual(
@@ -1215,11 +1215,11 @@ class ProxyConfigTest(unittest.TestCase):
 
     with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
       t.return_value = mock.Mock()
-      with mock.patch('urllib2.ProxyHandler') as proxy_handler:
+      with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
         proxy_handler_instance = mock.Mock()
         proxy_handler.return_value = proxy_handler_instance
 
-        with mock.patch('urllib2.HTTPSHandler') as https_handler:
+        with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
           https_handler_instance = mock.Mock()
           https_handler.return_value = https_handler_instance
           self.assertEqual(
@@ -1238,16 +1238,24 @@ class TestSudsRequestPatcher(unittest.TestCase):
     def __init__(self, d):
       self.dict = d
 
+      # If testing on Python 3, add get method to better mimic the
+      # http.client.HTTPMessage behavior.
+      if six.PY3:
+        def py3_get(s):
+          return self.dict.get(s)
+        self.get = py3_get
+
   def testInflateSuccessfulRequestIfGzipped(self):
     with mock.patch('suds.transport.http.HttpTransport.getcookies'):
-      with mock.patch('urllib2.OpenerDirector.open') as mock_open:
+      with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
         with mock.patch('gzip.GzipFile.read') as mock_read:
-          resp_fp = io.BytesIO()
-          resp_fp.write('abc')
+          resp_fp = six.BytesIO()
+          resp_fp.write(b'abc')
           resp_fp.flush()
           resp_fp.seek(0)
-          resp = addinfourl(resp_fp, self.MockHeaders(
-              {'content-encoding': 'gzip'}), 'https://example.com', code=200)
+          resp = six.moves.urllib.response.addinfourl(
+              resp_fp, self.MockHeaders({'content-encoding': 'gzip'}),
+              'https://example.com', code=200)
           mock_open.return_value = resp
 
           req = suds.transport.Request('https://example.com',
@@ -1258,26 +1266,22 @@ class TestSudsRequestPatcher(unittest.TestCase):
   def testInflateFailedRequestIfGzipped(self):
 
     with mock.patch('suds.transport.http.HttpTransport.getcookies'):
-      with mock.patch('urllib2.OpenerDirector.open') as mock_open:
+      with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
         with mock.patch('gzip.GzipFile') as mock_gzip:
           gzip_instance_mock = mock.MagicMock
           mock_gzip.return_value = gzip_instance_mock
-          resp_fp = io.BytesIO()
-          resp_fp.write('abc')
+          resp_fp = six.BytesIO()
+          resp_fp.write(b'abc')
           resp_fp.flush()
           resp_fp.seek(0)
-          resp = addinfourl(resp_fp,
-                            self.MockHeaders({'content-encoding': 'gzip'}),
-                            'https://example.com', code=200)
+          resp = six.moves.urllib.response.addinfourl(
+              resp_fp, self.MockHeaders({'content-encoding': 'gzip'}),
+              'https://example.com', code=200)
 
           def fail_to_open(*args, **kwargs):
-            raise urllib2.HTTPError(
-                'https://example.com',
-                500,
-                'oops!',
-                {'content-encoding': 'gzip'},
-                resp
-            )
+            raise six.moves.urllib.error.HTTPError(
+                'https://example.com', 500, 'oops!',
+                {'content-encoding': 'gzip'}, resp)
           mock_open.side_effect = fail_to_open
 
           req = suds.transport.Request('https://example.com',

@@ -26,7 +26,6 @@ section of our README.
 """
 
 
-import time
 from googleads import adwords
 
 
@@ -54,7 +53,6 @@ def main(client):
                            campaign['status']))
     else:
       print 'No campaigns were found.'
-    time.sleep(1)
 
 
 if __name__ == '__main__':

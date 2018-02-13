@@ -14,11 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This uses the BatchJobService to incrementally create a complete Campaign.
 
-The complete Campaign created by this example also includes AdGroups and
-KeyWords.
+"""This example illustrates how to incrementally upload keywords.
 
+Uses the BatchJobService and BatchJobHelper to incrementally upload operations.
 """
 
 import random

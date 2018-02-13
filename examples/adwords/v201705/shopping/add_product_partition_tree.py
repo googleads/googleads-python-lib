@@ -33,19 +33,6 @@ ADGROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
 class ProductPartitionHelper(object):
   """A helper for creating ProductPartition trees."""
 
-  # The next temporary criterion ID to be used.
-  # When creating our tree we need to specify the parent-child relationships
-  # between nodes. However, until a criterion has been created on the server we
-  # do not have a criterion ID with which to refer to it.
-  # Instead we can specify temporary IDs that are specific to a single mutate
-  # request. Once the criteria have been created they are assigned an ID as
-  # normal and the temporary ID will no longer refer to it.
-  # A valid temporary ID is any negative integer.
-  next_id = -1
-
-  # The set of mutate operations needed to create the current tree.
-  operations = []
-
   def __init__(self, adgroup_id):
     """Initializer.
 
@@ -53,6 +40,17 @@ class ProductPartitionHelper(object):
       adgroup_id: The ID of the AdGroup that we wish to attach the partition
                   tree to.
     """
+    # The next temporary criterion ID to be used.
+    # When creating our tree we need to specify the parent-child relationships
+    # between nodes. However, until a criterion has been created on the server
+    # we do not have a criterion ID with which to refer to it.
+    # Instead we can specify temporary IDs that are specific to a single mutate
+    # request. Once the criteria have been created they are assigned an ID as
+    # normal and the temporary ID will no longer refer to it.
+    # A valid temporary ID is any negative integer.
+    self.next_id = -1
+    # The set of mutate operations needed to create the current tree.
+    self.operations = []
     self.adgroup_id = adgroup_id
 
   def CreateSubdivision(self, parent=None, value=None):

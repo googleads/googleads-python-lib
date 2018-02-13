@@ -18,24 +18,25 @@
 import datetime
 import unittest
 
-
 import httplib2
 import mock
-
+import six
 import googleads.common
 import googleads.errors
 import googleads.oauth2
-
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_tempfile
 from oauth2client.client import AccessTokenRefreshError
 from oauth2client.client import OAuth2Credentials
+
 
 if googleads.oauth2.DEPRECATED_OAUTH2CLIENT:
   _SA_CRED_PATH = ('oauth2client.client'
                    '.SignedJwtAssertionCredentials')
 else:
   _SA_CRED_PATH = 'oauth2client.service_account.ServiceAccountCredentials'
+
+_BUILTIN_PATH = '__builtin__' if six.PY2 else 'builtins'
 
 
 class GetAPIScopeTest(unittest.TestCase):
@@ -185,7 +186,7 @@ class GoogleServiceAccountTest(unittest.TestCase):
   def setUp(self):
     self.scope = 'scope'
     self.service_account_email = 'email@email.com'
-    self.private_key = 'IT\'S A SECRET TO EVERYBODY.'
+    self.private_key = b'IT\'S A SECRET TO EVERYBODY.'
     self.private_key_password = 'notasecret'
     self.delegated_account = 'delegated_account@delegated.com'
     https_proxy_host = 'myproxy.com'
@@ -203,7 +204,7 @@ class GoogleServiceAccountTest(unittest.TestCase):
     self.fake_open = fake_filesystem.FakeFileOpen(filesystem)
     self.key_file_path = tempfile.NamedTemporaryFile(delete=False).name
 
-    with self.fake_open(self.key_file_path, 'w') as file_handle:
+    with self.fake_open(self.key_file_path, 'wb') as file_handle:
       file_handle.write(self.private_key)
 
     # Mock out httplib2.Http for testing.
@@ -240,7 +241,7 @@ class GoogleServiceAccountTest(unittest.TestCase):
 
     self.mock_oauth2_credentials.apply = mock.Mock(side_effect=apply)
     self.mock_oauth2_credentials.refresh = mock.Mock(side_effect=refresh)
-    with mock.patch('__builtin__.open', self.fake_open):
+    with mock.patch('%s.open' % _BUILTIN_PATH, self.fake_open):
       with mock.patch(_SA_CRED_PATH, self.oauth2_credentials):
         self.googleads_client = googleads.oauth2.GoogleServiceAccountClient(
             self.scope, self.service_account_email, self.key_file_path,
@@ -437,7 +438,7 @@ class GoogleServiceAccountTest(unittest.TestCase):
 
     See: https://github.com/googleads/googleads-python-lib/issues/123
     """
-    with mock.patch('__builtin__.open'):
+    with mock.patch('%s.open' % _BUILTIN_PATH):
       with mock.patch(_SA_CRED_PATH, self.oauth2_credentials):
         googleads.oauth2.GoogleServiceAccountClient(
             self.scope, self.service_account_email, '/dev/null',

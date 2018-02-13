@@ -18,16 +18,18 @@ import logging
 import os
 import re
 import unittest
-import urllib2
 from xml.etree import ElementTree
-
 
 import googleads.adwords
 import googleads.dfp
 import googleads.util
 import mock
+import six
 import suds
 import suds.transport
+
+
+_HTTP_CLIENT_PATH = 'httplib' if six.PY2 else 'http.client'
 
 
 class PatchesTest(unittest.TestCase):
@@ -84,6 +86,8 @@ class PatchesTest(unittest.TestCase):
     request = line_item_service.performLineItemAction(
         line_item_action, statement.ToStatement()).envelope
     line_item_service.suds_client.set_options(nosend=False)
+    if six.PY3:
+      request = request.decode('utf-8')
     # Strip namespace prefixes and parse.
     parsed_request = ElementTree.fromstring(re.sub('ns[0-1]:', '', request))
     line_item_action = parsed_request.find('Body').find('performLineItemAction')
@@ -117,6 +121,8 @@ class PatchesTest(unittest.TestCase):
     adgroup_criterion_service.suds_client.set_options(nosend=True)
     request = adgroup_criterion_service.mutate(operations).envelope
     adgroup_criterion_service.suds_client.set_options(nosend=False)
+    if six.PY3:
+      request = request.decode('utf-8')
     # Strip namespace prefixes and parse.
     parsed_request = ElementTree.fromstring(re.sub('ns[0-1]:', '', request))
     operand = parsed_request.find('Body').find('mutate').find(
@@ -136,6 +142,8 @@ class PatchesTest(unittest.TestCase):
     customer_service.suds_client.set_options(nosend=True)
     request = customer_service.mutate(customer).envelope
     customer_service.suds_client.set_options(nosend=False)
+    if six.PY3:
+      request = request.decode('utf-8')
     # Strip namespace prefixes and parse.
     parsed_request = ElementTree.fromstring(re.sub('ns[0-1]:', '', request))
     tracking_url_template = parsed_request.find('Body').find('mutate').find(
@@ -168,7 +176,7 @@ class PatchesTest(unittest.TestCase):
     cs = self.adwords_client_with_compression.GetService('CampaignService')
 
     with mock.patch('suds.transport.http.HttpTransport.u2open') as mock_u2open:
-      with mock.patch('httplib.HTTPMessage') as mock_headers:
+      with mock.patch('%s.HTTPMessage' % _HTTP_CLIENT_PATH) as mock_headers:
         mock_headers.get.return_value = None
         with open(os.path.join(
             test_dir, 'test_data/compact_fault_response_envelope.txt'), 'rb'
@@ -177,11 +185,11 @@ class PatchesTest(unittest.TestCase):
           code = 500
           msg = ''
           hdrs = mock_headers
-          mock_u2open.side_effect = urllib2.HTTPError(url, code, msg, hdrs,
-                                                      handler)
+          mock_u2open.side_effect = six.moves.urllib.error.HTTPError(
+              url, code, msg, hdrs, handler)
           try:
             cs.get()
-          except suds.WebFault, e:
+          except suds.WebFault as e:
             self.assertEqual(
                 'Unmarshalling Error: For input string: '
                 '"INSERT_ADVERTISER_COMPANY_ID_HERE" ',
@@ -209,7 +217,7 @@ class PatchesTest(unittest.TestCase):
         mock_send.return_value = reply_instance
         try:
           line_item_service.performLineItemAction(line_item_action, st)
-        except suds.WebFault, e:
+        except suds.WebFault as e:
           errors = e.fault.detail.ApiExceptionFault.errors
           self.assertIsInstance(errors, list)
           self.assertEqual(1, len(errors))
@@ -236,7 +244,7 @@ class PatchesTest(unittest.TestCase):
         mock_send.return_value = reply_instance
         try:
           line_item_service.performLineItemAction(line_item_action, st)
-        except suds.WebFault, e:
+        except suds.WebFault as e:
           errors = e.fault.detail.ApiExceptionFault.errors
           self.assertIsInstance(errors, list)
           self.assertEqual(0, len(errors))
@@ -263,7 +271,7 @@ class PatchesTest(unittest.TestCase):
         mock_send.return_value = reply_instance
         try:
           line_item_service.performLineItemAction(line_item_action, st)
-        except suds.WebFault, e:
+        except suds.WebFault as e:
           errors = e.fault.detail.ApiExceptionFault.errors
           self.assertIsInstance(errors, list)
           self.assertEqual(2, len(errors))

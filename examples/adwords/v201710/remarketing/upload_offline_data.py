@@ -44,9 +44,28 @@ EMAIL_ADDRESSES = ['EMAIL_ADDRESS_1', 'EMAIL_ADDRESS_2']
 # The external upload ID can be any number that you use to keep track of your
 # uploads.
 EXTERNAL_UPLOAD_ID = 'INSERT_EXTERNAL_UPLOAD_ID'
+# Store sales upload common metadata types
+METADATA_TYPE_1P = 'FirstPartyUploadMetadata'
+METADATA_TYPE_3P = 'ThirdPartyUploadMetadata'
+# Set the below constant to METADATA_TYPE_3P if uploading third-party data.
+STORE_SALES_UPLOAD_COMMON_METADATA_TYPE = METADATA_TYPE_1P
+# The three constants below are needed when uploading third-party data. They
+# are not used when uploading first-party data.
+# Advertiser upload time to partner.
+# For times, use the format yyyyMMdd HHmmss tz. For more details on formats,
+# see:
+# https://developers.google.com/adwords/api/docs/appendix/codes-formats#timezone-ids
+ADVERTISER_UPLOAD_TIME = 'INSERT_ADVERTISER_UPLOAD_TIME_HERE'
+# Indicates the version of the bridge map.
+BRIDGE_MAP_VERSION_ID = 'INSERT_BRIDGE_MAP_VERSION_ID_HERE'
+# The ID of the third party uploading the transaction feed.
+PARTNER_ID = 'INSERT_PARTNER_ID_HERE'
 
 
-def main(client, conversion_name, external_upload_id, email_addresses):
+def main(client, conversion_name, external_upload_id,
+         store_sales_upload_common_metadata_type, email_addresses,
+         advertiser_upload_time=None, bridge_map_version_id=None,
+         partner_id=None):
   # Initialize appropriate services.
   offline_data_upload_service = client.GetService(
       'OfflineDataUploadService', version='v201710')
@@ -95,12 +114,37 @@ def main(client, conversion_name, external_upload_id, email_addresses):
       }
   }
 
+  # Set the type and metadata of this upload.
+  upload_metadata = {
+      'StoreSalesUploadCommonMetadata': {
+          'xsi_type': store_sales_upload_common_metadata_type,
+          'loyaltyRate': 1.0,
+          'transactionUploadRate': 1.0,
+      }
+  }
+
+  if store_sales_upload_common_metadata_type == METADATA_TYPE_1P:
+    upload_type = 'STORE_SALES_UPLOAD_FIRST_PARTY'
+  elif store_sales_upload_common_metadata_type == METADATA_TYPE_3P:
+    upload_type = 'STORE_SALES_UPLOAD_THIRD_PARTY'
+    upload_metadata['StoreSalesUploadCommonMetadata'].update({
+        'advertiserUploadTime': advertiser_upload_time,
+        'validTransactionRate': 1.0,
+        'partnerMatchRate': 1.0,
+        'partnerUploadRate': 1.0,
+        'bridgeMapVersionId': bridge_map_version_id,
+        'partnerId': partner_id
+    })
+  else:
+    raise ValueError('Unknown metadata type.')
+
   # Create offline data upload
   offline_data_upload = {
       'externalUploadId': external_upload_id,
       'offlineDataList': [offline_data_1, offline_data_2],
-      # Optional: You can set the type of this upload.
-      # 'uploadType': 'STORE_SALES_UPLOAD_FIRST_PARTY'
+      # Set the type of this upload.
+      'uploadType': upload_type,
+      'uploadMetadata': upload_metadata
   }
 
   # Create an offline data upload operation.
@@ -169,4 +213,6 @@ if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
 
-  main(adwords_client, CONVERSION_NAME, EXTERNAL_UPLOAD_ID, EMAIL_ADDRESSES)
+  main(adwords_client, CONVERSION_NAME, EXTERNAL_UPLOAD_ID,
+       STORE_SALES_UPLOAD_COMMON_METADATA_TYPE, EMAIL_ADDRESSES,
+       ADVERTISER_UPLOAD_TIME, BRIDGE_MAP_VERSION_ID, PARTNER_ID)

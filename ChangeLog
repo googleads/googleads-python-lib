@@ -1,3 +1,15 @@
+10.0.0 -- 02/13/18
+* Added support and examples for DFP v201802.
+* Removed support and examples for AdWords v201702.
+* Resolved issues:
+- Issue 229: https://github.com/googleads/googleads-python-lib/issues/229
+- Issue 236: https://github.com/googleads/googleads-python-lib/issues/236
+
+9.0.1 -- 12/22/17
+* Improved Python 3 compatibility of library and tests.
+* Fixed reported issue with the ProductPartitionHelper utility used in AdWords
+  shopping examples.
+
 9.0.0 -- 11/14/17
 * Added support and examples for DFP v201711
 * Removed support and examples for DFP v201611

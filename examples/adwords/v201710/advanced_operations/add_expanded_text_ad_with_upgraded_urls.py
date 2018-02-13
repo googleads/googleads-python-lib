@@ -40,25 +40,6 @@ def main(client, adgroup_id):
       'headlinePart1': 'Luxury Cruise to Mars',
       'headlinePart2': 'Visit the Red Planet in style.',
       'description': 'Low-gravity fun for everyone!',
-      # Specify a tracking URL for 3rd party tracking provider. You may specify
-      # one at customer, campaign, ad group, ad, criterion or feed item levels.
-      'trackingUrlTemplate': ('http://tracker.example.com/?season={_season}'
-                              '&promocode={_promocode}&u={lpurl}'),
-      'urlCustomParameters': {
-          'parameters': [
-              # Since your tracking URL has two custom parameters, provide
-              # their values too. This can be provided at campaign, ad group,
-              # ad, criterion, or feed item levels.
-              {
-                  'key': 'season',
-                  'value': 'christmas'
-              },
-              {
-                  'key': 'promocode',
-                  'value': 'NYC123'
-              }
-          ]
-      },
       # Specify a list of final URLs. This field cannot be set if URL
       # field is set, or finalUrls is unset. This may be specified at ad,
       # criterion, and feed item levels.
@@ -72,6 +53,29 @@ def main(client, adgroup_id):
       'finalMobileUrls': [
           'http://mobile.example.com/cruise/space/',
           'http://mobile.example.com/locations/mars/'
+      ]
+  }
+
+  # Specify a tracking URL for 3rd party tracking provider. You may specify
+  # one at customer, campaign, ad group, ad, criterion or feed item levels.
+  expanded_text_ad['trackingUrlTemplate'] = (
+      'http://tracker.example.com/?season={_season}&promocode={_promocode}'
+      '&u={lpurl}'
+  )
+
+  expanded_text_ad['urlCustomParameters'] = {
+      'parameters': [
+          # Since your tracking URL has two custom parameters, provide
+          # their values too. This can be provided at campaign, ad group,
+          # ad, criterion, or feed item levels.
+          {
+              'key': 'season',
+              'value': 'christmas'
+          },
+          {
+              'key': 'promocode',
+              'value': 'NYC123'
+          }
       ]
   }
 

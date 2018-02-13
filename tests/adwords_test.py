@@ -20,25 +20,20 @@ import datetime
 import io
 import os
 import re
-import StringIO
-import sys
 import tempfile
 import unittest
-import urllib
-import urllib2
 from xml.etree import ElementTree
-
 
 import googleads.adwords
 import googleads.common
 import googleads.errors
-import testing
 import mock
+import six
 import suds
+from . import testing
 
 
-PYTHON2 = sys.version_info[0] == 2
-URL_REQUEST_PATH = ('urllib2' if PYTHON2 else 'urllib.request')
+URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
 CURRENT_VERSION = sorted(googleads.adwords._SERVICE_MAP.keys())[-1]
 
 
@@ -403,7 +398,7 @@ class AdWordsClientTest(unittest.TestCase):
       self.assertEquals(client.user_agent, 'unknown')
 
   def testGetService_success(self):
-    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
     namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
@@ -436,7 +431,7 @@ class AdWordsClientTest(unittest.TestCase):
                   packer=googleads.adwords._AdWordsPacker)
 
   def testGetService_successWithFileCache(self):
-    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
     namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
@@ -460,7 +455,7 @@ class AdWordsClientTest(unittest.TestCase):
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_successWithNoCache(self):
-    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
     namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
@@ -484,7 +479,7 @@ class AdWordsClientTest(unittest.TestCase):
       self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_successWithoutProxy(self):
-    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
     namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
 
     # Use the default server without a proxy.
@@ -517,7 +512,7 @@ class AdWordsClientTest(unittest.TestCase):
         'CampaignService', '11111')
 
   def testGetService_compressionEnabled(self):
-    service = googleads.adwords._SERVICE_MAP[CURRENT_VERSION].keys()[0]
+    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
     client = GetAdWordsClient()
     client.enable_compression = True
 
@@ -563,8 +558,8 @@ class AdWordsClientIntegrationTest(unittest.TestCase):
       for service, mapping in services.items():
         wsdl_url = wsdl_url_template % (server, mapping, version, service)
         try:
-          urllib2.urlopen(wsdl_url)
-        except urllib2.HTTPError:
+          six.moves.urllib.request.urlopen(wsdl_url)
+        except six.moves.urllib.error.HTTPError:
           raise ValueError('AdWords API %s does not contain "%s" with mapping '
                            '"%s". The generated WSDL URL does not exist:\n%s'
                            % (version, service, mapping, wsdl_url))
@@ -620,7 +615,8 @@ class BatchJobHelperTest(testing.CleanUtilityRegistryTestCase):
       with mock.patch('googleads.adwords.IncrementalUploadHelper'
                       '._InitializeURL') as mock_init:
         mock_init.return_value = 'https://www.google.com'
-        with mock.patch('urllib2.OpenerDirector.open') as mock_open:
+        with mock.patch(
+            '%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
           self.batch_job_helper.UploadOperations([[]])
           mock_open.assert_called_with(mock_request)
 
@@ -817,7 +813,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
         self.ExpandOperandTemplate(operation_type, op['operand'])
     ) for op in ops])
 
-    request = self.RAW_API_REQUEST_TEMPLATE.decode('utf-8') % (
+    request = self.RAW_API_REQUEST_TEMPLATE % (
         self.version, self.version, method, ops_xml, method)
 
     return (ops, request)
@@ -998,7 +994,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
       operations = mutate[i]
       self.assertEqual(operations.tag, '{%s}operations' %
                        self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertTrue(len(operations.getchildren()) == len(ops[i].keys()))
       self.assertEqual(operations.find(
           '{%s}operator' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operator'])
@@ -1009,7 +1005,8 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
           ops[i]['xsi_type'])
       operand = operations.find(
           '{%s}operand' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertTrue(len(operand.getchildren()) ==
+                      len(ops[i]['operand'].keys()))
       self.assertEqual(operand.find(
           '{%s}budgetId' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['budgetId'])
@@ -1018,7 +1015,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['operand']['name'])
       amount = operand.find('{%s}amount' %
                             self.request_builder._adwords_endpoint)
-      self.assertTrue(len(amount._children) ==
+      self.assertTrue(len(amount.getchildren()) ==
                       len(ops[i]['operand']['amount'].keys()))
       self.assertEqual(amount.find(
           '{%s}microAmount' % self.request_builder._adwords_endpoint).text,
@@ -1045,7 +1042,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
       self.assertEqual(
           operations.tag,
           '{%s}operations' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertTrue(len(operations.getchildren()) == len(ops[i].keys()))
       self.assertEqual(operations.find(
           '{%s}operator' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operator'])
@@ -1054,7 +1051,8 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['xsi_type'])
       operand = operations.find(
           '{%s}operand' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertTrue(len(operand.getchildren()) ==
+                      len(ops[i]['operand'].keys()))
       self.assertEqual(operand.find(
           '{%s}budgetId' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['budgetId'])
@@ -1063,7 +1061,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['operand']['name'])
       amount = operand.find(
           '{%s}amount' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(amount._children) ==
+      self.assertTrue(len(amount.getchildren()) ==
                       len(ops[i]['operand']['amount'].keys()))
       self.assertEqual(amount.find(
           '{%s}microAmount' % self.request_builder._adwords_endpoint).text,
@@ -1089,7 +1087,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
       operations = mutate[i]
       self.assertEqual(operations.tag, '{%s}operations' %
                        self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertTrue(len(operations.getchildren()) == len(ops[i].keys()))
       self.assertEqual(operations.find(
           '{%s}operator' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operator'])
@@ -1100,7 +1098,8 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
           ops[i]['xsi_type'])
       operand = operations.find(
           '{%s}operand' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertTrue(len(operand.getchildren()) ==
+                      len(ops[i]['operand'].keys()))
       self.assertEqual(operand.find(
           '{%s}budgetId' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['budgetId'])
@@ -1109,7 +1108,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['operand']['name'])
       amount = operand.find('{%s}amount' %
                             self.request_builder._adwords_endpoint)
-      self.assertTrue(len(amount._children) ==
+      self.assertTrue(len(amount.getchildren()) ==
                       len(ops[i]['operand']['amount'].keys()))
       self.assertEqual(amount.find(
           '{%s}microAmount' % self.request_builder._adwords_endpoint).text,
@@ -1127,14 +1126,14 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
     mutate = self.request_builder._GetRawOperationsFromXML(request)
     self.assertEqual(mutate.tag,
                      '{%s}mutateLabel' % self.request_builder._adwords_endpoint)
-    self.assertTrue(len(mutate._children) == operations_amount)
+    self.assertTrue(len(mutate.getchildren()) == operations_amount)
 
     for i in range(0, operations_amount):
       operations = mutate[i]
       self.assertEqual(
           operations.tag,
           '{%s}operations' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertTrue(len(operations.getchildren()) == len(ops[i].keys()))
       self.assertEqual(operations.find(
           '{%s}operator' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operator'])
@@ -1143,7 +1142,8 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['xsi_type'])
       operand = operations.find(
           '{%s}operand' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertTrue(len(operand.getchildren()) ==
+                      len(ops[i]['operand'].keys()))
       self.assertEqual(int(operand.find(
           '{%s}campaignId' % self.request_builder._adwords_endpoint).text),
                        ops[i]['operand']['campaignId'])
@@ -1163,14 +1163,14 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
     mutate = self.request_builder._GetRawOperationsFromXML(request)
     self.assertEqual(mutate.tag,
                      '{%s}mutate' % self.request_builder._adwords_endpoint)
-    self.assertTrue(len(mutate._children) == operations_amount)
+    self.assertTrue(len(mutate.getchildren()) == operations_amount)
 
     for i in range(0, operations_amount):
       operations = mutate[i]
       self.assertEqual(
           operations.tag,
           '{%s}operations' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertTrue(len(operations.getchildren()) == len(ops[i].keys()))
       self.assertEqual(operations.find(
           '{%s}operator' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operator'])
@@ -1179,7 +1179,8 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['xsi_type'])
       operand = operations.find(
           '{%s}operand' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertTrue(len(operand.getchildren()) ==
+                      len(ops[i]['operand'].keys()))
       self.assertEqual(operand.find(
           '{%s}budgetId' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['budgetId'])
@@ -1188,7 +1189,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['operand']['name'])
       amount = operand.find(
           '{%s}amount' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(amount._children) ==
+      self.assertTrue(len(amount.getchildren()) ==
                       len(ops[i]['operand']['amount'].keys()))
       self.assertEqual(amount.find(
           '{%s}microAmount' % self.request_builder._adwords_endpoint).text,
@@ -1210,14 +1211,14 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual(
         mutate.tag,
         '{%s}mutate' % self.request_builder._adwords_endpoint)
-    self.assertTrue(len(mutate._children) == operations_amount)
+    self.assertTrue(len(mutate.getchildren()) == operations_amount)
 
     for i in range(0, operations_amount):
       operations = mutate[i]
       self.assertEqual(
           operations.tag,
           '{%s}operations' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertTrue(len(operations.getchildren()) == len(ops[i].keys()))
       self.assertEqual(operations.find(
           '{%s}operator' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operator'])
@@ -1226,7 +1227,8 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['xsi_type'])
       operand = (operations.find(
           '{%s}operand' % self.request_builder._adwords_endpoint))
-      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertTrue(len(operand.getchildren()) ==
+                      len(ops[i]['operand'].keys()))
       self.assertEqual(operand.find(
           '{%s}budgetId' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['budgetId'])
@@ -1235,7 +1237,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['operand']['name'])
       amount = (operand.find(
           '{%s}amount' % self.request_builder._adwords_endpoint))
-      self.assertTrue(len(amount._children) ==
+      self.assertTrue(len(amount.getchildren()) ==
                       len(ops[i]['operand']['amount'].keys()))
       self.assertEqual(amount.find(
           '{%s}microAmount' % self.request_builder._adwords_endpoint).text,
@@ -1256,14 +1258,14 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual(
         mutate.tag,
         u'{%s}mutate' % self.request_builder._adwords_endpoint)
-    self.assertTrue(len(mutate._children) == operations_amount)
+    self.assertTrue(len(mutate.getchildren()) == operations_amount)
 
     for i in range(0, operations_amount):
       operations = mutate[i]
       self.assertEqual(
           operations.tag,
           '{%s}operations' % self.request_builder._adwords_endpoint)
-      self.assertTrue(len(operations._children) == len(ops[i].keys()))
+      self.assertTrue(len(operations.getchildren()) == len(ops[i].keys()))
       self.assertEqual(operations.find(
           '{%s}operator' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operator'])
@@ -1272,7 +1274,8 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['xsi_type'])
       operand = (operations.find(
           '{%s}operand' % self.request_builder._adwords_endpoint))
-      self.assertTrue(len(operand._children) == len(ops[i]['operand'].keys()))
+      self.assertTrue(len(operand.getchildren()) ==
+                      len(ops[i]['operand'].keys()))
       self.assertEqual(operand.find(
           '{%s}budgetId' % self.request_builder._adwords_endpoint).text,
                        ops[i]['operand']['budgetId'])
@@ -1281,7 +1284,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
                        ops[i]['operand']['name'])
       amount = (operand.find(
           '{%s}amount' % self.request_builder._adwords_endpoint))
-      self.assertTrue(len(amount._children) ==
+      self.assertTrue(len(amount.getchildren()) ==
                       len(ops[i]['operand']['amount'].keys()))
       self.assertEqual(amount.find(
           '{%s}microAmount' % self.request_builder._adwords_endpoint).text,
@@ -1301,7 +1304,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual(
         mutate.tag,
         '{%s}mutate' % self.request_builder._adwords_endpoint)
-    self.assertTrue(len(mutate._children) == operations_amount)
+    self.assertTrue(len(mutate.getchildren()) == operations_amount)
 
   def testGetRawOperationsFromInvalidRequest(self):
     """Test whether an invalid API request raises an Exception."""
@@ -1406,7 +1409,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
     self.original_url = 'https://goo.gl/w8tkpK'
     self.initialized_url = 'https://goo.gl/Xtaq83'
 
-    with mock.patch('urllib2.OpenerDirector.open') as mock_open:
+    with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
       mock_open.return_value.headers = {
           'location': self.initialized_url
       }
@@ -1431,9 +1434,9 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual(expected, dump_data)
 
   def testLoad(self):
-    s = StringIO.StringIO(self.incremental_uploader_dump)
+    s = six.StringIO(self.incremental_uploader_dump)
 
-    with mock.patch('urllib2.urlopen') as mock_open:
+    with mock.patch('%s.urlopen' % URL_REQUEST_PATH) as mock_open:
       mock_open.return_value.headers = {
           'location': self.initialized_url
       }
@@ -1458,7 +1461,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch('urllib2.OpenerDirector.open') as mock_open:
+      with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
         self.incremental_uploader.UploadOperations([[]], True)
         mock_open.assert_called_with(mock_request)
 
@@ -1467,7 +1470,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
     error_code = '404'
     error_message = 'I AM ERROR'
     error_headers = {}
-    http_error = urllib2.HTTPError(
+    http_error = six.moves.urllib.error.HTTPError(
         error_url, error_code, error_message, error_headers, None)
 
     with mock.patch('googleads.adwords.BatchJobHelper.'
@@ -1475,11 +1478,11 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch('urllib2.OpenerDirector.open') as mock_open:
+      with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
         mock_open.side_effect = http_error
         self.assertRaises(
-            urllib2.HTTPError, self.incremental_uploader.UploadOperations,
-            [[]], True)
+            six.moves.urllib.error.HTTPError,
+            self.incremental_uploader.UploadOperations, [[]], True)
         mock_open.assert_called_with(mock_request)
 
   def testUploadOperationsAfterFinished(self):
@@ -1488,7 +1491,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch('urllib2.OpenerDirector.open'):
+      with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH):
         self.incremental_uploader.UploadOperations([[]], True)
         self.assertRaises(
             googleads.errors.AdWordsBatchJobServiceInvalidOperationError,
@@ -1602,18 +1605,18 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                   self.adwords_client, self.version)
 
   def testDownloadReport(self):
-    output_file = io.StringIO()
+    output_file = six.StringIO()
     report_definition = {'table': 'campaigns',
                          'downloadFormat': 'CSV'}
     serialized_report = 'nuinbwuign'
-    post_body = urllib.urlencode({'__rdxml': serialized_report})
-    if not PYTHON2:
+    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
+    if six.PY3:
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
     report_data = u'CONTENT STRING 广告客户'
-    report_contents = io.StringIO() if PYTHON2 else io.BytesIO()
-    report_contents.write(report_data if PYTHON2
+    report_contents = six.StringIO() if six.PY2 else io.BytesIO()
+    report_contents.write(report_data if six.PY2
                           else bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
@@ -1643,18 +1646,18 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
             skip_report_header=True, use_raw_enum_values=False)
 
   def testDownloadReportWithAllLoggingEnabled(self):
-    output_file = io.StringIO()
+    output_file = six.StringIO()
     report_definition = {'table': 'campaigns',
                          'downloadFormat': 'CSV'}
     serialized_report = 'nuinbwuign'
-    post_body = urllib.urlencode({'__rdxml': serialized_report})
-    if not PYTHON2:
+    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
+    if six.PY3:
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
     report_data = u'CONTENT STRING 广告客户'
-    report_contents = io.StringIO() if PYTHON2 else io.BytesIO()
-    report_contents.write(report_data if PYTHON2
+    report_contents = six.StringIO() if six.PY2 else io.BytesIO()
+    report_contents.write(report_data if six.PY2
                           else bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
@@ -1691,14 +1694,14 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     report_definition = {'table': 'campaigns',
                          'downloadFormat': 'CSV'}
     serialized_report = 'nuinbwuign'
-    post_body = urllib.urlencode({'__rdxml': serialized_report})
-    if not PYTHON2:
+    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
+    if six.PY3:
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
     report_data = u'CONTENT STRING アングリーバード'
     report_contents = io.BytesIO()
-    report_contents.write(report_data.encode('utf-8') if PYTHON2
+    report_contents.write(report_data.encode('utf-8') if six.PY2
                           else bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
@@ -1728,14 +1731,15 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
   def testDownloadReportAsStringWithAwql(self):
     query = 'SELECT Id FROM Campaign WHERE NAME LIKE \'%Test%\''
     file_format = 'CSV'
-    post_body = urllib.urlencode({'__fmt': file_format, '__rdquery': query})
-    if not PYTHON2:
+    post_body = six.moves.urllib.parse.urlencode({'__fmt': file_format,
+                                                  '__rdquery': query})
+    if six.PY3:
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
     report_data = u'CONTENT STRING アングリーバード'
     report_contents = io.BytesIO()
-    report_contents.write(report_data.encode('utf-8') if PYTHON2
+    report_contents.write(report_data.encode('utf-8') if six.PY2
                           else bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
@@ -1761,7 +1765,7 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
         include_zero_impressions=True, use_raw_enum_values=False)
 
   def testDownloadReportCheckFormat_CSVStringSuccess(self):
-    output_file = io.StringIO()
+    output_file = six.StringIO()
 
     try:
       self.report_downloader._DownloadReportCheckFormat('CSV', output_file)
@@ -1770,7 +1774,7 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                 'unexpectedly!')
 
   def testDownloadReportCheckFormat_GZIPPEDBinaryFileSuccess(self):
-    output_file = io.StringIO()
+    output_file = six.StringIO()
 
     try:
       self.report_downloader._DownloadReportCheckFormat('CSV', output_file)
@@ -1789,14 +1793,14 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                 'unexpectedly!')
 
   def testDownloadReportCheckFormat_GZIPPEDStringFailure(self):
-    output_file = io.StringIO()
+    output_file = six.StringIO()
 
     self.assertRaises(googleads.errors.GoogleAdsValueError,
                       self.report_downloader._DownloadReportCheckFormat,
                       'GZIPPED_CSV', output_file)
 
   def testDownloadReportCheckFormat_Issue152(self):
-    output_file = io.StringIO()
+    output_file = six.StringIO()
     output_file.mode = 'w+b'  # Verify writing and reading works.
 
     try:
@@ -1816,18 +1820,18 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                 'unexpectedly!')
 
   def testDownloadReport_failure(self):
-    output_file = io.StringIO()
+    output_file = six.StringIO()
     report_definition = {'table': 'campaigns',
                          'downloadFormat': 'CSV'}
     serialized_report = 'hjuibnibguo'
-    post_body = urllib.urlencode({'__rdxml': serialized_report})
-    if not PYTHON2:
+    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
+    if six.PY3:
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
     report_data = u'Page not found. :-('
-    report_contents = io.StringIO() if PYTHON2 else io.BytesIO()
-    report_contents.write(report_data if PYTHON2 else bytes(report_data,
+    report_contents = six.StringIO() if six.PY2 else io.BytesIO()
+    report_contents.write(report_data if six.PY2 else bytes(report_data,
                                                             'utf-8'))
     logger_request_summary_template = 'Request Summary: %s'
     report_contents.seek(0)
@@ -1835,7 +1839,8 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     fake_response.read = report_contents.read
     fake_response.msg = 'fake message'
     fake_response.code = '200'
-    error = urllib2.HTTPError('', 400, 'Bad Request', {}, fp=fake_response)
+    error = six.moves.urllib.error.HTTPError('', 400, 'Bad Request', {},
+                                             fp=fake_response)
 
     self.marshaller.process.return_value = serialized_report
 
@@ -1875,21 +1880,22 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
             h_handler.GetReportDownloadHeaders.assert_called_once_with()
 
   def testDownloadReportWithAwql(self):
-    output_file = io.StringIO()
+    output_file = six.StringIO()
     query = (googleads.adwords.ReportQueryBuilder()
              .Select('CampaignId').From('CAMPAIGN_PERFORMANCE_REPORT')
              .Where('CampaignStatus').EqualTo('ENABLED')
              .Build())
     file_format = 'CSV'
-    post_body = urllib.urlencode({'__fmt': file_format, '__rdquery': query})
-    if not PYTHON2:
+    post_body = six.moves.urllib.parse.urlencode({'__fmt': file_format,
+                                                  '__rdquery': query})
+    if six.PY3:
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
     report_data = u'CONTENT STRING 广告客户'
-    report_contents = io.StringIO() if PYTHON2 else io.BytesIO()
-    report_contents.write(report_data if PYTHON2 else bytes(report_data,
-                                                            'utf-8'))
+    report_contents = six.StringIO() if six.PY2 else io.BytesIO()
+    report_contents.write(report_data if six.PY2
+                          else bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
     fake_response.read = report_contents.read
@@ -1918,14 +1924,14 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     report_definition = {'table': 'campaigns',
                          'downloadFormat': 'GZIPPED_CSV'}
     serialized_report = 'nuinbwuign'
-    post_body = urllib.urlencode({'__rdxml': serialized_report})
-    if not PYTHON2:
+    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
+    if six.PY3:
       post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
     report_data = u'CONTENT STRING 广告客户'
     report_contents = io.BytesIO()
-    report_contents.write(report_data.encode('utf-8') if PYTHON2
+    report_contents.write(report_data.encode('utf-8') if six.PY2
                           else bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
@@ -1962,7 +1968,7 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
         '<reportDownloadError><ApiError><type>%s</type><trigger>%s</trigger>'
         '<fieldPath>%s</fieldPath></ApiError></reportDownloadError>')
     content = content_template % (type_, trigger, field_path)
-    response.read.return_value = (content if PYTHON2
+    response.read.return_value = (content if six.PY2
                                   else bytes(content, 'utf-8'))
 
     rval = self.report_downloader._ExtractError(response)
@@ -1976,7 +1982,7 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
 
     # Check that if the XML fields are empty, this still functions.
     content = content_template % ('', '', '')
-    response.read.return_value = (content if PYTHON2
+    response.read.return_value = (content if six.PY2
                                   else bytes(content, 'utf-8'))
     rval = self.report_downloader._ExtractError(response)
     self.assertEqual(None, rval.type)
@@ -1989,7 +1995,7 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     content = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
                '<reportDownloadError><ApiError><type>1234</type><trigger>5678'
                '</trigger></ApiError></ExtraElement></reportDownloadError>')
-    response.read.return_value = (content if PYTHON2
+    response.read.return_value = (content if six.PY2
                                   else bytes(content, 'utf-8'))
 
     rval = self.report_downloader._ExtractError(response)
@@ -2002,7 +2008,7 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     response = mock.Mock()
     response.code = 400
     content = 'Page not found!'
-    response.read.return_value = (content if PYTHON2
+    response.read.return_value = (content if six.PY2
                                   else bytes(content, 'utf-8'))
 
     rval = self.report_downloader._ExtractError(response)
@@ -2265,9 +2271,9 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause can show fields listed in any orders.
-    self.assertItemsEqual(selected_fields,
-                          [field.strip() for field
-                           in match.group(1).split(',')])
+    six.assertCountEqual(
+        self, selected_fields,
+        [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testFailUsingCopyConstructor(self):
@@ -2286,9 +2292,9 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause can show fields listed in any orders.
-    self.assertItemsEqual(selected_fields,
-                          [field.strip() for field
-                           in match.group(1).split(',')])
+    six.assertCountEqual(
+        self, selected_fields,
+        [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testBuild_duplicateSelectedFieldsRetainOnlyUnique(self):
@@ -2301,9 +2307,9 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause retains only unique fields.
-    self.assertItemsEqual(set(selected_fields),
-                          [field.strip() for field
-                           in match.group(1).split(',')])
+    six.assertCountEqual(
+        self, set(selected_fields),
+        [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testBuild_whereConditions(self):
@@ -2323,9 +2329,9 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause can show fields listed in any orders.
-    self.assertItemsEqual(selected_fields,
-                          [field.strip() for field
-                           in match.group(1).split(',')])
+    six.assertCountEqual(
+        self, selected_fields,
+        [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testBuild_orderByDesc(self):
@@ -2341,9 +2347,9 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause can show fields listed in any orders.
-    self.assertItemsEqual(selected_fields,
-                          [field.strip() for field
-                           in match.group(1).split(',')])
+    six.assertCountEqual(
+        self, selected_fields,
+        [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testBuild_selectIsNone(self):

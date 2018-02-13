@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example updates status for a given ad group.
+"""This example updates the CPC bid and status for a given ad group.
 
 To get ad groups, run get_ad_groups.py.
 
@@ -29,9 +29,10 @@ from googleads import adwords
 
 
 AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
+CPC_BID_MICRO_AMOUNT = 'INSERT_CPC_BID_MICRO_AMOUNT_HERE'
 
 
-def main(client, ad_group_id):
+def main(client, ad_group_id, bid_micro_amount=None):
   # Initialize appropriate service.
   ad_group_service = client.GetService('AdGroupService', version='v201710')
 
@@ -43,16 +44,42 @@ def main(client, ad_group_id):
           'status': 'PAUSED'
       }
   }]
+
+  if bid_micro_amount:
+    operations[0]['operand']['biddingStrategyConfiguration'] = {
+        'bids': [{
+            'xsi_type': 'CpcBid',
+            'bid': {
+                'microAmount': bid_micro_amount,
+            }
+        }]
+    }
+
   ad_groups = ad_group_service.mutate(operations)
 
   # Display results.
   for ad_group in ad_groups['value']:
-    print ('Ad group with name "%s" and id "%s" was updated.'
-           % (ad_group['name'], ad_group['id']))
+    bidding_strategy_configuration = ad_group['biddingStrategyConfiguration']
+    # Find the CpcBid in the bidding strategy configuration's bids collection.
+    cpc_bid_micros = None
+
+    if bidding_strategy_configuration:
+      bids = bidding_strategy_configuration['bids']
+
+      if bids:
+        for bid in bids:
+          if bid['Bids.Type'] == 'CpcBid':
+            cpc_bid_micros = bid['bid']['microAmount']
+            break
+
+    print ('Ad group with name "%s", and id "%s" was updated to have status '
+           '"%s" and CPC bid %d.'
+           % (ad_group['name'], ad_group['id'], ad_group['status'],
+              cpc_bid_micros))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
 
-  main(adwords_client, AD_GROUP_ID)
+  main(adwords_client, AD_GROUP_ID, CPC_BID_MICRO_AMOUNT)

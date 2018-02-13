@@ -134,6 +134,8 @@ class PatchHelper(object):
           raise suds.transport.TransportError(e.msg, e.code, e.fp)
 
       self.getcookies(fp, u2request)
+      # Note: Python 2 returns httplib.HTTPMessage, and Python 3 returns
+      # http.client.HTTPMessage, which differ slightly.
       headers = (fp.headers.dict if sys.version_info < (3, 0) else fp.headers)
       result = suds.transport.Reply(200, headers, fp.read())
 
@@ -293,8 +295,11 @@ class _SudsTransportFilter(_AbstractDevTokenSOAPFilter):
         if self._AUTHORIZATION_HEADER in sanitized_headers:
           sanitized_headers[self._AUTHORIZATION_HEADER] = self._REDACTED
         new_arg.headers = sanitized_headers
+        msg = arg.message
+        if sys.version_info.major < 3:
+          msg = msg.decode('utf-8')
         new_arg.message = self._DEVELOPER_TOKEN_SUB.sub(
-            self._REDACTED, arg.message.decode('utf-8'))
+            self._REDACTED, msg)
         record.args = (new_arg,)
 
     return True

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Runs a report equal to the "Whole network report" on the DFP website."""
+"""This example runs a typical daily inventory report."""
 
 import tempfile
 

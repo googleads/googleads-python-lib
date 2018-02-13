@@ -42,11 +42,14 @@ def main(client, line_item_id):
   forecast = forecast_service.getAvailabilityForecastById(
       line_item_id, forecast_options)
   matched = long(forecast['matchedUnits'])
-  available_percent = (((long(forecast['availableUnits'])/
-                         (matched * 1.0)) * 100)
-                       if matched != 0 else 0)
-  contending_line_items = ([] if 'contendingLineItems' not in forecast
-                           else forecast['contendingLineItems'])
+  available_units = long(forecast['availableUnits'])
+
+  if matched > 0:
+    available_percent = (float(available_units) / matched) * 100.
+  else:
+    available_percent = 0
+
+  contending_line_items = getattr(forecast, 'contentingLineItems', [])
 
   # Display results.
   print '%s %s matched.' % (matched, forecast['unitType'].lower())
@@ -54,8 +57,9 @@ def main(client, line_item_id):
   print '%d contending line items.' % len(contending_line_items)
 
   if 'possibleUnits' in forecast and matched:
-    possible_percent = (long(forecast['possibleUnits'])/(matched * 1.0)) * 100
+    possible_percent = (long(forecast['possibleUnits'])/float(matched)) * 100.
     print '%s%% %s possible' % (possible_percent, forecast['unitType'].lower())
+
 
 if __name__ == '__main__':
   # Initialize client object.

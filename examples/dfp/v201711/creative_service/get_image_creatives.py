@@ -26,7 +26,7 @@ def main(client):
   # Create a statement to select creatives.
   statement = (dfp.StatementBuilder()
                .Where('creativeType = :creativeType')
-               .WithBindVariable('creativeType', '_image_creative'))
+               .WithBindVariable('creativeType', 'ImageCreative'))
 
   # Retrieve a small amount of creatives at a time, paging
   # through until all creatives have been retrieved.

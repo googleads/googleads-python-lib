@@ -14,7 +14,6 @@
 
 """Common client library functions and classes used by all products."""
 
-
 from functools import wraps
 import inspect
 import locale
@@ -27,13 +26,11 @@ import threading
 import urllib2
 import warnings
 
-
 import httplib2
 import socks
 import suds
 import suds.transport.http
 import yaml
-
 import googleads.errors
 import googleads.oauth2
 import googleads.util
@@ -65,7 +62,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '9.0.0'
+VERSION = '10.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
@@ -270,9 +267,8 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
                                    required_client_values,
                                    optional_product_values)
   except googleads.errors.GoogleAdsValueError as e:
-    e.message = ('Given yaml file, %s, '
-                 'could not find some keys. %s' % (path, e.message))
-    raise
+    raise googleads.errors.GoogleAdsValueError(
+        'Given yaml file, %s, could not find some keys. %s' % (path, e))
 
   return client_kwargs
 
@@ -524,6 +520,22 @@ def RegisterUtility(utility_name, version_mapping=None):
   Returns:
     The decorated class.
   """
+  def IsFunctionOrMethod(member):
+    """Determines if given member is a function or method.
+
+    These two are used in combination to ensure that inspect finds all of a
+    given utility class's methods in both Python 2 and 3.
+
+    Args:
+      member: object that is a member of a class, to be determined whether it is
+        a function or method.
+
+    Returns:
+      A boolean that is True if the provided member is a function or method, or
+      False if it isn't.
+    """
+    return inspect.isfunction(member) or inspect.ismethod(member)
+
   def MethodDecorator(utility_method, version):
     """Decorates a method in the utility class."""
     registry_name = ('%s/%s' % (utility_name, version) if version
@@ -537,7 +549,7 @@ def RegisterUtility(utility_name, version_mapping=None):
 
   def ClassDecorator(cls):
     """Decorates a utility class."""
-    for name, method in inspect.getmembers(cls, inspect.ismethod):
+    for name, method in inspect.getmembers(cls, predicate=IsFunctionOrMethod):
       # Public methods of the class will have the decorator applied.
       if not name.startswith('_'):
         # The decorator will only be applied to unbound methods; this prevents

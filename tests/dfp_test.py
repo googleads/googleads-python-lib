@@ -16,19 +16,17 @@
 
 
 import datetime
-import StringIO
 import sys
 import unittest
 
-
 import mock
 import pytz
+import six
 import suds.transport
-
 import googleads.dfp
 import googleads.common
 import googleads.errors
-import testing
+from . import testing
 
 
 class BaseValue(object):
@@ -571,7 +569,7 @@ class DataDownloaderTest(unittest.TestCase):
     }]
 
   def testDownloadPqlResultSetToCsv(self):
-    csv_file = StringIO.StringIO()
+    csv_file = six.StringIO()
 
     self.pql_service.select.return_value = {'rows': self.generic_rval,
                                             'columnTypes': self.generic_header}
@@ -703,14 +701,14 @@ class DataDownloaderTest(unittest.TestCase):
     report_job_id = 't68t3278y429'
     report_download_url = 'http://google.com/something'
     report_data = 'THIS IS YOUR REPORT!'
-    report_contents = StringIO.StringIO()
+    report_contents = six.StringIO()
     report_contents.write(report_data)
     report_contents.seek(0)
     fake_response = mock.Mock()
     fake_response.read = report_contents.read
     fake_response.msg = 'fake message'
     fake_response.code = '200'
-    outfile = StringIO.StringIO()
+    outfile = six.StringIO()
 
     download_func = self.report_service.getReportDownloadUrlWithOptions
     download_func.return_value = report_download_url
