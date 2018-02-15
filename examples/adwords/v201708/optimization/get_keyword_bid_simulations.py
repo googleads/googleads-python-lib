@@ -58,7 +58,7 @@ def main(client, ad_group_id, criterion_id):
   # Display results.
   if 'entries' in bid_landscapes:
     for bid_landscape in bid_landscapes['entries']:
-      if bid_landscape['BidLandscape.Type'] == 'CriterionBidLandscape':
+      if bid_landscape['DataEntry.Type'] == 'CriterionBidLandscape':
         print ('Criterion bid landscape with ad group id "%s", criterion id '
                '"%s", start date "%s", end date "%s", with landscape '
                'points was found:'
