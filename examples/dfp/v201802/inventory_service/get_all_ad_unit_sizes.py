@@ -26,7 +26,7 @@ def main(client):
       'InventoryService', version='v201802')
 
   # Create a statement to select ad unit sizes.
-  statement = dfp.FilterStatement()
+  statement = dfp.StatementBuilder()
 
   # Retrieve a small amount of ad unit sizes at a time, paging
   # through until all ad unit sizes have been retrieved.

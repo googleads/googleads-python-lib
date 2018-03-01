@@ -31,18 +31,10 @@ def main(client):
   suggested_ad_unit_service = client.GetService(
       'SuggestedAdUnitService', version='v201802')
 
-  values = [{
-      'key': 'numRequests',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': THRESHOLD_NUMBER_OF_REQUESTS
-      }
-  }]
-
-  query = 'WHERE numRequests > :numRequests'
-
   # Create a filter statement.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('numRequests > :numRequests')
+               .WithBindVariable('numRequests', THRESHOLD_NUMBER_OF_REQUESTS))
   num_approved_suggested_ad_units = 0
 
   # Get suggested ad units by statement.

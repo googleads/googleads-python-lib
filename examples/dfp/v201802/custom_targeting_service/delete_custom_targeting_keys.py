@@ -51,8 +51,8 @@ def main(client, key_name):
     if 'results' in response:
       key_ids = [str(key['id']) for key in response['results']]
       action = {'xsi_type': 'DeleteCustomTargetingKeys'}
-      key_query = 'WHERE id IN (%s)' % ', '.join(key_ids)
-      key_statement = dfp.FilterStatement(key_query)
+      key_statement = (dfp.StatementBuilder()
+                       .Where('id IN (%s)' % ', '.join(key_ids)))
 
       # Delete custom targeting keys.
       result = custom_targeting_service.performCustomTargetingKeyAction(
@@ -60,7 +60,7 @@ def main(client, key_name):
 
       if result and int(result['numChanges']) > 0:
         deleted_custom_targeting_keys += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

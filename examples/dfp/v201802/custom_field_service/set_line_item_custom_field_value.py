@@ -47,48 +47,31 @@ def main(client, custom_field_id, drop_down_custom_field_id,
   line_item_service = client.GetService('LineItemService', version='v201802')
 
   # Create statement to get a custom field.
-  custom_field_values = [{
-      'key': 'customFieldId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': custom_field_id
-      }
-  }]
-  custom_field_query = 'WHERE id = :customFieldId'
-  custom_field_statement = dfp.FilterStatement(
-      custom_field_query, custom_field_values, 1)
+  custom_field_statement = (dfp.StatementBuilder()
+                            .Where('id = :customFieldId')
+                            .WithBindVariable('customFieldId', custom_field_id)
+                            .Limit(1))
 
   # Get custom field.
   custom_field = custom_field_service.getCustomFieldsByStatement(
       custom_field_statement.ToStatement())['results'][0]
 
   # Create statement to get a drop down custom field.
-  drop_down_custom_field_values = [{
-      'key': 'dropDownCustomFieldId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': drop_down_custom_field_id
-      }
-  }]
-  drop_down_custom_field_query = 'WHERE id = :dropDownCustomFieldId'
-  drop_down_custom_field_statement = dfp.FilterStatement(
-      drop_down_custom_field_query, drop_down_custom_field_values, 1)
+  drop_down_custom_field_statement = (
+      dfp.StatementBuilder()
+      .Where('id = :dropDownCustomFieldId')
+      .WithBindVariable('dropDownCustomFieldId', drop_down_custom_field_id)
+      .Limit(1))
 
   # Get drop-down custom field.
   drop_down_custom_field = custom_field_service.getCustomFieldsByStatement(
       drop_down_custom_field_statement.ToStatement())['results'][0]
 
   # Create statement to get a line item.
-  line_item_values = [{
-      'key': 'lineItemId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': line_item_id
-      }
-  }]
-  line_item_query = 'WHERE id = :lineItemId'
-  line_item_statement = dfp.FilterStatement(
-      line_item_query, line_item_values, 1)
+  line_item_statement = (dfp.StatementBuilder()
+                         .Where('id = :lineItemId')
+                         .WithBindVariable('lineItemId', line_item_id)
+                         .Limit(1))
 
   # Get line item.
   line_item = line_item_service.getLineItemsByStatement(

@@ -62,7 +62,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '10.0.0'
+VERSION = '10.1.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
@@ -628,6 +628,18 @@ class ProxyConfig(object):
       return None
 
     return ssl_context
+
+  def BuildOpener(self):
+    """Builds an OpenerDirector instance using the ProxyConfig settings.
+
+    In Python 2, this will return a urllib2.OpenerDirector instance. In Python
+    3, this will return a urllib.request.OpenerDirector instance.
+
+    Returns:
+      An OpenerDirector instance instantiated with settings defined in the
+      ProxyConfig instance.
+    """
+    return urllib2.build_opener(*self.GetHandlers())
 
   def GetHandlers(self):
     """Retrieve the appropriate urllib2 handlers for the given configuration.

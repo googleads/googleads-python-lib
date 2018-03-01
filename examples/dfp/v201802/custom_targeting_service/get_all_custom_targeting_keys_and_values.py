@@ -42,9 +42,9 @@ def main(client):
 
   if all_keys:
     # Create a statement to select custom targeting values.
-    query = ('WHERE customTargetingKeyId IN (%s)' %
-             ', '.join([str(key['id']) for key in all_keys]))
-    statement = dfp.FilterStatement(query)
+    statement = (dfp.StatementBuilder()
+                 .Where('customTargetingKeyId IN (%s)' %
+                        ', '.join([str(key['id']) for key in all_keys])))
 
     # Retrieve a small amount of custom targeting values at a time, paging
     # through until all custom targeting values have been retrieved.
@@ -59,7 +59,7 @@ def main(client):
                 (custom_targeting_value['id'], custom_targeting_value['name'],
                  custom_targeting_value['displayName'],
                  custom_targeting_value['customTargetingKeyId']))
-        statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+        statement.offset += statement.limit
       else:
         break
 

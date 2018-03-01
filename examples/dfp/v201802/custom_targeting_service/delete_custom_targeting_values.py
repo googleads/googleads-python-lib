@@ -38,15 +38,9 @@ def main(client, key_id):
   custom_targeting_service = client.GetService(
       'CustomTargetingService', version='v201802')
 
-  filter_values = [{
-      'key': 'keyId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': key_id
-      }
-  }]
-  query = 'WHERE customTargetingKeyId = :keyId'
-  statement = dfp.FilterStatement(query, filter_values)
+  statement = (dfp.StatementBuilder()
+               .Where('customTargetingKeyId = :keyId')
+               .WithBindVariable('keyId', key_id))
 
   deleted_custom_targeting_values = 0
 
@@ -57,16 +51,17 @@ def main(client, key_id):
     if 'results' in response:
       value_ids = [value['id'] for value in response['results']]
       action = {'xsi_type': 'DeleteCustomTargetingValues'}
-      value_query = ('WHERE customTargetingKeyId = :keyId '
-                     'AND id IN (%s)' % ', '.join(value_ids))
-      value_statement = dfp.FilterStatement(value_query, filter_values)
+      value_statement = (dfp.StatementBuilder()
+                         .Where('customTargetingKeyId = :keyId '
+                                'AND id IN (%s)' % ', '.join(value_ids))
+                         .WithBindVariable('keyId', key_id))
 
       # Delete custom targeting values.
       result = custom_targeting_service.performCustomTargetingValueAction(
           action, value_statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         deleted_custom_targeting_values += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

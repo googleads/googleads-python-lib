@@ -1044,6 +1044,32 @@ class ProxyConfigTest(unittest.TestCase):
         self.proxy_host2, self.proxy_port2, username=self.username,
         password=self.password)
 
+  def testBuildOpenerWithConfig(self):
+    https_proxy = googleads.common.ProxyConfig.Proxy(self.proxy_host1,
+                                                     self.proxy_port1)
+    proxy_config = googleads.common.ProxyConfig(https_proxy=https_proxy)
+
+    with mock.patch('%s.build_opener' % URL_REQUEST_PATH) as mck_build_opener:
+      with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as mck_https_hndlr:
+        with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as mck_prxy_hndlr:
+          mck_https_hndlr_instance = mock.Mock()
+          mck_https_hndlr.return_value = mck_https_hndlr_instance
+          mck_prxy_hndlr_instance = mock.Mock()
+          mck_prxy_hndlr.return_value = mck_prxy_hndlr_instance
+          proxy_config.BuildOpener()
+          mck_build_opener.assert_called_once_with(
+              *[mck_https_hndlr_instance, mck_prxy_hndlr_instance])
+
+  def testBuildOpenerWithDefaultConfig(self):
+    proxy_config = googleads.common.ProxyConfig()
+
+    with mock.patch('%s.build_opener' % URL_REQUEST_PATH) as mck_build_opener:
+      with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as mock_https_hndlr:
+        mock_https_hndlr_instance = mock.Mock
+        mock_https_hndlr.return_value = mock_https_hndlr_instance
+        proxy_config.BuildOpener()
+        mck_build_opener.assert_called_once_with(*[mock_https_hndlr_instance])
+
   def testProxyToStringWithCredentials(self):
     proxy = googleads.common.ProxyConfig.Proxy(
         self.proxy_host1, self.proxy_port1, username=self.username,

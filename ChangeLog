@@ -1,3 +1,8 @@
+10.1.0 -- 03/01/18
+* Added support and examples for AdWords v201802.
+* Added new BuildOpener utility method to ProxyConfig, which returns an
+  OpenerDirector instance configured for the ProxyConfig settings.
+
 10.0.0 -- 02/13/18
 * Added support and examples for DFP v201802.
 * Removed support and examples for AdWords v201702.
