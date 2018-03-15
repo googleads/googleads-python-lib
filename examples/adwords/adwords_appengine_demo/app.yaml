@@ -1,5 +1,4 @@
-application: INSERT_APP_NAME_HERE
-version: 1
+service: default
 runtime: python27
 api_version: 1
 threadsafe: false
