@@ -16,18 +16,17 @@
 
 
 import datetime
-import StringIO
 import sys
 import unittest
 
-
 import mock
 import pytz
+import six
 import suds.transport
-
 import googleads.dfp
 import googleads.common
 import googleads.errors
+from . import testing
 
 
 class BaseValue(object):
@@ -106,7 +105,7 @@ def DecideValue(original_object):
     return BooleanValue(original_object)
 
 
-class DfpHeaderHandlerTest(unittest.TestCase):
+class DfpHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
   """Tests for the googleads.dfp._DfpHeaderHandler class."""
 
   def setUp(self):
@@ -336,7 +335,7 @@ class DfpClientTest(unittest.TestCase):
             mock_service_proxy.assert_called_once_with(
                 mock_client.return_value,
                 dfp_client._header_handler,
-                googleads.dfp._DFPDateTimePacker)
+                packer=googleads.dfp._DfpPacker)
 
   def testGetService_successWithNoCache(self):
     service = googleads.dfp._SERVICE_MAP[self.version][0]
@@ -410,25 +409,33 @@ class DfpClientTest(unittest.TestCase):
                         dfp_client.GetService, service, self.version)
 
 
-class DateTimePackerTest(unittest.TestCase):
+class DfpPackerTest(unittest.TestCase):
+  """Tests for the googleads.dfp._DfpPacker class."""
 
-  def testUnwrapDate(self):
+  def setUp(self):
+    self.packer = googleads.dfp._DfpPacker
+
+  def testPackDate(self):
     input_date = datetime.date(2017, 1, 2)
-    result = googleads.dfp._DFPDateTimePacker(input_date)
+    result = self.packer.Pack(input_date)
     self.assertEqual(result, {'year': 2017, 'month': 1, 'day': 2})
 
-  def testUnwrapDateTime(self):
+  def testPackDateTime(self):
     input_date = datetime.datetime(2017, 1, 2, 3, 4, 5)
     input_date = pytz.timezone('America/New_York').localize(input_date)
-    result = googleads.dfp._DFPDateTimePacker(input_date)
+    result = self.packer.Pack(input_date)
     self.assertEqual(result, {'date': {'year': 2017, 'month': 1, 'day': 2},
                               'hour': 3, 'minute': 4, 'second': 5,
                               'timeZoneID': 'America/New_York'})
 
-  def testUnwrapDateTimeNeedsTimeZone(self):
+  def testPackDateTimeNeedsTimeZone(self):
     input_date = datetime.datetime(2017, 1, 2, 3, 4, 5)
     self.assertRaises(googleads.errors.GoogleAdsValueError,
-                      googleads.dfp._DFPDateTimePacker, input_date)
+                      self.packer.Pack, input_date)
+
+  def testPackUnsupportedObjectType(self):
+    obj = object()
+    self.assertEqual(googleads.dfp._DfpPacker.Pack(obj), obj)
 
 
 class DataDownloaderTest(unittest.TestCase):
@@ -562,7 +569,7 @@ class DataDownloaderTest(unittest.TestCase):
     }]
 
   def testDownloadPqlResultSetToCsv(self):
-    csv_file = StringIO.StringIO()
+    csv_file = six.StringIO()
 
     self.pql_service.select.return_value = {'rows': self.generic_rval,
                                             'columnTypes': self.generic_header}
@@ -613,6 +620,50 @@ class DataDownloaderTest(unittest.TestCase):
                        self.generic_header[1]['labelName']],
                       row1, row2], result_set)
 
+  def testDownloadPqlResultToListWithOldValuesList(self):
+    self.pql_service.select.return_value = {'rows': self.generic_rval,
+                                            'columnTypes': self.generic_header}
+
+    result_set = self.report_downloader.DownloadPqlResultToList(
+        'SELECT Id, Name FROM Line_Item WHERE Id = :id',
+        [{'key': 'id', 'value': {'xsi_type': 'NumberValue', 'value': 1}}])
+
+    row1 = [self.report_downloader._ConvertValueForCsv(field)
+            for field in self.generic_rval[0]['values']]
+    row2 = [self.report_downloader._ConvertValueForCsv(field)
+            for field in self.generic_rval[1]['values']]
+
+    self.pql_service.select.assert_called_once_with(
+        {'values': [{'key': 'id',
+                     'value': {'xsi_type': 'NumberValue', 'value': 1}}],
+         'query': ('SELECT Id, Name FROM Line_Item '
+                   'WHERE Id = :id LIMIT 500 OFFSET 0')})
+    self.assertEqual([[self.generic_header[0]['labelName'],
+                       self.generic_header[1]['labelName']],
+                      row1, row2], result_set)
+
+  def testDownloadPqlResultToListWithDict(self):
+    self.pql_service.select.return_value = {'rows': self.generic_rval,
+                                            'columnTypes': self.generic_header}
+
+    result_set = self.report_downloader.DownloadPqlResultToList(
+        'SELECT Id, Name FROM Line_Item WHERE Id = :id',
+        {'id': 1})
+
+    row1 = [self.report_downloader._ConvertValueForCsv(field)
+            for field in self.generic_rval[0]['values']]
+    row2 = [self.report_downloader._ConvertValueForCsv(field)
+            for field in self.generic_rval[1]['values']]
+
+    self.pql_service.select.assert_called_once_with(
+        {'values': [{'key': 'id',
+                     'value': {'xsi_type': 'NumberValue', 'value': 1}}],
+         'query': ('SELECT Id, Name FROM Line_Item '
+                   'WHERE Id = :id LIMIT 500 OFFSET 0')})
+    self.assertEqual([[self.generic_header[0]['labelName'],
+                       self.generic_header[1]['labelName']],
+                      row1, row2], result_set)
+
   def testDownloadPqlResultToList_NoRows(self):
     self.pql_service.select.return_value = {}
 
@@ -650,14 +701,14 @@ class DataDownloaderTest(unittest.TestCase):
     report_job_id = 't68t3278y429'
     report_download_url = 'http://google.com/something'
     report_data = 'THIS IS YOUR REPORT!'
-    report_contents = StringIO.StringIO()
+    report_contents = six.StringIO()
     report_contents.write(report_data)
     report_contents.seek(0)
     fake_response = mock.Mock()
     fake_response.read = report_contents.read
     fake_response.msg = 'fake message'
     fake_response.code = '200'
-    outfile = StringIO.StringIO()
+    outfile = six.StringIO()
 
     download_func = self.report_service.getReportDownloadUrlWithOptions
     download_func.return_value = report_download_url
@@ -695,7 +746,7 @@ class DataDownloaderTest(unittest.TestCase):
         'PublisherQueryLanguageService', self.version, 'https://ads.google.com')
 
 
-class StatementBuilderTest(unittest.TestCase):
+class StatementBuilderTest(testing.CleanUtilityRegistryTestCase):
   """Tests for the StatementBuilder class."""
 
   def testBuildBasicSelectFrom(self):
@@ -953,7 +1004,7 @@ class StatementBuilderTest(unittest.TestCase):
                       test_statement.ToStatement)
 
 
-class FilterStatementTest(unittest.TestCase):
+class FilterStatementTest(testing.CleanUtilityRegistryTestCase):
   """Tests for the FilterStatement class."""
 
   def testFilterStatement(self):

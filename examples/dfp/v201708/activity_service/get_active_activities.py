@@ -23,16 +23,10 @@ from googleads import dfp
 def main(client):
   # Initialize appropriate service.
   activity_service = client.GetService('ActivityService', version='v201708')
-  query = 'WHERE status = :status'
-  values = [
-      {'key': 'status',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'ACTIVE'
-       }},
-  ]
   # Create a statement to select activities.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('status = :status')
+               .WithBindVariable('status', 'ACTIVE'))
 
   # Retrieve a small amount of activities at a time, paging
   # through until all activities have been retrieved.

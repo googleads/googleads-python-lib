@@ -23,16 +23,10 @@ from googleads import dfp
 def main(client):
   # Initialize appropriate service.
   company_service = client.GetService('CompanyService', version='v201708')
-  query = 'WHERE type = :type'
-  values = [
-      {'key': 'type',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'ADVERTISER'
-       }},
-  ]
   # Create a statement to select companies.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('type = :type')
+               .WithBindVariable('type', 'ADVERTISER'))
 
   # Retrieve a small amount of companies at a time, paging
   # through until all companies have been retrieved.

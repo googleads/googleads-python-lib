@@ -23,16 +23,10 @@ from googleads import dfp
 def main(client):
   # Initialize appropriate service.
   proposal_service = client.GetService('ProposalService', version='v201708')
-  query = 'WHERE status = :status'
-  values = [
-      {'key': 'status',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'PENDING_APPROVAL'
-       }},
-  ]
   # Create a statement to select proposals.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('status = :status')
+               .WithBindVariable('status', 'PENDING_APPROVAL'))
 
   # Retrieve a small amount of proposals at a time, paging
   # through until all proposals have been retrieved.

@@ -32,15 +32,9 @@ def main(client, key_id):
   custom_targeting_service = client.GetService(
       'CustomTargetingService', version='v201708')
 
-  values = [{
-      'key': 'keyId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': key_id
-      }
-  }]
-  query = 'WHERE customTargetingKeyId = :keyId'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('customTargetingKeyId = :keyId')
+               .WithBindVariable('keyId', long(key_id)))
 
   while True:
     # Get custom targeting values by statement.
@@ -69,6 +63,7 @@ def main(client, key_id):
 
   if response['totalResultSetSize'] == 0:
     print 'No custom targeting values were updated.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

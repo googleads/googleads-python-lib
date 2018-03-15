@@ -31,16 +31,10 @@ def main(client, order_id):
   order_service = client.GetService('OrderService', version='v201708')
 
   # Create statement object to select a single order by an ID.
-  values = [{
-      'key': 'orderId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': order_id
-      }
-  }]
-  query = 'WHERE id = :orderId'
 
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :orderId')
+               .WithBindVariable('orderId', long(order_id)))
 
   # Get orders by statement.
   response = order_service.getOrdersByStatement(statement.ToStatement())
@@ -68,6 +62,7 @@ def main(client, order_id):
       print 'No orders were updated.'
   else:
     print 'No orders found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

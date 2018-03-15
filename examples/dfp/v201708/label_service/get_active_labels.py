@@ -23,16 +23,10 @@ from googleads import dfp
 def main(client):
   # Initialize appropriate service.
   label_service = client.GetService('LabelService', version='v201708')
-  query = 'WHERE isActive = :isActive'
-  values = [
-      {'key': 'isActive',
-       'value': {
-           'xsi_type': 'BooleanValue',
-           'value': 'true'
-       }},
-  ]
   # Create a statement to select labels.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('isActive = :isActive')
+               .WithBindVariable('isActive', True))
 
   # Retrieve a small amount of labels at a time, paging
   # through until all labels have been retrieved.

@@ -33,21 +33,10 @@ def main(client, line_item_id):
       'LineItemCreativeAssociationService', version='v201708')
 
   # Create query.
-  values = [{
-      'key': 'lineItemId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': line_item_id
-      }
-  }, {
-      'key': 'status',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': 'ACTIVE'
-      }
-  }]
-  query = 'WHERE lineItemId = :lineItemId AND status = :status'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('lineItemId = :lineItemId AND status = :status')
+               .WithBindVariable('status', 'ACTIVE')
+               .WithBindVariable('lineItemId', long(line_item_id)))
 
   num_deactivated_licas = 0
 
@@ -76,6 +65,7 @@ def main(client, line_item_id):
     print 'Number of LICAs deactivated: %s' % num_deactivated_licas
   else:
     print 'No LICAs were deactivated.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

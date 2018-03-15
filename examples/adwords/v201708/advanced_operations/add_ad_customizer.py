@@ -92,7 +92,6 @@ def CreateCustomizerFeed(client, feed_name):
   # Get the AdCustomizerFeedService
   ad_customizer_feed_service = client.GetService('AdCustomizerFeedService',
                                                  'v201708')
-
   customizer_feed = {
       'feedName': feed_name,
       'feedAttributes': [
@@ -204,7 +203,12 @@ def CreateFeedItemAddOperation(name, price, date, adgroup_id,
       ]
   }
 
-  return {'operator': 'ADD', 'operand': feed_item}
+  operation = {
+      'operator': 'ADD',
+      'operand': feed_item
+  }
+
+  return operation
 
 
 def main(client, adgroup_ids, feed_name=FEED_NAME):

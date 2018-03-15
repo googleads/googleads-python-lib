@@ -23,16 +23,10 @@ from googleads import dfp
 def main(client):
   # Initialize appropriate service.
   contact_service = client.GetService('ContactService', version='v201708')
-  query = 'WHERE status = :status'
-  values = [
-      {'key': 'status',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'UNINVITED'
-       }},
-  ]
   # Create a statement to select contacts.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('status = :status')
+               .WithBindVariable('status', 'UNINVITED'))
 
   # Retrieve a small amount of contacts at a time, paging
   # through until all contacts have been retrieved.

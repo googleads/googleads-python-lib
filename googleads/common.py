@@ -14,8 +14,6 @@
 
 """Common client library functions and classes used by all products."""
 
-
-import datetime
 from functools import wraps
 import inspect
 import locale
@@ -28,13 +26,11 @@ import threading
 import urllib2
 import warnings
 
-
 import httplib2
 import socks
 import suds
 import suds.transport.http
 import yaml
-
 import googleads.errors
 import googleads.oauth2
 import googleads.util
@@ -66,7 +62,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '7.0.0'
+VERSION = '10.1.1'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http_proxy'
@@ -128,6 +124,26 @@ def GenerateLibSig(short_name):
     return ' (%s, %s, %s)' % (short_name, _COMMON_LIB_SIG, _PYTHON_VERSION)
 
 
+class CommonClient(object):
+  """Contains shared startup code between DFP and AdWords clients."""
+
+  def __init__(self):
+    # Warn users on deprecated Python versions on initialization.
+    if _PY_VERSION_MAJOR == 2:
+      if _PY_VERSION_MINOR == 7 and _PY_VERSION_MICRO < 9:
+        _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
+                        _PY_VERSION_MINOR, _PY_VERSION_MICRO)
+      elif _PY_VERSION_MINOR < 7:
+        _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
+                        _PY_VERSION_MINOR, _PY_VERSION_MICRO)
+
+    # Warn users about using non-utf8 encoding
+    _, encoding = locale.getdefaultlocale()
+    if encoding is None or encoding.lower() != 'utf-8':
+      _logger.warn('Your default encoding, %s, is not UTF-8. Please run this'
+                   ' script with UTF-8 encoding to avoid errors.', encoding)
+
+
 def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
                    optional_product_values):
   """Loads the data necessary for instantiating a client from file storage.
@@ -160,21 +176,6 @@ def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
   logging_config = data.get(_LOGGING_KEY)
   if logging_config:
     logging.config.dictConfig(logging_config)
-
-  # Warn users on deprecated Python versions on initialization.
-  if _PY_VERSION_MAJOR == 2:
-    if _PY_VERSION_MINOR == 7 and _PY_VERSION_MICRO < 9:
-      _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
-                      _PY_VERSION_MINOR, _PY_VERSION_MICRO)
-    elif _PY_VERSION_MINOR < 7:
-      _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
-                      _PY_VERSION_MINOR, _PY_VERSION_MICRO)
-
-  # Warn users about using non-utf8 encoding
-  _, encoding = locale.getdefaultlocale()
-  if encoding is None or encoding.lower() != 'utf-8':
-    _logger.warn('Your default encoding, %s, is not UTF-8. Please run this'
-                 ' script with UTF-8 encoding to avoid errors.', encoding)
 
   try:
     product_data = data[product_yaml_key]
@@ -266,9 +267,8 @@ def LoadFromStorage(path, product_yaml_key, required_client_values,
                                    required_client_values,
                                    optional_product_values)
   except googleads.errors.GoogleAdsValueError as e:
-    e.message = ('Given yaml file, %s, '
-                 'could not find some keys. %s' % (path, e.message))
-    raise
+    raise googleads.errors.GoogleAdsValueError(
+        'Given yaml file, %s, could not find some keys. %s' % (path, e))
 
   return client_kwargs
 
@@ -391,7 +391,7 @@ def _ExtractProxy(proxy_yaml_key, proxy_config_data):
   return proxy
 
 
-def _PackForSuds(obj, factory, datetime_packer=None):
+def _PackForSuds(obj, factory, packer=None):
   """Packs SOAP input into the format we want for suds.
 
   The main goal here is to pack dictionaries with an 'xsi_type' key into
@@ -406,15 +406,17 @@ def _PackForSuds(obj, factory, datetime_packer=None):
         for instances of unpacked dictionaries or lists.
     factory: The suds.client.Factory object which can create instances of the
         classes generated from the WSDL.
-    datetime_packer: A product specific function to unwrap date/datetimes.
+    packer: An optional subclass of googleads.common.SudsPacker that provides
+        customized packing logic.
 
   Returns:
     If the given obj was a dictionary that contained the 'xsi_type' key, this
     will be an instance of a class generated from the WSDL. Otherwise, this will
     be the same data type as the input obj was.
   """
-  if datetime_packer and isinstance(obj, (datetime.datetime, datetime.date)):
-    obj = datetime_packer(obj)
+  if packer:
+    obj = packer.Pack(obj)
+
   if obj in ({}, None):
     # Force suds to serialize empty objects. There are legitimate use cases for
     # this, for example passing in an empty SearchCriteria object to a DFA
@@ -445,16 +447,16 @@ def _PackForSuds(obj, factory, datetime_packer=None):
       for key in obj:
         if key == 'xsi_type': continue
         setattr(new_obj, key, _PackForSuds(obj[key], factory,
-                                           datetime_packer=datetime_packer))
+                                           packer=packer))
     else:
       new_obj = {}
       for key in obj:
         new_obj[key] = _PackForSuds(obj[key], factory,
-                                    datetime_packer=datetime_packer)
+                                    packer=packer)
     return new_obj
   elif isinstance(obj, (list, tuple)):
     return [_PackForSuds(item, factory,
-                         datetime_packer=datetime_packer) for item in obj]
+                         packer=packer) for item in obj]
   else:
     _RecurseOverObject(obj, factory)
     return obj
@@ -518,6 +520,22 @@ def RegisterUtility(utility_name, version_mapping=None):
   Returns:
     The decorated class.
   """
+  def IsFunctionOrMethod(member):
+    """Determines if given member is a function or method.
+
+    These two are used in combination to ensure that inspect finds all of a
+    given utility class's methods in both Python 2 and 3.
+
+    Args:
+      member: object that is a member of a class, to be determined whether it is
+        a function or method.
+
+    Returns:
+      A boolean that is True if the provided member is a function or method, or
+      False if it isn't.
+    """
+    return inspect.isfunction(member) or inspect.ismethod(member)
+
   def MethodDecorator(utility_method, version):
     """Decorates a method in the utility class."""
     registry_name = ('%s/%s' % (utility_name, version) if version
@@ -531,7 +549,7 @@ def RegisterUtility(utility_name, version_mapping=None):
 
   def ClassDecorator(cls):
     """Decorates a utility class."""
-    for name, method in inspect.getmembers(cls, inspect.ismethod):
+    for name, method in inspect.getmembers(cls, predicate=IsFunctionOrMethod):
       # Public methods of the class will have the decorator applied.
       if not name.startswith('_'):
         # The decorator will only be applied to unbound methods; this prevents
@@ -611,6 +629,18 @@ class ProxyConfig(object):
 
     return ssl_context
 
+  def BuildOpener(self):
+    """Builds an OpenerDirector instance using the ProxyConfig settings.
+
+    In Python 2, this will return a urllib2.OpenerDirector instance. In Python
+    3, this will return a urllib.request.OpenerDirector instance.
+
+    Returns:
+      An OpenerDirector instance instantiated with settings defined in the
+      ProxyConfig instance.
+    """
+    return urllib2.build_opener(*self.GetHandlers())
+
   def GetHandlers(self):
     """Retrieve the appropriate urllib2 handlers for the given configuration.
 
@@ -689,6 +719,18 @@ class ProxyConfig(object):
       return return_handlers
 
 
+class SudsPacker(object):
+  """A utility class to be passed to _PackForSuds for customized packing.
+
+  A subclass should be used in cases where custom logic is needed to pack a
+  given object in _PackForSuds.
+  """
+
+  @classmethod
+  def Pack(cls, obj):
+    raise NotImplementedError('You must subclass SudsPacker.')
+
+
 class SudsServiceProxy(object):
   """Wraps a suds service object, allowing custom logic to be injected.
 
@@ -703,7 +745,7 @@ class SudsServiceProxy(object):
         the client and its factory,
   """
 
-  def __init__(self, suds_client, header_handler, datetime_packer=None):
+  def __init__(self, suds_client, header_handler, packer=None):
     """Initializes a suds service proxy.
 
     Args:
@@ -712,12 +754,13 @@ class SudsServiceProxy(object):
         object.
       header_handler: A HeaderHandler responsible for setting the SOAP and HTTP
           headers on the service client.
-      datetime_packer: A product specific function to unwrap date/datetimes.
+      packer: An optional subclass of googleads.common.SudsPacker that provides
+        customized packing logic.
     """
     self.suds_client = suds_client
     self._header_handler = header_handler
     self._method_proxies = {}
-    self._datetime_packer = datetime_packer
+    self._packer = packer
 
   def __getattr__(self, attr):
     if attr in self.suds_client.wsdl.services[0].ports[0].methods:
@@ -745,13 +788,13 @@ class SudsServiceProxy(object):
       try:
         return soap_service_method(
             *[_PackForSuds(arg, self.suds_client.factory,
-                           self._datetime_packer) for arg in args])
+                           self._packer) for arg in args])
       except suds.WebFault as e:
         if _logger.isEnabledFor(logging.WARNING):
           _logger.warning('Response summary - %s',
                           _ExtractResponseSummaryFields(e.document))
 
-        _logger.info('SOAP response:\n%s', e.document)
+        _logger.info('SOAP response:\n%s', e.document.str())
 
         if not hasattr(e.fault, 'detail'):
           raise

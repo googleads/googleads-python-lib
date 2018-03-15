@@ -26,7 +26,6 @@ section of our README.
 """
 
 
-import time
 from googleads import adwords
 
 
@@ -55,7 +54,6 @@ def main(client):
       print 'No campaigns were found.'
     offset += PAGE_SIZE
     more_pages = offset < int(page['totalNumEntries'])
-    time.sleep(1)
 
 
 if __name__ == '__main__':

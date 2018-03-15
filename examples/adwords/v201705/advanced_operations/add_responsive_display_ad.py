@@ -42,7 +42,9 @@ def main(client, ad_group_id):
   try:
     # Create image.
     opener = urllib2.build_opener(*client.proxy_config.GetHandlers())
-    image_data = base64.b64encode(opener.open('https://goo.gl/3b9Wfh').read())
+    # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
+    image_data = (base64.b64encode(opener.open('https://goo.gl/3b9Wfh').read())
+                  .decode('utf-8'))
     image = {
         'type': 'IMAGE',
         'data': image_data,

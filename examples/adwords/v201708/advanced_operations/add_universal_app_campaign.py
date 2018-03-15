@@ -80,7 +80,7 @@ def main(client):
           'description2': 'Remove connected blocks',
           'description3': '3 difficulty levels',
           'description4': '4 colorful fun skins',
-          # Optional: You can set up to 10 image assets for your campaign.
+          # Optional: You can set up to 20 image assets for your campaign.
           # See upload_image.py for an example on how to upload images.
           #
           # 'imageMediaIds': [INSERT_IMAGE_MEDIA_ID(s)_HERE]

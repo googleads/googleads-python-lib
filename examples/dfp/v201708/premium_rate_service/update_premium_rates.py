@@ -33,15 +33,11 @@ def main(client, premium_rate_id):
                                            version='v201708')
 
   # Create statement object to select a single proposal by an ID.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': premium_rate_id
-      }
-  }]
-  query = 'WHERE id = :id ORDER BY id ASC'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .OrderBy('id', ascending=True)
+               .WithBindVariable('id', long(premium_rate_id))
+               .Limit(1))
 
   # Get the premium rate.
   response = premium_rate_service.getPremiumRatesByStatement(

@@ -33,17 +33,9 @@ def main(client, user_id):
   user_service = client.GetService('UserService', version='v201708')
 
   # Create query.
-  values = [{
-      'key': 'userId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': user_id
-      }
-  }]
-  query = 'WHERE id = :userId'
-
-  # Create a filter statement.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :userId')
+               .WithBindVariable('userId', long(user_id)))
 
   # Get users by statement.
   response = user_service.getUsersByStatement(statement.ToStatement())
@@ -65,6 +57,7 @@ def main(client, user_id):
     print 'Number of users deactivated: %s' % result['numChanges']
   else:
     print 'No users were deactivated.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

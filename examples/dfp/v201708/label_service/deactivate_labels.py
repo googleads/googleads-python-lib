@@ -30,15 +30,9 @@ def main(client):
   label_service = client.GetService('LabelService', version='v201708')
 
   # Create query.
-  values = [{
-      'key': 'isActive',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': 'true'
-      }
-  }]
-  query = 'WHERE isActive = :isActive'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('isActive = :isActive')
+               .WithBindVariable('isActive', True))
 
   labels_deactivated = 0
 
@@ -63,6 +57,7 @@ def main(client):
     print 'Number of labels deactivated: %s' % labels_deactivated
   else:
     print 'No labels were deactivated.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

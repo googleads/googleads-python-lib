@@ -24,16 +24,10 @@ def main(client):
   # Initialize appropriate service.
   custom_field_service = client.GetService(
       'CustomFieldService', version='v201708')
-  query = 'WHERE entityType = :entityType'
-  values = [
-      {'key': 'entityType',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'LINE_ITEM'
-       }},
-  ]
   # Create a statement to select custom fields.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('entityType = :entityType')
+               .WithBindVariable('entityType', 'LINE_ITEM'))
 
   # Retrieve a small amount of custom fields at a time, paging
   # through until all custom fields have been retrieved.

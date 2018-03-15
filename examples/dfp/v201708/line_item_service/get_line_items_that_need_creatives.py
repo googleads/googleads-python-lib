@@ -23,16 +23,10 @@ from googleads import dfp
 def main(client):
   # Initialize appropriate service.
   line_item_service = client.GetService('LineItemService', version='v201708')
-  query = 'WHERE isMissingCreatives = :isMissingCreatives'
-  values = [
-      {'key': 'isMissingCreatives',
-       'value': {
-           'xsi_type': 'BooleanValue',
-           'value': 'true'
-       }},
-  ]
   # Create a statement to select line items.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('isMissingCreatives = :isMissingCreatives')
+               .WithBindVariable('isMissingCreatives', True))
 
   # Retrieve a small amount of line items at a time, paging
   # through until all line items have been retrieved.

@@ -28,17 +28,13 @@ def main(client, reconciliation_report_id):
   # Initialize appropriate service.
   reconciliation_report_row_service = client.GetService(
       'ReconciliationReportRowService', version='v201708')
-  query = ('WHERE reconciliationReportId = %s AND '
-           'lineItemId != :lineItemId') % reconciliation_report_id
-  values = [{
-      'key': 'lineItemId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': '0'
-      }
-  }]
+
   # Create a statement to select reconciliation report rows.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where(('reconciliationReportId = :reportId '
+                       'AND lineItemId != :lineItemId'))
+               .WithBindVariable('lineItemId', 0)
+               .WithBindVariable('reportId', long(reconciliation_report_id)))
 
   # Retrieve a small amount of reconciliation report rows at a time, paging
   # through until all reconciliation report rows have been retrieved.

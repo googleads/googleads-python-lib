@@ -31,15 +31,10 @@ def main(client, placement_id):
   placement_service = client.GetService('PlacementService', version='v201708')
 
   # Create query.
-  values = [{
-      'key': 'placementId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': placement_id
-      }
-  }]
-  query = 'WHERE id = :placementId'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :placementId')
+               .WithBindVariable('placementId', long(placement_id))
+               .Limit(1))
 
   # Get placements by statement.
   placements = placement_service.getPlacementsByStatement(
@@ -59,6 +54,7 @@ def main(client, placement_id):
     print 'Number of placements deactivated: %s' % result['numChanges']
   else:
     print 'No placements were deactivated.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

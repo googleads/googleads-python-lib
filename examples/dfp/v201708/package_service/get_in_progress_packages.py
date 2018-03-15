@@ -23,16 +23,10 @@ from googleads import dfp
 def main(client):
   # Initialize appropriate service.
   pkg_service = client.GetService('PackageService', version='v201708')
-  query = 'WHERE status = :status'
-  values = [
-      {'key': 'status',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'IN_PROGRESS'
-       }},
-  ]
   # Create a statement to select packages.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('status = :status')
+               .WithBindVariable('status', 'IN_PROGRESS'))
 
   # Retrieve a small amount of packages at a time, paging
   # through until all packages have been retrieved.

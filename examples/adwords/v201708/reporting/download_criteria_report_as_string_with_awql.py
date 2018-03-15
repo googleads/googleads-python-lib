@@ -37,11 +37,14 @@ def main(client):
   report_downloader = client.GetReportDownloader(version='v201708')
 
   # Create report query.
-  report_query = ('SELECT CampaignId, AdGroupId, Id, Criteria, CriteriaType, '
-                  'FinalUrls, Impressions, Clicks, Cost '
-                  'FROM CRITERIA_PERFORMANCE_REPORT '
-                  'WHERE Status IN [ENABLED, PAUSED] '
-                  'DURING LAST_7_DAYS')
+  report_query = (adwords.ReportQueryBuilder()
+                  .Select('CampaignId', 'AdGroupId', 'Id', 'Criteria',
+                          'CriteriaType', 'FinalUrls', 'Impressions', 'Clicks',
+                          'Cost')
+                  .From('CRITERIA_PERFORMANCE_REPORT')
+                  .Where('Status').In('ENABLED', 'PAUSED')
+                  .During('LAST_7_DAYS')
+                  .Build())
 
   print report_downloader.DownloadReportAsStringWithAwql(
       report_query, 'CSV', skip_report_header=False, skip_column_header=False,

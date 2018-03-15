@@ -36,21 +36,10 @@ def main(client, label_id):
                                                version='v201708')
 
   # Create a query to select the active creative wrappers for the given label.
-  values = [{
-      'key': 'labelId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': label_id
-      }
-  }, {
-      'key': 'status',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': 'ACTIVE'
-      }
-  }]
-  query = 'WHERE status = :status AND labelId = :labelId'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('status = :status AND labelId = :labelId')
+               .WithBindVariable('status', 'ACTIVE')
+               .WithBindVariable('labelId', long(label_id)))
 
   creative_wrappers_deactivated = 0
 
@@ -81,6 +70,7 @@ def main(client, label_id):
            creative_wrappers_deactivated)
   else:
     print 'No creative wrappers were deactivated.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

@@ -34,15 +34,10 @@ def main(client, product_template_id):
       'ProductTemplateService', version='v201708')
 
   # Create query.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': product_template_id
-      }
-  }]
-  query = 'WHERE id = :id'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .WithBindVariable('id', long(product_template_id))
+               .Limit(1))
 
   product_templates_activated = 0
 

@@ -39,15 +39,9 @@ def main(client, ad_unit_id):
   inventory_service = client.GetService('InventoryService', version='v201708')
 
   # Create a statement to select a single ad unit by ID.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': ad_unit_id
-      }
-  }]
-  query = 'WHERE id = :id'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .WithBindVariable('id', ad_unit_id))
 
   # Get ad units by statement.
   response = inventory_service.getAdUnitsByStatement(
@@ -80,6 +74,7 @@ def main(client, ad_unit_id):
                        for size in ad_unit['adUnitSizes']]
       print ('Ad unit with ID "%s", name "%s", and sizes [%s] was updated'
              % (ad_unit['id'], ad_unit['name'], ','.join(ad_unit_sizes)))
+
 
 if __name__ == '__main__':
   # Initialize client object.

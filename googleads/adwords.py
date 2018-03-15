@@ -15,6 +15,7 @@
 """Client library for the AdWords API."""
 
 from collections import namedtuple
+import datetime
 import io
 import logging
 import os
@@ -29,7 +30,6 @@ import suds.mx.literal
 import suds.xsd.doctor
 import xmltodict
 import yaml
-
 import googleads.common
 import googleads.errors
 
@@ -42,98 +42,6 @@ _batch_job_logger = logging.getLogger('%s.%s'
 # A giant dictionary of AdWords versions, the services they support, and which
 # namespace those services are in.
 _SERVICE_MAP = {
-    'v201609': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'BatchJobService': 'cm',
-        'BiddingStrategyService': 'cm',
-        'BudgetOrderService': 'billing',
-        'BudgetService': 'cm',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerFeedService': 'cm',
-        'CustomerService': 'mcm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'DraftAsyncErrorService': 'cm',
-        'DraftService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'LabelService': 'cm',
-        'LocationCriterionService': 'cm',
-        'ManagedCustomerService': 'mcm',
-        'MediaService': 'cm',
-        'OfflineCallConversionFeedService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-        'TrialAsyncErrorService': 'cm',
-        'TrialService': 'cm'
-    },
-    'v201702': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'BatchJobService': 'cm',
-        'BiddingStrategyService': 'cm',
-        'BudgetOrderService': 'billing',
-        'BudgetService': 'cm',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerFeedService': 'cm',
-        'CustomerService': 'mcm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'DraftAsyncErrorService': 'cm',
-        'DraftService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'LabelService': 'cm',
-        'LocationCriterionService': 'cm',
-        'ManagedCustomerService': 'mcm',
-        'MediaService': 'cm',
-        'OfflineCallConversionFeedService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-        'TrialAsyncErrorService': 'cm',
-        'TrialService': 'cm'
-    },
     'v201705': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
@@ -224,7 +132,110 @@ _SERVICE_MAP = {
         'MediaService': 'cm',
         'OfflineCallConversionFeedService': 'cm',
         'OfflineConversionFeedService': 'cm',
-        'OfflineDataUploadService': 'cm',
+        'OfflineDataUploadService': 'rm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'TrialAsyncErrorService': 'cm',
+        'TrialService': 'cm'
+    },
+    'v201710': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'BatchJobService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignBidModifierService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignGroupPerformanceTargetService': 'cm',
+        'CampaignGroupService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerNegativeCriterionService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'DraftAsyncErrorService': 'cm',
+        'DraftService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'OfflineCallConversionFeedService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'OfflineDataUploadService': 'rm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'TrialAsyncErrorService': 'cm',
+        'TrialService': 'cm'
+    },
+    'v201802': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'BatchJobService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignBidModifierService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignGroupPerformanceTargetService': 'cm',
+        'CampaignGroupService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerNegativeCriterionService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'DraftAsyncErrorService': 'cm',
+        'DraftService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedItemTargetService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'OfflineCallConversionFeedService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'OfflineDataUploadService': 'rm',
         'ReportDefinitionService': 'cm',
         'SharedCriterionService': 'cm',
         'SharedSetService': 'cm',
@@ -249,7 +260,7 @@ _DEFAULT_ENDPOINT = 'https://adwords.google.com'
 _DEFAULT_USER_AGENT = 'unknown'
 
 
-class AdWordsClient(object):
+class AdWordsClient(googleads.common.CommonClient):
   """A central location to set headers and create web service clients.
 
   Attributes:
@@ -277,8 +288,8 @@ class AdWordsClient(object):
   # AdWords.
   _OPTIONAL_INIT_VALUES = (
       'validate_only', 'partial_failure', 'client_customer_id', 'user_agent',
-      'report_downloader_headers',
-      googleads.common.ENABLE_COMPRESSION_KEY)
+  'report_downloader_headers',
+  googleads.common.ENABLE_COMPRESSION_KEY)
 
   # The format of SOAP service WSDLs. A server, namespace, version, and service
   # name need to be formatted in.
@@ -368,6 +379,8 @@ class AdWordsClient(object):
       GoogleAdsValueError: If the provided user_agent contains non-ASCII
         characters.
     """
+    super(AdWordsClient, self).__init__()
+
     self.developer_token = developer_token
     self.oauth2_client = oauth2_client
     self.client_customer_id = kwargs.get('client_customer_id')
@@ -446,7 +459,8 @@ class AdWordsClient(object):
         **kwargs)
 
     return googleads.common.SudsServiceProxy(
-        client, _AdWordsHeaderHandler(self, version, self.enable_compression))
+        client, _AdWordsHeaderHandler(self, version, self.enable_compression),
+        packer=_AdWordsPacker)
 
   def GetBatchJobHelper(self, version=sorted(_SERVICE_MAP.keys())[-1],
                         server=None):
@@ -616,6 +630,26 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     return headers
 
 
+class _AdWordsPacker(googleads.common.SudsPacker):
+  """A utility applying customized packing logic for AdWords."""
+
+  @classmethod
+  def Pack(cls, obj):
+    """Pack the given object using AdWords-specific logic.
+
+    Args:
+      obj: an object to be packed for suds using AdWords-specific logic, if
+          applicable.
+
+    Returns:
+      The given object packed with AdWords-specific logic for suds, if
+      applicable. Otherwise, returns the given object unmodified.
+    """
+    if isinstance(obj, ServiceQuery):
+      return str(obj)
+    return obj
+
+
 @googleads.common.RegisterUtility('BatchJobHelper')
 class BatchJobHelper(object):
   """A utility that simplifies working with the BatchJobService."""
@@ -708,11 +742,20 @@ class BatchJobHelper(object):
                                         'CampaignService', 'mutate'),
         'CampaignLabelOperation': _OPERATION('CampaignLabelOperation',
                                              'CampaignService', 'mutateLabel'),
+        'CampaignSharedSetOperation': _OPERATION(
+            'CampaignSharedSetOperation', 'CampaignSharedSetService',
+            'mutate'),
         'CustomerExtensionSettingOperation': _OPERATION(
             'CustomerExtensionSettingOperation',
             'CustomerExtensionSettingService', 'mutate'),
         'FeedItemOperation': _OPERATION('FeedItemOperation', 'FeedItemService',
-                                        'mutate')
+                                        'mutate'),
+        'FeedItemTargetOperation': _OPERATION(
+            'FeedItemTargetOperation', 'FeedItemTargetService', 'mutate'),
+        'SharedCriterionOperation': _OPERATION(
+            'SharedCriterionOperation', 'SharedCriterionService', 'mutate'),
+        'SharedSetOperation': _OPERATION('SharedSetOperation',
+                                         'SharedSetService', 'mutate')
     }
 
     def __init__(self, client, **kwargs):
@@ -880,7 +923,7 @@ class BatchJobHelper(object):
       Raises:
         GoogleAdsValueError: if no xsi_type is specified for the operations.
       """
-        # Verify that all operations included specify an xsi_type.
+      # Verify that all operations included specify an xsi_type.
       if operations:
         if any('xsi_type' not in operation for operation in operations):
           raise googleads.errors.AdWordsBatchJobServiceInvalidOperationError(
@@ -1515,8 +1558,8 @@ class ReportDownloader(object):
     The report contents will be written to the given output.
 
     Args:
-      query: A string containing the query which specifies the data you want
-          your report to include.
+      query: A string or ReportQuery object containing the query which
+          specifies the data you want your report to include.
       file_format: A string representing the output format for your report.
           Acceptable values can be found in our API documentation:
           https://developers.google.com/adwords/api/docs/guides/reporting
@@ -1661,11 +1704,12 @@ class ReportDownloader(object):
                              response.code, response.msg)
       return response
     except urllib2.HTTPError as e:
+      error = self._ExtractError(e)
       if _report_logger.isEnabledFor(logging.WARNING):
         _report_logger.warning(
             'Request Summary: %s', self._ExtractRequestSummaryFields(
-                request, error=e))
-      raise self._ExtractError(e)
+                request, error=error))
+      raise error
 
   def _SanitizeRequestHeaders(self, headers):
     """Removes sensitive data from request headers for use in logging.
@@ -1708,7 +1752,9 @@ class ReportDownloader(object):
     Args:
       request:  a urllib2.Request instance.
       [optional]
-      error: a urllib2.HttpError instance used to retrieve error details.
+      error: a googleads.errors.AdWordsReportError instance or subclass used to
+          retrieve error details. This should only be present when an error
+          occurred, otherwise it should be set to None for successful requests.
 
     Returns:
       A dict containing the fields to be output in the summary logs.
@@ -1728,7 +1774,7 @@ class ReportDownloader(object):
 
     if error:
       summary_fields['isError'] = True
-      summary_fields['errorMessage'] = error.read()
+      summary_fields['errorMessage'] = error.content
     else:
       summary_fields['isError'] = False
 
@@ -1738,7 +1784,8 @@ class ReportDownloader(object):
     """Serializes an AWQL query and file format for transport.
 
     Args:
-      query: A string representing the AWQL query used in the report.
+      query: A string or ReportQuery object representing the AWQL query used in
+          the report.
       file_format: A string representing the file format of the generated
           report.
 
@@ -1746,7 +1793,7 @@ class ReportDownloader(object):
       The given query and format URL encoded into the format needed for an
       AdWords report request as a string. This is intended to be a POST body.
     """
-    return urllib.urlencode({'__fmt': file_format, '__rdquery': query})
+    return urllib.urlencode({'__fmt': file_format, '__rdquery': str(query)})
 
   def _SerializeReportDefinition(self, report_definition):
     """Serializes a report definition for transport.
@@ -1791,3 +1838,713 @@ class ReportDownloader(object):
         pass
     return googleads.errors.AdWordsReportError(
         error.code, error, content)
+
+
+class _QueryBuilder(object):
+  """A query builder for building AWQL (AdWords Query Language) queries."""
+
+  def __init__(self, query_builder=None):
+    """Creates the query builder with the optional specified query builder.
+
+    This class shouldn't be instantiated directly or extended. Use
+    ReportQueryBuilder if you want to create a query for reporting or
+    ServiceQueryBuilder if you want to create a query for services.
+
+    Args:
+      query_builder: An optional query builder whose properties will be copied
+          over to this instance.
+
+    Returns:
+      The query builder.
+
+    Raises:
+      GoogleAdsValueError: If the passed query_builder isn't of the QueryBuilder
+          type.
+    """
+    if query_builder is None:
+      self.where_builders = []
+    else:
+      try:
+        self.where_builders = list(query_builder.where_builders)
+      except (AttributeError, TypeError):
+        raise googleads.errors.GoogleAdsValueError(
+            'The passed query builder should be of the QueryBuilder type.')
+
+  def Select(self, *fields):
+    """Sets a provided list of fields as selected fields for the query.
+
+    Args:
+      *fields: The specified list of fields to be added to a SELECT clause.
+
+    Returns:
+      This query builder.
+    """
+    raise NotImplementedError('You must subclass _QueryBuilder.')
+
+  def Where(self, field):
+    """Creates a WHERE builder using a provided field.
+
+    Args:
+      field: the field to be added as an argument in the WHERE clause.
+
+    Returns:
+      The created WHERE builder.
+    """
+    where_builder = _WhereBuilder(self, field)
+    self.where_builders.append(where_builder)
+    return where_builder
+
+
+class _WhereBuilder(object):
+  """A WHERE builder for building a WHERE clause in AWQL queries."""
+
+  def __init__(self, query_builder, field):
+    """Creates the WHERE builder with specified query builder and field.
+
+    This class should be instantiated through _QueryBuilder.Where. Don't call
+    this constructor directly.
+
+    Args:
+      query_builder: The query builder that this WHERE builder links to.
+      field: The field to be used in the WHERE condition.
+
+    Returns:
+      The WHERE builder.
+    """
+    self._field = field
+    self._query_builder = query_builder
+    self._awql = None
+
+  def EqualTo(self, value):
+    """Sets the type of the WHERE clause as "equal to".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, '=')
+    return self._query_builder
+
+  def NotEqualTo(self, value):
+    """Sets the type of the WHERE clause as "not equal to".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, '!=')
+    return self._query_builder
+
+  def GreaterThan(self, value):
+    """Sets the type of the WHERE clause as "greater than".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, '>')
+    return self._query_builder
+
+  def GreaterThanOrEqualTo(self, value):
+    """Sets the type of the WHERE clause as "greater than or equal to".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, '>=')
+    return self._query_builder
+
+  def LessThan(self, value):
+    """Sets the type of the WHERE clause as "less than".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, '<')
+    return self._query_builder
+
+  def LessThanOrEqualTo(self, value):
+    """Sets the type of the WHERE clause as "less than or equal to.
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, '<=')
+    return self._query_builder
+
+  def StartsWith(self, value):
+    """Sets the type of the WHERE clause as "starts with".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, 'STARTS_WITH')
+    return self._query_builder
+
+  def StartsWithIgnoreCase(self, value):
+    """Sets the type of the WHERE clause as "starts with ignore case".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value,
+                                                  'STARTS_WITH_IGNORE_CASE')
+    return self._query_builder
+
+  def Contains(self, value):
+    """Sets the type of the WHERE clause as "contains".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, 'CONTAINS')
+    return self._query_builder
+
+  def ContainsIgnoreCase(self, value):
+    """Sets the type of the WHERE clause as "contains ignore case".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, 'CONTAINS_IGNORE_CASE')
+    return self._query_builder
+
+  def DoesNotContain(self, value):
+    """Sets the type of the WHERE clause as "does not contain".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(value, 'DOES_NOT_CONTAIN')
+    return self._query_builder
+
+  def DoesNotContainIgnoreCase(self, value):
+    """Sets the type of the WHERE clause as "doesn not contain ignore case".
+
+    Args:
+      value: The value to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateSingleValueCondition(
+        value, 'DOES_NOT_CONTAIN_IGNORE_CASE')
+    return self._query_builder
+
+  def In(self, *values):
+    """Sets the type of the WHERE clause as "in".
+
+    Args:
+      *values: The values to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateMultipleValuesCondition(values, 'IN')
+    return self._query_builder
+
+  def NotIn(self, *values):
+    """Sets the type of the WHERE clause as "in".
+
+    Args:
+      *values: The values to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateMultipleValuesCondition(values, 'NOT_IN')
+    return self._query_builder
+
+  def ContainsAny(self, *values):
+    """Sets the type of the WHERE clause as "contains any".
+
+    Args:
+      *values: The values to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateMultipleValuesCondition(values, 'CONTAINS_ANY')
+    return self._query_builder
+
+  def ContainsNone(self, *values):
+    """Sets the type of the WHERE clause as "contains none".
+
+    Args:
+      *values: The values to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateMultipleValuesCondition(values, 'CONTAINS_NONE')
+    return self._query_builder
+
+  def ContainsAll(self, *values):
+    """Sets the type of the WHERE clause as "contains all".
+
+    Args:
+      *values: The values to be used in the WHERE condition.
+
+    Returns:
+      The query builder that this WHERE builder links to.
+    """
+    self._awql = self._CreateMultipleValuesCondition(values, 'CONTAINS_ALL')
+    return self._query_builder
+
+  def Build(self):
+    """Builds the WHERE clause by returning the stored AWQL.
+
+    Returns:
+      The resulting WHERE clause in AWQL format.
+    """
+    return self._awql
+
+  def _CreateSingleValueCondition(self, value, operator):
+    """Creates a single-value condition with the provided value and operator."""
+    if isinstance(value, str) or isinstance(value, unicode):
+      value = '"%s"' % value
+    return '%s %s %s' % (self._field, operator, value)
+
+  def _CreateMultipleValuesCondition(self, values, operator):
+    """Creates a condition with the provided list of values and operator."""
+    values = ['"%s"' % value if isinstance(value, str) or
+              isinstance(value, unicode) else str(value) for value in values]
+    return '%s %s [%s]' % (self._field, operator, ', '.join(values))
+
+
+@googleads.common.RegisterUtility('ReportQueryBuilder')
+class ReportQueryBuilder(_QueryBuilder):
+  """A query builder for building AWQL queries for reporting."""
+
+  def __init__(self, query_builder=None):
+    """Creates the report query builder with the optionally specified builder.
+
+    Creates the report query builder by initializing all attributes including
+    the report name, time range, start and end date. If the optional query
+    builder are specified, copy all its attributes to this instance.
+
+    Args:
+      query_builder: An optional query builder whose attributes will be copied
+          over to this instance.
+
+    Returns:
+      This report query builder.
+
+    Raises:
+      GoogleAdsValueError: If the passed query_builder isn't of the QueryBuilder
+          type.
+    """
+    _QueryBuilder.__init__(self, query_builder)
+    if query_builder is None:
+      self.select = None
+      self.from_report = None
+      self.date_range = None
+      self.start_date = None
+      self.end_date = None
+    else:
+      try:
+        self.select = list(query_builder.select)
+        self.from_report = query_builder.from_report
+        self.date_range = query_builder.date_range
+        self.start_date = query_builder.start_date
+        self.end_date = query_builder.end_date
+      except (AttributeError, TypeError):
+        raise googleads.errors.GoogleAdsValueError(
+            'The passed query builder should be of ReportQueryBuilder type.')
+
+  def Select(self, *fields):
+    """Sets a provided list of fields as selected fields for the query.
+
+    Subsequent calls to this method overwrite the entire set of selected fields
+    with the new one.
+
+    Args:
+      *fields: The specified list of fields to be added to a SELECT clause.
+
+    Returns:
+      This report query builder.
+    """
+    self.select = list(fields)
+    return self
+
+  def From(self, report_name):
+    """Sets a provided report name as the argument to FROM clause.
+
+    Args:
+      report_name: The specified report name.
+
+    Returns:
+      This report query builder.
+    """
+    self.from_report = report_name
+    return self
+
+  def During(self, date_range=None, start_date=None, end_date=None):
+    """Sets arguments for the DURING clause of the query.
+
+    Sets arguments for the DURING clause using the provided date range or start
+    and end dates. Only the date range or start and end date should be
+    specified. If both are supplied, an error will be thrown. A valid date range
+    string can be found at
+    https://developers.google.com/adwords/api/docs/guides/reporting#date_ranges.
+    Start and end dates should be in 'YYYYMMDD' format.
+
+    Args:
+      date_range: The specified date range string, e.g., YESTERDAY.
+      start_date: The start date string in 'YYYYMMDD' format or an instance of
+          datetime.date.
+      end_date: The end date string in 'YYYYMMDD' format or an instance of
+          datetime.date.
+
+    Returns:
+      This report query builder.
+
+    Raises:
+      ValueError: If all the arguments are None or both date_range and start
+          and end dates have values or if start_date has value but end_date
+          doesn't (and vice versa).
+    """
+    if date_range is None and (start_date is None or end_date is None):
+      raise ValueError(
+          'Either date_range or both start_date and end_date must not be None.')
+    if date_range is not None and (start_date is not None
+                                   or end_date is not None):
+      raise ValueError(
+          'If date_range is not None, start_date and end_date must be None '
+          '(and vice versa).')
+    self.date_range = date_range
+    self.start_date = start_date
+    self.end_date = end_date
+    return self
+
+  def Build(self):
+    """Builds a ReportQuery object containing the created AWQL query.
+
+    Returns:
+      The created ReportQuery object.
+
+    Raises:
+      ValueError: If the selected fields or report name is not specified.
+    """
+    if self.select is None:
+      raise ValueError('Must use Select() to specify SELECT clause for valid'
+                       ' AWQL first.')
+    if self.from_report is None:
+      raise ValueError('Must use From() to specify FROM clause for valid AWQL'
+                       ' first.')
+
+    parts = ['SELECT ', (', '.join(self.select))]
+    parts.extend([' FROM ', self.from_report])
+    where_clause = (' WHERE %s' % ' AND '.join([builder.Build() for builder
+                                                in self.where_builders])
+                    if self.where_builders else '')
+    parts += where_clause
+
+    if self.date_range:
+      parts.extend([' DURING ', self.date_range])
+    elif self._start_date and self._end_date:
+      parts.extend([' DURING ', '%s,%s' % (self._start_date, self._end_date)])
+    awql = ''.join(parts)
+
+    return ReportQuery(awql)
+
+  @property
+  def start_date(self):
+    """Gets the start date of the query."""
+    return self._start_date
+
+  @start_date.setter
+  def start_date(self, start_date):
+    """Sets the start date of the query to the provided value."""
+    if isinstance(start_date, datetime.date):
+      self._start_date = '{:%Y%m%d}'.format(start_date)
+    else:
+      self._start_date = start_date
+
+  @property
+  def end_date(self):
+    """Gets the end date of the query."""
+    return self._end_date
+
+  @end_date.setter
+  def end_date(self, end_date):
+    """Sets the end date of the query to the provided value."""
+    if isinstance(end_date, datetime.date):
+      self._end_date = '{:%Y%m%d}'.format(end_date)
+    else:
+      self._end_date = end_date
+
+
+class ReportQuery(object):
+  """A report query storing an AWQL query."""
+
+  def __init__(self, awql):
+    """Creates a report query instance storing the provided AWQL query."""
+    self._awql = awql
+
+  def __str__(self):
+    """Returns the stored AWQL query."""
+    return self._awql
+
+
+@googleads.common.RegisterUtility('ServiceQueryBuilder')
+class ServiceQueryBuilder(_QueryBuilder):
+  """A query builder for building AWQL queries for services."""
+
+  _ORDER_BY_CLAUSE = namedtuple('OrderByClause', ['field', 'direction'])
+
+  def __init__(self, query_builder=None):
+    """Creates the service query builder with the optionally specified builder.
+
+    Creates the service query builder by initializing all attributes including
+    oder by list, start index, and page size.
+    If the optional query builder are specified, copy all its attributes to this
+    instance.
+
+    Args:
+      query_builder: An optional query builder whose attributes will be copied
+          over to this instance.
+
+    Returns:
+      This service query builder.
+
+    Raises:
+      GoogleAdsValueError: If the passed query_builder isn't of the QueryBuilder
+          type.
+    """
+    _QueryBuilder.__init__(self, query_builder)
+    if query_builder is None:
+      self.select = set()
+      self.order_by_list = []
+      self.start_index = None
+      self.page_size = None
+    else:
+      try:
+        self.select = query_builder.select
+        self.order_by_list = query_builder.order_by_list
+        self.start_index = query_builder.start_index
+        self.page_size = query_builder.page_size
+      except (AttributeError, TypeError):
+        raise googleads.errors.GoogleAdsValueError(
+            'The passed query builder should be of ServiceQueryBuilder type.')
+
+  def Select(self, *fields):
+    """Sets a provided list of fields as selected fields for the query.
+
+    Subsequent calls to this method overwrite the entire set of selected fields
+    with the new one. Duplicate field names will be treated as one field.
+
+    Args:
+      *fields: The specified list of fields to be added to a SELECT clause.
+
+    Returns:
+      This service query builder.
+    """
+    self.select.update(fields)
+    return self
+
+  def OrderBy(self, field, ascending=True):
+    """Adds the provided field to the order-by list with the provided direction.
+
+    Args:
+      field: The specified field to be added to the order-by list.
+      ascending: If true, the newly created order-by clause will be in ascending
+          order. Otherwise, it will be in descending order.
+
+    Returns:
+      This service query builder.
+    """
+    order_by = self._ORDER_BY_CLAUSE(field, 'ASC' if ascending else 'DESC')
+    self.order_by_list.append(order_by)
+    return self
+
+  def Limit(self, start_index, page_size):
+    """Sets the LIMIT clause using the provided start index and page size.
+
+    Args:
+      start_index: The specified start index for the LIMIT clause.
+      page_size: The optional page size for the LIMIT clause.
+
+    Returns:
+      This service query builder.
+
+    Raises:
+      ValueError: If start_index is None but the page_size is not None or vice
+          versa.
+    """
+    if ((start_index is None and page_size is not None)
+        or (start_index is not None and page_size is None)):
+      raise ValueError('Either both start_index and page_size must be None, or'
+                       ' neither')
+    self.start_index = start_index
+    self.page_size = page_size
+    return self
+
+  def Build(self):
+    """Builds a ServiceQuery object containing AWQL queries.
+
+    Returns:
+      The created ServiceQuery object.
+
+    Raises:
+      ValueError: If the selected fields or service name is not specified.
+    """
+    if not self.select:
+      raise ValueError('Must use Select() to specify SELECT clause for valid'
+                       ' AWQL first')
+
+    parts = ['SELECT ', (', '.join(self.select))]
+    where_clause = (' WHERE %s' % ' AND '.join(builder.Build() for builder
+                                               in self.where_builders)
+                    if self.where_builders else '')
+    parts += where_clause
+
+    if self.order_by_list:
+      parts.extend([' ORDER BY ',
+                    ', '.join('%s %s' % (order_by.field, order_by.direction)
+                              for order_by in self.order_by_list)])
+    awql = ''.join(parts)
+
+    return ServiceQuery(awql, self.start_index, self.page_size)
+
+  @property
+  def select(self):
+    """Gets the select set of the query."""
+    return self._select
+
+  @select.setter
+  def select(self, select):
+    """Sets the select set of the query to the copy of provided value."""
+    self._select = set(select)
+
+  @property
+  def order_by_list(self):
+    """Gets the order-by list of the query."""
+    return self._order_by_list
+
+  @order_by_list.setter
+  def order_by_list(self, order_by_list):
+    """Sets the order-by list of the query to the copy of provided value."""
+    self._order_by_list = list(order_by_list)
+
+
+class ServiceQuery(object):
+  """A service query storing an AWQL query."""
+
+  def __init__(self, awql, start_index, page_size):
+    """Creates a service query instance storing the provided AWQL query."""
+    self._awql = awql
+    self._start_index = start_index
+    self._page_size = page_size
+    self._total_num_entries = None
+
+  def NextPage(self, page_size=None):
+    """Sets the LIMIT clause of the AWQL to the next page.
+
+    This method is meant to be used with HasNext().
+    The page_size is necessary when using DataService, as its paging mechanism
+    is different from other services. For details, see
+    https://developers.google.com/adwords/api/docs/guides/bid-landscapes#paging_through_results.
+    When the page_size is None, this object's page size is used instead.
+
+    Args:
+      page_size: The optional page size used to increment the index in the LIMIT
+          clause.
+
+    Returns:
+      This service query object.
+
+    Raises:
+      ValueError: If the start index of this object is None, meaning that the
+          LIMIT clause hasn't been set before.
+    """
+    if self._start_index is None:
+      raise ValueError('Cannot page through query with no LIMIT clause.')
+    increment = self._page_size if page_size is None else page_size
+    self._start_index += increment
+    return self
+
+  def HasNext(self, page, page_size=None):
+    """Checks if there is still a page left to query.
+
+    This method is meant to be used with NextPage().
+    The page_size is necessary when using DataService, as its paging mechanism
+    is different from other services. For details, see
+    https://developers.google.com/adwords/api/docs/guides/bid-landscapes#paging_through_results.
+    When the page_size is None, this object's page size is used instead.
+
+    Args:
+      page: A dict containing the 'totalNumEntries' key whose value represents
+          the total number of results from making the query to the AdWords API
+          services.
+      page_size: The optional page size used to increment the index in the LIMIT
+          clause.
+
+    Returns:
+      True if there is still a page left.
+
+    Raises:
+      ValueError: If the start index of this object is None, meaning that the
+          LIMIT clause hasn't been set before.
+    """
+    if self._start_index is None:
+      raise ValueError('Cannot page through query with no LIMIT clause.')
+    if not self._total_num_entries:
+      self._total_num_entries = page['totalNumEntries']
+    increment = self._page_size if page_size is None else page_size
+    return self._start_index + increment < self._total_num_entries
+
+  def Pager(self, service):
+    """A page generator for this service query and the provided service.
+
+    This generates a page as a result from using the provided service's query()
+    method until there are no more results to fetch.
+
+    Args:
+      service: The service object for making a query using this service query.
+
+    Yields:
+      A resulting page from querying the provided service.
+    """
+    has_page = True
+    while has_page:
+      page = service.query(self)
+      yield page
+      has_page = self.HasNext(page)
+      if has_page:
+        self.NextPage()
+
+  def __str__(self):
+    """Returns the stored AWQL query combined with the LIMIT clause."""
+    awql = self._awql + ' LIMIT %s,%s' % (self._start_index, self._page_size)
+    return awql

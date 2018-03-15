@@ -27,16 +27,10 @@ def main(client):
   # Initialize appropriate service.
   workflow_request_service = client.GetService(
       'WorkflowRequestService', version='v201708')
-  query = 'WHERE type = :type'
-  values = [
-      {'key': 'type',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'WORKFLOW_APPROVAL_REQUEST'
-       }},
-  ]
   # Create a statement to select workflow requests.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('type = :type')
+               .WithBindVariable('type', 'WORKFLOW_APPROVAL_REQUEST'))
 
   # Retrieve a small amount of workflow requests at a time, paging
   # through until all workflow requests have been retrieved.

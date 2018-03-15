@@ -24,16 +24,10 @@ def main(client):
   # Initialize appropriate service.
   product_package_service = client.GetService(
       'ProductPackageService', version='v201708')
-  query = 'WHERE status = :status'
-  values = [
-      {'key': 'status',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'ACTIVE'
-       }},
-  ]
   # Create a statement to select product packages.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('status = :status')
+               .WithBindVariable('status', 'ACTIVE'))
 
   # Retrieve a small amount of product packages at a time, paging
   # through until all product packages have been retrieved.

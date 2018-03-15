@@ -26,16 +26,10 @@ def main(client, rate_card_id):
   # Initialize appropriate service.
   premium_rate_service = client.GetService(
       'PremiumRateService', version='v201708')
-  query = 'WHERE rateCardId = :rateCardId'
-  values = [
-      {'key': 'rateCardId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': rate_card_id
-       }},
-  ]
   # Create a statement to select premium rates.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('rateCardId = :rateCardId')
+               .WithBindVariable('rateCardId', rate_card_id))
 
   # Retrieve a small amount of premium rates at a time, paging
   # through until all premium rates have been retrieved.

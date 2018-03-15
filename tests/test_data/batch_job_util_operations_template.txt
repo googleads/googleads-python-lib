@@ -1,0 +1,7 @@
+<ns1:operations>
+  <ns1:operator>%s</ns1:operator>
+  <ns1:Operation.Type>%s</ns1:Operation.Type>
+  <ns1:operand>
+%s
+  </ns1:operand>
+</ns1:operations>

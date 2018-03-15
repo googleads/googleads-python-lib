@@ -27,7 +27,6 @@ section of our README.
 
 
 import logging
-import time
 from googleads import adwords
 
 logging.basicConfig(level=logging.INFO)
@@ -66,7 +65,6 @@ def main(client):
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])
-    time.sleep(1)
 
 
 if __name__ == '__main__':

@@ -34,15 +34,10 @@ def main(client, saved_query_id):
   report_downloader = client.GetDataDownloader(version='v201708')
 
   # Create statement object to filter for an order.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': saved_query_id
-      }
-  }]
-  query = 'WHERE id = :id'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .WithBindVariable('id', long(saved_query_id))
+               .Limit(1))
 
   response = report_service.getSavedQueriesByStatement(
       statement.ToStatement())

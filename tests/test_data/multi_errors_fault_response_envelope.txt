@@ -1,0 +1,31 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+    <ResponseHeader xmlns="https://www.google.com/apis/ads/publisher/v201611">
+      <requestId>644a8c6efd398cf8643c29ff68fe574e</requestId>
+      <responseTime>22</responseTime>
+    </ResponseHeader>
+  </soap:Header>
+  <soap:Body>
+    <soap:Fault>
+      <faultcode>soap:Server</faultcode>
+      <faultstring>[Error 1, Error 2]</faultstring>
+      <detail>
+        <ApiExceptionFault xmlns="https://www.google.com/apis/ads/publisher/v201611">
+          <message>Multiple errors occurred</message>
+          <errors xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="AuthenticationError">
+            <fieldPath/>
+            <trigger/>
+            <errorString>ERROR_1</errorString>
+            <reason>NETWORK_CODE_REQUIRED</reason>
+          </errors>
+          <errors xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="AuthenticationError">
+            <fieldPath/>
+            <trigger/>
+            <errorString>ERROR_2</errorString>
+            <reason>NETWORK_CODE_REQUIRED</reason>
+          </errors>
+        </ApiExceptionFault>
+      </detail>
+    </soap:Fault>
+  </soap:Body>
+</soap:Envelope>

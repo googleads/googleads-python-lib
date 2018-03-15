@@ -26,16 +26,10 @@ def main(client, num_requests):
   # Initialize appropriate service.
   suggested_ad_unit_service = client.GetService(
       'SuggestedAdUnitService', version='v201708')
-  query = 'WHERE numRequests >= :numRequests'
-  values = [
-      {'key': 'numRequests',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': num_requests
-       }},
-  ]
   # Create a statement to select suggested ad units.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('numRequests >= :numRequests')
+               .WithBindVariable('numRequests', long(num_requests)))
 
   # Retrieve a small amount of suggested ad units at a time, paging
   # through until all suggested ad units have been retrieved.

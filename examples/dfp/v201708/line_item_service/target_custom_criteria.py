@@ -81,15 +81,10 @@ def main(client, line_item_id, key_id1, key_id2, key_id3, value_id1, value_id2,
   }
 
   # Create statement to get the line item
-  values = [{
-      'key': 'lineItemId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': line_item_id
-      }
-  }]
-  query = 'WHERE id = :lineItemId'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :lineItemId')
+               .WithBindVariable('lineItemId', long(line_item_id))
+               .Limit(1))
 
   # Set custom criteria targeting on the line item.
   line_item = line_item_service.getLineItemsByStatement(
@@ -106,6 +101,7 @@ def main(client, line_item_id, key_id1, key_id2, key_id3, value_id1, value_id2,
     pprint.pprint(line_item['targeting']['customTargeting'])
   else:
     print 'No line items were updated.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

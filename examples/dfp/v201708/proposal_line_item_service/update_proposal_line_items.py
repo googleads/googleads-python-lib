@@ -34,16 +34,11 @@ def main(client, proposal_line_item_id):
       'ProposalLineItemService', version='v201708')
 
   # Create statement to select a proposal line item.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': proposal_line_item_id
-      }
-  }]
 
-  query = 'WHERE id = :id'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .WithBindVariable('id', long(proposal_line_item_id))
+               .Limit(1))
 
   # Get proposal line items by statement.
   response = proposal_line_item_service.getProposalLineItemsByStatement(

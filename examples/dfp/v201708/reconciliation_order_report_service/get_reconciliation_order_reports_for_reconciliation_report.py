@@ -26,16 +26,11 @@ def main(client, reconciliation_report_id):
   # Initialize appropriate service.
   reconciliation_order_report_service = client.GetService(
       'ReconciliationOrderReportService', version='v201708')
-  query = 'WHERE reconciliationReportId = :reconciliationReportId'
-  values = [
-      {'key': 'reconciliationReportId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': reconciliation_report_id
-       }},
-  ]
   # Create a statement to select reconciliation order reports.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('reconciliationReportId = :reconciliationReportId')
+               .WithBindVariable('reconciliationReportId',
+                                 reconciliation_report_id))
 
   # Retrieve a small amount of reconciliation order reports at a time, paging
   # through until all reconciliation order reports have been retrieved.

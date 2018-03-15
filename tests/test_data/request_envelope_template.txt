@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns0="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="https://adwords.google.com/api/adwords/cm/v201607" xmlns:tns="https://adwords.google.com/api/adwords/cm/v201607" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <SOAP-ENV:Header>
+      <tns:RequestHeader>
+         <tns:clientCustomerId>xxx-yyy-zzzz</tns:clientCustomerId>
+         <tns:developerToken>%s</tns:developerToken>
+         <tns:userAgent>testing!</tns:userAgent>
+         <tns:validateOnly>false</tns:validateOnly>
+         <tns:partialFailure>false</tns:partialFailure>
+      </tns:RequestHeader>
+   </SOAP-ENV:Header>
+   <ns0:Body>
+      <ns1:mutate>
+         <ns1:operations>
+            <ns1:operator>ADD</ns1:operator>
+            <ns1:operand>
+               <ns1:name>Test Budget #123456</ns1:name>
+               <ns1:amount>
+                  <ns1:microAmount>50000000</ns1:microAmount>
+               </ns1:amount>
+               <ns1:deliveryMethod>STANDARD</ns1:deliveryMethod>
+               <ns1:isExplicitlyShared>true</ns1:isExplicitlyShared>
+            </ns1:operand>
+         </ns1:operations>
+      </ns1:mutate>
+   </ns0:Body>
+</SOAP-ENV:Envelope>

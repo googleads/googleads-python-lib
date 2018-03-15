@@ -36,21 +36,10 @@ def main(client, order_id):
   line_item_service = client.GetService('LineItemService', version='v201708')
 
   # Create query.
-  values = [{
-      'key': 'orderId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': order_id
-      }
-  }, {
-      'key': 'status',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': 'NEEDS_CREATIVES'
-      }
-  }]
-  query = 'WHERE orderId = :orderId AND status = :status'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('orderId = :orderId AND status = :status')
+               .WithBindVariable('status', 'NEEDS_CREATIVES')
+               .WithBindVariable('orderId', long(order_id)))
 
   line_items_activated = 0
 
@@ -78,6 +67,7 @@ def main(client, order_id):
     print 'Number of line items activated: %s' % line_items_activated
   else:
     print 'No line items were activated.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

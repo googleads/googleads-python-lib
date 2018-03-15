@@ -38,17 +38,9 @@ def main(client, user_id):
       'UserTeamAssociationService', version='v201708')
 
   # Create filter text to select user team associations by the user ID.
-  values = [{
-      'key': 'userId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': user_id
-      }
-  }]
-  query = 'WHERE userId = :userId'
-
-  # Create a filter statement.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('userId = :userId')
+               .WithBindVariable('userId', long(user_id)))
 
   # Get user team associations by statement.
   response = user_team_association_service.getUserTeamAssociationsByStatement(
@@ -62,10 +54,14 @@ def main(client, user_id):
   print ('Number of teams that the user will be removed from: %s' %
          len(user_team_associations))
 
+  # Action doesn't require limit/offset
+  statement.limit = None
+  statement.offset = None
+
   # Perform action.
   result = user_team_association_service.performUserTeamAssociationAction(
       {'xsi_type': 'DeleteUserTeamAssociations'},
-      {'query': query, 'values': values})
+      statement.ToStatement())
 
   # Display results.
   if result and int(result['numChanges']) > 0:
@@ -73,6 +69,7 @@ def main(client, user_id):
            % result['numChanges'])
   else:
     print 'No user team associations were deleted.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

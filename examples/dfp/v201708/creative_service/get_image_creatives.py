@@ -23,16 +23,10 @@ from googleads import dfp
 def main(client):
   # Initialize appropriate service.
   creative_service = client.GetService('CreativeService', version='v201708')
-  query = 'WHERE creativeType = :creativeType'
-  values = [
-      {'key': 'creativeType',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': '_image_creative'
-       }},
-  ]
   # Create a statement to select creatives.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('creativeType = :creativeType')
+               .WithBindVariable('creativeType', 'ImageCreative'))
 
   # Retrieve a small amount of creatives at a time, paging
   # through until all creatives have been retrieved.

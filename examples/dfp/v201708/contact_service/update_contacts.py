@@ -38,15 +38,10 @@ def main(client, contact_id):
   contact_service = client.GetService('ContactService', version='v201708')
 
   # Create statement object to select the single contact by ID.
-  values = [{
-      'key': 'id',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': contact_id
-      }
-  }]
-  query = 'WHERE id = :id'
-  statement = dfp.FilterStatement(query, values, 1)
+  statement = (dfp.StatementBuilder()
+               .Where('id = :id')
+               .WithBindVariable('id', long(contact_id))
+               .Limit(1))
 
   # Get contacts by statement.
   response = contact_service.getContactsByStatement(
@@ -68,6 +63,7 @@ def main(client, contact_id):
              % (contact['id'], contact['name'], contact['address']))
   else:
     print 'No contacts found to update.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

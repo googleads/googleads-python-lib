@@ -39,15 +39,9 @@ def main(client, parent_id):
 
   # Create a query to select ad units under the parent ad unit and the parent ad
   # unit.
-  values = [{
-      'key': 'parentId',
-      'value': {
-          'xsi_type': 'NumberValue',
-          'value': parent_id
-      }
-  }]
-  query = 'WHERE parentId = :parentId or id = :parentId'
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('parentId = :parentId or id = :parentId')
+               .WithBindVariable('parentId', long(parent_id)))
 
   ad_units_archived = 0
 
@@ -73,6 +67,7 @@ def main(client, parent_id):
     print 'Number of ad units archived: %s' % ad_units_archived
   else:
     print 'No ad units were archived.'
+
 
 if __name__ == '__main__':
   # Initialize client object.

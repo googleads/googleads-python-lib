@@ -26,16 +26,10 @@ def main(client, line_item_id):
   # Initialize appropriate service.
   lica_service = client.GetService(
       'LineItemCreativeAssociationService', version='v201708')
-  query = 'WHERE lineItemId = :lineItemId'
-  values = [
-      {'key': 'lineItemId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': line_item_id
-       }},
-  ]
   # Create a statement to select line item creative associations.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('lineItemId = :lineItemId')
+               .WithBindVariable('lineItemId', line_item_id))
 
   # Retrieve a small amount of line item creative associations at a time, paging
   # through until all line item creative associations have been retrieved.

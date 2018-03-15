@@ -1,0 +1,2 @@
+    <ns1:campaignId>%s</ns1:campaignId>
+    <ns1:labelId>%s</ns1:labelId>

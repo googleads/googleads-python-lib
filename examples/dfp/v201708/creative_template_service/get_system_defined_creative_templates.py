@@ -24,16 +24,10 @@ def main(client):
   # Initialize appropriate service.
   creative_template_service = client.GetService(
       'CreativeTemplateService', version='v201708')
-  query = 'WHERE type = :type'
-  values = [
-      {'key': 'type',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'SYSTEM_DEFINED'
-       }},
-  ]
   # Create a statement to select creative templates.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('type = :type')
+               .WithBindVariable('type', 'SYSTEM_DEFINED'))
 
   # Retrieve a small amount of creative templates at a time, paging
   # through until all creative templates have been retrieved.

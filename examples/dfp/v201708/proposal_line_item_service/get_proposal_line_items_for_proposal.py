@@ -26,16 +26,10 @@ def main(client, proposal_id):
   # Initialize appropriate service.
   proposal_line_item_service = client.GetService(
       'ProposalLineItemService', version='v201708')
-  query = 'WHERE proposalId = :proposalId'
-  values = [
-      {'key': 'proposalId',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': proposal_id
-       }},
-  ]
   # Create a statement to select proposal line items.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('proposalId = :proposalId')
+               .WithBindVariable('proposalId', proposal_id))
 
   # Retrieve a small amount of proposal line items at a time, paging
   # through until all proposal line items have been retrieved.

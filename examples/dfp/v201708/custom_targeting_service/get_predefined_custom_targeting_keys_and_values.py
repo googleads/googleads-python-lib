@@ -26,15 +26,9 @@ def main(client):
       'CustomTargetingService', version='v201708')
 
   # Create statement to get targeting keys for predefined values.
-  query = ('WHERE type = :type')
-  values = [{
-      'key': 'type',
-      'value': {
-          'xsi_type': 'TextValue',
-          'value': 'PREDEFINED'
-      }
-  }]
-  targeting_key_statement = dfp.FilterStatement(query, values)
+  targeting_key_statement = (dfp.StatementBuilder()
+                             .Where('type = :type')
+                             .WithBindVariable('type', 'PREDEFINED'))
 
   all_keys = []
 
@@ -44,15 +38,15 @@ def main(client):
         targeting_key_statement.ToStatement())
     if 'results' in response:
       all_keys.extend(response['results'])
-      targeting_key_statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      targeting_key_statement.offset += targeting_key_statement.limit
     else:
       break
 
   if all_keys:
     # Create a statement to select custom targeting values.
-    query = ('WHERE customTargetingKeyId IN (%s)' %
-             ', '.join([str(key['id']) for key in all_keys]))
-    statement = dfp.FilterStatement(query)
+    statement = (dfp.StatementBuilder()
+                 .Where('customTargetingKeyId IN (:ids)')
+                 .WithBindVariable('ids', [key['id'] for key in all_keys]))
 
     # Retrieve a small amount of custom targeting values at a time, paging
     # through until all custom targeting values have been retrieved.
@@ -67,7 +61,7 @@ def main(client):
                 (custom_targeting_value['id'], custom_targeting_value['name'],
                  custom_targeting_value['displayName'],
                  custom_targeting_value['customTargetingKeyId']))
-        statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+        statement.offset += statement.limit
       else:
         break
 

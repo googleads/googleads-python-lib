@@ -24,16 +24,10 @@ def main(client):
   # Initialize appropriate service.
   audience_segment_service = client.GetService(
       'AudienceSegmentService', version='v201708')
-  query = 'WHERE type = :type'
-  values = [
-      {'key': 'type',
-       'value': {
-           'xsi_type': 'TextValue',
-           'value': 'FIRST_PARTY'
-       }},
-  ]
   # Create a statement to select audience segments.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where('type = :type')
+               .WithBindVariable('type', 'FIRST_PARTY'))
 
   # Retrieve a small amount of audience segments at a time, paging
   # through until all audience segments have been retrieved.

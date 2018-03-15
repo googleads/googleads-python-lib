@@ -33,35 +33,13 @@ def main(client, proposal_id):
   workflow_request_service = client.GetService('WorkflowRequestService',
                                                version='v201708')
 
-  # Create query.
-  values = [
-      {
-          'key': 'entityId',
-          'value': {
-              'xsi_type': 'TextValue',
-              'value': proposal_id
-          }
-      },
-      {
-          'key': 'entityType',
-          'value': {
-              'xsi_type': 'TextValue',
-              'value': 'PROPOSAL'
-          }
-      },
-      {
-          'key': 'type',
-          'value': {
-              'xsi_type': 'TextValue',
-              'value': 'WORKFLOW_EXTERNAL_CONDITION_REQUEST'
-          }
-      }
-  ]
-  query = ('WHERE entityId = :entityId and entityType = :entityType '
-           'and type = :type')
-
   # Create a filter statement.
-  statement = dfp.FilterStatement(query, values)
+  statement = (dfp.StatementBuilder()
+               .Where(('entityId = :entityId and entityType = :entityType '
+                       'and type = :type'))
+               .WithBindVariable('entityId', proposal_id)
+               .WithBindVariable('entityType', 'PROPOSAL')
+               .WithBindVariable('type', 'WORKFLOW_EXTERNAL_CONDITION_REQUEST'))
   workflow_external_condition_requests_triggered = 0
 
   # Get workflow external condition requests by statement.

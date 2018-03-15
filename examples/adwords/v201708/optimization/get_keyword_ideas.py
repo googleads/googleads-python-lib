@@ -26,49 +26,62 @@ section of our README.
 from googleads import adwords
 
 
+# Optional AdGroup ID used to set a SearchAdGroupIdSearchParameter.
+AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
 PAGE_SIZE = 100
 
 
-def main(client):
+def main(client, ad_group_id=None):
   # Initialize appropriate service.
   targeting_idea_service = client.GetService(
       'TargetingIdeaService', version='v201708')
 
   # Construct selector object and retrieve related keywords.
-  offset = 0
   selector = {
-      'searchParameters': [
-          {
-              'xsi_type': 'RelatedToQuerySearchParameter',
-              'queries': ['space cruise']
-          },
-          {
-              # Language setting (optional).
-              # The ID can be found in the documentation:
-              # https://developers.google.com/adwords/api/docs/appendix/languagecodes
-              'xsi_type': 'LanguageSearchParameter',
-              'languages': [{'id': '1000'}]
-          },
-          {
-              # Network search parameter (optional)
-              'xsi_type': 'NetworkSearchParameter',
-              'networkSetting': {
-                  'targetGoogleSearch': True,
-                  'targetSearchNetwork': False,
-                  'targetContentNetwork': False,
-                  'targetPartnerSearchNetwork': False
-              }
-          }
-      ],
       'ideaType': 'KEYWORD',
-      'requestType': 'IDEAS',
-      'requestedAttributeTypes': ['KEYWORD_TEXT', 'SEARCH_VOLUME',
-                                  'CATEGORY_PRODUCTS_AND_SERVICES'],
-      'paging': {
-          'startIndex': str(offset),
-          'numberResults': str(PAGE_SIZE)
-      }
+      'requestType': 'IDEAS'
   }
+
+  selector['requestedAttributeTypes'] = [
+      'KEYWORD_TEXT', 'SEARCH_VOLUME', 'CATEGORY_PRODUCTS_AND_SERVICES']
+
+  offset = 0
+  selector['paging'] = {
+      'startIndex': str(offset),
+      'numberResults': str(PAGE_SIZE)
+  }
+
+  selector['searchParameters'] = [{
+      'xsi_type': 'RelatedToQuerySearchParameter',
+      'queries': ['space cruise']
+  }]
+
+  # Language setting (optional).
+  selector['searchParameters'].append({
+      # The ID can be found in the documentation:
+      # https://developers.google.com/adwords/api/docs/appendix/languagecodes
+      'xsi_type': 'LanguageSearchParameter',
+      'languages': [{'id': '1000'}]
+  })
+
+  # Network search parameter (optional)
+  selector['searchParameters'].append({
+      'xsi_type': 'NetworkSearchParameter',
+      'networkSetting': {
+          'targetGoogleSearch': True,
+          'targetSearchNetwork': False,
+          'targetContentNetwork': False,
+          'targetPartnerSearchNetwork': False
+      }
+  })
+
+  # Use an existing ad group to generate ideas (optional)
+  if ad_group_id is not None:
+    selector['searchParameters'].append({
+        'xsi_type': 'SeedAdGroupIdSearchParameter',
+        'adGroupId': ad_group_id
+    })
+
   more_pages = True
   while more_pages:
     page = targeting_idea_service.get(selector)
@@ -78,8 +91,8 @@ def main(client):
       for result in page['entries']:
         attributes = {}
         for attribute in result['data']:
-          attributes[attribute['key']] = getattr(attribute['value'], 'value',
-                                                 '0')
+          attributes[attribute['key']] = getattr(
+              attribute['value'], 'value', '0')
         print ('Keyword with "%s" text and average monthly search volume '
                '"%s" was found with Products and Services categories: %s.'
                % (attributes['KEYWORD_TEXT'],
@@ -97,4 +110,4 @@ if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
 
-  main(adwords_client)
+  main(adwords_client, int(AD_GROUP_ID) if AD_GROUP_ID.isdigit() else None)
