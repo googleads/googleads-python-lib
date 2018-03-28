@@ -42,7 +42,7 @@ def main(client, rate_card_id):
               'found.\n' %
               (base_rate['id'], dfp.DfpClassType(base_rate),
                base_rate['rateCardId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

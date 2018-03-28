@@ -58,7 +58,7 @@ def main(client, order_id):
           {'xsi_type': 'ActivateLineItems'}, statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         line_items_activated += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

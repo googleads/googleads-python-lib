@@ -28,7 +28,6 @@ section of our README.
 """
 
 
-import base64
 import os
 import uuid
 
@@ -50,7 +49,6 @@ def main(client, advertiser_id):
   file_name = 'image%s.jpg' % uuid.uuid4()
   image_data = open(os.path.join(os.path.split(__file__)[0], '..', '..', 'data',
                                  'medium_rectangle.jpg'), 'r').read()
-  image_data = base64.encodestring(image_data)
   size = {
       'width': '300',
       'height': '250'

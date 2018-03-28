@@ -45,7 +45,7 @@ def main(client, reconciliation_report_id):
         print('Reconciliation order report with ID "%d" and status "%s" was '
               'found.\n' % (reconciliation_order_report['id'],
                             reconciliation_order_report['status']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

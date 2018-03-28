@@ -22,7 +22,6 @@ import unittest
 import mock
 import pytz
 import six
-import suds.transport
 import googleads.dfp
 import googleads.common
 import googleads.errors
@@ -118,7 +117,7 @@ class DfpHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
     self.util_sig_template = ' (%s, %s, %s, %s)'
     self.network_code = 'my network code is code'
     self.app_name = 'application name'
-    self.oauth_header = {'oauth', 'header'}
+    self.oauth_header = {'oauth': 'header'}
 
     @googleads.common.RegisterUtility(self.utility_name)
     class TestUtility(object):
@@ -128,42 +127,41 @@ class DfpHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
 
     self.test_utility = TestUtility()
 
-  def testSetHeaders(self):
-    suds_client = mock.Mock()
-    self.dfp_client.network_code = self.network_code
-    self.dfp_client.application_name = self.app_name
+  def testGetHTTPHeaders(self):
     self.dfp_client.oauth2_client.CreateHttpHeader.return_value = (
         self.oauth_header)
 
-    self.header_handler.SetHeaders(suds_client)
+    header_result = self.header_handler.GetHTTPHeaders()
+
+    # Check that the returned headers have the correct values.
+    self.assertEqual(header_result, self.oauth_header)
+
+  def testGetSOAPHeaders(self):
+    create_method = mock.Mock()
+    self.dfp_client.network_code = self.network_code
+    self.dfp_client.application_name = self.app_name
+
+    header_result = self.header_handler.GetSOAPHeaders(create_method)
 
     # Check that the SOAP header has the correct values.
-    suds_client.factory.create.assert_called_once_with('SoapRequestHeader')
-    soap_header = suds_client.factory.create.return_value
-    self.assertEqual(self.network_code, soap_header.networkCode)
+    create_method.assert_called_once_with('ns0:SoapRequestHeader')
+    self.assertEqual(self.network_code, header_result.networkCode)
     self.assertEqual(
         ''.join([
             self.app_name,
             googleads.common.GenerateLibSig(
                 googleads.dfp._DfpHeaderHandler._PRODUCT_SIG)]),
-        soap_header.applicationName)
+        header_result.applicationName)
 
-    # Check that the suds client has the correct values.
-    suds_client.set_options.assert_any_call(soapheaders=soap_header,
-                                            headers=self.oauth_header)
-
-  def testSetHeadersUserAgentWithUtility(self):
-    suds_client = mock.Mock()
+  def testGetSOAPHeadersUserAgentWithUtility(self):
+    create_method = mock.Mock()
     self.dfp_client.network_code = self.network_code
     self.dfp_client.application_name = self.app_name
-    self.dfp_client.oauth2_client.CreateHttpHeader.return_value = (
-        self.oauth_header)
 
     with mock.patch('googleads.common._COMMON_LIB_SIG') as mock_common_sig:
       with mock.patch('googleads.common._PYTHON_VERSION') as mock_py_ver:
         self.test_utility.Test()  # This will register TestUtility.
-        self.header_handler.SetHeaders(suds_client)
-        soap_header = suds_client.factory.create.return_value
+        soap_header = self.header_handler.GetSOAPHeaders(create_method)
         self.assertEqual(
             ''.join([self.app_name,
                      self.util_sig_template % (
@@ -173,20 +171,17 @@ class DfpHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
                          self.utility_name)]),
             soap_header.applicationName)
 
-  def testSetHeadersUserAgentWithAndWithoutUtility(self):
-    suds_client = mock.Mock()
+  def testGetHeadersUserAgentWithAndWithoutUtility(self):
+    create_method = mock.Mock()
 
     self.dfp_client.network_code = self.network_code
     self.dfp_client.application_name = self.app_name
-    self.dfp_client.oauth2_client.CreateHttpHeader.return_value = (
-        self.oauth_header)
 
     with mock.patch('googleads.common._COMMON_LIB_SIG') as mock_common_sig:
       with mock.patch('googleads.common._PYTHON_VERSION') as mock_py_ver:
         # Check headers when utility registered.
         self.test_utility.Test()  # This will register TestUtility.
-        self.header_handler.SetHeaders(suds_client)
-        soap_header = suds_client.factory.create.return_value
+        soap_header = self.header_handler.GetSOAPHeaders(create_method)
         self.assertEqual(
             ''.join([self.app_name,
                      self.util_sig_template % (
@@ -197,8 +192,7 @@ class DfpHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
             soap_header.applicationName)
 
         # Check headers when no utility should be registered.
-        self.header_handler.SetHeaders(suds_client)
-        soap_header = suds_client.factory.create.return_value
+        soap_header = self.header_handler.GetSOAPHeaders(create_method)
         self.assertEqual(
             ''.join([self.app_name,
                      self.default_sig_template % (
@@ -209,8 +203,7 @@ class DfpHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
 
         # Verify that utility is registered in subsequent uses.
         self.test_utility.Test()  # This will register TestUtility.
-        self.header_handler.SetHeaders(suds_client)
-        soap_header = suds_client.factory.create.return_value
+        soap_header = self.header_handler.GetSOAPHeaders(create_method)
         self.assertEqual(
             ''.join([self.app_name,
                      self.util_sig_template % (
@@ -232,8 +225,7 @@ class DfpClientTest(unittest.TestCase):
     self.oauth2_client.CreateHttpHeader.return_value = {}
     self.proxy_host = 'myproxy'
     self.proxy_port = 443
-    self.https_proxy = googleads.common.ProxyConfig.Proxy(host=self.proxy_host,
-                                                          port=self.proxy_port)
+    self.https_proxy = 'http://myproxy:443'
     self.proxy_config = googleads.common.ProxyConfig(
         https_proxy=self.https_proxy)
     self.cache = None
@@ -306,96 +298,46 @@ class DfpClientTest(unittest.TestCase):
         self.https_proxy, self.cache)
 
   def testGetService_success(self):
-    service = googleads.dfp._SERVICE_MAP[self.version][0]
+    dfp_client = self.CreateDfpClient(
+        cache='cache', proxy_config='proxy', timeout='timeout')
+    service_name = googleads.dfp._SERVICE_MAP[self.version][0]
 
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
     server = 'https://testing.test.com/'
-    with mock.patch('suds.client.Client') as mock_client:
-      with mock.patch('googleads.common.'
-                      'ProxyConfig._SudsProxyTransport') as mock_transport:
-        with mock.patch('googleads.common.'
-                        'SudsServiceProxy') as mock_service_proxy:
-          with mock.patch('googleads.common.LoggingMessagePlugin') as mck_plugn:
-            mock_plugin_instance = mock.Mock()
-            mck_plugn.return_value = mock_plugin_instance
-            dfp_client = self.CreateDfpClient()
-            mock_service_proxy.return_value = mock.Mock()
-            mock_transport.return_value = mock.Mock()
-            mock_client.return_value = mock.Mock()
-            mock_client.return_value.sd.__getitem__ = mock.Mock()
-            suds_service = dfp_client.GetService(service, self.version, server)
+    with mock.patch('googleads.common.'
+                    'GetServiceClassForLibrary') as mock_get_service:
+      impl = mock.Mock()
+      mock_service = mock.Mock()
+      impl.return_value = mock_service
+      mock_get_service.return_value = impl
 
-            mock_client.assert_called_once_with(
-                'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
-                % (self.version, service), timeout=3600,
-                transport=mock_transport.return_value,
-                plugins=[mock_plugin_instance])
-            self.assertEqual(suds_service, mock_service_proxy.return_value)
-            mock_service_proxy.assert_called_once_with(
-                mock_client.return_value,
-                dfp_client._header_handler,
-                packer=googleads.dfp._DfpPacker)
+      service = dfp_client.GetService(service_name, self.version, server)
 
-  def testGetService_successWithNoCache(self):
-    service = googleads.dfp._SERVICE_MAP[self.version][0]
-    no_cache = suds.cache.NoCache()
+      impl.assert_called_once_with(
+          'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
+          % (self.version, service_name), dfp_client._header_handler,
+          googleads.dfp._DfpPacker, 'proxy', 'timeout',
+          cache='cache')
+      self.assertEqual(service, mock_service)
 
-    # Use a custom server. Also test what happens if the server ends with a
-    # trailing slash
-    server = 'https://testing.test.com/'
-    with mock.patch('suds.client.Client') as mock_client:
-      with mock.patch('googleads.common.'
-                      'ProxyConfig._SudsProxyTransport') as mock_transport:
-        with mock.patch('googleads.common.LoggingMessagePlugin') as mck_plugn:
-          mock_plugin_instance = mock.Mock()
-          mck_plugn.return_value = mock_plugin_instance
-          dfp_client = self.CreateDfpClient(cache=no_cache)
-          mock_transport.return_value = mock.Mock()
-          suds_service = dfp_client.GetService(service, self.version, server)
-
-          mock_client.assert_called_once_with(
-              'https://testing.test.com/apis/ads/publisher/%s/%s?wsdl'
-              % (self.version, service), timeout=3600,
-              cache=no_cache, transport=mock_transport.return_value,
-              plugins=[mock_plugin_instance])
-          self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
-
-  def testGetService_successWithoutProxy(self):
-    service = googleads.dfp._SERVICE_MAP[self.version][0]
-
-    with mock.patch('suds.client.Client') as mock_client:
-      with mock.patch('googleads.common.'
-                      'ProxyConfig._SudsProxyTransport') as mock_transport:
-        with mock.patch('googleads.common.LoggingMessagePlugin') as mck_plugn:
-          mock_plugin_instance = mock.Mock()
-          mck_plugn.return_value = mock_plugin_instance
-          dfp_client = self.CreateDfpClient()
-          # Use the default server without a proxy.
-          dfp_client.proxy_option = None
-          mock_transport.return_value = mock.Mock()
-          suds_service = dfp_client.GetService(service, self.version)
-
-          mock_client.assert_called_once_with(
-              'https://ads.google.com/apis/ads/publisher/%s/%s?wsdl'
-              % (self.version, service), timeout=3600,
-              transport=mock_transport.return_value,
-              plugins=[mock_plugin_instance])
-          self.assertFalse(mock_client.return_value.set_options.called)
-          self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
 
   def testGetService_badService(self):
     dfp_client = self.CreateDfpClient()
-    with mock.patch('suds.client.Client') as mock_client:
-      mock_client.side_effect = suds.transport.TransportError('', '')
+    with mock.patch('googleads.common.'
+                    'GetServiceClassForLibrary') as mock_get_service:
+      mock_get_service.side_effect = (
+          googleads.errors.GoogleAdsSoapTransportError('', ''))
       self.assertRaises(
           googleads.errors.GoogleAdsValueError, dfp_client.GetService,
           'GYIVyievfyiovslf', self.version)
 
   def testGetService_badVersion(self):
     dfp_client = self.CreateDfpClient()
-    with mock.patch('suds.client.Client') as mock_client:
-      mock_client.side_effect = suds.transport.TransportError('', '')
+    with mock.patch('googleads.common.'
+                    'GetServiceClassForLibrary') as mock_get_service:
+      mock_get_service.side_effect = (
+          googleads.errors.GoogleAdsSoapTransportError('', ''))
       self.assertRaises(
           googleads.errors.GoogleAdsValueError, dfp_client.GetService,
           'CampaignService', '11111')
@@ -403,9 +345,11 @@ class DfpClientTest(unittest.TestCase):
   def testGetService_transportError(self):
     service = googleads.dfp._SERVICE_MAP[self.version][0]
     dfp_client = self.CreateDfpClient()
-    with mock.patch('suds.client.Client') as mock_client:
-      mock_client.side_effect = suds.transport.TransportError('', '')
-      self.assertRaises(suds.transport.TransportError,
+    with mock.patch('googleads.common.'
+                    'GetServiceClassForLibrary') as mock_get_service:
+      mock_get_service.side_effect = (
+          googleads.errors.GoogleAdsSoapTransportError('', ''))
+      self.assertRaises(googleads.errors.GoogleAdsSoapTransportError,
                         dfp_client.GetService, service, self.version)
 
 

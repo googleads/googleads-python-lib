@@ -61,7 +61,7 @@ def main(client, proposal_id):
       if result and int(result['numChanges']) > 0:
         workflow_external_condition_requests_triggered += int(
             result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

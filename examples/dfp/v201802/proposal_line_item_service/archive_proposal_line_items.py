@@ -58,7 +58,7 @@ def main(client, proposal_line_item_id):
           {'xsi_type': 'ArchiveProposalLineItems'}, statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         proposal_line_items_archived += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

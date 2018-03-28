@@ -25,9 +25,9 @@ section of our README.
 
 """
 
-import suds
 
 from googleads import adwords
+from googleads import errors
 
 
 AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
@@ -73,7 +73,7 @@ def main(client, ad_group_id):
   }]
   try:
     ad_group_ad_service.mutate(operations)
-  except suds.WebFault, e:
+  except errors.GoogleAdsServerFault, e:
     print 'Validation correctly failed with "%s".' % str(e)
 
 

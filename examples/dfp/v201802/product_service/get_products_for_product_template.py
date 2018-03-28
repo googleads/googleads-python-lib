@@ -40,7 +40,7 @@ def main(client, product_template_id):
         # Print out some information for each product.
         print('Product with ID "%d" and name "%s" was found.\n' %
               (product['id'], product['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

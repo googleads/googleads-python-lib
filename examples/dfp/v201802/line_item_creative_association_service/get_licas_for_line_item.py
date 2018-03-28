@@ -47,7 +47,7 @@ def main(client, line_item_id):
           print('Line item creative association with line item ID "%d" and '
                 'creative ID "%d" was found.\n' %
                 (lica['lineItemId'], lica['creativeId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

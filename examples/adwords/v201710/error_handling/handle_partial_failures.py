@@ -109,12 +109,12 @@ def main(client, ad_group_id):
 
     if (first_field_path_element and
         first_field_path_element['field'] == 'operations' and
-        first_field_path_element['index']):
+        'index' in first_field_path_element):
       operation_index = first_field_path_element['index']
 
       adgroup_criterion = operations[operation_index]['operand']
 
-      print('Ad group criterion with ad group ID %d and keyword "%s" triggered '
+      print('Ad group criterion with ad group ID %s and keyword "%s" triggered '
             'a failure for the following reason: %s.'
             % (adgroup_criterion['adGroupId'],
                adgroup_criterion['criterion']['text'],

@@ -44,7 +44,7 @@ def main(client):
               '"%d" was found.\n' % (workflow_request['id'],
                                      workflow_request['entityType'],
                                      workflow_request['entityId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

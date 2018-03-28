@@ -1,3 +1,44 @@
+11.0.0 -- 03/21/18
+* Removed support and examples for AdWords v201705, and v201708.
+* The default SOAP backend is now zeep. If you encounter any issues,
+  please report them and use your googleads.yaml file to revert back
+  to suds.
+- Zeep logs to the googleads.soap channel.
+- When using zeep (the default), you no longer need to encode your
+  image assets to base64, this will be done automatically.
+* Sunset oauth2client, replaced with google-auth.
+  https://google-auth.readthedocs.io/en/latest/
+- Updated googleads.yaml to remove service_account_email configurations that
+  are no longer necessary.
+- Removed httplib2 dependency.
+- Added google-auth, google-auth-oauthlib, and requests as dependencies.
+- AdWords and DFP auth examples have been updated to use new OAuth 2.0
+  dependencies.
+* Fixed a bug in IncrementalUploadHelper where the specified server would be
+  lost in serialization/deserialization.
+* Breaking changes:
+* Connection faults are now raised as GoogleAdsSoapTransportError
+  instances instead of suds errors.
+- Soap faults are now raised as GoogleAdsServerFault instances instead of suds
+  errors.
+- GoogleServiceAccountClient no longer supports P12 key files.
+- GoogleServiceAccountClient's initializer arguments have been refactored;
+  `key_file` is now a required positional argument, `client_email` and
+  `private_key_password` have been removed.
+- Removed Proxy from common.py. When creating a ProxyConfig, you must now
+  provide the full URI for http_proxy and https_proxy rather than a Proxy
+  instance. For an example of what these would look like, see:
+  http://docs.python-requests.org/en/master/user/advanced/#proxies
+- The proxy_config used in googleads.yaml has been updated to better resemble
+  proxy configuration for the underlying HTTP library. The http_proxy and
+  https_proxy configurations have been removed, and replaced with http and
+  https. These take the full proxy URI as their value.
+- Removed proxy_info attribute from ProxyConfig.
+- Refactored proxy_option attribute in ProxyConfig, renamed to proxies.
+* Resolved issues:
+- Issue 251: https://github.com/googleads/googleads-python-lib/issues/251
+- Issue 254: https://github.com/googleads/googleads-python-lib/issues/254
+
 10.1.1 -- 03/16/18
 * Accepted PR #222, to improve AdWords App Engine sample.
 

@@ -42,7 +42,7 @@ def main(client, num_requests):
         print(
             'Suggested ad unit with ID "%s" and num requests "%d" was found.\n'
             % (suggested_ad_unit['id'], suggested_ad_unit['numRequests']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

@@ -50,7 +50,7 @@ def main(client, proposal_id):
           {'xsi_type': 'SubmitProposalsForApproval'}, statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         proposals_approved += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

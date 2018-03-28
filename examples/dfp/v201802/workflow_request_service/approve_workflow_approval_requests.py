@@ -58,7 +58,7 @@ def main(client, proposal_id):
           statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         workflow_approval_requests_approved += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

@@ -42,12 +42,16 @@ PLACEHOLDER_FIELD_LINE_2_TEXT = '3'
 PLACEHOLDER_FIELD_LINE_3_TEXT = '4'
 
 CAMPAIGN_ID = 'INSERT_CAMPAIGN_ID_HERE'
+# Optional: Ad group to restrict targeting to.
+AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
 
 
-def main(client, campaign_id):
+def main(client, campaign_id, ad_group_id=None):
   # Initialize appropriate service.
   feed_service = client.GetService('FeedService', version='v201802')
   feed_item_service = client.GetService('FeedItemService', version='v201802')
+  feed_item_target_service = client.GetService('FeedItemTargetService',
+                                               version='v201802')
   feed_mapping_service = client.GetService(
       'FeedMappingService', version='v201802')
   campaign_feed_service = client.GetService(
@@ -228,9 +232,34 @@ def main(client, campaign_id):
   else:
     raise errors.GoogleAdsError('No campaign feeds were added.')
 
+  # Optional: Restrict the first feed item to only serve with ads for the
+  # specified ad group ID.
+  if ad_group_id:
+    feed_item_target = {
+        'xsi_type': 'FeedItemAdGroupTarget',
+        'feedId': sitelinks_data['feedId'],
+        'feedItemId': sitelinks_data['feedItemIds'][0],
+        'adGroupId': ad_group_id
+    }
+
+    operations = [{
+        'operator': 'ADD',
+        'operand': feed_item_target
+    }]
+
+    response = feed_item_target_service.mutate(operations)
+
+    if 'value' in response:
+      print ('Feed item target for feed ID "%d" and feed item ID "%d" was '
+             'created to restrict serving to ad group ID "%d".'
+             % (feed_item_target['feedId'], feed_item_target['feedItemId'],
+                feed_item_target['adGroupId']))
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
 
-  main(adwords_client, CAMPAIGN_ID)
+  if AD_GROUP_ID == 'INSERT_AD_GROUP_ID_HERE':
+    main(adwords_client, CAMPAIGN_ID)
+  else:
+    main(adwords_client, CAMPAIGN_ID, ad_group_id=AD_GROUP_ID)

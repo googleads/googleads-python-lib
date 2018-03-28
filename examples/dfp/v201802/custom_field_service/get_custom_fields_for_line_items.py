@@ -39,7 +39,7 @@ def main(client):
         # Print out some information for each custom field.
         print('Custom field with ID "%d" and name "%s" was found.\n' %
               (custom_field['id'], custom_field['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

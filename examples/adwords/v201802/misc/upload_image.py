@@ -26,7 +26,6 @@ section of our README.
 """
 
 
-import base64
 from googleads import adwords
 
 
@@ -38,7 +37,7 @@ def main(client, image_filename):
   media_service = client.GetService('MediaService', version='v201802')
 
   with open(image_filename, 'rb') as image_handle:
-    image_data = base64.encodestring(image_handle.read()).decode('utf-8')
+    image_data = image_handle.read().decode('utf-8')
 
   # Construct media and upload image.
   media = [{

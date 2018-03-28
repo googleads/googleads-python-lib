@@ -14,6 +14,7 @@
 
 """Client library for the AdWords API."""
 
+import abc
 from collections import namedtuple
 import datetime
 import io
@@ -25,9 +26,6 @@ import urllib
 import urllib2
 from xml.etree import ElementTree
 
-import suds.client
-import suds.mx.literal
-import suds.xsd.doctor
 import xmltodict
 import yaml
 import googleads.common
@@ -38,109 +36,11 @@ _report_logger = logging.getLogger('%s.%s' % (__name__, 'report_downloader'))
 _batch_job_logger = logging.getLogger('%s.%s'
                                       % (__name__, 'batch_job_helper'))
 
-
+# The chunk size used for report downloads.
+_CHUNK_SIZE = 16 * 1024
 # A giant dictionary of AdWords versions, the services they support, and which
 # namespace those services are in.
 _SERVICE_MAP = {
-    'v201705': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'BatchJobService': 'cm',
-        'BiddingStrategyService': 'cm',
-        'BudgetOrderService': 'billing',
-        'BudgetService': 'cm',
-        'CampaignBidModifierService': 'cm',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignGroupPerformanceTargetService': 'cm',
-        'CampaignGroupService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerFeedService': 'cm',
-        'CustomerService': 'mcm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'DraftAsyncErrorService': 'cm',
-        'DraftService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'LabelService': 'cm',
-        'LocationCriterionService': 'cm',
-        'ManagedCustomerService': 'mcm',
-        'MediaService': 'cm',
-        'OfflineCallConversionFeedService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-        'TrialAsyncErrorService': 'cm',
-        'TrialService': 'cm'
-    },
-    'v201708': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'BatchJobService': 'cm',
-        'BiddingStrategyService': 'cm',
-        'BudgetOrderService': 'billing',
-        'BudgetService': 'cm',
-        'CampaignBidModifierService': 'cm',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignGroupPerformanceTargetService': 'cm',
-        'CampaignGroupService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerFeedService': 'cm',
-        'CustomerService': 'mcm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'DraftAsyncErrorService': 'cm',
-        'DraftService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'LabelService': 'cm',
-        'LocationCriterionService': 'cm',
-        'ManagedCustomerService': 'mcm',
-        'MediaService': 'cm',
-        'OfflineCallConversionFeedService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'OfflineDataUploadService': 'rm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-        'TrialAsyncErrorService': 'cm',
-        'TrialService': 'cm'
-    },
     'v201710': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
@@ -338,7 +238,8 @@ class AdWordsClient(googleads.common.CommonClient):
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, developer_token, oauth2_client,
-               user_agent=_DEFAULT_USER_AGENT, **kwargs):
+               user_agent=_DEFAULT_USER_AGENT, soap_impl='zeep',
+               timeout=3600, **kwargs):
     """Initializes an AdWordsClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -351,6 +252,9 @@ class AdWordsClient(googleads.common.CommonClient):
       user_agent: An arbitrary string containing only ASCII characters that will
           be used to identify your application. If not set, this will default to
           the string value "unknown".
+      soap_impl: A string identifying which SOAP implementation to use. The
+          options are 'zeep' or 'suds'.
+      timeout: An integer time in MS to time out connections to AdWords.
       **kwargs: Optional keyword arguments.
 
     Keyword Arguments:
@@ -365,8 +269,9 @@ class AdWordsClient(googleads.common.CommonClient):
           succeed, to result in a complete failure with no changes made or a
           partial failure with some changes made. Only certain services respect
           this header.
-      cache: A subclass of suds.cache.Cache. If not set, this will default to an
-          instance of suds.cache.ObjectCache.
+      cache: A subclass of zeep.cache.Base or suds.cache.Cache. If not set,
+          this will default to a basic file cache. To disable caching for Zeep,
+          pass googleads.common.ZeepServiceProxy.NO_CACHE.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
         isn't being used.
       report_downloader_headers: A dict containing optional headers to be used
@@ -385,6 +290,7 @@ class AdWordsClient(googleads.common.CommonClient):
     self.oauth2_client = oauth2_client
     self.client_customer_id = kwargs.get('client_customer_id')
     self.user_agent = user_agent
+    self.soap_impl = soap_impl
     # Verify that the provided user_agent contains only ASCII characters. In
     # both Python 2 and Python 3, a UnicodeEncodeError will be raised if it
     # contains a non-ASCII character.
@@ -407,6 +313,7 @@ class AdWordsClient(googleads.common.CommonClient):
       self.user_agent = '%s (gzip)' % self.user_agent
 
     self.message_plugin = googleads.common.LoggingMessagePlugin()
+    self.timeout = timeout
 
   def GetService(self, service_name, version=None, server=None):
     """Creates a service client for the given service.
@@ -421,8 +328,8 @@ class AdWordsClient(googleads.common.CommonClient):
       server: A string identifying the webserver hosting the AdWords API.
 
     Returns:
-      A suds.client.ServiceSelector which has the headers and proxy configured
-          for use.
+      A googleads.common.GoogleSoapService instance which has the headers
+      and proxy configured for use.
 
     Raises:
       A GoogleAdsValueError if the service or version provided do not exist.
@@ -446,21 +353,16 @@ class AdWordsClient(googleads.common.CommonClient):
         raise googleads.errors.GoogleAdsValueError(
             msg_fmt % ('version', version, _SERVICE_MAP.keys()))
 
-    kwargs = {'timeout': 3600,
-              'transport': self.proxy_config.GetSudsProxyTransport(),
-              'plugins': [self.message_plugin]}
+    service = googleads.common.GetServiceClassForLibrary(self.soap_impl)(
+        self._SOAP_SERVICE_FORMAT % (
+            server, version_service_mapping, version, service_name),
+        _AdWordsHeaderHandler(self, version, self.enable_compression),
+        _AdWordsPacker,
+        self.proxy_config,
+        self.timeout,
+        cache=self.cache)
 
-    if self.cache:
-      kwargs['cache'] = self.cache
-
-    client = suds.client.Client(
-        self._SOAP_SERVICE_FORMAT %
-        (server, version_service_mapping, version, service_name),
-        **kwargs)
-
-    return googleads.common.SudsServiceProxy(
-        client, _AdWordsHeaderHandler(self, version, self.enable_compression),
-        packer=_AdWordsPacker)
+    return service
 
   def GetBatchJobHelper(self, version=sorted(_SERVICE_MAP.keys())[-1],
                         server=None):
@@ -486,7 +388,7 @@ class AdWordsClient(googleads.common.CommonClient):
         self, version=version, server=server)
     response_parser = BatchJobHelper.GetResponseParser()
 
-    return BatchJobHelper(request_builder, response_parser, version=version)
+    return BatchJobHelper(request_builder, response_parser)
 
   def GetReportDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
                           server=None):
@@ -548,13 +450,17 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     self._version = version
     self.enable_compression = enable_compression
 
-  def SetHeaders(self, suds_client):
-    """Sets the SOAP and HTTP headers on the given suds client.
+  def GetSOAPHeaders(self, create_method):
+    """Returns the SOAP headers required for request authorization.
 
     Args:
-      suds_client: An initialized suds.client.Client.
+      create_method: The SOAP library specific method used to instantiate SOAP
+      objects.
+
+    Returns:
+      A SOAP object containing the headers.
     """
-    header = suds_client.factory.create(self._SOAP_HEADER_CLASS % self._version)
+    header = create_method(self._SOAP_HEADER_CLASS % self._version)
     header.clientCustomerId = self._adwords_client.client_customer_id
     header.developerToken = self._adwords_client.developer_token
     header.userAgent = ''.join([
@@ -562,14 +468,18 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
         googleads.common.GenerateLibSig(self._PRODUCT_SIG)])
     header.validateOnly = self._adwords_client.validate_only
     header.partialFailure = self._adwords_client.partial_failure
+    return header
 
+  def GetHTTPHeaders(self):
+    """Returns the HTTP headers required for request authorization.
+
+    Returns:
+      A dictionary containing the required headers.
+    """
     http_headers = self._adwords_client.oauth2_client.CreateHttpHeader()
     if self.enable_compression:
       http_headers['accept-encoding'] = 'gzip'
-
-    suds_client.set_options(
-        soapheaders=header,
-        headers=http_headers)
+    return http_headers
 
   def GetReportDownloadHeaders(self, **kwargs):
     """Returns a dictionary of headers for a report download request.
@@ -630,7 +540,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     return headers
 
 
-class _AdWordsPacker(googleads.common.SudsPacker):
+class _AdWordsPacker(googleads.common.SoapPacker):
   """A utility applying customized packing logic for AdWords."""
 
   @classmethod
@@ -638,11 +548,11 @@ class _AdWordsPacker(googleads.common.SudsPacker):
     """Pack the given object using AdWords-specific logic.
 
     Args:
-      obj: an object to be packed for suds using AdWords-specific logic, if
+      obj: an object to be packed for SOAP using AdWords-specific logic, if
           applicable.
 
     Returns:
-      The given object packed with AdWords-specific logic for suds, if
+      The given object packed with AdWords-specific logic for SOAP, if
       applicable. Otherwise, returns the given object unmodified.
     """
     if isinstance(obj, ServiceQuery):
@@ -657,6 +567,9 @@ class BatchJobHelper(object):
   class AbstractResponseParser(object):
     """Interface for parsing responses from the BatchJobService."""
 
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
     def ParseResponse(self, batch_job_response):
       """Parses a Batch Job Service response..
 
@@ -664,7 +577,6 @@ class BatchJobHelper(object):
         batch_job_response: a str containing the response from the
         BatchJobService.
       """
-      raise NotImplementedError('You must implement ParseResponse().')
 
   class _XMLToDictResponseParser(AbstractResponseParser):
     """Parses responses from the BatchJobService, returning as a dictionary."""
@@ -684,6 +596,9 @@ class BatchJobHelper(object):
   class AbstractUploadRequestBuilder(object):
     """Interface for building requests used to upload batch job operations."""
 
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
     def BuildUploadRequest(self, upload_url, operations, **kwargs):
       """Builds the BatchJob upload request.
 
@@ -697,9 +612,25 @@ class BatchJobHelper(object):
         A urllib2.Request instance with the correct method, headers, and
         padding (if required) for the batch job upload.
       """
-      raise NotImplementedError('You must implement BuildUploadRequest().')
 
-  class _SudsUploadRequestBuilder(AbstractUploadRequestBuilder):
+    @abc.abstractmethod
+    def GetVersion(self):
+      """Retrieves the version of AdWords used to build requests.
+
+      Returns:
+        A str indicating the version of AdWords for which requests are being
+          built.
+      """
+
+    @abc.abstractmethod
+    def GetServer(self):
+      """Retrieves the endpoint used to access the AdWords API.
+
+      Returns:
+        A str indicating the version of AdWords endpoint being used.
+      """
+
+  class _UploadRequestBuilder(AbstractUploadRequestBuilder):
     """Builds requests used to upload operations for Batch Jobs."""
     # Used to remove namespace from xsi:type Element attributes.
     _ATTRIB_NAMESPACE_SUB = re.compile('ns[0-1]:')
@@ -757,9 +688,10 @@ class BatchJobHelper(object):
         'SharedSetOperation': _OPERATION('SharedSetOperation',
                                          'SharedSetService', 'mutate')
     }
+    XSI_TYPE_STRING = '{http://www.w3.org/2001/XMLSchema-instance}type'
 
     def __init__(self, client, **kwargs):
-      """Initializes a _SudsUploadRequestBuilder.
+      """Initializes an _UploadRequestBuilder.
 
       Arguments:
         client: an AdWordsClient instance.
@@ -771,9 +703,9 @@ class BatchJobHelper(object):
       """
       self.client = client
       self._version = kwargs.get('version', sorted(_SERVICE_MAP.keys())[-1])
-      server = kwargs.get('server', _DEFAULT_ENDPOINT)
+      self.server = kwargs.get('server', _DEFAULT_ENDPOINT)
       self._adwords_endpoint = ('%s/api/adwords/cm/%s' %
-                                (server, self._version))
+                                (self.server, self._version))
       self._adwords_namespace = ('{%s}' % self._adwords_endpoint)
       # Used to remove the AdWords namespace from Element tags.
       self._tag_namespace_sub = re.compile(self._adwords_namespace)
@@ -825,6 +757,23 @@ class BatchJobHelper(object):
 
       return req
 
+    def GetVersion(self):
+      """Retrieves the version of AdWords used to build requests.
+
+      Returns:
+        A str indicating the version of AdWords for which requests are being
+          built.
+      """
+      return self._version
+
+    def GetServer(self):
+      """Retrieves the endpoint used to access the AdWords API.
+
+      Returns:
+        A str indicating the version of AdWords endpoint being used.
+      """
+      return self.server
+
     def _BuildUploadRequestBody(self, operations, has_prefix=True,
                                 has_suffix=True):
       """Builds an unpadded body containing operations for a BatchJob upload.
@@ -853,8 +802,7 @@ class BatchJobHelper(object):
       """Extracts operations from API Request XML for use with BatchJobService.
 
       Args:
-        full_soap_xml: The full XML for the desired operation, as generated by
-          suds.
+        full_soap_xml: The full XML for the desired operation.
 
       Returns:
         A string containing only the operations portion of the full XML request,
@@ -879,7 +827,7 @@ class BatchJobHelper(object):
         if operation_type is None:
           raise googleads.errors.GoogleAdsValueError('No xsi_type specified '
                                                      'for the operations.')
-        operations.attrib['xsi:type'] = operation_type.text
+        operations.attrib[self.XSI_TYPE_STRING] = operation_type.text
       operations_xml = ''.join([ElementTree.tostring(operation).decode('utf-8')
                                 for operation in method])
       # Force removal of this line, which suds produces.
@@ -940,19 +888,15 @@ class BatchJobHelper(object):
           service.
 
       Returns:
-        A str containing the raw XML of the request to the given service that
-        would execute the given operations.
+        An element containing the raw XML of the request to the given service
+        that would execute the given operations.
 
       Raises:
         KeyError: If the given operation type is not supported.
       """
       operation = self._OPERATION_MAP[operations[0]['xsi_type']]
       service = self.client.GetService(operation.service, self._version)
-      service.suds_client.set_options(nosend=True)
-      service_request = (getattr(service, operation.method)
-                         (operations).envelope)
-      service.suds_client.set_options(nosend=False)
-      return service_request
+      return service.GetRequestXML(operation.method, operations)
 
     def _GetPaddingLength(self, length):
       """Retrieve the padding to be used in an incremental upload.
@@ -971,8 +915,7 @@ class BatchJobHelper(object):
       """Retrieve the raw set of operations from the request XML.
 
       Args:
-        raw_request_xml: The full XML for the desired operation, as generated by
-          suds.
+        raw_request_xml: The full XML for the desired operation.
 
       Returns:
         An unmodified Element containing the operations from the raw request
@@ -981,12 +924,10 @@ class BatchJobHelper(object):
       Raises:
         AttributeError: if the provided XML isn't from AdWords.
       """
-      root = ElementTree.fromstring(raw_request_xml)
-      return root.find('{http://schemas.xmlsoap.org/soap/envelope/}Body').find(
-          './/')
+      return raw_request_xml.find(
+          '{http://schemas.xmlsoap.org/soap/envelope/}Body').find('.//')
 
-  def __init__(self, request_builder, response_parser,
-               version=sorted(_SERVICE_MAP.keys())[-1]):
+  def __init__(self, request_builder, response_parser):
     """Initializes the BatchJobHelper.
 
     For general use, consider using AdWordsClient's GetBatchJobHelper method to
@@ -996,14 +937,10 @@ class BatchJobHelper(object):
     Args:
       request_builder: an AbstractUploadRequestBuilder instance.
       response_parser: an AbstractResponseParser instance.
-      version: A string identifying the AdWords version to connect to. This
-        defaults to what is currently the latest version. This will be updated
-        in future releases to point to what is then the latest version.
     """
     self._temporary_id = 0  # Used for temporary IDs in BatchJobService.
     self._request_builder = request_builder
     self._response_parser = response_parser
-    self._version = version
 
   def GetId(self):
     """Produces a distinct sequential ID for the BatchJobService.
@@ -1015,14 +952,13 @@ class BatchJobHelper(object):
     return self._temporary_id
 
   def GetIncrementalUploadHelper(self, upload_url, current_content_length=0):
-    return IncrementalUploadHelper(self._request_builder, upload_url,
-                                   current_content_length,
-                                   version=self._version)
+    return IncrementalUploadHelper(
+        self._request_builder, upload_url, current_content_length)
 
   @classmethod
   def GetRequestBuilder(cls, *args, **kwargs):
     """Get a new AbstractUploadRequestBuilder instance."""
-    return cls._SudsUploadRequestBuilder(*args, **kwargs)
+    return cls._UploadRequestBuilder(*args, **kwargs)
 
   @classmethod
   def GetResponseParser(cls, *args, **kwargs):
@@ -1056,8 +992,7 @@ class BatchJobHelper(object):
       *operations: one or more lists of operations as would be sent to the
         AdWords API for the associated service.
     """
-    uploader = IncrementalUploadHelper(self._request_builder, upload_url,
-                                       version=self._version)
+    uploader = IncrementalUploadHelper(self._request_builder, upload_url)
     uploader.UploadOperations(operations, is_last=True)
 
 
@@ -1093,21 +1028,21 @@ class IncrementalUploadHelper(object):
       raise googleads.errors.GoogleAdsError(
           'Error loading IncrementalUploadHelper from file: %s' % str(e))
 
-    batch_job_helper = client.GetBatchJobHelper(version=data['version'])
-    request_builder = batch_job_helper.GetRequestBuilder(
-        client, version=data['version'])
-
     try:
+      request_builder = BatchJobHelper.GetRequestBuilder(
+          client, version=data['version'], server=data['server']
+      )
+
       return cls(request_builder, data['upload_url'],
                  current_content_length=data['current_content_length'],
-                 is_last=data['is_last'], version=data['version'])
+                 is_last=data['is_last'])
     except KeyError as e:
       raise googleads.errors.GoogleAdsValueError(
           'Can\'t parse IncrementalUploadHelper from file. Required field '
           '"%s" is missing.' % e.message)
 
   def __init__(self, request_builder, upload_url, current_content_length=0,
-               is_last=False, version=sorted(_SERVICE_MAP.keys())[-1]):
+               is_last=False):
     """Initializes the IncrementalUpload.
 
     Args:
@@ -1116,20 +1051,15 @@ class IncrementalUploadHelper(object):
       current_content_length: an integer identifying the current content length
         of data uploaded to the Batch Job.
       is_last: a boolean indicating whether this is the final increment.
-      version: A string identifying the AdWords version to connect to. This
-        defaults to what is currently the latest version. This will be updated
-        in future releases to point to what is then the latest version.
     Raises:
       GoogleAdsValueError: if the content length is lower than 0.
     """
-    self._version = version
     self._request_builder = request_builder
     if current_content_length < 0:
       raise googleads.errors.GoogleAdsValueError(
           'Current content length %s is < 0.' % current_content_length)
     self._current_content_length = current_content_length
     self._is_last = is_last
-
     self._url_opener = urllib2.build_opener(
         *self._request_builder.client.proxy_config.GetHandlers())
     self._upload_url = self._InitializeURL(upload_url, current_content_length)
@@ -1175,8 +1105,9 @@ class IncrementalUploadHelper(object):
     data = {
         'current_content_length': self._current_content_length,
         'is_last': self._is_last,
+        'server': self._request_builder.GetServer(),
         'upload_url': self._upload_url,
-        'version': self._version
+        'version': self._request_builder.GetVersion()
     }
 
     try:
@@ -1301,18 +1232,15 @@ class ReportDownloader(object):
     self._header_handler = _AdWordsHeaderHandler(
         adwords_client, version, self._adwords_client.enable_compression)
     self.proxy_config = self._adwords_client.proxy_config
-    self.url_opener = urllib2.build_opener(*self.proxy_config.GetHandlers())
+    handlers = self.proxy_config.GetHandlers()
+    self.url_opener = urllib2.build_opener(*handlers)
 
     schema_url = self._SCHEMA_FORMAT % (server, version)
-    schema = suds.client.Client(
-        schema_url,
-        doctor=suds.xsd.doctor.ImportDoctor(suds.xsd.doctor.Import(
-            self._namespace, schema_url)),
-        transport=self.proxy_config.GetSudsProxyTransport(),
-        cache=self._adwords_client.cache).wsdl.schema
-    self._report_definition_type = schema.elements[
-        (self._REPORT_DEFINITION_NAME, self._namespace)]
-    self._marshaller = suds.mx.literal.Literal(schema)
+    service_class = (googleads.common
+                     .GetSchemaHelperForLibrary(adwords_client.soap_impl))
+    self.schema_helper = service_class(
+        schema_url, self._adwords_client.timeout,
+        self.proxy_config, self._namespace, self._adwords_client.cache)
 
   def _DownloadReportCheckFormat(self, file_format, output):
     mode = getattr(output, 'mode', 'w')
@@ -1635,11 +1563,15 @@ class ReportDownloader(object):
     """
     response = None
     try:
+      # New
       response = self._DownloadReportAsStream(post_body, **kwargs)
-      output.write(response.read().decode() if sys.version_info[0] == 3
-                   and (getattr(output, 'mode', 'w') == 'w'
-                        and type(output) is not io.BytesIO)
-                   else response.read())
+      while True:
+        chunk = response.read(_CHUNK_SIZE)
+        if not chunk: break
+        output.write(chunk.decode('utf-8') if sys.version_info[0] == 3
+                     and (getattr(output, 'mode', 'w') == 'w'
+                          and not isinstance(output, io.BytesIO))
+                     else chunk)
     finally:
       if response:
         response.close()
@@ -1807,10 +1739,9 @@ class ReportDownloader(object):
       the format needed for an AdWords report request as a string. This is
       intended to be a POST body.
     """
-    content = suds.mx.Content(
-        tag=self._REPORT_DEFINITION_NAME, value=report_definition,
-        name=self._REPORT_DEFINITION_NAME, type=self._report_definition_type)
-    return urllib.urlencode({'__rdxml': self._marshaller.process(content)})
+    return urllib.urlencode(
+        {'__rdxml': self.schema_helper.GetSoapXMLForComplexType(
+            self._REPORT_DEFINITION_NAME, report_definition)})
 
   def _ExtractError(self, error):
     """Attempts to extract information from a report download error XML message.
@@ -2461,6 +2392,13 @@ class ServiceQueryBuilder(_QueryBuilder):
 class ServiceQuery(object):
   """A service query storing an AWQL query."""
 
+  _BID_LANDSCAPE_PAGES = ('AdGroupBidLandscapePage',
+                          'CriterionBidLandscapePage')
+  _LANDSCAPE_POINTS = 'landscapePoints'
+  _TOTAL_NUM_ENTRIES = 'totalNumEntries'
+  _ENTRIES = 'entries'
+  _PAGE_TYPE = 'Page.Type'
+
   def __init__(self, awql, start_index, page_size):
     """Creates a service query instance storing the provided AWQL query."""
     self._awql = awql
@@ -2468,18 +2406,20 @@ class ServiceQuery(object):
     self._page_size = page_size
     self._total_num_entries = None
 
-  def NextPage(self, page_size=None):
+  def NextPage(self, page=None):
     """Sets the LIMIT clause of the AWQL to the next page.
 
-    This method is meant to be used with HasNext().
-    The page_size is necessary when using DataService, as its paging mechanism
-    is different from other services. For details, see
+    This method is meant to be used with HasNext(). When using DataService,
+    page is needed, as its paging mechanism is different from other services.
+    For details, see
     https://developers.google.com/adwords/api/docs/guides/bid-landscapes#paging_through_results.
-    When the page_size is None, this object's page size is used instead.
 
     Args:
-      page_size: The optional page size used to increment the index in the LIMIT
-          clause.
+      page: An optional dict-like page returned in an API response, where the
+          type depends on the configured SOAP client. The page contains the
+          'totalNumEntries' key whose value represents the total number of
+          results from making the query to the AdWords API services. This page
+          is required when using this method with DataService.
 
     Returns:
       This service query object.
@@ -2490,25 +2430,31 @@ class ServiceQuery(object):
     """
     if self._start_index is None:
       raise ValueError('Cannot page through query with no LIMIT clause.')
-    increment = self._page_size if page_size is None else page_size
+
+    # DataService has a different paging mechanism, resulting in different
+    # method of determining if there is still a page left.
+    page_size = None
+    if (page and self._PAGE_TYPE in page
+        and page[self._PAGE_TYPE] in self._BID_LANDSCAPE_PAGES):
+      page_size = sum([len(bid_landscape[self._LANDSCAPE_POINTS])
+                       for bid_landscape in page[self._ENTRIES]])
+
+    increment = page_size or self._page_size
     self._start_index += increment
     return self
 
-  def HasNext(self, page, page_size=None):
+  def HasNext(self, page):
     """Checks if there is still a page left to query.
 
-    This method is meant to be used with NextPage().
-    The page_size is necessary when using DataService, as its paging mechanism
-    is different from other services. For details, see
+    This method is meant to be used with NextPage(). When using DataService,
+    the paging mechanism is different from other services. For details, see
     https://developers.google.com/adwords/api/docs/guides/bid-landscapes#paging_through_results.
-    When the page_size is None, this object's page size is used instead.
 
     Args:
-      page: A dict containing the 'totalNumEntries' key whose value represents
-          the total number of results from making the query to the AdWords API
-          services.
-      page_size: The optional page size used to increment the index in the LIMIT
-          clause.
+      page: A dict-like page returned in an API response, where the type depends
+          on the configured SOAP client. The page contains the 'totalNumEntries'
+          key whose value represents the total number of results from making the
+          query to the AdWords API services.
 
     Returns:
       True if there is still a page left.
@@ -2519,10 +2465,20 @@ class ServiceQuery(object):
     """
     if self._start_index is None:
       raise ValueError('Cannot page through query with no LIMIT clause.')
+    if page is None:
+      raise ValueError('The passed page cannot be None.')
+
+    # DataService has a different paging mechanism, resulting in different
+    # method of determining if there is still a page left.
+    if (self._PAGE_TYPE in page
+        and page[self._PAGE_TYPE] in self._BID_LANDSCAPE_PAGES):
+      total_landscape_points = sum([len(bid_landscape[self._LANDSCAPE_POINTS])
+                                    for bid_landscape in page[self._ENTRIES]])
+      return total_landscape_points >= self._page_size
+
     if not self._total_num_entries:
-      self._total_num_entries = page['totalNumEntries']
-    increment = self._page_size if page_size is None else page_size
-    return self._start_index + increment < self._total_num_entries
+      self._total_num_entries = page[self._TOTAL_NUM_ENTRIES]
+    return self._start_index + self._page_size < self._total_num_entries
 
   def Pager(self, service):
     """A page generator for this service query and the provided service.

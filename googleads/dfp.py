@@ -25,8 +25,6 @@ import time
 import urllib2
 
 import pytz
-import suds.client
-import suds.transport
 import googleads.common
 import googleads.errors
 
@@ -204,7 +202,7 @@ class DfpClient(googleads.common.CommonClient):
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, oauth2_client, application_name, network_code=None,
-               cache=None, proxy_config=None,
+               cache=None, proxy_config=None, soap_impl='zeep', timeout=3600,
                enable_compression=False):
     """Initializes a DfpClient.
 
@@ -220,10 +218,14 @@ class DfpClient(googleads.common.CommonClient):
       network_code: A string identifying the network code of the network you are
           accessing. All requests other than getAllNetworks require this header
           to be set.
-      cache: A subclass of suds.cache.Cache. If not set, this will default to an
-          instance of suds.cache.ObjectCache.
+      cache: A subclass of zeep.cache.Base or suds.cache.Cache. If not set,
+          this will default to a basic file cache. To disable caching for Zeep,
+          pass googleads.common.ZeepServiceProxy.NO_CACHE.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
         isn't being used.
+      soap_impl: A string identifying which SOAP implementation to use. The
+          options are 'zeep' or 'suds'.
+      timeout: An integer timeout in MS for connections made to DFP.
       enable_compression: A boolean indicating if you want to enable compression
         of the SOAP response. If True, the SOAP response will use gzip
         compression, and will be decompressed for you automatically.
@@ -246,7 +248,8 @@ class DfpClient(googleads.common.CommonClient):
     if enable_compression:
       self.application_name = '%s (gzip)' % self.application_name
 
-    self.message_plugin = googleads.common.LoggingMessagePlugin()
+    self.soap_impl = soap_impl
+    self.timeout = timeout
 
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
@@ -263,8 +266,8 @@ class DfpClient(googleads.common.CommonClient):
       server: A string identifying the webserver hosting the DFP API.
 
     Returns:
-      A suds.client.ServiceSelector which has the headers and proxy configured
-          for use.
+      A googleads.common.GoogleSoapService instance which has the headers
+      and proxy configured for use.
 
     Raises:
       A GoogleAdsValueError if the service or version provided do not exist.
@@ -274,19 +277,17 @@ class DfpClient(googleads.common.CommonClient):
 
     server = server[:-1] if server[-1] == '/' else server
 
-    kwargs = {'timeout': 3600,
-              'transport': self.proxy_config.GetSudsProxyTransport(),
-              'plugins': [self.message_plugin]}
-
-    if self.cache:
-      kwargs['cache'] = self.cache
-
     try:
-      client = suds.client.Client(
+      service = googleads.common.GetServiceClassForLibrary(self.soap_impl)(
           self._SOAP_SERVICE_FORMAT % (server, version, service_name),
-          **kwargs)
+          self._header_handler,
+          _DfpPacker,
+          self.proxy_config,
+          self.timeout,
+          cache=self.cache)
 
-    except suds.transport.TransportError:
+      return service
+    except googleads.errors.GoogleAdsSoapTransportError:
       if version in _SERVICE_MAP:
         if service_name in _SERVICE_MAP[version]:
           raise
@@ -299,9 +300,6 @@ class DfpClient(googleads.common.CommonClient):
         raise googleads.errors.GoogleAdsValueError(
             'Unrecognized version of the DFP API. Version given: %s Supported '
             'versions: %s' % (version, _SERVICE_MAP.keys()))
-
-    return googleads.common.SudsServiceProxy(client, self._header_handler,
-                                             packer=_DfpPacker)
 
   def GetDataDownloader(self, version=sorted(_SERVICE_MAP.keys())[-1],
                         server=None):
@@ -332,7 +330,7 @@ class _DfpHeaderHandler(googleads.common.HeaderHandler):
   # The library signature for DFP, to be appended to all application_names.
   _PRODUCT_SIG = 'DfpApi-Python'
   # The name of the WSDL-defined SOAP Header class used in all requests.
-  _SOAP_HEADER_CLASS = 'SoapRequestHeader'
+  _SOAP_HEADER_CLASS = 'ns0:SoapRequestHeader'
 
   def __init__(self, dfp_client, enable_compression):
     """Initializes a DfpHeaderHandler.
@@ -348,24 +346,37 @@ class _DfpHeaderHandler(googleads.common.HeaderHandler):
     self._dfp_client = dfp_client
     self.enable_compression = enable_compression
 
-  def SetHeaders(self, suds_client):
-    """Sets the SOAP and HTTP headers on the given suds client."""
-    header = suds_client.factory.create(self._SOAP_HEADER_CLASS)
+  def GetSOAPHeaders(self, create_method):
+    """Returns the SOAP headers required for request authorization.
+
+    Args:
+      create_method: The SOAP library specific method used to instantiate SOAP
+      objects.
+
+    Returns:
+      A SOAP object containing the headers.
+    """
+    header = create_method(self._SOAP_HEADER_CLASS)
     header.networkCode = self._dfp_client.network_code
     header.applicationName = ''.join([
         self._dfp_client.application_name,
         googleads.common.GenerateLibSig(self._PRODUCT_SIG)])
+    return header
 
+  def GetHTTPHeaders(self):
+    """Returns the HTTP headers required for request authorization.
+
+    Returns:
+      A dictionary containing the required headers.
+    """
     http_headers = self._dfp_client.oauth2_client.CreateHttpHeader()
     if self.enable_compression:
       http_headers['accept-encoding'] = 'gzip'
 
-    suds_client.set_options(
-        soapheaders=header,
-        headers=http_headers)
+    return http_headers
 
 
-class _DfpPacker(googleads.common.SudsPacker):
+class _DfpPacker(googleads.common.SoapPacker):
   """A utility applying customized packing logic for DFP."""
 
   @classmethod
@@ -373,11 +384,11 @@ class _DfpPacker(googleads.common.SudsPacker):
     """Pack the given object using DFP-specific logic.
 
     Args:
-      obj: an object to be packed for suds using DFP-specific logic, if
+      obj: an object to be packed for SOAP using DFP-specific logic, if
           applicable.
 
     Returns:
-      The given object packed with DFP-specific logic for suds, if applicable.
+      The given object packed with DFP-specific logic for SOAP, if applicable.
       Otherwise, returns the given object unmodified.
     """
     if isinstance(obj, (datetime.datetime, datetime.date)):
@@ -719,7 +730,8 @@ class DataDownloader(object):
     self._report_service = None
     self._pql_service = None
     self.proxy_config = self._dfp_client.proxy_config
-    self.url_opener = urllib2.build_opener(*self.proxy_config.GetHandlers())
+    handlers = self.proxy_config.GetHandlers()
+    self.url_opener = urllib2.build_opener(*handlers)
 
   def _GetReportService(self):
     """Lazily initializes a report service client."""
@@ -740,7 +752,7 @@ class DataDownloader(object):
 
     Args:
       report_job: The report job to wait for. This may be a dictionary or an
-          instance of the suds-generated ReportJob class.
+          instance of the SOAP ReportJob class.
 
     Returns:
       The completed report job's ID as a string.

@@ -41,7 +41,7 @@ def main(client, proposal_id):
         # Print out some information for each proposal line item.
         print('Proposal line item with ID "%d" and name "%s" was found.\n' %
               (proposal_line_item['id'], proposal_line_item['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

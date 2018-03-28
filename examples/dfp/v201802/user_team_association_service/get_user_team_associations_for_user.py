@@ -42,7 +42,7 @@ def main(client, user_id):
         print('User team association with user ID "%d" and team ID "%d" was '
               'found.\n' % (user_team_association['userId'],
                             user_team_association['teamId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

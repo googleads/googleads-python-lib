@@ -58,7 +58,7 @@ def main(client, parent_id):
           {'xsi_type': 'ArchiveAdUnits'}, statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         ad_units_archived += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

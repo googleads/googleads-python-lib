@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#
 # Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +20,6 @@
 import os
 from google.appengine.ext import vendor
 
-# Add any libraries install in the "lib" folder.
+# Add any libraries installed in the "lib" folder to the path.
 vendor.add(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib'))
 

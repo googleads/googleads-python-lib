@@ -22,16 +22,15 @@ from googleads import oauth2
 
 # OAuth2 credential information. In a real application, you'd probably be
 # pulling these values from a credential storage.
-SERVICE_ACCOUNT_EMAIL = 'INSERT_SERVICE_ACCOUNT_EMAIL'
 KEY_FILE = 'INSERT_KEY_FILE_PATH'
 
 # DFP API information.
 APPLICATION_NAME = 'INSERT_APPLICATION_NAME_HERE'
 
 
-def main(service_account_email, key_file, application_name):
+def main(key_file, application_name):
   oauth2_client = oauth2.GoogleServiceAccountClient(
-      oauth2.GetAPIScope('dfp'), service_account_email, key_file)
+      key_file, oauth2.GetAPIScope('dfp'))
 
   dfp_client = dfp.DfpClient(oauth2_client, application_name)
 
@@ -42,4 +41,4 @@ def main(service_account_email, key_file, application_name):
 
 
 if __name__ == '__main__':
-  main(SERVICE_ACCOUNT_EMAIL, KEY_FILE, APPLICATION_NAME)
+  main(KEY_FILE, APPLICATION_NAME)

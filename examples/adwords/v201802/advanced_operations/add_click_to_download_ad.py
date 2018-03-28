@@ -26,7 +26,6 @@ section of our README.
 
 """
 
-import base64
 import urllib2
 
 from googleads import adwords
@@ -39,13 +38,11 @@ def main(client, ad_group_id):
   # Initialize appropriate service.
   ad_group_ad_service = client.GetService('AdGroupAdService', version='v201802')
 
-  # Optionally, you may specify a landscape image. The image needs to be in a
-  # BASE64 encoded form. Here we download a demo image and encode it for this
-  # ad.
+  # Optionally, you may specify a landscape image.
+  # Here we download a demo image.
   opener = urllib2.build_opener(*client.proxy_config.GetHandlers())
   # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
-  image_data = (base64.b64encode(opener.open('http://goo.gl/9JmyKk').read())
-                .decode('utf-8'))
+  image_data = opener.open('http://goo.gl/9JmyKk').read().decode('utf-8')
 
   # Create the template elements for the ad. You can refer to
   #     https://developers.google.com/adwords/api/docs/appendix/templateads

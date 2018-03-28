@@ -38,7 +38,7 @@ def main(client):
         # Print out some information for each placement.
         print('Placement with ID "%d" and name "%s" was found.\n' %
               (placement['id'], placement['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

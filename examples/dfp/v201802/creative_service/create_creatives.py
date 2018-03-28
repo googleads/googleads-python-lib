@@ -27,7 +27,6 @@ section of our README.
 """
 
 
-import base64
 import os
 import uuid
 
@@ -46,7 +45,7 @@ def main(client, advertiser_id):
   creatives = []
   with open(os.path.join(os.path.split(__file__)[0], '..', '..', 'data',
                          'medium_rectangle.jpg'), 'r') as image:
-    image_data = base64.encodestring(image.read())
+    image_data = image.read()
 
   for _ in xrange(5):
     # Create creative size.

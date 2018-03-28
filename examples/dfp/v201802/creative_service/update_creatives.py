@@ -36,7 +36,7 @@ def main(client, image_creative_id):
   # Initialize appropriate service.
   creative_service = client.GetService('CreativeService', version='v201802')
 
-  # Create statement object to get all image creatives.
+  # Create statement object to get the creative by ID.
   statement = (dfp.StatementBuilder()
                .Where('creativeType = :type AND id = :id')
                .WithBindVariable('type', 'ImageCreative')

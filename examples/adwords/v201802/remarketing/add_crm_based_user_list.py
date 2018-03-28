@@ -39,8 +39,8 @@ def main(client):
       'xsi_type': 'CrmBasedUserList',
       'name': 'Customer relationship management list #%d' % uuid.uuid4(),
       'description': 'A list of customers that originated from email addresses',
-      # See limit here:
-      # https://support.google.com/adwords/answer/6276125#requirements
+      # CRM-based user lists can use a membershipLifeSpan of 10000 to indicate
+      # unlimited; otherwise normal values apply.
       'membershipLifeSpan': 30,
       'uploadKeyType': 'CONTACT_INFO'
   }

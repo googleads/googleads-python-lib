@@ -28,7 +28,6 @@ section of our README.
 """
 
 
-import base64
 import os
 import uuid
 
@@ -46,7 +45,6 @@ def main(client, advertiser_id):
   # Get the image data for the creative.
   image_data = open(os.path.join(os.path.split(__file__)[0], '..', '..', 'data',
                                  'medium_rectangle.jpg'), 'r').read()
-  image_data = base64.encodestring(image_data)
 
   # Create the HTML snippet used in the custom creative.
   html_snippet = ('<a href=\'%s%s\'><img src="%s"/></a><br>Click above for '

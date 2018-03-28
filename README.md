@@ -106,7 +106,14 @@ configuration via the configuration file; see [googleads.yaml](https://github.co
 for an example.
 
 Alternatively, you can manually specify your logging configuration. For example,
-if you want to log your SOAP interactions to stdout, you can do the following:
+if you want to log your SOAP interactions to stdout, and you are using the Zeep soap library, you
+can do the following:
+```python
+logging.basicConfig(level=logging.INFO, format=googleads.util.LOGGER_FORMAT)
+logging.getLogger('googleads.soap').setLevel(logging.DEBUG)
+```
+
+If you are using suds, you can achieve the same like this:
 ```python
 logging.basicConfig(level=logging.INFO, format=googleads.util.LOGGER_FORMAT)
 logging.getLogger('suds.transport').setLevel(logging.DEBUG)
@@ -116,7 +123,22 @@ which is configured to write the output to a file.
 
 
 ## How do I disable log filters?
-By default, this library will apply log filters to the `googleads.common`,
+The zeep plugin used for logging strips sensitive data from its output. If you would like this data
+included in logs, you'll need to implement your own simple logging plugin. For example:
+```python
+class DangerousZeepLogger(zeep.Plugin):
+  def ingress(self, envelope, http_headers, operation):
+    logging.debug('Incoming response: \n%s', etree.tostring(envelope, pretty_print=True))
+    return envelope, http_headers
+
+  def egress(self, envelope, http_headers, operation, binding_options):
+    logging.debug('Incoming response: \n%s', etree.tostring(envelope, pretty_print=True))
+    return envelope, http_headers
+
+adwords_client.zeep_client.plugins.append(DangerousZeepLogger())
+```
+
+When using suds, this library will apply log filters to the `googleads.common`,
 `suds.client`, and `suds.transport` loggers in order to omit sensitive data. If
 you need to see this data in your logs, you can disable the filters with the
 following:
@@ -134,10 +156,10 @@ logging.getLogger('suds.transport').removeFilter(
 ```
 
 
-## I'm familiar with suds. Can I use suds features with this library?
+## I'm familiar with suds/zeep. Can I use those features in the library?
 Yes, you can. The services returned by the `client.GetService()` functions all
-have a reference to the underlying suds client stored in the `suds_client`
-attribute. You can retrieve the client and use it in familiar ways:
+have a reference to the underlying client stored in the `zeep_client` or `suds_client`
+attributes. You can retrieve the client and use it in familiar ways:
 ```python
 client = AdWordsClient.LoadFromStorage()
 campaign_service = client.GetService('CampaignService')
@@ -170,17 +192,25 @@ suds_client.set_options(
 suds_client.service.mutate([operation])
 ```
 
-## How can I configure or disable caching for the suds client?
+## How can I configure or disable caching?
 
-By default, the suds clients are cached because reading and digesting the WSDL
+By default, clients are cached because reading and digesting the WSDL
 can be expensive. However, the default caching method requires permission to
 access a local file system that may not be available in certain hosting
 environments such as App Engine.
 
-You can pass an implementation of `suds.cache.Cache` to the `AdWordsClient` or
+You can pass an implementation of `suds.cache.Cache` or `zeep.cache.Base` to the `AdWordsClient` or
 `DfpClient` initializer to modify the default caching behavior.
 
-For example, configuring a different location and duration of the cache file:
+For example, configuring a different location and duration of the cache file with zeep
+```python
+doc_cache = zeep.cache.SqliteCache(path=cache_path)
+adwords_client = adwords.AdWordsClient(
+  developer_token, oauth2_client, user_agent,
+  client_customer_id=client_customer_id, cache=doc_cache)
+```
+
+And with suds:
 ```python
 doc_cache = suds.cache.DocumentCache(location=cache_path, days=2)
 adwords_client = adwords.AdWordsClient(
@@ -188,7 +218,14 @@ adwords_client = adwords.AdWordsClient(
   client_customer_id=client_customer_id, cache=doc_cache)
 ```
 
-You can also disable caching in similar fashion:
+You can also disable caching in similar fashion with zeep
+```python
+adwords_client = adwords.AdWordsClient(
+  developer_token, oauth2_client, user_agent,
+  client_customer_id=client_customer_id, cache=None)
+```
+
+And with suds:
 ```python
 adwords_client = adwords.AdWordsClient(
   developer_token, oauth2_client, user_agent,
@@ -212,6 +249,7 @@ have Python 2.7.9 (or higher) or Python 3.4 (or higher) installed.
     - pytz                 -- https://pypi.python.org/pypi/pytz
     - pyYAML               -- https://pypi.python.org/pypi/pyYAML/
     - xmltodict            -- https://pypi.python.org/pypi/xmltodict/
+    - zeep                 -- https://pypi.python.org/pypi/zeep
     - mock                 -- https://pypi.python.org/pypi/mock
                               (only needed to run unit tests)
     - pyfakefs             -- https://pypi.python.org/pypi/pyfakefs

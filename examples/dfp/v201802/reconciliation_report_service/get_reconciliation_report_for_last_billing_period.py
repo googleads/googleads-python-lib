@@ -50,7 +50,7 @@ def main(client):
             'Reconciliation report with ID "%d" and start date "%s" was found.'
             '\n' % (reconciliation_report['id'],
                     last_month.strftime('%Y-%m-01')))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

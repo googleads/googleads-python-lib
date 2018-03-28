@@ -25,6 +25,20 @@ class GoogleAdsValueError(GoogleAdsError):
   pass
 
 
+class GoogleAdsSoapTransportError(GoogleAdsError):
+  pass
+
+
+class GoogleAdsServerFault(GoogleAdsError):
+
+  def __init__(self, document, errors=(), message=None):
+    super(GoogleAdsServerFault, self).__init__(
+        message if message else 'Server Error')
+
+    self.errors = errors
+    self.document = document
+
+
 class AdWordsReportError(GoogleAdsError):
   """Error indicating that an AdWords report download request failed.
 

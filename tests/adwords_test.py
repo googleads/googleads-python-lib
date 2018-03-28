@@ -27,22 +27,30 @@ from xml.etree import ElementTree
 import googleads.adwords
 import googleads.common
 import googleads.errors
+import lxml.etree
 import mock
 import six
 import suds
+import yaml
+import yaml
+import zeep.transports
 from . import testing
+try:
+  import urllib2
+except ImportError:
+  import urllib.request as urllib2  # For Py3
 
-
-URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
 CURRENT_VERSION = sorted(googleads.adwords._SERVICE_MAP.keys())[-1]
+TEST_DIR = os.path.dirname(__file__)
 
 
-def GetAdWordsClient(**kwargs):
+def GetAdWordsClient(soap_impl, **kwargs):
   """Returns an initialized AdwordsClient for use in testing.
 
   If not specified, the keyword arguments will be set to default test values.
 
   Args:
+    soap_impl: The SOAP implementation to pass to the client.
     **kwargs: Optional keyword arguments that can be provided to customize the
       generated AdWordsClient.
   Keyword Arguments:
@@ -55,6 +63,7 @@ def GetAdWordsClient(**kwargs):
     report_downloader_headers: A dict containing optional report downloader
       headers.
     user_agent: A str value for the AdWordsClient's user_agent.
+    timeout: An integer timeout in MS for connections.
 
   Returns:
     An AdWordsClient instance intended for testing.
@@ -65,6 +74,7 @@ def GetAdWordsClient(**kwargs):
   validate_only = kwargs.get('validate_only', False)
   partial_failure = kwargs.get('partial_failure', False)
   report_downloader_headers = kwargs.get('report_downloader_headers', {})
+  timeout = kwargs.get('timeout', 3600)
 
   if 'oauth2_client' in kwargs:
     oauth2_client = kwargs['oauth2_client']
@@ -79,25 +89,23 @@ def GetAdWordsClient(**kwargs):
       cache=kwargs.get('cache'),
       proxy_config=kwargs.get('proxy_config'),
       validate_only=validate_only, partial_failure=partial_failure,
-      report_downloader_headers=report_downloader_headers)
+      report_downloader_headers=report_downloader_headers,
+      soap_impl=soap_impl, timeout=timeout)
 
   return client
 
 
-def GetProxyConfig(http_host=None, http_port=None, https_host=None,
-                   https_port=None, cafile=None,
+def GetProxyConfig(http_proxy_uri=None, https_proxy_uri=None, cafile=None,
                    disable_certificate_validation=None):
   """Returns an initialized ProxyConfig for use in testing.
 
   Args:
-    http_host: A str containing the url or IP of an http proxy host. If this is
-      not specified, the ProxyConfig will be initialized without an HTTP proxy
-      configured.
-    http_port: An int port number for the HTTP proxy host.
-    https_host: A str containing the url or IP of an https proxy host. If this
-      is not specified, the ProxyConfig will be initialized without an HTTPS
-      proxy configured.
-    https_port: An int port number for the HTTPS proxy host.
+    http_proxy_uri: A str containing the full URI for the http proxy host. If
+      this is not specified, the ProxyConfig will be initialized without an
+      HTTP proxy configured.
+    https_proxy_uri: A str containing the full URI for the https proxy host. If
+      this is not specified, the ProxyConfig will be initialized without an
+      HTTPS proxy configured.
     cafile: A str containing the path to a custom ca file.
     disable_certificate_validation: A boolean indicating whether or not to
       disable certificate validation.
@@ -105,17 +113,8 @@ def GetProxyConfig(http_host=None, http_port=None, https_host=None,
   Returns:
     An initialized ProxyConfig using the given configurations.
   """
-  http_proxy = None
-  https_proxy = None
-
-  if http_host:
-    http_proxy = googleads.common.ProxyConfig.Proxy(http_host, http_port)
-
-  if https_host:
-    https_proxy = googleads.common.ProxyConfig.Proxy(https_host, https_port)
-
   return googleads.common.ProxyConfig(
-      http_proxy, https_proxy, cafile=cafile,
+      http_proxy_uri, https_proxy_uri, cafile=cafile,
       disable_certificate_validation=disable_certificate_validation)
 
 
@@ -137,9 +136,9 @@ class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
     self.default_sig_template = ' (%s, %s, %s)'
     self.util_sig_template = ' (%s, %s, %s, %s)'
     self.aw_client = GetAdWordsClient(
-        ccid=self.ccid, dev_token=self.dev_token, user_agent=self.user_agent,
-        oauth2_client=self.oauth2_client, validate_only=self.validate_only,
-        partial_failure=self.partial_failure,
+        'zeep', ccid=self.ccid, dev_token=self.dev_token,
+        user_agent=self.user_agent, oauth2_client=self.oauth2_client,
+        validate_only=self.validate_only, partial_failure=self.partial_failure,
         report_downloader_headers=self.report_downloader_headers)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.aw_client, CURRENT_VERSION, self.enable_compression)
@@ -152,14 +151,18 @@ class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
 
     self.test_utility = TestUtility()
 
-  def testSetHeaders(self):
-    suds_client = mock.Mock()
-    self.header_handler.SetHeaders(suds_client)
+  def testGetHTTPHeaders(self):
+    header_result = self.header_handler.GetHTTPHeaders()
+    # Check that the returned headers have the correct values.
+    self.assertEqual(header_result, self.oauth_header)
+
+  def testGetSOAPHeaders(self):
+    create_method = mock.Mock()
+    soap_header = self.header_handler.GetSOAPHeaders(create_method)
     # Check that the SOAP header has the correct values.
-    suds_client.factory.create.assert_called_once_with(
+    create_method.assert_called_once_with(
         '{https://adwords.google.com/api/adwords/cm/%s}SoapHeader' %
         CURRENT_VERSION)
-    soap_header = suds_client.factory.create.return_value
     self.assertEqual(self.ccid, soap_header.clientCustomerId)
     self.assertEqual(self.dev_token, soap_header.developerToken)
     self.assertEqual(
@@ -169,18 +172,14 @@ class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
         soap_header.userAgent)
     self.assertEqual(self.validate_only, soap_header.validateOnly)
     self.assertEqual(self.partial_failure, soap_header.partialFailure)
-    # Check that the suds client has the correct values.
-    suds_client.set_options.assert_any_call(
-        soapheaders=soap_header, headers=self.oauth_header)
 
-  def testSetHeadersUserAgentWithUtility(self):
-    suds_client = mock.Mock()
+  def testGetHeadersUserAgentWithUtility(self):
+    create_method = mock.Mock()
 
     with mock.patch('googleads.common._COMMON_LIB_SIG') as mock_common_sig:
       with mock.patch('googleads.common._PYTHON_VERSION') as mock_py_ver:
         self.test_utility.Test()  # This will register TestUtility.
-        self.header_handler.SetHeaders(suds_client)
-        soap_header = suds_client.factory.create.return_value
+        soap_header = self.header_handler.GetSOAPHeaders(create_method)
 
         self.assertEqual(
             ''.join([self.user_agent,
@@ -192,15 +191,14 @@ class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
                     ]),
             soap_header.userAgent)
 
-  def testSetHeadersUserAgentWithAndWithoutUtility(self):
-    suds_client = mock.Mock()
+  def testGetHeadersUserAgentWithAndWithoutUtility(self):
+    create_method = mock.Mock()
 
     with mock.patch('googleads.common._COMMON_LIB_SIG') as mock_common_sig:
       with mock.patch('googleads.common._PYTHON_VERSION') as mock_py_ver:
         # Check headers when utility registered.
         self.test_utility.Test()  # This will register TestUtility.
-        self.header_handler.SetHeaders(suds_client)
-        soap_header = suds_client.factory.create.return_value
+        soap_header = self.header_handler.GetSOAPHeaders(create_method)
 
         self.assertEqual(
             ''.join([self.user_agent,
@@ -213,8 +211,7 @@ class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
             soap_header.userAgent)
 
         # Check headers when no utility should be registered.
-        self.header_handler.SetHeaders(suds_client)
-        soap_header = suds_client.factory.create.return_value
+        soap_header = self.header_handler.GetSOAPHeaders(create_method)
         self.assertEqual(
             ''.join([self.user_agent,
                      self.default_sig_template % (
@@ -226,8 +223,7 @@ class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
 
         # Verify that utility is registered in subsequent uses.
         self.test_utility.Test()  # This will register TestUtility.
-        self.header_handler.SetHeaders(suds_client)
-        soap_header = suds_client.factory.create.return_value
+        soap_header = self.header_handler.GetSOAPHeaders(create_method)
 
         self.assertEqual(
             ''.join([self.user_agent,
@@ -341,15 +337,12 @@ class AdWordsClientTest(unittest.TestCase):
   def setUp(self):
     self.load_from_storage_path = os.path.join(
         os.path.dirname(__file__), 'test_data/adwords_googleads.yaml')
-    self.https_proxy_host = 'myproxy'
-    self.https_proxy_port = 443
-    self.proxy_config = GetProxyConfig(https_host=self.https_proxy_host,
-                                       https_port=self.https_proxy_port)
+    self.https_proxy_uri = 'http://myproxy:443'
+    self.proxy_config = GetProxyConfig(https_proxy_uri=self.https_proxy_uri)
     self.file_cache = suds.cache.FileCache
     self.no_cache = suds.cache.NoCache()
-    self.adwords_client = GetAdWordsClient()
-    self.aw_client = GetAdWordsClient(
-        proxy_config=self.proxy_config)
+    self.adwords_client = GetAdWordsClient('zeep')
+    self.aw_client = GetAdWordsClient('zeep', proxy_config=self.proxy_config)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.adwords_client, CURRENT_VERSION, False)
 
@@ -357,8 +350,7 @@ class AdWordsClientTest(unittest.TestCase):
   def testLoadFromStorage(self):
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient.Refresh'):
       self.assertIsInstance(googleads.adwords.AdWordsClient.LoadFromStorage(
-          path=self.load_from_storage_path),
-                            googleads.adwords.AdWordsClient)
+          path=self.load_from_storage_path), googleads.adwords.AdWordsClient)
 
   def testLoadFromStorageWithCompressionEnabled(self):
     enable_compression = True
@@ -395,109 +387,42 @@ class AdWordsClientTest(unittest.TestCase):
       }
 
       client = googleads.adwords.AdWordsClient.LoadFromStorage()
-      self.assertEquals(client.user_agent, 'unknown')
+      self.assertEqual(client.user_agent, 'unknown')
 
   def testGetService_success(self):
-    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
-    namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
+    client = GetAdWordsClient(
+        'zeep', timeout='timeout', cache='cache', proxy_config='proxy_config')
+    client.enable_compression = True
+
+    service_name = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
+    namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service_name]
     # Use a custom server. Also test what happens if the server ends with a
     # trailing slash
     server = 'https://testing.test.com/'
 
-    with mock.patch('googleads.common.LoggingMessagePlugin') as mock_plugin:
-      with mock.patch('googleads.adwords._AdWordsHeaderHandler') as mock_awhh:
-        with mock.patch('suds.client.Client') as mock_client:
-          with mock.patch('googleads.common.'
-                          'SudsServiceProxy') as mock_service_proxy:
-            with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
-                           ) as mock_transport:
-              mock_plugin.return_value = mock.Mock()
-              mock_awhh.return_value = mock.Mock()
-              mock_service_proxy.return_value = mock.Mock()
-              mock_transport.return_value = mock.Mock()
-              client = GetAdWordsClient()
-              suds_service = client.GetService(
-                  service, CURRENT_VERSION, server)
+    with mock.patch('googleads.common.'
+                    'GetServiceClassForLibrary') as mock_get_service:
+      with mock.patch('googleads.adwords.'
+                      '_AdWordsHeaderHandler') as mock_header_handler:
+        mock_header_handler.return_value = 'header_handler'
 
-              mock_client.assert_called_once_with(
-                  'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
-                  % (namespace, CURRENT_VERSION, service),
-                  transport=mock_transport.return_value, timeout=3600,
-                  plugins=[mock_plugin.return_value])
-              self.assertEqual(suds_service, mock_service_proxy.return_value)
-              mock_service_proxy.assert_called_once_with(
-                  mock_client.return_value,
-                  mock_awhh.return_value,
-                  packer=googleads.adwords._AdWordsPacker)
+        impl = mock.Mock()
+        mock_service = mock.Mock()
+        impl.return_value = mock_service
+        mock_get_service.return_value = impl
 
-  def testGetService_successWithFileCache(self):
-    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
-    namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
-    # Use a custom server. Also test what happens if the server ends with a
-    # trailing slash
-    server = 'https://testing.test.com/'
-
-    with mock.patch('googleads.common.LoggingMessagePlugin') as mock_plugin:
-      with mock.patch('suds.client.Client') as mock_client:
-        with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
-                       ) as mock_transport:
-          mock_plugin.return_value = mock.Mock()
-          mock_transport.return_value = mock.Mock()
-          client = GetAdWordsClient(cache=self.file_cache)
-          suds_service = client.GetService(
-              service, CURRENT_VERSION, server)
-
-          mock_client.assert_called_once_with(
-              'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
-              % (namespace, CURRENT_VERSION, service),
-              transport=mock_transport.return_value, timeout=3600,
-              cache=self.file_cache, plugins=[mock_plugin.return_value])
-      self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
-
-  def testGetService_successWithNoCache(self):
-    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
-    namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
-    # Use a custom server. Also test what happens if the server ends with a
-    # trailing slash
-    server = 'https://testing.test.com/'
-
-    with mock.patch('googleads.common.LoggingMessagePlugin') as mock_plugin:
-      with mock.patch('suds.client.Client') as mock_client:
-        with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
-                       ) as mock_transport:
-          mock_plugin.return_value = mock.Mock()
-          mock_transport.return_value = mock.Mock()
-          client = GetAdWordsClient(cache=self.no_cache)
-          suds_service = client.GetService(
-              service, CURRENT_VERSION, server)
-
-          mock_client.assert_called_once_with(
-              'https://testing.test.com/api/adwords/%s/%s/%s?wsdl'
-              % (namespace, CURRENT_VERSION, service),
-              transport=mock_transport.return_value, timeout=3600,
-              cache=self.no_cache, plugins=[mock_plugin.return_value])
-      self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
-
-  def testGetService_successWithoutProxy(self):
-    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
-    namespace = googleads.adwords._SERVICE_MAP[CURRENT_VERSION][service]
-
-    # Use the default server without a proxy.
-    with mock.patch('googleads.common.LoggingMessagePlugin') as mock_plugin:
-      with mock.patch('suds.client.Client') as mock_client:
-        with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport'
-                       ) as mock_transport:
-          mock_transport.return_value = mock.Mock()
-          client = GetAdWordsClient()
-          suds_service = client.GetService(service, CURRENT_VERSION)
-
-          mock_client.assert_called_once_with(
-              'https://adwords.google.com/api/adwords/%s/%s/%s?wsdl'
-              % (namespace, CURRENT_VERSION, service),
-              transport=mock_transport.return_value, timeout=3600,
-              plugins=[mock_plugin.return_value])
-          self.assertFalse(mock_client.return_value.set_options.called)
-          self.assertIsInstance(suds_service, googleads.common.SudsServiceProxy)
+        service = client.GetService(service_name, CURRENT_VERSION, server)
+        mock_header_handler.assert_called_once_with(
+            client, CURRENT_VERSION, True)
+        impl.assert_called_once_with(
+            'https://testing.test.com/api/adwords/%s/%s/%s?wsdl' % (
+                namespace, CURRENT_VERSION, service_name),
+            'header_handler',
+            googleads.adwords._AdWordsPacker,
+            'proxy_config',
+            'timeout',
+            cache='cache')
+        self.assertEqual(service, mock_service)
 
   def testGetService_badService(self):
     version = CURRENT_VERSION
@@ -510,17 +435,6 @@ class AdWordsClientTest(unittest.TestCase):
     self.assertRaises(
         googleads.errors.GoogleAdsValueError, self.adwords_client.GetService,
         'CampaignService', '11111')
-
-  def testGetService_compressionEnabled(self):
-    service = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
-    client = GetAdWordsClient()
-    client.enable_compression = True
-
-    with mock.patch('suds.client.Client'):
-      with mock.patch('googleads.adwords._AdWordsHeaderHandler') as mock_h:
-        client.GetService(service, CURRENT_VERSION)
-        mock_h.assert_called_once_with(client, CURRENT_VERSION,
-                                       client.enable_compression)
 
   def testGetBatchJobHelper(self):
     with mock.patch('googleads.adwords.BatchJobHelper') as mock_helper:
@@ -537,13 +451,12 @@ class AdWordsClientTest(unittest.TestCase):
           self.adwords_client, 'version', 'server')
 
   def testSetClientCustomerId(self):
-    suds_client = mock.Mock()
+    create_method = mock.Mock()
     ccid = 'modified'
     # Check that the SOAP header has the modified client customer id.
     self.adwords_client.SetClientCustomerId(ccid)
-    self.header_handler.SetHeaders(suds_client)
-    soap_header = suds_client.factory.create.return_value
-    self.assertEqual(ccid, soap_header.clientCustomerId)
+    header_result = self.header_handler.GetSOAPHeaders(create_method)
+    self.assertEqual(ccid, header_result.clientCustomerId)
 
 
 class AdWordsClientIntegrationTest(unittest.TestCase):
@@ -595,7 +508,7 @@ class BatchJobHelperTest(testing.CleanUtilityRegistryTestCase):
 
   def setUp(self):
     """Prepare tests."""
-    self.client = GetAdWordsClient()
+    self.client = GetAdWordsClient('zeep')
     self.batch_job_helper = self.client.GetBatchJobHelper()
 
   def testGetId(self):
@@ -605,7 +518,7 @@ class BatchJobHelperTest(testing.CleanUtilityRegistryTestCase):
 
   def testUploadOperations(self):
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.Mock()
       mock_request.data = 'in disguise.'
@@ -615,27 +528,26 @@ class BatchJobHelperTest(testing.CleanUtilityRegistryTestCase):
       with mock.patch('googleads.adwords.IncrementalUploadHelper'
                       '._InitializeURL') as mock_init:
         mock_init.return_value = 'https://www.google.com'
-        with mock.patch(
-            '%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
+        with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
           self.batch_job_helper.UploadOperations([[]])
           mock_open.assert_called_with(mock_request)
 
 
+@testing.MultiBackendTest
 class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
 
   """Test suite for the BatchJobUploadRequestBuilder."""
 
   ENVELOPE_NS = 'http://schemas.xmlsoap.org/soap/envelope/'
 
-  def setUp(self):
+  def setUp(self, soap_impl):
     """Prepare tests."""
-    self.client = GetAdWordsClient()
+    self.client = GetAdWordsClient(soap_impl)
     self.request_builder = self.client.GetBatchJobHelper()._request_builder
     self.version = self.request_builder._version
     self.upload_url = 'https://goo.gl/IaQQsJ'
     self.sample_xml = ('<operations><id>!n3vERg0Nn4Run4r0und4NDd35Er7Y0u!~</id>'
                        '</operations>')
-    sample_xml_length = len(self.sample_xml)
     self.complete_request_body = '%s%s%s' % (
         self.request_builder._UPLOAD_PREFIX_TEMPLATE % (
             self.request_builder._adwords_endpoint),
@@ -815,6 +727,9 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
 
     request = self.RAW_API_REQUEST_TEMPLATE % (
         self.version, self.version, method, ops_xml, method)
+    if six.PY3:
+      request = bytes(request, 'utf-8')
+    request = lxml.etree.fromstring(request)
 
     return (ops, request)
 
@@ -838,6 +753,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
 
     request = (self.RAW_API_REQUEST_TEMPLATE % (
         self.version, self.version, method, ops_xml, method)).encode('utf-8')
+    request = lxml.etree.fromstring(request)
 
     return (ops, request)
 
@@ -901,8 +817,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
     operations_amount = 5
     _, ops = self.GenerateOperations('CampaignCriterionOperation',
                                      operations_amount)
-    root = ElementTree.fromstring(self.request_builder._GenerateRawRequestXML(
-        ops))
+    root = self.request_builder._GenerateRawRequestXML(ops)
     body = root.find('{%s}Body' % self.ENVELOPE_NS)
     mutate = body.find('{%s}mutate' % self.request_builder._adwords_endpoint)
     self.request_builder._FormatForBatchJobService(mutate)
@@ -968,8 +883,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
         'operand': {'campaignId': 0, 'labelId': 0}
     }]
 
-    root = ElementTree.fromstring(
-        self.request_builder._GenerateRawRequestXML(ops))
+    root = self.request_builder._GenerateRawRequestXML(ops)
     self.assertTrue(len(root) == 2)
     body = root.find('{%s}Body' % self.ENVELOPE_NS)
     self.assertTrue(len(body) == 1)
@@ -982,8 +896,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
     operations_amount = 1
     _, ops = self.GenerateOperations('BudgetOperation', operations_amount)
 
-    root = ElementTree.fromstring(
-        self.request_builder._GenerateRawRequestXML(ops))
+    root = self.request_builder._GenerateRawRequestXML(ops)
     self.assertTrue(len(root) == 2)
     body = root.find('{%s}Body' % self.ENVELOPE_NS)
     self.assertTrue(len(body) == 1)
@@ -1029,8 +942,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
     operations_amount = 5
     _, ops = self.GenerateOperations('BudgetOperation', operations_amount)
 
-    root = ElementTree.fromstring(
-        self.request_builder._GenerateRawRequestXML(ops))
+    root = self.request_builder._GenerateRawRequestXML(ops)
     self.assertTrue(len(root) == 2)
     body = root.find('{%s}Body' % self.ENVELOPE_NS)
     self.assertTrue(len(body) == 1)
@@ -1075,8 +987,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
     operations_amount = 1
     ops = self.GenerateUnicodeBudgetOperations(operations_amount)
 
-    root = ElementTree.fromstring(
-        self.request_builder._GenerateRawRequestXML(ops))
+    root = self.request_builder._GenerateRawRequestXML(ops)
     self.assertTrue(len(root) == 2)
     body = root.find(u'{%s}Body' % self.ENVELOPE_NS)
     self.assertTrue(len(body) == 1)
@@ -1314,14 +1225,14 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
 
   def testGetRawOperationsFromNotXMLRequest(self):
     """Test whether non-XML input raises an Exception."""
-    self.assertRaises(ElementTree.ParseError,
+    self.assertRaises(AttributeError,
                       self.request_builder._GetRawOperationsFromXML,
                       self.NOT_API_REQUEST)
 
   def testBuildRequestForSingleUpload(self):
     """Test whether a single upload request is build correctly."""
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     '_BuildUploadRequestBody') as mock_request_body_builder:
       mock_request_body_builder.return_value = self.sample_xml
       req = self.request_builder.BuildUploadRequest(self.upload_url, [[]],
@@ -1332,7 +1243,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
   def testBuildRequestForIncrementalUpload(self):
     """Test whether an incremental upload request is built correctly."""
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     '_BuildUploadRequestBody') as mock_request_body_builder:
       mock_request_body_builder.return_value = self.sample_xml
       req = self.request_builder.BuildUploadRequest(
@@ -1344,11 +1255,11 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
   def testBuildUploadRequestBody(self):
     """Test whether a a complete request body is built correctly."""
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     '_GenerateOperationsXML') as mock_generate_xml:
       mock_generate_xml.return_value = self.sample_xml
       with mock.patch('googleads.adwords.BatchJobHelper._'
-                      'SudsUploadRequestBuilder.'
+                      'UploadRequestBuilder.'
                       '_GetPaddingLength') as mock_get_padding_length:
         mock_get_padding_length.return_value = 0
         increment = self.request_builder._BuildUploadRequestBody([[]])
@@ -1357,11 +1268,11 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
   def testBuildUploadRequestBodyWithSuffix(self):
     """Test whether a request body is built correctly with only the suffix."""
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     '_GenerateOperationsXML') as mock_generate_xml:
       mock_generate_xml.return_value = self.sample_xml
       with mock.patch('googleads.adwords.BatchJobHelper.'
-                      '_SudsUploadRequestBuilder.'
+                      '_UploadRequestBuilder.'
                       '_GetPaddingLength') as mock_get_padding_length:
         mock_get_padding_length.return_value = 0
         increment = self.request_builder._BuildUploadRequestBody(
@@ -1371,11 +1282,11 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
   def testBuildUploadRequestBodyWithoutPrefixOrSuffix(self):
     """Test whether a request body is built correctly without prefix/suffix."""
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     '_GenerateOperationsXML') as mock_generate_xml:
       mock_generate_xml.return_value = self.sample_xml
       with mock.patch('googleads.adwords.BatchJobHelper.'
-                      '_SudsUploadRequestBuilder.'
+                      '_UploadRequestBuilder.'
                       '_GetPaddingLength') as mock_get_padding_length:
         mock_get_padding_length.return_value = 0
         increment = self.request_builder._BuildUploadRequestBody(
@@ -1385,11 +1296,11 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
   def testBuildUploadRequestBodyWithOnlyPrefix(self):
     """Test whether a request body is built correctly with only the prefix."""
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     '_GenerateOperationsXML') as mock_generate_xml:
       mock_generate_xml.return_value = self.sample_xml
       with mock.patch('googleads.adwords.BatchJobHelper.'
-                      '_SudsUploadRequestBuilder.'
+                      '_UploadRequestBuilder.'
                       '_GetPaddingLength') as mock_get_padding_length:
         mock_get_padding_length.return_value = 0
         increment = self.request_builder._BuildUploadRequestBody(
@@ -1403,13 +1314,15 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
 
   def setUp(self):
     """Prepare tests."""
-    self.client = GetAdWordsClient()
-    self.batch_job_helper = self.client.GetBatchJobHelper()
-    self.version = self.batch_job_helper._version
+    self.client = GetAdWordsClient('zeep')
+    self.server = 'https://test.com'
+    self.version = 'test_version'
+    self.batch_job_helper = self.client.GetBatchJobHelper(
+        version=self.version, server=self.server)
     self.original_url = 'https://goo.gl/w8tkpK'
     self.initialized_url = 'https://goo.gl/Xtaq83'
 
-    with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
+    with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
       mock_open.return_value.headers = {
           'location': self.initialized_url
       }
@@ -1419,24 +1332,25 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
 
     self.incremental_uploader_dump = (
         '{current_content_length: 0, is_last: false, '
-        'upload_url: \'https://goo.gl/Xtaq83\', version: %s}\n' % self.version)
+        'server: \'https://test.com\', upload_url: \'https://goo.gl/Xtaq83\','
+        'version: %s}\n' % self.version)
 
   def testDump(self):
-    expected = self.incremental_uploader_dump
+    expected = yaml.load(self.incremental_uploader_dump)
 
     with tempfile.NamedTemporaryFile(delete=False, mode='w') as t:
       name = t.name
       self.incremental_uploader.Dump(t)
 
     with open(name, mode='r') as handler:
-      dump_data = handler.read()
+      dump_data = yaml.safe_load(handler)
 
     self.assertEqual(expected, dump_data)
 
   def testLoad(self):
     s = six.StringIO(self.incremental_uploader_dump)
 
-    with mock.patch('%s.urlopen' % URL_REQUEST_PATH) as mock_open:
+    with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
       mock_open.return_value.headers = {
           'location': self.initialized_url
       }
@@ -1454,14 +1368,16 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
                       self.version)
     self.assertEquals(restored_uploader._upload_url,
                       self.incremental_uploader._upload_url)
+    self.assertEquals(restored_uploader._request_builder.GetServer(),
+                      self.server)
 
   def testUploadOperations(self):
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
+      with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
         self.incremental_uploader.UploadOperations([[]], True)
         mock_open.assert_called_with(mock_request)
 
@@ -1474,11 +1390,11 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
         error_url, error_code, error_message, error_headers, None)
 
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH) as mock_open:
+      with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
         mock_open.side_effect = http_error
         self.assertRaises(
             six.moves.urllib.error.HTTPError,
@@ -1487,11 +1403,11 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
 
   def testUploadOperationsAfterFinished(self):
     with mock.patch('googleads.adwords.BatchJobHelper.'
-                    '_SudsUploadRequestBuilder.'
+                    '_UploadRequestBuilder.'
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch('%s.OpenerDirector.open' % URL_REQUEST_PATH):
+      with mock.patch.object(urllib2.OpenerDirector, 'open'):
         self.incremental_uploader.UploadOperations([[]], True)
         self.assertRaises(
             googleads.errors.AdWordsBatchJobServiceInvalidOperationError,
@@ -1503,7 +1419,7 @@ class ResponseParserTest(testing.CleanUtilityRegistryTestCase):
 
   def setUp(self):
     """Prepare tests."""
-    self.client = GetAdWordsClient()
+    self.client = GetAdWordsClient('zeep')
     self.response_parser = googleads.adwords.BatchJobHelper.GetResponseParser()
 
   @classmethod
@@ -1580,6 +1496,243 @@ class ResponseParserTest(testing.CleanUtilityRegistryTestCase):
     self.assertTrue(campaign['name'] == name)
 
 
+def GetVersionedXSD(version):
+  report_xsd = os.path.join(
+      TEST_DIR, 'test_data/adwords_report_definition.xsd')
+
+  with open(report_xsd, 'rb') as f:
+    data = f.read()
+    if six.PY3:
+      return data.replace(b'{VERSION}', bytes(version, 'utf-8'))
+    else:
+      return data.replace('{VERSION}', version)
+
+
+class ReportDownloaderZeepTest(testing.CleanUtilityRegistryTestCase):
+
+  def setUp(self):
+    self.version = CURRENT_VERSION
+    self.opener = mock.Mock()
+    self.adwords_client = mock.Mock()
+    self.adwords_client.proxy_config = GetProxyConfig()
+    self.adwords_client.soap_impl = 'zeep'
+    self.header_handler = mock.Mock()
+
+    # It's unfortunate that the target output is different between suds and
+    # zeep. The reason is because suds pretty prints its xml in a very hardcoded
+    # hack way, and zeep does not. Not doing it is better.
+    post_body_path = os.path.join(
+        TEST_DIR, 'test_data/adwords_report_post_body_no_formatting.txt')
+    with open(post_body_path, 'r') as f:
+      self.post_body_data = f.read().replace('{VERSION}', self.version)
+
+    class XSDTransport(zeep.transports.Transport):
+
+      def load(self, url):
+        return GetVersionedXSD(CURRENT_VERSION)
+
+    with mock.patch(
+        'googleads.adwords._AdWordsHeaderHandler') as mock_handler:
+      mock_handler.return_value = self.header_handler
+
+      with mock.patch('googleads.common._ZeepProxyTransport') as mock_transport:
+        mock_transport.return_value = XSDTransport()
+
+        self.adwords_client.soap_impl = 'zeep'
+        self.report_downloader = googleads.adwords.ReportDownloader(
+            self.adwords_client, self.version
+        )
+    self.report_downloader.url_opener = self.opener
+
+  @mock.patch('googleads.adwords._report_logger')
+  @mock.patch.object(urllib2, 'Request')
+  def testDownloadReportWithZeep(self, mock_request, mock_logger):
+    mock_logger.isEnabledFor.return_value = True
+    output_file = six.StringIO()
+    report_definition = {
+        'reportName': 'Last 7 days CRITERIA_PERFORMANCE_REPORT',
+        'dateRangeType': 'LAST_7_DAYS',
+        'reportType': 'CRITERIA_PERFORMANCE_REPORT',
+        'downloadFormat': 'CSV',
+        'selector': {
+            'fields': ['CampaignId', 'AdGroupId', 'Id', 'CriteriaType',
+                       'Criteria', 'FinalUrls', 'Impressions', 'Clicks', 'Cost']
+        }
+    }
+
+    with mock.patch.object(self.report_downloader,
+                           '_header_handler') as mock_header_handler, \
+        (mock.patch.object(
+            self.report_downloader,
+            '_ExtractRequestSummaryFields')) as mock_extract_request_summary, \
+        (mock.patch.object(
+            self.report_downloader,
+            '_ExtractResponseHeaders')) as mock_extract_response_headers:
+      response_data = u'ABC 广告客户'
+      response_fp = six.BytesIO()
+      response_fp.write(response_data if six.PY2 else bytes(response_data,
+                                                            'utf-8'))
+      response_fp.seek(0)
+      mock_response = mock.Mock()
+      mock_response.read.side_effect = response_fp.read
+      mock_response.code = '200'
+      self.opener.open.return_value = mock_response
+
+      self.report_downloader.DownloadReport(report_definition, output_file,
+                                            skip_report_header=True,
+                                            use_raw_enum_values=False)
+
+      mock_request.assert_called_once_with(
+          self.report_downloader._end_point,
+          (self.post_body_data if six.PY2
+           else bytes(self.post_body_data, 'utf-8')),
+          mock_header_handler.GetReportDownloadHeaders.return_value)
+
+      output_file.seek(0)
+      self.assertEqual(output_file.read(), response_data)
+      mock_extract_request_summary.assert_called_once_with(
+          mock_request.return_value)
+      mock_extract_response_headers.assert_called_once_with(
+          mock_response.headers)
+
+
+class ReportDownloaderSudsTest(testing.CleanUtilityRegistryTestCase):
+  """Reporting integration tests for suds."""
+
+  def setUp(self):
+    self.version = CURRENT_VERSION
+    self.marshaller = mock.Mock()
+    self.header_handler = mock.Mock()
+    self.adwords_client = mock.Mock()
+    self.adwords_client.proxy_config = GetProxyConfig()
+    self.adwords_client.cache = suds.cache.NoCache()
+    self.opener = mock.Mock()
+
+    post_body_path = os.path.join(TEST_DIR,
+                                  'test_data/adwords_report_post_body.txt')
+    with open(post_body_path, 'r') as f:
+      self.post_body_data = f.read().replace('{VERSION}', self.version)
+
+    class XSDTransport(suds.transport.Transport):
+
+      def __init__(self):
+        suds.transport.Transport.__init__(self)
+        self.handlers = []
+
+      def open(self, request):
+        fp = io.BytesIO()
+        fp.write(GetVersionedXSD(CURRENT_VERSION))
+        fp.seek(0)
+        return fp
+
+    with mock.patch(
+        'googleads.adwords._AdWordsHeaderHandler') as mock_handler:
+      mock_handler.return_value = self.header_handler
+
+      with mock.patch('googleads.common._SudsProxyTransport') as mock_transport:
+        mock_transport.return_value = XSDTransport()
+
+        self.adwords_client.soap_impl = 'suds'
+        self.report_downloader = googleads.adwords.ReportDownloader(
+            self.adwords_client, self.version
+        )
+    self.report_downloader.url_opener = self.opener
+
+  @mock.patch('googleads.adwords._report_logger')
+  @mock.patch.object(urllib2, 'Request')
+  def testDownloadReportWithSuds(self, mock_request, mock_logger):
+    mock_logger.isEnabledFor.return_value = True
+    output_file = six.StringIO()
+    report_definition = {
+        'reportName': 'Last 7 days CRITERIA_PERFORMANCE_REPORT',
+        'dateRangeType': 'LAST_7_DAYS',
+        'reportType': 'CRITERIA_PERFORMANCE_REPORT',
+        'downloadFormat': 'CSV',
+        'selector': {
+            'fields': ['CampaignId', 'AdGroupId', 'Id', 'CriteriaType',
+                       'Criteria', 'FinalUrls', 'Impressions', 'Clicks', 'Cost']
+        }
+    }
+
+    with mock.patch.object(self.report_downloader,
+                           '_header_handler') as mock_header_handler, \
+        (mock.patch.object(
+            self.report_downloader,
+            '_ExtractRequestSummaryFields')) as mock_extract_request_summary, \
+        (mock.patch.object(
+            self.report_downloader,
+            '_ExtractResponseHeaders')) as mock_extract_response_headers:
+      response_data = u'ABC 广告客户'
+      response_fp = six.BytesIO()
+      response_fp.write(response_data if six.PY2 else bytes(response_data,
+                                                            'utf-8'))
+      response_fp.seek(0)
+      mock_response = mock.Mock()
+      mock_response.read.side_effect = response_fp.read
+      mock_response.code = '200'
+      self.opener.open.return_value = mock_response
+
+      self.report_downloader.DownloadReport(report_definition, output_file,
+                                            skip_report_header=True,
+                                            use_raw_enum_values=False)
+
+      mock_request.assert_called_once_with(
+          self.report_downloader._end_point,
+          (self.post_body_data if six.PY2
+           else bytes(self.post_body_data, 'utf-8')),
+          mock_header_handler.GetReportDownloadHeaders.return_value)
+
+      output_file.seek(0)
+      self.assertEqual(output_file.read(), response_data)
+      mock_extract_request_summary.assert_called_once_with(
+          mock_request.return_value)
+      mock_extract_response_headers.assert_called_once_with(
+          mock_response.headers)
+
+  @mock.patch.object(urllib2, 'Request')
+  def testDownloadReportWithBytesIO(self, mock_request):
+    output_file = six.BytesIO()
+    report_definition = {
+        'reportName': 'Last 7 days CRITERIA_PERFORMANCE_REPORT',
+        'dateRangeType': 'LAST_7_DAYS',
+        'reportType': 'CRITERIA_PERFORMANCE_REPORT',
+        'downloadFormat': 'CSV',
+        'selector': {
+            'fields': ['CampaignId', 'AdGroupId', 'Id', 'CriteriaType',
+                       'Criteria', 'FinalUrls', 'Impressions', 'Clicks', 'Cost']
+        }
+    }
+
+    with mock.patch.object(self.report_downloader,
+                           '_header_handler') as mock_header_handler, \
+        (mock.patch.object(self.report_downloader,
+                           '_ExtractRequestSummaryFields')), \
+        (mock.patch.object(self.report_downloader,
+                           '_ExtractResponseHeaders')):
+      response_data = u'CONTENT STRING 广告客户'
+      response_fp = six.BytesIO()
+      response_fp.write(response_data.encode('utf-8'))
+      response_fp.seek(0)
+      mock_response = mock.Mock()
+      mock_response.read.side_effect = response_fp.read
+      mock_response.code = '200'
+      self.opener.open.return_value = mock_response
+
+      self.report_downloader.DownloadReport(report_definition,
+                                            output_file,
+                                            skip_report_header=True,
+                                            use_raw_enum_values=False)
+
+      mock_request.assert_called_once_with(
+          self.report_downloader._end_point,
+          (self.post_body_data if six.PY2
+           else bytes(self.post_body_data, 'utf-8')),
+          mock_header_handler.GetReportDownloadHeaders.return_value)
+
+      output_file.seek(0)
+      self.assertEqual(output_file.read().decode('utf-8'), response_data)
+
+
 class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
   """Tests for the googleads.adwords.ReportDownloader class."""
 
@@ -1589,144 +1742,41 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     self.header_handler = mock.Mock()
     self.adwords_client = mock.Mock()
     self.adwords_client.proxy_config = GetProxyConfig()
+    self.adwords_client.cache = suds.cache.NoCache()
     self.opener = mock.Mock()
 
-    with mock.patch('suds.client.Client'):
-      with mock.patch('suds.xsd.doctor'):
-        with mock.patch('suds.mx.literal.Literal') as mock_literal:
-          with mock.patch(
-              'googleads.adwords._AdWordsHeaderHandler') as mock_handler:
-            with mock.patch(
-                URL_REQUEST_PATH + '.OpenerDirector') as mock_opener:
-              mock_literal.return_value = self.marshaller
-              mock_handler.return_value = self.header_handler
-              mock_opener.return_value = self.opener
-              self.report_downloader = googleads.adwords.ReportDownloader(
-                  self.adwords_client, self.version)
+    with mock.patch(
+        'googleads.adwords._AdWordsHeaderHandler') as mock_handler, \
+        mock.patch('googleads.adwords.googleads.common'
+                   '.GetSchemaHelperForLibrary') as mock_get_schema:
+      mock_handler.return_value = self.header_handler
+      mock_get_schema.return_value = mock.Mock()
 
-  def testDownloadReport(self):
-    output_file = six.StringIO()
-    report_definition = {'table': 'campaigns',
-                         'downloadFormat': 'CSV'}
-    serialized_report = 'nuinbwuign'
-    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
-    if six.PY3:
-      post_body = bytes(post_body, 'utf-8')
-    headers = {'Authorization': 'ya29.something'}
-    self.header_handler.GetReportDownloadHeaders.return_value = headers
-    report_data = u'CONTENT STRING 广告客户'
-    report_contents = six.StringIO() if six.PY2 else io.BytesIO()
-    report_contents.write(report_data if six.PY2
-                          else bytes(report_data, 'utf-8'))
-    report_contents.seek(0)
-    fake_response = mock.Mock()
-    fake_response.read = report_contents.read
-    fake_response.msg = 'fake message'
-    fake_response.code = '200'
-    self.marshaller.process.return_value = serialized_report
+      self.report_downloader = googleads.adwords.ReportDownloader(
+          self.adwords_client, self.version
+      )
 
-    with mock.patch('suds.mx.Content') as mock_content:
-      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        mock_request_instance = mock.Mock()
-        mock_request.return_value = mock_request_instance
-        mock_request_instance.get_full_url.return_value = 'https://google.com/'
-        mock_request_instance.headers = {}
-        self.opener.open.return_value = fake_response
-        self.report_downloader.DownloadReport(report_definition, output_file,
-                                              skip_report_header=True,
-                                              use_raw_enum_values=False)
-        mock_request.assert_called_once_with(
-            ('https://adwords.google.com/api/adwords/reportdownload/%s'
-             % self.version), post_body, headers)
-        self.opener.open.assert_called_once_with(mock_request.return_value)
-        self.marshaller.process.assert_called_once_with(
-            mock_content.return_value)
-        self.assertEqual(report_data, output_file.getvalue())
-        self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
-            skip_report_header=True, use_raw_enum_values=False)
+      self.report_downloader.url_opener = self.opener
 
-  def testDownloadReportWithAllLoggingEnabled(self):
-    output_file = six.StringIO()
-    report_definition = {'table': 'campaigns',
-                         'downloadFormat': 'CSV'}
-    serialized_report = 'nuinbwuign'
-    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
-    if six.PY3:
-      post_body = bytes(post_body, 'utf-8')
-    headers = {'Authorization': 'ya29.something'}
-    self.header_handler.GetReportDownloadHeaders.return_value = headers
-    report_data = u'CONTENT STRING 广告客户'
-    report_contents = six.StringIO() if six.PY2 else io.BytesIO()
-    report_contents.write(report_data if six.PY2
-                          else bytes(report_data, 'utf-8'))
-    report_contents.seek(0)
-    fake_response = mock.Mock()
-    fake_response.read = report_contents.read
-    fake_response.headers = '\nsomekey: somevalue\n'
-    fake_response.msg = 'fake message'
-    fake_response.code = '200'
-    self.marshaller.process.return_value = serialized_report
+  @mock.patch.object(urllib2.OpenerDirector, 'open')
+  def testDownloadReportAsString(self, mock_request):
+    serialize_response = mock.Mock()
+    with mock.patch.object(
+        self.report_downloader,
+        '_DownloadReportAsStream') as mock_internal_download, \
+        mock.patch.object(
+            self.report_downloader,
+            '_SerializeReportDefinition') as mock_internal_serialize:
+      mock_internal_serialize.return_value = serialize_response
 
-    with mock.patch('suds.mx.Content') as mock_content:
-      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        with mock.patch('googleads.adwords._report_logger') as mock_logger:
-          mock_logger.isEnabledFor.return_value = True
-          mock_request_instance = mock.Mock()
-          mock_request.return_value = mock_request_instance
-          mock_request_instance.get_full_url.return_value = (
-              'https://google.com/')
-          mock_request_instance.headers = {}
-          self.opener.open.return_value = fake_response
-          self.report_downloader.DownloadReport(report_definition, output_file,
-                                                skip_report_header=True,
-                                                use_raw_enum_values=False)
-          mock_request.assert_called_once_with(
-              ('https://adwords.google.com/api/adwords/reportdownload/%s'
-               % self.version), post_body, headers)
-          self.opener.open.assert_called_once_with(mock_request.return_value)
-          self.marshaller.process.assert_called_once_with(
-              mock_content.return_value)
-          self.assertEqual(report_data, output_file.getvalue())
-          self.header_handler.GetReportDownloadHeaders.assert_called_once_with(
-              skip_report_header=True, use_raw_enum_values=False)
+      self.report_downloader.DownloadReportAsString(
+          'report_definition',
+          some_arg='abc')
 
-  def testDownloadReportAsString(self):
-    report_definition = {'table': 'campaigns',
-                         'downloadFormat': 'CSV'}
-    serialized_report = 'nuinbwuign'
-    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
-    if six.PY3:
-      post_body = bytes(post_body, 'utf-8')
-    headers = {'Authorization': 'ya29.something'}
-    self.header_handler.GetReportDownloadHeaders.return_value = headers
-    report_data = u'CONTENT STRING アングリーバード'
-    report_contents = io.BytesIO()
-    report_contents.write(report_data.encode('utf-8') if six.PY2
-                          else bytes(report_data, 'utf-8'))
-    report_contents.seek(0)
-    fake_response = mock.Mock()
-    fake_response.read = report_contents.read
-    fake_response.msg = 'fake message'
-    fake_response.code = '200'
-    self.marshaller.process.return_value = serialized_report
-
-    with mock.patch('suds.mx.Content') as mock_content:
-      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        mock_request_instance = mock.Mock()
-        mock_request.return_value = mock_request_instance
-        mock_request_instance.get_full_url.return_value = (
-            'https://google.com/')
-        mock_request_instance.headers = {}
-        self.opener.open.return_value = fake_response
-        s = self.report_downloader.DownloadReportAsString(report_definition)
-        mock_request.assert_called_once_with(
-            ('https://adwords.google.com/api/adwords/reportdownload/%s'
-             % self.version), post_body, headers)
-        self.opener.open.assert_called_once_with(mock_request.return_value)
-        self.marshaller.process.assert_called_once_with(
-            mock_content.return_value)
-        self.assertEqual(report_data, s)
-        self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
+      mock_internal_serialize.assert_called_once_with('report_definition')
+      mock_internal_download.assert_called_once_with(
+          serialize_response,
+          some_arg='abc')
 
   def testDownloadReportAsStringWithAwql(self):
     query = 'SELECT Id FROM Campaign WHERE NAME LIKE \'%Test%\''
@@ -1743,11 +1793,11 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                           else bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
-    fake_response.read = report_contents.read
+    fake_response.read.side_effect = report_contents.read
     fake_response.msg = 'fake message'
     fake_response.code = '200'
 
-    with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+    with mock.patch.object(urllib2, 'Request') as mock_request:
       mock_request_instance = mock.Mock()
       mock_request.return_value = mock_request_instance
       mock_request_instance.get_full_url.return_value = 'https://google.com/'
@@ -1821,63 +1871,32 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
 
   def testDownloadReport_failure(self):
     output_file = six.StringIO()
-    report_definition = {'table': 'campaigns',
-                         'downloadFormat': 'CSV'}
-    serialized_report = 'hjuibnibguo'
-    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
-    if six.PY3:
-      post_body = bytes(post_body, 'utf-8')
-    headers = {'Authorization': 'ya29.something'}
-    self.header_handler.GetReportDownloadHeaders.return_value = headers
-    report_data = u'Page not found. :-('
-    report_contents = six.StringIO() if six.PY2 else io.BytesIO()
-    report_contents.write(report_data if six.PY2 else bytes(report_data,
-                                                            'utf-8'))
-    logger_request_summary_template = 'Request Summary: %s'
-    report_contents.seek(0)
-    fake_response = mock.Mock()
-    fake_response.read = report_contents.read
-    fake_response.msg = 'fake message'
-    fake_response.code = '200'
-    error = six.moves.urllib.error.HTTPError('', 400, 'Bad Request', {},
-                                             fp=fake_response)
+    report_definition = {
+        'reportName': 'Last 7 days CRITERIA_PERFORMANCE_REPORT',
+        'dateRangeType': 'LAST_7_DAYS',
+        'reportType': 'CRITERIA_PERFORMANCE_REPORT',
+        'downloadFormat': 'CSV',
+        'selector': {
+            'fields': ['CampaignId', 'AdGroupId', 'Id', 'CriteriaType',
+                       'Criteria', 'FinalUrls', 'Impressions', 'Clicks', 'Cost']
+        }
+    }
 
-    self.marshaller.process.return_value = serialized_report
+    with mock.patch.object(self.report_downloader.url_opener,
+                           'open') as mock_open:
+      response_data = 'bad stuff happened'
+      response_fp = six.BytesIO()
+      response_fp.write(response_data if six.PY2 else bytes(
+          response_data, 'utf-8'))
+      response_fp.seek(0)
 
-    with mock.patch('suds.mx.Content') as mock_content:
-      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        with mock.patch('googleads.adwords._report_logger') as mock_logger:
-          with mock.patch('googleads.adwords.ReportDownloader'
-                          '._ExtractRequestSummaryFields') as mock_extract_fds:
-            mock_logger.isEnabledFor.return_value = True
-            mock_extract_fds_return_value = mock.Mock()
-            mock_extract_fds.return_value = mock_extract_fds_return_value
-            mock_request_instance = mock.Mock()
-            mock_request.return_value = mock_request_instance
-            mock_request_instance.get_full_url.return_value = (
-                'https://google.com/')
-            mock_request_instance.headers = {}
-            self.opener.open.side_effect = error
-
-            try:
-              self.report_downloader.DownloadReport(
-                  report_definition, output_file)
-            except googleads.errors.AdWordsReportError as ex:
-              mock_extract_fds.assert_called_once_with(
-                  mock_request_instance, error=ex)
-              mock_logger.warning.assert_called_once_with(
-                  logger_request_summary_template,
-                  mock_extract_fds_return_value)
-
-            mock_request.assert_called_once_with(
-                ('https://adwords.google.com/api/adwords/reportdownload/%s'
-                 % self.version), post_body, headers)
-            self.opener.open.assert_called_once_with(mock_request.return_value)
-            self.marshaller.process.assert_called_once_with(
-                mock_content.return_value)
-            self.assertEqual('', output_file.getvalue())
-            h_handler = self.header_handler
-            h_handler.GetReportDownloadHeaders.assert_called_once_with()
+      mock_open.side_effect = six.moves.urllib.error.HTTPError(
+          'http://abc', '500', 'whoops!', {}, response_fp)
+      with mock.patch.object(self.report_downloader, '_header_handler'):
+        with self.assertRaises(googleads.errors.AdWordsReportError):
+          self.report_downloader.DownloadReport(report_definition, output_file,
+                                                skip_report_header=True,
+                                                use_raw_enum_values=False)
 
   def testDownloadReportWithAwql(self):
     output_file = six.StringIO()
@@ -1898,11 +1917,11 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                           else bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
-    fake_response.read = report_contents.read
+    fake_response.read.side_effect = report_contents.read
     fake_response.msg = 'fake message'
     fake_response.code = '200'
 
-    with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
+    with mock.patch.object(urllib2, 'Request') as mock_request:
       mock_request_instance = mock.Mock()
       mock_request.return_value = mock_request_instance
       mock_request_instance.get_full_url.return_value = 'https://google.com/'
@@ -1919,57 +1938,22 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual(report_data, output_file.getvalue())
     self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
 
-  def testDownloadReportWithBytesIO(self):
-    output_file = io.BytesIO()
-    report_definition = {'table': 'campaigns',
-                         'downloadFormat': 'GZIPPED_CSV'}
-    serialized_report = 'nuinbwuign'
-    post_body = six.moves.urllib.parse.urlencode({'__rdxml': serialized_report})
-    if six.PY3:
-      post_body = bytes(post_body, 'utf-8')
-    headers = {'Authorization': 'ya29.something'}
-    self.header_handler.GetReportDownloadHeaders.return_value = headers
-    report_data = u'CONTENT STRING 广告客户'
-    report_contents = io.BytesIO()
-    report_contents.write(report_data.encode('utf-8') if six.PY2
-                          else bytes(report_data, 'utf-8'))
-    report_contents.seek(0)
-    fake_response = mock.Mock()
-    fake_response.read = report_contents.read
-    fake_response.msg = 'fake message'
-    fake_response.code = '200'
-    self.marshaller.process.return_value = serialized_report
-
-    with mock.patch('suds.mx.Content') as mock_content:
-      with mock.patch(URL_REQUEST_PATH + '.Request') as mock_request:
-        mock_request_instance = mock.Mock()
-        mock_request.return_value = mock_request_instance
-        mock_request_instance.get_full_url.return_value = 'https://google.com/'
-        mock_request_instance.headers = {}
-        self.opener.open.return_value = fake_response
-        self.report_downloader.DownloadReport(report_definition, output_file)
-        mock_request.assert_called_once_with(
-            ('https://adwords.google.com/api/adwords/reportdownload/%s'
-             % self.version), post_body, headers)
-        self.opener.open.assert_called_once_with(mock_request.return_value)
-        self.marshaller.process.assert_called_once_with(
-            mock_content.return_value)
-        self.assertEqual(report_data, output_file.getvalue().decode('utf-8'))
-        self.header_handler.GetReportDownloadHeaders.assert_called_once_with()
-
   def testExtractError_badRequest(self):
     response = mock.Mock()
     response.code = 400
     type_ = 'ReportDownloadError.INVALID_REPORT_DEFINITION_XML'
     trigger = 'Invalid enumeration.'
     field_path = 'Criteria.Type'
-    content_template = (
+    error_template = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<reportDownloadError><ApiError><type>%s</type><trigger>%s</trigger>'
         '<fieldPath>%s</fieldPath></ApiError></reportDownloadError>')
-    content = content_template % (type_, trigger, field_path)
-    response.read.return_value = (content if six.PY2
-                                  else bytes(content, 'utf-8'))
+    response_data = error_template % (type_, trigger, field_path)
+    response_fp = six.BytesIO()
+    response_fp.write(response_data if six.PY2
+                      else bytes(response_data, 'utf-8'))
+    response_fp.seek(0)
+    response.read.side_effect = response_fp.read
 
     rval = self.report_downloader._ExtractError(response)
     self.assertEqual(type_, rval.type)
@@ -1977,13 +1961,16 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual(field_path, rval.field_path)
     self.assertEqual(response.code, rval.code)
     self.assertEqual(response, rval.error)
-    self.assertEqual(content, rval.content)
+    self.assertEqual(response_data, rval.content)
     self.assertIsInstance(rval, googleads.errors.AdWordsReportBadRequestError)
 
     # Check that if the XML fields are empty, this still functions.
-    content = content_template % ('', '', '')
-    response.read.return_value = (content if six.PY2
-                                  else bytes(content, 'utf-8'))
+    response_data = error_template % ('', '', '')
+    response_fp = six.BytesIO()
+    response_fp.write(response_data if six.PY2
+                      else bytes(response_data, 'utf-8'))
+    response_fp.seek(0)
+    response.read.side_effect = response_fp.read
     rval = self.report_downloader._ExtractError(response)
     self.assertEqual(None, rval.type)
     self.assertEqual(None, rval.trigger)
@@ -1992,16 +1979,20 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
   def testExtractError_malformedBadRequest(self):
     response = mock.Mock()
     response.code = 400
-    content = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-               '<reportDownloadError><ApiError><type>1234</type><trigger>5678'
-               '</trigger></ApiError></ExtraElement></reportDownloadError>')
-    response.read.return_value = (content if six.PY2
-                                  else bytes(content, 'utf-8'))
+    response_data = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                     '<reportDownloadError><ApiError><type>1234</type>'
+                     '<trigger>5678</trigger></ApiError></ExtraElement>'
+                     '</reportDownloadError>')
+    response_fp = six.BytesIO()
+    response_fp.write(response_data if six.PY2
+                      else bytes(response_data, 'utf-8'))
+    response_fp.seek(0)
+    response.read.side_effect = response_fp.read
 
     rval = self.report_downloader._ExtractError(response)
     self.assertEqual(response.code, rval.code)
     self.assertEqual(response, rval.error)
-    self.assertEqual(content, rval.content)
+    self.assertEqual(response_data, rval.content)
     self.assertIsInstance(rval, googleads.errors.AdWordsReportError)
 
   def testExtractError_notBadRequest(self):
@@ -2387,15 +2378,25 @@ class ServiceQueryTest(testing.CleanUtilityRegistryTestCase):
     actual_query.NextPage()
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
-  def testNextPage_userProvidedPage(self):
+  def testNextPageForDataService(self):
     selected_fields = ['Id', 'Name']
-    actual_query = (googleads.adwords.ServiceQueryBuilder()
-                    .Select(*selected_fields)
-                    .Limit(0, 100)
-                    .Build())
-    # Do next page and check if the LIMIT clause is modified correctly.
-    awql_regex = (r'SELECT (.*) LIMIT 50,100')
-    actual_query.NextPage(50)
+    actual_query = (
+        googleads.adwords.ServiceQueryBuilder().Select(*selected_fields).Limit(
+            0, 2).Build())
+    page = {
+        'totalNumEntries': 3,
+        'Page.Type': 'CriterionBidLandscapePage',
+        'entries': [{
+            'landscapePoints': ['fakePoint1', 'fakePoint2']
+        }, {
+            'landscapePoints': ['fakePoint3', 'fakePoint4']
+        }]
+    }
+
+    # The LIMIT clause should be incremented by the number of bid landscape
+    # points of the page.
+    awql_regex = (r'SELECT (.*) LIMIT 4,2')
+    actual_query.NextPage(page)
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testNextPageFail(self):
@@ -2427,17 +2428,30 @@ class ServiceQueryTest(testing.CleanUtilityRegistryTestCase):
 
     self.assertFalse(actual_query.HasNext(page))
 
-  def testHasNext_userProvidedPage(self):
+  def testHasNextForDataService(self):
+    page = {
+        'totalNumEntries': 3,
+        'Page.Type': 'AdGroupBidLandscapePage',
+        'entries': [{
+            'landscapePoints': ['fakePoint1', 'fakePoint2']
+        }, {
+            'landscapePoints': ['fakePoint3', 'fakePoint4']
+        }]
+    }
     selected_fields = ['Id', 'Name']
-    actual_query = (googleads.adwords.ServiceQueryBuilder()
-                    .Select(*selected_fields)
-                    .Limit(0, 1)
-                    .Build())
-    awql_regex = (r'SELECT (.*) LIMIT 0,1')
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    page_size = 2
+    actual_query = (
+        googleads.adwords.ServiceQueryBuilder().Select(*selected_fields).Limit(
+            0, page_size).Build())
+    # 2 * 2 landscape points are greater than page_size.
+    self.assertTrue(actual_query.HasNext(page))
 
-    page = {'totalNumEntries': 80}
-    self.assertFalse(actual_query.HasNext(page, 100))
+    page_size = 10
+    actual_query = (
+        googleads.adwords.ServiceQueryBuilder().Select(*selected_fields).Limit(
+            0, page_size).Build())
+    # 2 * 2 landscape points are less than page_size.
+    self.assertFalse(actual_query.HasNext(page))
 
   def testHasNextFail(self):
     actual_query = googleads.adwords.ServiceQuery('SELECT Id, Name', None, 100)
@@ -2447,26 +2461,22 @@ class ServiceQueryTest(testing.CleanUtilityRegistryTestCase):
       actual_query.HasNext(page)
 
   def testPager(self):
-    service = 'CampaignService'
     fake_page = {'totalNumEntries': 3}
+    service = mock.Mock()
+    service.query.return_value = fake_page
 
-    with mock.patch('suds.client.Client'):
-      client = GetAdWordsClient(cache=suds.cache.FileCache)
-      service = client.GetService(service, CURRENT_VERSION)
-      with mock.patch.object(service, 'query',
-                             return_value=fake_page, autospec=True):
-        query = (googleads.adwords.ServiceQueryBuilder()
-                 .Select('Id', 'Name')
-                 .Limit(0, 1)
-                 .Build())
-        i = 0
-        for page in query.Pager(service):
-          self.assertEqual(fake_page['totalNumEntries'],
-                           page['totalNumEntries'])
-          i += 1
-        # Pager should return the number of page equal to the 'totalNumEntries'
-        # returned by a service.
-        self.assertEqual(fake_page['totalNumEntries'], i)
+    query = (googleads.adwords.ServiceQueryBuilder()
+             .Select('Id', 'Name')
+             .Limit(0, 1)
+             .Build())
+    i = 0
+    for page in query.Pager(service):
+      self.assertEqual(fake_page['totalNumEntries'],
+                       page['totalNumEntries'])
+      i += 1
+    # Pager should return the number of page equal to the 'totalNumEntries'
+    # returned by a service.
+    self.assertEqual(fake_page['totalNumEntries'], i)
 
 
 if __name__ == '__main__':

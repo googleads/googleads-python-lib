@@ -39,7 +39,7 @@ def main(client):
         # Print out some information for each creative wrapper.
         print('Creative wrapper with ID "%d" and label ID "%d" was found.\n' %
               (creative_wrapper['id'], creative_wrapper['labelId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

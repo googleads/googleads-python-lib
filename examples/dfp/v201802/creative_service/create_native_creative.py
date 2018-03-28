@@ -29,7 +29,6 @@ directory. For more information, see the "Caching authentication information"
 section of our README.
 """
 
-import base64
 import urllib2
 import uuid
 
@@ -52,10 +51,8 @@ def main(client, advertiser_id):
   creative_template_id = '10004400'
 
   image_data = urllib2.urlopen(ICON_URL).read()
-  image_data = base64.b64encode(image_data)
 
   app_icon_data = urllib2.urlopen(APP_ICON_SMALL).read()
-  app_icon_data = base64.b64encode(app_icon_data)
 
   # Create creative from templates.
   creative = {

@@ -142,8 +142,8 @@ def _CreateFeedItems(client, feed_details, label_name):
   # Get the FeedItemService.
   feed_item_service = client.GetService('FeedItemService', version='v201710')
 
-  # Optional: You can include the {feeditem} valuetrack parameter to track which
-  # page feed items lead to each click.
+  # For page feed URL recommendations and rules, see:
+  # https://support.google.com/adwords/answer/7166527
   urls = ('http://www.example.com/discounts/rental-cars?id={feeditem}',
           'http://www.example.com/discounts/hotel-deals?id={feeditem}',
           'http://www.example.com/discounts/flight-deals?id={feeditem}')

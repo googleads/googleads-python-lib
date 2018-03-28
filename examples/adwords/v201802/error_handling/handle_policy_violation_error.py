@@ -26,9 +26,9 @@ section of our README.
 """
 
 
-import suds
 
 from googleads import adwords
+from googleads import errors
 
 AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
 
@@ -81,8 +81,8 @@ def main(client, ad_group_id):
     client.validate_only = True
     ad_group_ad_service.mutate(operations)
     print 'Validation successful, no errors returned.'
-  except suds.WebFault, e:
-    for error in e.fault.detail.ApiExceptionFault.errors:
+  except errors.GoogleAdsServerFault, e:
+    for error in e.errors:
       # Get the index of the failed operation from the error's field path
       # elements.
       field_path_elements = error['fieldPathElements']
@@ -96,16 +96,15 @@ def main(client, ad_group_id):
       # so simply throw the exception.
       if (not (first_field_path_element
                and first_field_path_element['field'] == 'operations'
-               and first_field_path_element['index'])):
+               and 'index' in first_field_path_element)):
         raise e
 
-      operation_index = first_field_path_element['index']
-      index = int(operation_index[0])
+      index = long(first_field_path_element['index'])
       operation = operations[index]
       if not HandleAPIError(error, operation):
         # Set non-exemptable operation to None to mark for deletion.
         print ('Removing operation with non-exemptable error at index %s.'
-               % operation_index)
+               % index)
         operations[index] = None
 
     # Remove the non-exemptable operations.

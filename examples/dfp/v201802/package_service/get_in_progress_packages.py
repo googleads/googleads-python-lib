@@ -38,7 +38,7 @@ def main(client):
         print(
             'Package with ID "%d", name "%s", and proposal ID "%d" was found.\n'
             % (pkg['id'], pkg['name'], pkg['proposalId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

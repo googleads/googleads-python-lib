@@ -47,7 +47,7 @@ def main(client):
         # Print out some information for each order.
         print('Order with ID "%d" and name "%s" was found.\n' % (order['id'],
                                                                  order['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

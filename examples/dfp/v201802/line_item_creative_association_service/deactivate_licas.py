@@ -56,7 +56,7 @@ def main(client, line_item_id):
           statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         num_deactivated_licas += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

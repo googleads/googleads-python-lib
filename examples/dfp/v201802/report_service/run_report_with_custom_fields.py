@@ -50,7 +50,7 @@ def main(client, order_id):
         if 'customFieldValues' in line_item:
           for custom_field_value in line_item['customFieldValues']:
             custom_field_ids.add(custom_field_value['customFieldId'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="https://adwords.google.com/api/adwords/cm/{VERSION}" elementFormDefault="qualified" targetNamespace="https://adwords.google.com/api/adwords/cm/{VERSION}" version="1.0">
+<xs:element name="reportDefinition">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="id" type="xs:long"/>
+        <xs:element minOccurs="1" name="selector" type="tns:Selector"/>
+        <xs:element minOccurs="1" name="reportName" type="xs:string"/>
+        <xs:element minOccurs="1" name="reportType" type="tns:ReportDefinition.ReportType"/>
+        <xs:element minOccurs="1" name="dateRangeType" type="tns:ReportDefinition.DateRangeType"/>
+        <xs:element minOccurs="1" name="downloadFormat" type="tns:DownloadFormat"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+<xs:complexType name="Selector">
+    <xs:sequence>
+      <xs:element maxOccurs="unbounded" minOccurs="1" name="fields" nillable="true" type="xs:string"/>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="predicates" nillable="true" type="tns:Predicate"/>
+      <xs:element minOccurs="0" name="dateRange" type="tns:DateRange"/>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="ordering" nillable="true" type="tns:OrderBy"/>
+      <xs:element minOccurs="0" name="paging" type="tns:Paging"/>
+    </xs:sequence>
+  </xs:complexType>
+<xs:complexType name="Predicate">
+    <xs:sequence>
+      <xs:element minOccurs="1" name="field" type="xs:string"/>
+      <xs:element minOccurs="1" name="operator" type="tns:Predicate.Operator"/>
+      <xs:element maxOccurs="unbounded" minOccurs="1" name="values" nillable="true" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+<xs:complexType name="DateRange">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="min" type="xs:string"/>
+      <xs:element minOccurs="0" name="max" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+<xs:complexType name="OrderBy">
+    <xs:sequence>
+      <xs:element minOccurs="1" name="field" type="xs:string"/>
+      <xs:element minOccurs="0" name="sortOrder" type="tns:SortOrder"/>
+    </xs:sequence>
+  </xs:complexType>
+<xs:complexType name="Paging">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="startIndex" type="xs:int"/>
+      <xs:element minOccurs="0" name="numberResults" type="xs:int"/>
+    </xs:sequence>
+  </xs:complexType>
+<xs:simpleType name="Predicate.Operator">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="EQUALS"/>
+      <xs:enumeration value="NOT_EQUALS"/>
+      <xs:enumeration value="IN"/>
+      <xs:enumeration value="NOT_IN"/>
+      <xs:enumeration value="GREATER_THAN"/>
+      <xs:enumeration value="GREATER_THAN_EQUALS"/>
+      <xs:enumeration value="LESS_THAN"/>
+      <xs:enumeration value="LESS_THAN_EQUALS"/>
+      <xs:enumeration value="STARTS_WITH"/>
+      <xs:enumeration value="STARTS_WITH_IGNORE_CASE"/>
+      <xs:enumeration value="CONTAINS"/>
+      <xs:enumeration value="CONTAINS_IGNORE_CASE"/>
+      <xs:enumeration value="DOES_NOT_CONTAIN"/>
+      <xs:enumeration value="DOES_NOT_CONTAIN_IGNORE_CASE"/>
+      <xs:enumeration value="CONTAINS_ANY"/>
+      <xs:enumeration value="CONTAINS_ALL"/>
+      <xs:enumeration value="CONTAINS_NONE"/>
+      <xs:enumeration value="UNKNOWN"/>
+    </xs:restriction>
+  </xs:simpleType>
+<xs:simpleType name="SortOrder">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="ASCENDING"/>
+      <xs:enumeration value="DESCENDING"/>
+    </xs:restriction>
+  </xs:simpleType>
+<xs:simpleType name="ReportDefinition.ReportType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="KEYWORDS_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="AD_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="URL_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="ADGROUP_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="CAMPAIGN_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="ACCOUNT_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="GEO_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="SEARCH_QUERY_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="CAMPAIGN_NEGATIVE_KEYWORDS_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="CAMPAIGN_NEGATIVE_PLACEMENTS_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="DESTINATION_URL_REPORT"/>
+      <xs:enumeration value="SHARED_SET_REPORT"/>
+      <xs:enumeration value="CAMPAIGN_SHARED_SET_REPORT"/>
+      <xs:enumeration value="SHARED_SET_CRITERIA_REPORT"/>
+      <xs:enumeration value="CREATIVE_CONVERSION_REPORT"/>
+      <xs:enumeration value="CALL_METRICS_CALL_DETAILS_REPORT"/>
+      <xs:enumeration value="KEYWORDLESS_QUERY_REPORT"/>
+      <xs:enumeration value="KEYWORDLESS_CATEGORY_REPORT"/>
+      <xs:enumeration value="CRITERIA_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="CLICK_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="BUDGET_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="BID_GOAL_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="DISPLAY_KEYWORD_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="PLACEHOLDER_FEED_ITEM_REPORT"/>
+      <xs:enumeration value="PLACEMENT_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="CAMPAIGN_NEGATIVE_LOCATIONS_REPORT"/>
+      <xs:enumeration value="GENDER_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="AGE_RANGE_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="CAMPAIGN_LOCATION_TARGET_REPORT"/>
+      <xs:enumeration value="CAMPAIGN_AD_SCHEDULE_TARGET_REPORT"/>
+      <xs:enumeration value="PAID_ORGANIC_QUERY_REPORT"/>
+      <xs:enumeration value="AUDIENCE_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="DISPLAY_TOPICS_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="USER_AD_DISTANCE_REPORT"/>
+      <xs:enumeration value="SHOPPING_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="PRODUCT_PARTITION_REPORT"/>
+      <xs:enumeration value="PARENTAL_STATUS_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="PLACEHOLDER_REPORT"/>
+      <xs:enumeration value="AD_CUSTOMIZERS_FEED_ITEM_REPORT"/>
+      <xs:enumeration value="LABEL_REPORT"/>
+      <xs:enumeration value="FINAL_URL_REPORT"/>
+      <xs:enumeration value="VIDEO_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="TOP_CONTENT_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="CAMPAIGN_CRITERIA_REPORT"/>
+      <xs:enumeration value="CAMPAIGN_GROUP_PERFORMANCE_REPORT"/>
+      <xs:enumeration value="UNKNOWN"/>
+    </xs:restriction>
+  </xs:simpleType>
+<xs:simpleType name="ReportDefinition.DateRangeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="TODAY"/>
+      <xs:enumeration value="YESTERDAY"/>
+      <xs:enumeration value="LAST_7_DAYS"/>
+      <xs:enumeration value="LAST_WEEK"/>
+      <xs:enumeration value="LAST_BUSINESS_WEEK"/>
+      <xs:enumeration value="THIS_MONTH"/>
+      <xs:enumeration value="LAST_MONTH"/>
+      <xs:enumeration value="ALL_TIME"/>
+      <xs:enumeration value="CUSTOM_DATE"/>
+      <xs:enumeration value="LAST_14_DAYS"/>
+      <xs:enumeration value="LAST_30_DAYS"/>
+      <xs:enumeration value="THIS_WEEK_SUN_TODAY"/>
+      <xs:enumeration value="THIS_WEEK_MON_TODAY"/>
+      <xs:enumeration value="LAST_WEEK_SUN_SAT"/>
+    </xs:restriction>
+  </xs:simpleType>
+<xs:simpleType name="DownloadFormat">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="CSVFOREXCEL"/>
+      <xs:enumeration value="CSV"/>
+      <xs:enumeration value="TSV"/>
+      <xs:enumeration value="XML"/>
+      <xs:enumeration value="GZIPPED_CSV"/>
+      <xs:enumeration value="GZIPPED_XML"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

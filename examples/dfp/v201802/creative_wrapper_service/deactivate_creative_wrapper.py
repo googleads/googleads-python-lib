@@ -60,7 +60,7 @@ def main(client, label_id):
           {'xsi_type': 'DeactivateCreativeWrappers'}, statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         creative_wrappers_deactivated += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

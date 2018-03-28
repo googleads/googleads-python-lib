@@ -37,7 +37,7 @@ def main(client):
         # Print out some information for each company.
         print('Company with ID "%d", name "%s", and type "%s" was found.\n' %
               (company['id'], company['name'], company['type']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

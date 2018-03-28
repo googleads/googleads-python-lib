@@ -46,7 +46,7 @@ def main(client):
         # Print out some information for each line item.
         print('Line item with ID "%d" and name "%s" was found.\n' %
               (line_item['id'], line_item['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

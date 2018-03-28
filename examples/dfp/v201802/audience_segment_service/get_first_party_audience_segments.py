@@ -40,7 +40,7 @@ def main(client):
         print('Audience segment with ID "%d", name "%s", and size "%d" was '
               'found.\n' % (audience_segment['id'], audience_segment['name'],
                             audience_segment['size']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

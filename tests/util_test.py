@@ -14,28 +14,33 @@
 
 """Unit tests to cover the errors module."""
 
+from contextlib import contextmanager
 import logging
 import os
-import re
 import unittest
-from xml.etree import ElementTree
 
 import googleads.adwords
 import googleads.dfp
+import googleads.errors
 import googleads.util
+from lxml import etree
 import mock
 import six
 import suds
 import suds.transport
+from . import testing
 
 
 _HTTP_CLIENT_PATH = 'httplib' if six.PY2 else 'http.client'
 
 
+@testing.MultiBackendTest
 class PatchesTest(unittest.TestCase):
   """Tests for the PatchHelper utility."""
 
-  def setUp(self):
+  def setUp(self, soap_impl):
+    self.soap_impl = soap_impl
+
     oauth_header = {'Authorization': 'header'}
     oauth2_client = mock.Mock()
     oauth2_client.CreateHttpHeader.return_value = dict(oauth_header)
@@ -46,18 +51,26 @@ class PatchesTest(unittest.TestCase):
     user_agent = '4M153rAb13p1l30F53CR37s'
     self.adwords_client = googleads.adwords.AdWordsClient(
         dev_token, oauth2_client, user_agent,
-        client_customer_id=client_customer_id)
+        client_customer_id=client_customer_id, soap_impl=soap_impl)
     # AdWordsClient setup (compression enabled)
     self.adwords_client_with_compression = googleads.adwords.AdWordsClient(
         dev_token, oauth2_client, user_agent,
         client_customer_id=client_customer_id,
-        enable_compression=True)
+        enable_compression=True, soap_impl=soap_impl)
+    self.adwords_version = sorted(googleads.adwords._SERVICE_MAP.keys())[-1]
+    self.adwords_namespace_partial = (
+        'https://adwords.google.com/api/adwords/%s/' + self.adwords_version)
 
     # DfpClient setup
     network_code = '12345'
     application_name = 'application name'
     self.dfp_client = googleads.dfp.DfpClient(
-        oauth2_client, application_name, network_code)
+        oauth2_client, application_name, network_code, soap_impl=soap_impl)
+
+    self.dfp_version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
+    self.dfp_namespace = (
+        'https://www.google.com/apis/ads/publisher/%s'
+        % self.dfp_version)
 
   def testPatchedSudsJurkoAppender(self):
     """Tests to confirm that the appender no longer removes empty objects."""
@@ -80,19 +93,16 @@ class PatchesTest(unittest.TestCase):
     statement = googleads.dfp.FilterStatement(query, values)
 
     line_item_service = self.dfp_client.GetService('LineItemService')
-    line_item_service.suds_client.set_options(nosend=True)
+
     line_item_action = {'xsi_type': 'ActivateLineItems'}
-    # Perform the ActivateLineItems action.
-    request = line_item_service.performLineItemAction(
-        line_item_action, statement.ToStatement()).envelope
-    line_item_service.suds_client.set_options(nosend=False)
-    if six.PY3:
-      request = request.decode('utf-8')
-    # Strip namespace prefixes and parse.
-    parsed_request = ElementTree.fromstring(re.sub('ns[0-1]:', '', request))
-    line_item_action = parsed_request.find('Body').find('performLineItemAction')
+    request = line_item_service.GetRequestXML(
+        'performLineItemAction', line_item_action, statement.ToStatement())
+
+    line_item_action = request.find(
+        './/{%s}lineItemAction' % self.dfp_namespace)
+
     # Assert that the request includes the action.
-    self.assertTrue(line_item_action is not None)
+    self.assertIsNotNone(line_item_action)
 
   def testPatchedSudsJurkoAppenderIssue63(self):
     """Verifies that issue 63 has been resolved with the patch."""
@@ -118,20 +128,14 @@ class PatchesTest(unittest.TestCase):
     }]
     adgroup_criterion_service = self.adwords_client.GetService(
         'AdGroupCriterionService')
-    adgroup_criterion_service.suds_client.set_options(nosend=True)
-    request = adgroup_criterion_service.mutate(operations).envelope
-    adgroup_criterion_service.suds_client.set_options(nosend=False)
-    if six.PY3:
-      request = request.decode('utf-8')
-    # Strip namespace prefixes and parse.
-    parsed_request = ElementTree.fromstring(re.sub('ns[0-1]:', '', request))
-    operand = parsed_request.find('Body').find('mutate').find(
-        'operations').find('operand')
-    final_mobile_urls = operand.find('finalMobileUrls')
-    final_urls = operand.find('finalUrls')
+    request = adgroup_criterion_service.GetRequestXML('mutate', operations)
+    final_mobile_urls = request.find('.//{%s}finalMobileUrls' %
+                                     self.adwords_namespace_partial % 'cm')
+    final_urls = request.find('.//{%s}finalUrls' %
+                              self.adwords_namespace_partial % 'cm')
     # Assert that the request includes the empty urls.
-    self.assertTrue(final_mobile_urls is not None)
-    self.assertTrue(final_urls is not None)
+    self.assertIsNotNone(final_mobile_urls)
+    self.assertIsNotNone(final_urls)
 
   def testPatchedSudsJurkoAppenderIssue78(self):
     """Verifies that issue 78 has been resolved with the patch."""
@@ -139,20 +143,18 @@ class PatchesTest(unittest.TestCase):
     # trackingUrl template. In the bug, this would be excluded from the output.
     customer = {'trackingUrlTemplate': '', 'xsi_type': 'Customer'}
     customer_service = self.adwords_client.GetService('CustomerService')
-    customer_service.suds_client.set_options(nosend=True)
-    request = customer_service.mutate(customer).envelope
-    customer_service.suds_client.set_options(nosend=False)
-    if six.PY3:
-      request = request.decode('utf-8')
-    # Strip namespace prefixes and parse.
-    parsed_request = ElementTree.fromstring(re.sub('ns[0-1]:', '', request))
-    tracking_url_template = parsed_request.find('Body').find('mutate').find(
-        'customer').find('trackingUrlTemplate')
+    request = customer_service.GetRequestXML('mutate', customer)
+    tracking_url_template = request.find(
+        './/{%s}trackingUrlTemplate' % self.adwords_namespace_partial % 'mcm')
     # Assert that the request includes the empty trackingUrlTemplate.
-    self.assertTrue(tracking_url_template is not None)
+    self.assertIsNotNone(tracking_url_template)
 
   def testSudsJurkoSendWithCompression(self):
     """Verifies that the patched HttpTransport.send can decode gzip response."""
+    # Not applicable to zeep
+    if self.soap_impl == 'zeep':
+      return
+
     test_dir = os.path.dirname(__file__)
     cs = self.adwords_client_with_compression.GetService('CampaignService')
 
@@ -172,6 +174,10 @@ class PatchesTest(unittest.TestCase):
 
   def testSudsJurkoSendWithException(self):
     """Verifies that the patched HttpTransport.send can escalate HTTPError."""
+    # Not applicable to zeep
+    if self.soap_impl == 'zeep':
+      return
+
     test_dir = os.path.dirname(__file__)
     cs = self.adwords_client_with_compression.GetService('CampaignService')
 
@@ -189,11 +195,40 @@ class PatchesTest(unittest.TestCase):
               url, code, msg, hdrs, handler)
           try:
             cs.get()
-          except suds.WebFault as e:
+          except googleads.errors.GoogleAdsServerFault as e:
             self.assertEqual(
                 'Unmarshalling Error: For input string: '
                 '"INSERT_ADVERTISER_COMPANY_ID_HERE" ',
-                e.fault.faultstring)
+                str(e))
+
+  @contextmanager
+  def mock_fault_response(self, response_file, version):
+    test_dir = os.path.dirname(__file__)
+    with open(os.path.join(test_dir, response_file), 'rb') as handler:
+      response_data = handler.read()
+    if six.PY3:
+      response_data = response_data.replace(
+          b'{VERSION}', bytes(version, 'utf-8'))
+    else:
+      response_data = response_data.replace('{VERSION}', version)
+
+    if self.soap_impl == 'suds':
+      with mock.patch('suds.transport.http.HttpTransport.send') as mock_send:
+        # Use a fake reply containing a fault SOAP response.
+        reply_instance = mock.Mock()
+        reply_instance.code = 500
+        reply_instance.headers = {}
+        reply_instance.message = response_data
+        mock_send.return_value = reply_instance
+        yield
+    else:
+      with mock.patch('zeep.transports.Transport.post') as mock_post:
+        reply_instance = mock.Mock()
+        reply_instance.status_code = 500
+        reply_instance.headers = {}
+        reply_instance.content = response_data
+        mock_post.return_value = reply_instance
+        yield
 
   def testSingleErrorListIssue90(self):
     """Verifies that issue 90 has been resolved with the patch."""
@@ -202,25 +237,12 @@ class PatchesTest(unittest.TestCase):
     line_item_service = self.dfp_client.GetService('LineItemService')
     line_item_action = {'xsi_type': 'ActivateLineItems'}
     st = statement.ToStatement()
-
-    test_dir = os.path.dirname(__file__)
-
-    with mock.patch('suds.transport.http.HttpTransport.send') as mock_send:
-      with open(os.path.join(
-          test_dir, 'test_data/fault_response_envelope.txt'), 'rb'
-               ) as handler:
-        # Use a fake reply containing a fault SOAP response.
-        reply_instance = mock.Mock()
-        reply_instance.code = 500
-        reply_instance.headers = {}
-        reply_instance.message = handler.read()
-        mock_send.return_value = reply_instance
-        try:
-          line_item_service.performLineItemAction(line_item_action, st)
-        except suds.WebFault as e:
-          errors = e.fault.detail.ApiExceptionFault.errors
-          self.assertIsInstance(errors, list)
-          self.assertEqual(1, len(errors))
+    with self.mock_fault_response(
+        'test_data/fault_response_envelope.txt', self.dfp_version):
+      try:
+        line_item_service.performLineItemAction(line_item_action, st)
+      except googleads.errors.GoogleAdsServerFault as e:
+        self.assertEqual(1, len(e.errors))
 
   def testSingleErrorListIssue90_emptyErrors(self):
     """Verifies that issue 90 has been resolved with the patch."""
@@ -230,24 +252,12 @@ class PatchesTest(unittest.TestCase):
     line_item_action = {'xsi_type': 'ActivateLineItems'}
     st = statement.ToStatement()
 
-    test_dir = os.path.dirname(__file__)
-
-    with mock.patch('suds.transport.http.HttpTransport.send') as mock_send:
-      with open(os.path.join(
-          test_dir, 'test_data/empty_fault_response_envelope.txt'), 'rb'
-               ) as handler:
-        # Use a fake reply containing a fault SOAP response.
-        reply_instance = mock.Mock()
-        reply_instance.code = 500
-        reply_instance.headers = {}
-        reply_instance.message = handler.read()
-        mock_send.return_value = reply_instance
-        try:
-          line_item_service.performLineItemAction(line_item_action, st)
-        except suds.WebFault as e:
-          errors = e.fault.detail.ApiExceptionFault.errors
-          self.assertIsInstance(errors, list)
-          self.assertEqual(0, len(errors))
+    with self.mock_fault_response(
+        'test_data/empty_fault_response_envelope.txt', self.dfp_version):
+      try:
+        line_item_service.performLineItemAction(line_item_action, st)
+      except googleads.errors.GoogleAdsServerFault as e:
+        self.assertEqual(0, len(e.errors))
 
   def testSingleErrorListIssue90_multipleErrors(self):
     """Verifies that issue 90 has been resolved with the patch."""
@@ -257,24 +267,12 @@ class PatchesTest(unittest.TestCase):
     line_item_action = {'xsi_type': 'ActivateLineItems'}
     st = statement.ToStatement()
 
-    test_dir = os.path.dirname(__file__)
-
-    with mock.patch('suds.transport.http.HttpTransport.send') as mock_send:
-      with open(os.path.join(
-          test_dir, 'test_data/multi_errors_fault_response_envelope.txt'), 'rb'
-               ) as handler:
-        # Use a fake reply containing a fault SOAP response.
-        reply_instance = mock.Mock()
-        reply_instance.code = 500
-        reply_instance.headers = {}
-        reply_instance.message = handler.read()
-        mock_send.return_value = reply_instance
-        try:
-          line_item_service.performLineItemAction(line_item_action, st)
-        except suds.WebFault as e:
-          errors = e.fault.detail.ApiExceptionFault.errors
-          self.assertIsInstance(errors, list)
-          self.assertEqual(2, len(errors))
+    with self.mock_fault_response(
+        'test_data/multi_errors_fault_response_envelope.txt', self.dfp_version):
+      try:
+        line_item_service.performLineItemAction(line_item_action, st)
+      except googleads.errors.GoogleAdsServerFault as e:
+        self.assertEqual(2, len(e.errors))
 
 
 class GoogleAdsCommonFilterTest(unittest.TestCase):
@@ -341,9 +339,9 @@ class SudsClientFilterTest(unittest.TestCase):
     record = mock.Mock()
     record.msg = 'headers = %s'
     record.args = {'Content-Type': 'text/xml; charset=utf-8',
-                   'Authorization': 'Bearer abc123doremi'}
+                   'authorization': 'Bearer abc123doremi'}
     expected_args = {'Content-Type': 'text/xml; charset=utf-8',
-                     'Authorization': self.redacted_text}
+                     'authorization': self.redacted_text}
     self.filter.filter(record)
     self.assertEqual(record.args, expected_args)
 
@@ -536,17 +534,141 @@ class SudsTransportFilterTest(unittest.TestCase):
   def testFilterSudsTransportRequest(self):
     request_instance = suds.transport.Request('https://www.google.com')
     request_instance.headers = {'User-Agent': 'user-agent',
-                                'Authorization': 'abc123doremi'}
+                                'authorization': 'abc123doremi'}
     request_instance.message = (self.test_request_envelope_template %
-                                self.dev_token_template)
+                                self.dev_token_template).encode('utf-8')
     expected_headers = {'User-Agent': 'user-agent',
-                        'Authorization': self.redacted_text}
+                        'authorization': self.redacted_text}
     record = mock.Mock()
     record.args = (request_instance,)
     self.filter.filter(record)
     self.assertEqual(record.args[0].headers, expected_headers)
     self.assertEqual(record.args[0].message,
                      self.test_request_envelope_template % self.redacted_text)
+
+XML_WITH_DEV_TOKEN = (
+    '<abc xmlns:ns0="http://abc">'
+    '<ns0:developerToken>a token</ns0:developerToken>'
+    '<sdf>hi</sdf>'
+    '</abc>')
+XML_WITH_DEV_TOKEN_SAFE = etree.fromstring(
+    XML_WITH_DEV_TOKEN.replace('a token', 'REDACTED'))
+XML_WITH_DEV_TOKEN = etree.fromstring(XML_WITH_DEV_TOKEN)
+XML_PRETTY = etree.tostring(XML_WITH_DEV_TOKEN, pretty_print=True)
+XML_PRETTY_SAFE = etree.tostring(XML_WITH_DEV_TOKEN_SAFE, pretty_print=True)
+if six.PY3:
+  XML_PRETTY_SAFE = XML_PRETTY_SAFE.decode('utf-8')
+XML_WITH_FAULT = etree.fromstring(
+    '<abc xmlns:ns0="http://schemas.xmlsoap.org/soap/envelope/">'
+    '<ns0:Header>'
+    '<child><key>value</key></child>'
+    '</ns0:Header>'
+    '<ns0:Fault>'
+    '<faultstring>hi</faultstring>'
+    '</ns0:Fault>'
+    '</abc>')
+
+ZEEP_HEADER = {'abc': 'hi', 'authorization': 'secret'}
+ZEEP_HEADER_SAFE = ZEEP_HEADER.copy()
+ZEEP_HEADER_SAFE['authorization'] = 'REDACTED'
+BINDING_OPTIONS = {'address': 'myaddress'}
+
+
+class ZeepLoggerTest(unittest.TestCase):
+
+  def setUp(self):
+    self.logger = mock.Mock()
+    self.zeep_logger = googleads.util.ZeepLogger()
+    self.zeep_logger._logger = self.logger
+    self.operation = mock.Mock()
+    self.operation.name = 'opname'
+    if six.PY2:
+      self.operation.binding.wsdl.services.keys.return_value = ['service_name']
+    else:
+      self.operation.binding.wsdl.services.keys.return_value = (
+          iter(['service_name']))
+
+  def enable_log_levels(self, *levels):
+    self.logger.isEnabledFor.side_effect = lambda lvl: lvl in levels
+
+  def testIngressPassesThroughArguments(self):
+    self.enable_log_levels()
+
+    # This result isn't related to logging, just confirming that the plugin
+    # is passing along the data unmodified.
+    result = self.zeep_logger.ingress(
+        XML_WITH_DEV_TOKEN, ZEEP_HEADER, self.operation)
+
+    self.assertEqual(result, (XML_WITH_DEV_TOKEN, ZEEP_HEADER))
+
+  def testIngressNoLoggingByDefault(self):
+    self.enable_log_levels()
+
+    self.zeep_logger.ingress(
+        XML_WITH_DEV_TOKEN, ZEEP_HEADER, self.operation)
+
+    self.logger.debug.assert_not_called()
+
+  def testIngressDebugLogging(self):
+    self.enable_log_levels(logging.DEBUG)
+
+    # Re-using the XML with <developerToken> for convenience, but this
+    # is testing inbound data, which would not have anything sensitive in it.
+    self.zeep_logger.ingress(
+        XML_WITH_DEV_TOKEN, ZEEP_HEADER, self.operation)
+
+    self.logger.debug.assert_called_once_with(
+        googleads.util._RESPONSE_XML_LOG_LINE, XML_PRETTY)
+
+  def testIngressFaultLogging(self):
+    self.enable_log_levels(logging.WARN)
+
+    self.zeep_logger.ingress(
+        XML_WITH_FAULT, ZEEP_HEADER, self.operation)
+
+    self.assertEqual({'faultMessage': 'hi',
+                      'key': 'value',
+                      'methodName': 'opname',
+                      'serviceName': 'service_name'},
+                     self.logger.warn.mock_calls[0][1][1])
+
+  def testEgressPassesThroughArguments(self):
+    self.enable_log_levels()
+
+    self.enable_log_levels(logging.DEBUG)
+
+    # This result isn't related to logging, just confirming that the plugin
+    # is passing along the data unmodified.
+    result = self.zeep_logger.egress(
+        XML_WITH_DEV_TOKEN, ZEEP_HEADER, self.operation, BINDING_OPTIONS)
+
+    self.assertEqual(result, (XML_WITH_DEV_TOKEN, ZEEP_HEADER))
+
+  def testEgressNoLoggingByDefault(self):
+    self.enable_log_levels()
+
+    self.zeep_logger.egress(
+        XML_WITH_DEV_TOKEN, ZEEP_HEADER, self.operation, BINDING_OPTIONS)
+
+    self.logger.debug.assert_not_called()
+
+  def testEgressDebugLogging(self):
+    self.enable_log_levels(logging.DEBUG)
+    self.zeep_logger.egress(
+        XML_WITH_DEV_TOKEN, ZEEP_HEADER, self.operation, BINDING_OPTIONS)
+
+    # With egress, they should be redacted.
+    self.logger.debug.assert_called_once_with(
+        googleads.util._REQUEST_XML_LOG_LINE, ZEEP_HEADER_SAFE, XML_PRETTY_SAFE)
+
+  def testEgressInfoLogging(self):
+
+    self.enable_log_levels(logging.INFO)
+    self.zeep_logger.egress(
+        XML_WITH_DEV_TOKEN, ZEEP_HEADER, self.operation, BINDING_OPTIONS)
+
+    self.logger.info.assert_called_once_with(
+        googleads.util._REQUEST_LOG_LINE, 'service_name', 'opname', 'myaddress')
 
 
 if __name__ == '__main__':

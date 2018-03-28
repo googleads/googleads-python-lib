@@ -15,6 +15,7 @@
 """Unit tests to cover the common module."""
 
 
+from contextlib import contextmanager
 import numbers
 import os
 import ssl
@@ -24,17 +25,22 @@ import warnings
 from pyfakefs import fake_filesystem
 from pyfakefs import fake_tempfile
 import mock
+import requests.exceptions
 import six
 import suds
+import suds.cache
 import yaml
+import zeep.cache
 
 import googleads.common
 import googleads.errors
 import googleads.oauth2
 from . import testing
+import zeep.exceptions
 
 
 URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
+TEST_DIR = os.path.dirname(__file__)
 
 
 class CommonTest(testing.CleanUtilityRegistryTestCase):
@@ -44,22 +50,17 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
   _OAUTH_INSTALLED_APP_DICT = {'client_id': 'a', 'client_secret': 'b',
                                'refresh_token': 'c'}
   _OAUTH_SERVICE_ACCT_DICT = {
-      'service_account_email': 'service_account@example.com',
-      'path_to_private_key_file': '/test/test.p12',
+      'path_to_private_key_file': '/test/test.json',
       'delegated_account': 'delegated_account@example.com'}
 
   def setUp(self):
     self.filesystem = fake_filesystem.FakeFilesystem()
     self.tempfile = fake_tempfile.FakeTempfileModule(self.filesystem)
     self.fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
-    self.host1 = 'h1'
-    self.port1 = 1
-    self.host2 = 'h2'
-    self.port2 = 2
-    self.uplink_host = '127.0.0.1'
-    self.uplink_port = 999
-    self.username = 'username'
-    self.password = 'password'
+    self.uri1 = 'http://h1:1'
+    self.uri1_w_creds = 'http://username:password@h1:1'
+    self.uri2 = 'http://h2:2'
+    self.uplink_uri = 'http://127.0.0.1:999'
     self.test1_name = 'Test1'
     self.test2_name = 'Test2'
     self.test2_version = 'testing'
@@ -159,11 +160,12 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                            rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
-    # Optional logging configuration key is present.
+    # Optional keys present
     logging_config = {'foo': 'bar'}
     yaml_fname = self._CreateYamlFile(
         {'one': {'needed': 'd', 'keys': 'e', 'other': 'f'},
-         googleads.common._LOGGING_KEY: logging_config},
+         googleads.common._LOGGING_KEY: logging_config,
+         googleads.common.SOAP_IMPLEMENTATION_KEY: 'suds'},
         'one', self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
@@ -181,7 +183,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
             self.assertEqual({'oauth2_client': mock_client.return_value,
                               'needed': 'd', 'keys': 'e', 'other': 'f',
                               'proxy_config': proxy_config.return_value,
-                              googleads.common.ENABLE_COMPRESSION_KEY: False},
+                              googleads.common.ENABLE_COMPRESSION_KEY: False,
+                              googleads.common.SOAP_IMPLEMENTATION_KEY: 'suds'},
                              rval)
             self.assertTrue(googleads.common._utility_registry._enabled)
 
@@ -440,15 +443,6 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
           googleads.common.LoadFromString,
           yaml_doc, 'woo', [], [])
 
-  def testLoadFromString_missingPartialServiceAcctOAuthCredential(self):
-    yaml_doc = self._CreateYamlDoc({'woo': {}}, 'woo', {
-        'service_account_email': 'abc@xyz.com'})
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
-      self.assertRaises(
-          googleads.errors.GoogleAdsValueError,
-          googleads.common.LoadFromString,
-          yaml_doc, 'woo', [], [])
-
   def testLoadFromString_passesWithNoRequiredKeys(self):
     yaml_doc = self._CreateYamlDoc({'woo': {}}, 'woo',
                                    self._OAUTH_INSTALLED_APP_DICT)
@@ -471,24 +465,18 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     yaml_doc = self._CreateYamlDoc(
         {'adwords': {},
          'proxy_config': {
-             'http_proxy': {'host': self.host1, 'port': self.port1},
-             'https_proxy': {'host': self.host2, 'port': self.port2}}},
+             'http': self.uri1,
+             'https': self.uri2}},
         insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
-          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
-            proxy.return_value = mock.Mock()
-            rval = googleads.common.LoadFromString(
-                yaml_doc, 'adwords', [], [])
-    proxy.assert_has_calls([mock.call(self.host1, self.port1,
-                                      username=None, password=None),
-                            mock.call(self.host2, self.port2,
-                                      username=None, password=None)])
+          rval = googleads.common.LoadFromString(
+              yaml_doc, 'adwords', [], [])
+
     proxy_config.assert_called_once_with(
-        http_proxy=proxy.return_value,
-        https_proxy=proxy.return_value, cafile=None,
+        http_proxy=self.uri1, https_proxy=self.uri2, cafile=None,
         disable_certificate_validation=False)
     mock_client.assert_called_once_with(
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
@@ -497,35 +485,25 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                       googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
 
   def testHTTPSProxyExtendsSSLSockTimeout(self):
-    with mock.patch('googleads.oauth2.GoogleRefreshTokenClient'):
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
-        with mock.patch('suds.transport.http.'
-                        'HttpTransport.__init__') as mock_transport:
-          proxy_config = googleads.common.ProxyConfig()
-          proxy_config.GetSudsProxyTransport()
-          mock_transport.assert_called_once()
-          # 90 is the default, don't expect an exact value so that we can change
-          # the timeout in the code without returning here.
-          self.assertGreater(mock_transport.call_args_list[0][1]['timeout'], 90)
+    proxy_config = mock.MagicMock()
+    with mock.patch('suds.transport.http.'
+                    'HttpTransport.__init__') as mock_transport:
+      googleads.common._SudsProxyTransport(1000, proxy_config)
+      self.assertEqual(mock_transport.call_args_list[0][1]['timeout'], 1000)
 
   def testLoadFromString_passesWithHTTPProxy(self):
     yaml_doc = self._CreateYamlDoc(
         {'adwords': {},
          'proxy_config': {
-             'http_proxy': {'host': self.host1, 'port': self.port1}}},
+             'http': self.uri1}},
         insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
-          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
-            proxy.return_value = mock.Mock()
-            rval = googleads.common.LoadFromString(
-                yaml_doc, 'adwords', [], [])
-
-    proxy.assert_called_once_with(self.host1, self.port1,
-                                  username=None, password=None)
-    proxy_config.assert_called_once_with(http_proxy=proxy.return_value,
+          rval = googleads.common.LoadFromString(
+              yaml_doc, 'adwords', [], [])
+    proxy_config.assert_called_once_with(http_proxy=self.uri1,
                                          https_proxy=None, cafile=None,
                                          disable_certificate_validation=False)
     mock_client.assert_called_once_with(
@@ -538,23 +516,15 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     yaml_doc = self._CreateYamlDoc(
         {'adwords': {},
          'proxy_config': {
-             'http_proxy': {'host': self.host1, 'port': self.port1,
-                            'username': self.username,
-                            'password': self.password}}},
+             'http': self.uri1_w_creds}},
         insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
-          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
-            proxy.return_value = mock.Mock()
-            rval = googleads.common.LoadFromString(
-                yaml_doc, 'adwords', [], [])
+          rval = googleads.common.LoadFromString(yaml_doc, 'adwords', [], [])
 
-    proxy.assert_called_once_with(self.host1, self.port1,
-                                  username=self.username,
-                                  password=self.password)
-    proxy_config.assert_called_once_with(http_proxy=proxy.return_value,
+    proxy_config.assert_called_once_with(http_proxy=self.uri1_w_creds,
                                          https_proxy=None, cafile=None,
                                          disable_certificate_validation=False)
     mock_client.assert_called_once_with(
@@ -567,21 +537,16 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     yaml_doc = self._CreateYamlDoc(
         {'adwords': {},
          'proxy_config': {
-             'https_proxy': {'host': self.host1, 'port': self.port1}}},
+             'https': self.uri1}},
         insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
-          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
-            proxy.return_value = mock.Mock()
-            rval = googleads.common.LoadFromString(
-                yaml_doc, 'adwords', [], [])
+          rval = googleads.common.LoadFromString(yaml_doc, 'adwords', [], [])
 
-    proxy.assert_called_once_with(self.host1, self.port1,
-                                  username=None, password=None)
     proxy_config.assert_called_once_with(http_proxy=None,
-                                         https_proxy=proxy.return_value,
+                                         https_proxy=self.uri1,
                                          cafile=None,
                                          disable_certificate_validation=False)
     mock_client.assert_called_once_with(
@@ -594,24 +559,16 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     yaml_doc = self._CreateYamlDoc(
         {'adwords': {},
          'proxy_config': {
-             'https_proxy': {'host': self.host1, 'port': self.port1,
-                             'username': self.username,
-                             'password': self.password}}},
+             'https': self.uri1_w_creds}},
         insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
-          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
-            proxy.return_value = mock.Mock()
-            rval = googleads.common.LoadFromString(
-                yaml_doc, 'adwords', [], [])
+          rval = googleads.common.LoadFromString(yaml_doc, 'adwords', [], [])
 
-    proxy.assert_called_once_with(self.host1, self.port1,
-                                  username=self.username,
-                                  password=self.password)
     proxy_config.assert_called_once_with(http_proxy=None,
-                                         https_proxy=proxy.return_value,
+                                         https_proxy=self.uri1_w_creds,
                                          cafile=None,
                                          disable_certificate_validation=False)
     mock_client.assert_called_once_with(
@@ -619,23 +576,6 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
                       googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
-
-  def testLoadFromString_failsWithMisconfiguredProxy(self):
-    yaml_doc = self._CreateYamlDoc(
-        {'adwords': {},
-         'proxy_config': {
-             'http_proxy': {'host': self.host1}}},
-        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
-
-    with mock.patch('googleads.oauth2.GoogleRefreshTokenClient'):
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
-        with mock.patch('googleads.common.ProxyConfig') as proxy_config:
-          proxy_config.return_value = mock.Mock()
-          with mock.patch('googleads.common.ProxyConfig.Proxy') as proxy:
-            proxy.return_value = mock.Mock()
-            self.assertRaises(googleads.errors.GoogleAdsValueError,
-                              googleads.common.LoadFromString,
-                              yaml_doc, 'adwords', [], [])
 
   def testLoadFromString_missingRequiredKeys(self):
     with mock.patch('googleads.common.open', self.fake_open, create=True):
@@ -705,7 +645,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                            rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
-  def testLoadFromString_serviceAccountWithDeprecatedOAuth2Client(self):
+  def testLoadFromString_serviceAccount(self):
     dfp_scope = googleads.oauth2.GetAPIScope('dfp')
     # No optional keys present.
     yaml_doc = self._CreateYamlDoc(
@@ -723,8 +663,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         http_proxy=None, https_proxy=None, cafile=None,
         disable_certificate_validation=False)
     mock_client.assert_called_once_with(
-        dfp_scope, client_email='service_account@example.com',
-        key_file='/test/test.p12', sub='delegated_account@example.com',
+        '/test/test.json', dfp_scope, sub='delegated_account@example.com',
         proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
@@ -748,8 +687,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         http_proxy=None, https_proxy=None, cafile=None,
         disable_certificate_validation=False)
     mock_client.assert_called_once_with(
-        dfp_scope, client_email='service_account@example.com',
-        key_file='/test/test.p12', sub='delegated_account@example.com',
+        '/test/test.json', dfp_scope, sub='delegated_account@example.com',
         proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
@@ -915,7 +853,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     rval = googleads.common._PackForSuds(input_list, factory)
     factory.create.assert_any_call('EliteCampaign')
     factory.create.assert_any_call('metadata')
-    self.assertIsInstance(rval, list)
+    self.assertEqual(len(rval), 2)
     self.assertEqual('Sales', rval[0].name)
     self.assertIsInstance(rval[0].id, suds.null)
     self.assertEqual({'b': 'c'}, rval[0].metadata.a)
@@ -926,7 +864,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
          {'i do not have': 'a type'}], input_list)
 
   def testPackForSuds_applyCustomPacker(self):
-    class CustomPacker(googleads.common.SudsPacker):
+    class CustomPacker(googleads.common.SoapPacker):
       @classmethod
       def Pack(cls, obj):
         if isinstance(obj, numbers.Number):
@@ -953,45 +891,444 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual('Sales', rval.name)
 
 
+@contextmanager
+def mock_zeep_client():
+  mock_port = mock.MagicMock()
+  mock_port.binding = mock.MagicMock()
+  mock_service = mock.MagicMock()
+  mock_service.ports.itervalues.return_value = iter([mock_port])
+  mock_service.ports.values.return_value = iter([mock_port])  # For py3
+
+  with mock.patch('googleads.common.zeep.Client') as mock_client:
+    mock_services = mock_client.return_value.wsdl.services
+    mock_services.itervalues.return_value = iter([mock_service])
+    mock_services.values.return_value = iter([mock_service])  # For py3
+
+    yield mock_client
+
+
+class ZeepServiceProxyTest(unittest.TestCase):
+
+  def setUp(self):
+    super(ZeepServiceProxyTest, self).setUp()
+
+    self.empty_proxy_config = googleads.common.ProxyConfig()
+    self.timeout_100 = 100
+
+  def testCreateZeepClient(self):
+    header_handler = mock.Mock()
+    packer = mock.Mock()
+
+    class MyCache(zeep.cache.Base):
+      pass
+    cache = MyCache()
+
+    with mock_zeep_client() as mock_client, \
+        mock.patch('googleads.common._ZeepAuthHeaderPlugin') as zeep_auth, \
+        mock.patch('googleads.common._ZeepProxyTransport') as zeep_transport, \
+        mock.patch('googleads.util.ZeepLogger') as zeep_logger:
+      zeep_wrapper = googleads.common.ZeepServiceProxy(
+          'http://abc', header_handler, packer, 'proxy', 'timeout', cache)
+
+      zeep_auth.assert_called_once_with(header_handler)
+      plugins = [zeep_auth.return_value, zeep_logger.return_value]
+      transport = zeep_transport.return_value
+      zeep_transport.assert_called_once_with('timeout', 'proxy', cache)
+      mock_client.assert_called_once_with(
+          'http://abc', transport=transport, plugins=plugins)
+      self.assertEqual(zeep_wrapper.zeep_client, mock_client.return_value)
+
+  def testCreateSoapElementForType(self):
+    header_handler = mock.Mock()
+    packer = mock.Mock()
+
+    with mock_zeep_client():
+      zeep_wrapper = googleads.common.ZeepServiceProxy(
+          'http://abc', header_handler, packer,
+          self.empty_proxy_config, self.timeout_100)
+
+      type_mock = mock.Mock()
+      zeep_wrapper.zeep_client.get_type.return_value = type_mock
+      result = zeep_wrapper.CreateSoapElementForType('MyType')
+      self.assertEqual(result, type_mock.return_value)
+      zeep_wrapper.zeep_client.get_type.assert_called_once_with('MyType')
+
+  def testWsdlHasMethod(self):
+    header_handler = mock.Mock()
+    packer = mock.Mock()
+
+    with mock_zeep_client():
+      zeep_wrapper = googleads.common.ZeepServiceProxy(
+          'http://abc', header_handler, packer,
+          self.empty_proxy_config, self.timeout_100)
+
+      with mock.patch.object(zeep_wrapper, '_method_bindings') as mock_bindings:
+        get_method = mock_bindings.get
+
+        self.assertTrue(zeep_wrapper._WsdlHasMethod('abc'))
+
+        get_method.side_effect = ValueError
+        self.assertFalse(zeep_wrapper._WsdlHasMethod('abc'))
+
+  def testZeepErrorRaisesGoogleError(self):
+    with mock_zeep_client() as mock_client:
+      mock_client.side_effect = requests.exceptions.HTTPError
+
+      with self.assertRaises(googleads.errors.GoogleAdsSoapTransportError):
+        googleads.common.ZeepServiceProxy(
+            'http://abc', None, None, self.empty_proxy_config, self.timeout_100)
+
+  @mock.patch('googleads.common._ZeepProxyTransport')
+  def testSchemaHelperRaisesGoogleError(self, mock_transport_class):
+    mock_transport_class.return_value.load.side_effect = (
+        requests.exceptions.HTTPError)
+
+    with self.assertRaises(googleads.errors.GoogleAdsSoapTransportError):
+      googleads.common.ZeepSchemaHelper(None, None, None, 100, None)
+
+  def testGetRequestXML(self):
+    header_handler = mock.Mock()
+    packer = mock.Mock()
+
+    with mock_zeep_client():
+      zeep_wrapper = googleads.common.ZeepServiceProxy(
+          'http://abc', header_handler, packer,
+          self.empty_proxy_config, self.timeout_100)
+
+      mock_create = zeep_wrapper.zeep_client.create_message
+
+      with mock.patch.object(
+          zeep_wrapper,
+          '_GetZeepFormattedSOAPHeaders') as mock_get_headers, \
+          mock.patch.object(zeep_wrapper, '_PackArguments') as mock_pack:
+        mock_pack.return_value = [1, 2, 3]
+
+        result = zeep_wrapper.GetRequestXML('someMethod', 'a', 1, 2)
+
+        self.assertEqual(result, mock_create.return_value)
+        mock_pack.assert_called_once_with(
+            'someMethod', ('a', 1, 2), set_type_attrs=True)
+        mock_create.assert_called_once_with(
+            zeep_wrapper.zeep_client.service, 'someMethod', 1, 2, 3,
+            _soapheaders=mock_get_headers.return_value)
+
+  def testBadCacheType(self):
+    header_handler = mock.Mock()
+    packer = mock.Mock()
+
+    with mock_zeep_client(), self.assertRaises(ValueError):
+      googleads.common.ZeepServiceProxy(
+          'http://abc', header_handler, packer,
+          self.empty_proxy_config, self.timeout_100, cache='not_a_zeep_cache')
+
+  def testAllowsNoCache(self):
+    header_handler = mock.Mock()
+    packer = mock.Mock()
+
+    with mock_zeep_client(),\
+        mock.patch('googleads.common._ZeepProxyTransport') as zeep_transport:
+      googleads.common.ZeepServiceProxy(
+          'http://abc', header_handler, packer,
+          self.empty_proxy_config, self.timeout_100,
+          cache=googleads.common.ZeepServiceProxy.NO_CACHE)
+
+      zeep_transport.assert_called_once_with(
+          self.timeout_100, self.empty_proxy_config,
+          googleads.common.ZeepServiceProxy.NO_CACHE)
+
+  def testFaultWithErrors(self):
+    detail = mock.Mock()
+    fault = zeep.exceptions.Fault('message', detail=detail)
+    header_handler = mock.Mock()
+    packer = mock.Mock()
+
+    with mock_zeep_client():
+      zeep_wrapper = googleads.common.ZeepServiceProxy(
+          'http://abc', header_handler, packer,
+          googleads.common.ProxyConfig(), 100)
+
+      zeep_wrapper.zeep_client.service['mymethod'].side_effect = fault
+      zeep_wrapper._GetBindingNamespace = mock.Mock()
+
+      with self.assertRaises(googleads.errors.GoogleAdsServerFault) as e:
+        zeep_wrapper.mymethod()
+
+    self.assertEqual(e.exception.document, detail)
+    self.assertIn('message', str(e.exception))
+
+  def testIsBase64(self):
+    result = googleads.common.ZeepServiceProxy._IsBase64('abcd')
+    self.assertTrue(result)
+
+  def testIsBase64Exception(self):
+    result = googleads.common.ZeepServiceProxy._IsBase64('abc')
+    self.assertFalse(result)
+
+  def testIsBase64DataBad(self):
+    result = googleads.common.ZeepServiceProxy._IsBase64('%%%%')
+    self.assertFalse(result)
+
+
+class TestZeepArgumentPacking(unittest.TestCase):
+
+  def setUp(self):
+    header_handler = mock.Mock()
+
+    wsdl_path = os.path.join(TEST_DIR, 'test_data/dfp_report_service.xml')
+    self.zeep_client = googleads.common.ZeepServiceProxy(
+        wsdl_path, header_handler, None, googleads.common.ProxyConfig(), 100)
+
+  def testPackArgumentsPrimitivesOnly(self):
+    result = self.zeep_client._PackArguments('getReportJobStatus', [5])
+    six.assertCountEqual(self, result, [5])
+
+  def testPackArgumentsWithSimpleDict(self):
+    opts = {
+        'exportFormat': 'CSV',
+        'includeReportProperties': False,
+        'includeTotalsRow': True,
+        'useGzipCompression': False}
+    result = self.zeep_client._PackArguments(
+        'getReportDownloadUrlWithOptions', [123, opts])
+    self.assertEqual(result[0], 123)
+    self.assertEqual(result[1].exportFormat, 'CSV')
+    self.assertEqual(result[1].includeTotalsRow, True)
+
+  def testPackArgumentsWithCustomTypeAndList(self):
+    data = {
+        'reportQuery': {
+            'adUnitView': 'HIERARCHICAL',
+            'columns': ['AD_SERVER_IMPRESSIONS', 'AD_SERVER_CLICKS'],
+            'dateRangeType': 'LAST_WEEK',
+            'dimensions': ['DATE', 'AD_UNIT_NAME'],
+            'statement': {
+                'query': 'WHERE PARENT_AD_UNIT_ID = :parentAdUnitId',
+                'values': [{
+                    'key': 'parentAdUnitId',
+                    'value': {
+                        'value': 606389, 'xsi_type': 'NumberValue'}}]}}}
+    result = self.zeep_client._PackArguments('runReportJob', [data])
+    self.assertEqual(result[0].reportQuery.adUnitView, 'HIERARCHICAL')
+    self.assertEqual(result[0].reportQuery.dimensions[1], 'AD_UNIT_NAME')
+    number_value = result[0].reportQuery.statement.values[0].value
+    number_type = self.zeep_client.zeep_client.get_type('ns0:NumberValue')
+    self.assertEqual(type(number_value), number_type._value_class)
+
+  def testPackArgumentsWithCustomPacker(self):
+    class CustomPacker(googleads.common.SoapPacker):
+
+      @classmethod
+      def Pack(cls, obj):
+        if isinstance(obj, numbers.Number):
+          return '50'
+        return obj
+
+    self.zeep_client._packer = CustomPacker
+    result = self.zeep_client._PackArguments('getReportJobStatus', [5])[0]
+    self.assertEqual(result, '50')
+
+  def testPackArgumentsBase64Warning(self):
+    image_type = self.zeep_client.zeep_client.get_type('ns0:Image')
+    b64_type = image_type.elements[0][1]
+    data = 'abcd'  # This is valid base64
+
+    with mock.patch('googleads.common._logger'):
+      self.zeep_client._PackArgumentsHelper(b64_type, data, False)
+      self.assertTrue(len(googleads.common._logger.warn.mock_calls))
+
+
 class SudsServiceProxyTest(unittest.TestCase):
   """Tests for the googleads.common.SudsServiceProxy class."""
 
-  def setUp(self):
-    self.header_handler = mock.Mock()
-    self.port = mock.Mock()
-    self.port.methods = ('SoapMethod',)
-    self.services = mock.Mock()
-    self.services.ports = [self.port]
-    self.client = mock.Mock()
-    self.client.wsdl.services = [self.services]
-    self.datetime_packer = mock.Mock()
-    self.suds_service_wrapper = googleads.common.SudsServiceProxy(
-        self.client, self.header_handler, self.datetime_packer)
+  def testCreateSudsClient(self):
+    class MyCache(suds.cache.Cache):
+      pass
 
-  def testSudsServiceProxy(self):
-    self.assertEqual(self.suds_service_wrapper.SoapMethod,
-                     self.suds_service_wrapper._method_proxies['SoapMethod'])
-    self.assertEqual(self.suds_service_wrapper.NotSoapMethod,
-                     self.client.service.NotSoapMethod)
+    cache = MyCache()
+    header_handler = mock.Mock()
+    packer = mock.Mock()
+    proxy_config = mock.Mock()
 
-    with mock.patch('googleads.common._PackForSuds') as mock_pack_for_suds:
-      mock_pack_for_suds.return_value = 'modified_test'
-      self.suds_service_wrapper.SoapMethod('test')
-      mock_pack_for_suds.assert_called_once_with('test', self.client.factory,
-                                                 self.datetime_packer)
+    with mock.patch('googleads.common.suds.client.Client') as mock_suds_client:
+      mock_suds_client.return_value = 'suds_client'
 
-    self.client.service.SoapMethod.assert_called_once_with('modified_test')
-    self.header_handler.SetHeaders.assert_called_once_with(self.client)
+      with mock.patch('googleads.common.LoggingMessagePlugin') as mock_logging:
+        mock_logging.return_value = 'logging'
+
+        with mock.patch('googleads.common'
+                        '._SudsProxyTransport') as mock_transport:
+          mock_transport.return_value = 'transport'
+
+          suds_wrapper = googleads.common.SudsServiceProxy(
+              'https://endpoint', header_handler, packer, proxy_config,
+              1000, cache)
+
+          mock_transport.assert_called_once_with(1000, proxy_config)
+          mock_suds_client.assert_called_once_with(
+              'https://endpoint', timeout=1000, cache=cache,
+              transport='transport', plugins=['logging'])
+          self.assertEqual(suds_wrapper.suds_client, 'suds_client')
+
+  @contextmanager
+  def mock_suds_api(self):
+    with mock.patch('googleads.common._SudsProxyTransport'), \
+        mock.patch('googleads.common.suds.client.Client') as mock_suds_client:
+      yield mock_suds_client
+
+  def testSudsErrorRaisesGoogleError(self):
+    with self.mock_suds_api() as mock_suds_client:
+      mock_suds_client.side_effect = suds.transport.TransportError(None, None)
+      with self.assertRaises(googleads.errors.GoogleAdsSoapTransportError):
+        googleads.common.SudsServiceProxy(
+            'https://endpoint', None, None, None, 1000, None)
+
+  def testSchemaHelperRaisesGoogleError(self):
+    with self.mock_suds_api() as mock_suds_client:
+      mock_suds_client.side_effect = suds.transport.TransportError(None, None)
+
+      with self.assertRaises(googleads.errors.GoogleAdsSoapTransportError):
+        googleads.common.SudsSchemaHelper(None, None, None, 100, None)
 
 
-class HeaderHandlerTest(unittest.TestCase):
-  """Tests for the googleads.common.HeaderHeader class."""
+  def testGetMethod(self):
+    header_handler = mock.Mock()
+    wrapped_method = mock.Mock()
+    wrapped_method.return_value = 'wrap_result'
+
+    with self.mock_suds_api() as mock_suds_client_class:
+      mock_suds_client = mock.MagicMock()
+      mock_suds_client_class.return_value = mock_suds_client
+
+      suds_wrapper = googleads.common.SudsServiceProxy(
+          'https://endpoint', header_handler, None, None, 1000, None
+      )
+
+      with mock.patch.object(suds_wrapper, '_CreateMethod') as mock_create:
+        mock_create.return_value = wrapped_method
+
+        services_dict = {'method1': True}
+        suds_contains_method = (mock_suds_client.wsdl.services[0].ports[0]
+                                .methods.__contains__)
+        suds_contains_method.side_effect = services_dict.__contains__
+        result = suds_wrapper.method1()
+        self.assertEqual(result, 'wrap_result')
+
+  @contextmanager
+  def get_suds_api_with_mocked_method(self, mock_method):
+    header_handler = mock.Mock()
+    with self.mock_suds_api() as mock_suds_client_class:
+      mock_suds_client = mock.MagicMock()
+      mock_suds_client_class.return_value = mock_suds_client
+
+      suds_wrapper = googleads.common.SudsServiceProxy(
+          'https://endpoint', header_handler, None, None, 1000, None
+      )
+      with mock.patch('googleads.common._ExtractResponseSummaryFields'):
+        with mock.patch.object(suds_wrapper,
+                               '_WsdlHasMethod') as mock_has_method:
+          mock_has_method.return_value = True
+
+          suds_wrapper.suds_client.service.method1 = mock_method
+          suds_wrapper._method_proxies['method1'] = (
+              suds_wrapper._CreateMethod('method1'))
+
+          yield suds_wrapper
+
+  def testNoDetailError(self):
+    mock_method = mock.Mock()
+    mock_document = mock.Mock()
+
+    class MockFault(object):
+      faultstring = 'abc'
+
+    mock_method.side_effect = suds.WebFault(MockFault(), mock_document)
+
+    with self.get_suds_api_with_mocked_method(mock_method) as suds_wrapper:
+      with self.assertRaises(googleads.errors.GoogleAdsServerFault) as e:
+        suds_wrapper.method1()
+
+    self.assertEqual(len(e.exception.errors), 0)
+    self.assertEqual(e.exception.document, mock_document)
+    self.assertIn('abc', str(e.exception))
+
+  def testEmptyListError(self):
+    mock_method = mock.Mock()
+    mock_document = mock.Mock()
+
+    class MockFault(object):
+      faultstring = 'abc'
+      detail = mock.Mock()
+
+      def __init__(self):
+        self.detail.ApiExceptionFault.errors = None
+
+    mock_fault = MockFault()
+
+    mock_method.side_effect = suds.WebFault(mock_fault, mock_document)
+
+    with self.get_suds_api_with_mocked_method(mock_method) as suds_wrapper:
+      with self.assertRaises(googleads.errors.GoogleAdsServerFault) as e:
+        suds_wrapper.method1()
+    self.assertEqual(len(e.exception.errors), 0)
+    self.assertEqual(e.exception.document, mock_document)
+    self.assertIn('abc', str(e.exception))
+
+  def testFaultWithErrors(self):
+    mock_method = mock.Mock()
+    mock_document = mock.Mock()
+
+    class MockFault(object):
+      faultstring = 'abc'
+      detail = mock.Mock()
+
+      def __init__(self):
+        self.detail.ApiExceptionFault.errors = ['1', '2', '3']
+
+    mock_fault = MockFault()
+
+    mock_method.side_effect = suds.WebFault(mock_fault, mock_document)
+
+    with self.get_suds_api_with_mocked_method(mock_method) as suds_wrapper:
+      with self.assertRaises(googleads.errors.GoogleAdsServerFault) as e:
+        suds_wrapper.method1()
+    six.assertCountEqual(self, e.exception.errors, ['1', '2', '3'])
+    self.assertEqual(e.exception.document, mock_document)
+    self.assertIn('abc', str(e.exception))
+
+  def testGetRequestXML(self):
+    mock_method = mock.Mock()
+    mock_method.return_value.envelope = '<a></a>'
+
+    with self.get_suds_api_with_mocked_method(mock_method) as suds_wrapper, \
+        mock.patch.object(suds_wrapper, 'SetHeaders'):
+      ops = ['abc', '123']
+      result = suds_wrapper.GetRequestXML('method1', ops)
+      toggle_calls = [mock.call(nosend=True), mock.call(nosend=False)]
+      suds_wrapper.suds_client.set_options.assert_has_calls(toggle_calls)
+      self.assertEqual(result.tag, 'a')
+
+  def testCreateSoapElementForType(self):
+    with self.mock_suds_api():
+      suds_wrapper = googleads.common.SudsServiceProxy(
+          'https://endpoint', None, None, None, 1000, None)
+      suds_wrapper.suds_client.factory.create.return_value = 'result'
+
+      result = suds_wrapper.CreateSoapElementForType('MyType')
+      self.assertEqual(result, 'result')
 
   def testSetHeaders(self):
-    """For coverage."""
-    self.assertRaises(
-        NotImplementedError, googleads.common.HeaderHandler().SetHeaders,
-        mock.Mock())
+    with self.mock_suds_api():
+      suds_wrapper = googleads.common.SudsServiceProxy(
+          'https://endpoint', None, None, None, 1000, None)
+
+      suds_wrapper.SetHeaders('soap', 'http')
+      suds_wrapper.suds_client.set_options.assert_called_once_with(
+          soapheaders='soap', headers='http')
+
+  def testBadCache(self):
+    with self.mock_suds_api(), self.assertRaises(ValueError):
+      googleads.common.SudsServiceProxy(
+          'https://endpoint', None, None, None, 1000, 'not_a_suds_cache')
 
 
 class LoggingMessagePluginTest(unittest.TestCase):
@@ -1026,28 +1363,16 @@ class LoggingMessagePluginTest(unittest.TestCase):
 
 
 class ProxyConfigTest(unittest.TestCase):
-  """Tests fpr the googleads.common.ProxyConfig class."""
+  """Tests for the googleads.common.ProxyConfig class."""
 
   def setUp(self):
-    self.proxy_host1 = 'host1'
-    self.proxy_port1 = 'port1'
-    self.proxy_host2 = 'host2'
-    self.proxy_port2 = 'port2'
-    self.username = 'username'
-    self.password = 'password'
     self.cafile = os.path.join(os.path.dirname(__file__), 'test_data/test.crt')
-
-    self.proxy_no_credentials = googleads.common.ProxyConfig.Proxy(
-        self.proxy_host1, self.proxy_port1)
-
-    self.proxy_with_credentials = googleads.common.ProxyConfig.Proxy(
-        self.proxy_host2, self.proxy_port2, username=self.username,
-        password=self.password)
+    self.proxy_no_credentials = 'http://host1:port1'
+    self.proxy_with_credentials = 'http://username:password@host2:port2'
 
   def testBuildOpenerWithConfig(self):
-    https_proxy = googleads.common.ProxyConfig.Proxy(self.proxy_host1,
-                                                     self.proxy_port1)
-    proxy_config = googleads.common.ProxyConfig(https_proxy=https_proxy)
+    proxy_config = googleads.common.ProxyConfig(
+        https_proxy=self.proxy_no_credentials)
 
     with mock.patch('%s.build_opener' % URL_REQUEST_PATH) as mck_build_opener:
       with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as mck_https_hndlr:
@@ -1070,206 +1395,102 @@ class ProxyConfigTest(unittest.TestCase):
         proxy_config.BuildOpener()
         mck_build_opener.assert_called_once_with(*[mock_https_hndlr_instance])
 
-  def testProxyToStringWithCredentials(self):
-    proxy = googleads.common.ProxyConfig.Proxy(
-        self.proxy_host1, self.proxy_port1, username=self.username,
-        password=self.password)
-    self.assertEqual(str(proxy),
-                     '%s:%s@%s:%s' % (self.username, self.password,
-                                      self.proxy_host1,
-                                      self.proxy_port1))
-
-  def testProxyToStringWithoutCredentials(self):
-    proxy = googleads.common.ProxyConfig.Proxy(
-        self.proxy_host2, self.proxy_port2)
-    self.assertEqual(str(proxy),
-                     '%s:%s' % (self.proxy_host2, self.proxy_port2))
-
-  def testProxyToStringWithOnlyUsername(self):
-    proxy = googleads.common.ProxyConfig.Proxy(
-        self.proxy_host1, self.proxy_port1, username=self.username)
-    self.assertEqual(str(proxy),
-                     '%s:@%s:%s' % (self.username, self.proxy_host1,
-                                    self.proxy_port1))
-
   def testProxyConfigGetHandlersWithNoProxyOrSSLContext(self):
     proxy_config = googleads.common.ProxyConfig()
     with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
       https_handler_instance = mock.Mock()
       https_handler.return_value = https_handler_instance
-      self.assertIn(https_handler_instance, proxy_config.GetHandlers())
+
+      transport = googleads.common._SudsProxyTransport(0, proxy_config)
+      self.assertIn(https_handler_instance, transport.handlers)
 
   def testProxyConfigGetHandlersWithProxy(self):
-    http_proxy = googleads.common.ProxyConfig.Proxy(self.proxy_host1,
-                                                    self.proxy_port1)
     with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
       proxy_handler_instance = mock.Mock()
       proxy_handler.return_value = proxy_handler_instance
-      proxy_config = googleads.common.ProxyConfig(http_proxy=http_proxy)
+      proxy_config = googleads.common.ProxyConfig(
+          http_proxy=self.proxy_no_credentials)
       with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
         https_handler_instance = mock.Mock()
         https_handler.return_value = https_handler_instance
-        self.assertEqual(proxy_config.GetHandlers(),
+
+        transport = googleads.common._SudsProxyTransport(0, proxy_config)
+        self.assertEqual(transport.handlers,
                          [https_handler_instance, proxy_handler_instance])
         proxy_handler.assert_called_once_with(
-            {'http': '%s' % str(http_proxy)})
+            {'http': self.proxy_no_credentials})
 
   def testProxyConfigGetHandlersWithProxyAndSLLContext(self):
-    https_proxy = googleads.common.ProxyConfig.Proxy(self.proxy_host1,
-                                                     self.proxy_port1)
     with mock.patch('googleads.common.ProxyConfig._InitSSLContext') as ssl_ctxt:
       ssl_ctxt.return_value = 'CONTEXT'
       with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
         proxy_handler.return_value = mock.Mock()
         with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
           https_handler.return_value = mock.Mock()
-          proxy_config = googleads.common.ProxyConfig(https_proxy=https_proxy)
-          self.assertEqual(proxy_config.GetHandlers(),
+
+          proxy_config = googleads.common.ProxyConfig(
+              https_proxy=self.proxy_no_credentials)
+          transport = googleads.common._SudsProxyTransport(0, proxy_config)
+          self.assertEqual(transport.handlers,
                            [https_handler.return_value,
                             proxy_handler.return_value])
           proxy_handler.assert_called_once_with(
-              {'https': '%s' % str(https_proxy)})
+              {'https': self.proxy_no_credentials})
           https_handler.assert_called_once_with(
               context=ssl_ctxt.return_value)
 
   def testProxyConfigWithNoProxy(self):
     proxy_config = googleads.common.ProxyConfig()
-    self.assertEqual(proxy_config.proxy_info, None)
-
-    with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
-      https_handler_instance = mock.Mock()
-      https_handler.return_value = https_handler_instance
-      self.assertEqual(proxy_config.GetHandlers(),
-                       [https_handler_instance])
-      self.assertIsInstance(
-          proxy_config._ssl_context, ssl.SSLContext)
-
-    with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
-      t.return_value = mock.Mock()
-      with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
-        https_handler_instance = mock.Mock()
-        https_handler.return_value = https_handler_instance
-        transport = proxy_config.GetSudsProxyTransport()
-        t.assert_called_once_with([https_handler_instance])
-        self.assertEqual(t.return_value, transport)
+    self.assertEqual(proxy_config.proxies, {})
+    self.assertIsInstance(
+        proxy_config.ssl_context, ssl.SSLContext)
 
   def testProxyConfigWithHTTPProxy(self):
-    with mock.patch('httplib2.ProxyInfo') as proxy_info:
-      proxy_info.return_value = mock.Mock()
-      with mock.patch('socks.PROXY_TYPE_HTTP') as proxy_type:
-        proxy_config = googleads.common.ProxyConfig(
-            http_proxy=self.proxy_no_credentials)
-        proxy_info.assert_called_once_with(
-            proxy_type, self.proxy_host1, self.proxy_port1,
-            proxy_user=None, proxy_pass='')
-        self.assertEqual(proxy_config.proxy_info, proxy_info.return_value)
-    self.assertEqual(proxy_config._proxy_option, {'http': '%s:%s' % (
-        self.proxy_host1, self.proxy_port1)})
+    proxy_config = googleads.common.ProxyConfig(
+        http_proxy=self.proxy_no_credentials)
+    self.assertEqual(proxy_config.proxies, {'http': self.proxy_no_credentials})
     self.assertIsInstance(
-        proxy_config._ssl_context, ssl.SSLContext)
-
-    with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
-      t.return_value = mock.Mock()
-      with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
-        proxy_handler_instance = mock.Mock()
-        proxy_handler.return_value = proxy_handler_instance
-        with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
-          https_handler_instance = mock.Mock()
-          https_handler.return_value = https_handler_instance
-          self.assertEqual(proxy_config.GetHandlers(),
-                           [https_handler_instance, proxy_handler_instance])
-          transport = proxy_config.GetSudsProxyTransport()
-          t.assert_called_once_with(
-              [https_handler_instance, proxy_handler_instance])
-          self.assertEqual(t.return_value, transport)
+        proxy_config.ssl_context, ssl.SSLContext)
 
   def testProxyConfigWithHTTPSProxy(self):
-    with mock.patch('httplib2.ProxyInfo') as proxy_info:
-      proxy_info.return_value = mock.Mock()
-      with mock.patch('socks.PROXY_TYPE_HTTP') as proxy_type:
-        proxy_config = googleads.common.ProxyConfig(
-            https_proxy=self.proxy_with_credentials,
-            cafile=self.cafile)
-        proxy_info.assert_called_once_with(
-            proxy_type, self.proxy_host2, self.proxy_port2,
-            proxy_user=self.username, proxy_pass=self.password)
-        self.assertEqual(proxy_config.proxy_info, proxy_info.return_value)
-    self.assertEqual(proxy_config._proxy_option, {'https': '%s:%s@%s:%s' % (
-        self.username, self.password, self.proxy_host2,
-        self.proxy_port2)})
+    proxy_config = googleads.common.ProxyConfig(
+        https_proxy=self.proxy_with_credentials,
+        cafile=self.cafile)
+    self.assertEqual(proxy_config.proxies, {
+        'https': self.proxy_with_credentials})
     self.assertIsInstance(
-        proxy_config._ssl_context, ssl.SSLContext)
+        proxy_config.ssl_context, ssl.SSLContext)
     self.assertEqual(proxy_config.cafile, self.cafile)
     self.assertEqual(proxy_config.disable_certificate_validation, False)
 
-    with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
-      t.return_value = mock.Mock()
-      with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
-        proxy_handler_instance = mock.Mock()
-        proxy_handler.return_value = proxy_handler_instance
-        with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
-          https_handler_instance = mock.Mock()
-          https_handler.return_value = https_handler_instance
-          self.assertEqual(
-              proxy_config.GetHandlers(),
-              [https_handler_instance, proxy_handler_instance])
-          transport = proxy_config.GetSudsProxyTransport()
-          t.assert_called_once_with(
-              [https_handler_instance, proxy_handler_instance])
-          self.assertEqual(t.return_value, transport)
-
   def testProxyConfigWithHTTPAndHTTPSProxy(self):
-    with mock.patch('httplib2.ProxyInfo') as proxy_info:
-      proxy_info.return_value = mock.Mock()
-      with mock.patch('socks.PROXY_TYPE_HTTP') as proxy_type:
-        proxy_config = googleads.common.ProxyConfig(
-            http_proxy=self.proxy_with_credentials,
-            https_proxy=self.proxy_no_credentials,
-            disable_certificate_validation=True)
-        proxy_info.assert_called_once_with(
-            proxy_type, self.proxy_host1, self.proxy_port1,
-            proxy_user=None, proxy_pass='')
-        self.assertEqual(proxy_config.proxy_info, proxy_info.return_value)
-    self.assertEqual(proxy_config._proxy_option, {
-        'http': '%s:%s@%s:%s' % (self.username, self.password,
-                                 self.proxy_host2, self.proxy_port2),
-        'https': '%s:%s' % (self.proxy_host1, self.proxy_port1)})
+    proxy_config = googleads.common.ProxyConfig(
+        http_proxy=self.proxy_with_credentials,
+        https_proxy=self.proxy_no_credentials,
+        disable_certificate_validation=True)
+    self.assertEqual(proxy_config.proxies, {
+        'http': self.proxy_with_credentials,
+        'https': self.proxy_no_credentials})
 
-    self.assertIsInstance(proxy_config._ssl_context, ssl.SSLContext)
+    self.assertIsInstance(proxy_config.ssl_context, ssl.SSLContext)
     self.assertEqual(proxy_config.cafile, None)
     self.assertEqual(proxy_config.disable_certificate_validation, True)
 
-    with mock.patch('googleads.common.ProxyConfig._SudsProxyTransport') as t:
-      t.return_value = mock.Mock()
-      with mock.patch('%s.ProxyHandler' % URL_REQUEST_PATH) as proxy_handler:
-        proxy_handler_instance = mock.Mock()
-        proxy_handler.return_value = proxy_handler_instance
 
-        with mock.patch('%s.HTTPSHandler' % URL_REQUEST_PATH) as https_handler:
-          https_handler_instance = mock.Mock()
-          https_handler.return_value = https_handler_instance
-          self.assertEqual(
-              proxy_config.GetHandlers(),
-              [https_handler_instance, proxy_handler_instance])
-          transport = proxy_config.GetSudsProxyTransport()
-          t.assert_called_once_with(
-              [https_handler_instance, proxy_handler_instance])
-          self.assertEqual(t.return_value, transport)
+class MockHeaders(object):
+
+  def __init__(self, d):
+    self.dict = d
+
+    # If testing on Python 3, add get method to better mimic the
+    # http.client.HTTPMessage behavior.
+    if six.PY3:
+      def py3_get(s):
+        return self.dict.get(s)
+      self.get = py3_get
 
 
 class TestSudsRequestPatcher(unittest.TestCase):
-
-  class MockHeaders(object):
-
-    def __init__(self, d):
-      self.dict = d
-
-      # If testing on Python 3, add get method to better mimic the
-      # http.client.HTTPMessage behavior.
-      if six.PY3:
-        def py3_get(s):
-          return self.dict.get(s)
-        self.get = py3_get
 
   def testInflateSuccessfulRequestIfGzipped(self):
     with mock.patch('suds.transport.http.HttpTransport.getcookies'):
@@ -1280,7 +1501,7 @@ class TestSudsRequestPatcher(unittest.TestCase):
           resp_fp.flush()
           resp_fp.seek(0)
           resp = six.moves.urllib.response.addinfourl(
-              resp_fp, self.MockHeaders({'content-encoding': 'gzip'}),
+              resp_fp, MockHeaders({'content-encoding': 'gzip'}),
               'https://example.com', code=200)
           mock_open.return_value = resp
 
@@ -1301,7 +1522,7 @@ class TestSudsRequestPatcher(unittest.TestCase):
           resp_fp.flush()
           resp_fp.seek(0)
           resp = six.moves.urllib.response.addinfourl(
-              resp_fp, self.MockHeaders({'content-encoding': 'gzip'}),
+              resp_fp, MockHeaders({'content-encoding': 'gzip'}),
               'https://example.com', code=200)
 
           def fail_to_open(*args, **kwargs):

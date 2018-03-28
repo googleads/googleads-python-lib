@@ -41,7 +41,7 @@ def main(client, master_creative_id):
         # Print out some information for each creative set.
         print('Creative set with ID "%d" and name "%s" was found.\n' %
               (creative_set['id'], creative_set['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

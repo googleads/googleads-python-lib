@@ -43,7 +43,7 @@ def main(client, currency_code):
               'rate "%.2f" was found.\n' %
               (exchange_rate['id'], exchange_rate['currencyCode'],
                float(exchange_rate['exchangeRate'] / 1000000)))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

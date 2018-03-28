@@ -51,7 +51,7 @@ def main(client, reconciliation_report_id):
               (reconciliation_report_row['id'],
                reconciliation_report_row['reconciliationSource'],
                reconciliation_report_row['reconciledVolume']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

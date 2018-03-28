@@ -29,7 +29,6 @@ directory. For more information, see the "Caching authentication information"
 section of our README.
 """
 
-import base64
 import urllib2
 import uuid
 
@@ -53,11 +52,11 @@ def main(client, advertiser_id):
 
   image_data = urllib2.urlopen(ICON_URL).read()
   # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
-  image_data = base64.b64encode(image_data).decode('utf-8')
+  image_data = image_data.decode('utf-8')
 
   app_icon_data = urllib2.urlopen(APP_ICON_SMALL).read()
   # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
-  app_icon_data = base64.b64encode(app_icon_data).decode('utf-8')
+  app_icon_data = app_icon_data.decode('utf-8')
 
   # Create creative from templates.
   creative = {

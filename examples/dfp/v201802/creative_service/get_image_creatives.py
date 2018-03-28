@@ -37,7 +37,7 @@ def main(client):
         # Print out some information for each creative.
         print('Creative with ID "%d" and name "%s" was found.\n' %
               (creative['id'], creative['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

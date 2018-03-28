@@ -43,7 +43,7 @@ def main(client, product_package_id):
               'package ID "%d" was found.\n' %
               (product_package_item['id'], product_package_item['productId'],
                product_package_item['productPackageId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

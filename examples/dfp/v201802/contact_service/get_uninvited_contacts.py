@@ -37,7 +37,7 @@ def main(client):
         # Print out some information for each contact.
         print('Contact with ID "%d" and name "%s" was found.\n' %
               (contact['id'], contact['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

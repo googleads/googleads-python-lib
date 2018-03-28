@@ -57,7 +57,7 @@ def main(client):
             {'xsi_type': 'DeactivateCustomFields'}, statement.ToStatement())
         if result and int(result['numChanges']) > 0:
           custom_fields_deactivated += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

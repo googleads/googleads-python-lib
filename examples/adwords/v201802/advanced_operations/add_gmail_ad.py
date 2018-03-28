@@ -23,8 +23,6 @@ To get your ad groups, run get_ad_groups.py.
 """
 
 
-import base64
-
 # Import appropriate classes from the client library.
 from googleads import adwords
 
@@ -101,7 +99,7 @@ def _CreateImage(media_service, opener, url):
     The image that was successfully uploaded.
   """
   # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
-  image_data = base64.b64encode(opener.open(url).read()).decode('utf-8')
+  image_data = opener.open(url).read().decode('utf-8')
   image = {
       'type': 'IMAGE',
       'data': image_data,

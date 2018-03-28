@@ -51,7 +51,7 @@ def main(client):
           {'xsi_type': 'ApproveOrders'}, statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         orders_approved += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

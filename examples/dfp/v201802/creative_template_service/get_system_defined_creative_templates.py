@@ -39,7 +39,7 @@ def main(client):
         # Print out some information for each creative template.
         print('Creative template with ID "%d" and name "%s" was found.\n' %
               (creative_template['id'], creative_template['name']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

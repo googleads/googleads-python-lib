@@ -15,6 +15,7 @@
 """Functions and classes used for unit tests."""
 
 
+import functools
 import unittest
 
 import googleads.common
@@ -30,3 +31,41 @@ class CleanUtilityRegistryTestCase(unittest.TestCase):
   def tearDown(self):
     """Ensures that the UtilityRegistry is cleared between tests."""
     googleads.common._utility_registry.Clear()
+
+_SOAP_BACKENDS = ['suds', 'zeep']
+
+
+def _CreatePatchedSetUp(func):
+  """Create a setUp function that includes the SOAP implementation.
+
+  Args:
+    func: A reference to the original setUp function.
+
+  Returns:
+    The result of func called with soap_impl.
+  """
+  @functools.wraps(func)
+  def SetUp(self):
+    soap_impl = 'suds' if '_suds' in str(self) else 'zeep'
+    return func(self, soap_impl)
+  return SetUp
+
+
+def MultiBackendTest(cls):
+  """A decorator that patches a test suite to test with zeep and suds.
+
+  Args:
+    cls: The test suite to patch
+
+  Returns:
+    The patched suite.
+  """
+  for name, func in list(cls.__dict__.items()):
+    if name.startswith('test'):
+      for backend in _SOAP_BACKENDS:
+        # Create a new test with _suds and _zeep
+        setattr(cls, '%s_%s' % (name, backend), func)
+      # Delete the original test
+      delattr(cls, name)
+  cls.setUp = _CreatePatchedSetUp(cls.setUp)
+  return cls

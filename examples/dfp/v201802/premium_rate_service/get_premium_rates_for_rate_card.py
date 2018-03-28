@@ -43,7 +43,7 @@ def main(client, rate_card_id):
               'ID "%d" was found.\n' % (premium_rate['id'],
                                         premium_rate['premium feature'],
                                         premium_rate['rateCardId']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

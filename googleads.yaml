@@ -23,8 +23,7 @@ adwords:
   client_secret: INSERT_CLIENT_SECRET_HERE
   refresh_token: INSERT_REFRESH_TOKEN_HERE
   # The following values configure the client for the service account flow.
-  # service_account_email: INSERT_SERVICE_ACCOUNT_EMAIL_HERE
-  # path_to_private_key_file: INSERT_PATH_TO_FILE_HERE
+  # path_to_private_key_file: INSERT_PATH_TO_JSON_KEY_FILE_HERE
   # delegated_account: INSERT_DOMAIN_WIDE_DELEGATION_ACCOUNT
   #############################################################################
   # ReportDownloader Headers                                                  #
@@ -57,9 +56,8 @@ dfp:
   # flow you're not using.                                                    #
   #############################################################################
   # The following values configure the client for the service account flow.
-  path_to_private_key_file: INSERT_PATH_TO_FILE_HERE
-  # Only needed when using P12
-  # service_account_email: INSERT_SERVICE_ACCOUNT_EMAIL_HERE
+  path_to_private_key_file: INSERT_PATH_TO_JSON_KEY_FILE_HERE
+  # delegated_account: INSERT_DOMAIN_WIDE_DELEGATION_ACCOUNT
   # The following values configure the client for the installed application
   # flow.
   # client_id: INSERT_OAUTH_2_CLIENT_ID_HERE
@@ -98,25 +96,18 @@ dfp:
 ###############################################################################
 # Proxy configurations (optional)                                             #
 # Below you may specify an HTTP or HTTPS Proxy to be used when making API     #
-# requests.                                                                   #
+# requests. Note: You must specify the scheme used for the proxy endpoint.    #
+#                                                                             #
+# For additional information on configuring these values, see:                #
+# http://docs.python-requests.org/en/master/user/advanced/#proxies            #
 ###############################################################################
 # proxy_config:
+  # http: INSERT_HTTP_PROXY_URI_HERE
+  # https: INSERT_HTTPS_PROXY_URI_HERE
   # If specified, the given cafile will only be used if certificate validation
   # is not disabled.
   # cafile: INSERT_PATH_HERE
   # disable_certificate_validation: False
-  # http_proxy:
-    # host: INSERT_HOST_HERE
-    # port: INSERT_PROXY_PORT_HERE
-    # The following values are optional:
-    # username: INSERT_USERNAME_HERE
-    # password: INSERT_PASSWORD_HERE
-  # https_proxy:
-    # host: INSERT_HOST_HERE
-    # port: INSERT_PROXY_PORT_HERE
-    # The following values are optional:
-    # username: INSERT_USERNAME_HERE
-    # password: INSERT_PASSWORD_HERE
 ################################################################################
 # Utilities Included (optional)                                                #
 # Below you may specify whether the library will include utilities used in the #
@@ -124,3 +115,10 @@ dfp:
 # agent.                                                                       #
 ################################################################################
 # include_utilities_in_user_agent: True
+################################################################################
+# SOAP implementation (optional)                                               #
+# Specify which SOAP implementation to use. This library currently supports    #
+# suds and zeep. Zeep is more modern, and is the default, if you have any      #
+# issues please report them and fall back to suds.                             #
+################################################################################
+# soap_impl: zeep

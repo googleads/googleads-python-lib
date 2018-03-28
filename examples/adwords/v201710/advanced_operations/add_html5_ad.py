@@ -26,7 +26,6 @@ section of our README.
 """
 
 
-import base64
 import urllib2
 from googleads import adwords
 
@@ -39,12 +38,11 @@ def main(client, ad_group_id):
   ad_group_ad_service = client.GetService('AdGroupAdService', version='v201710')
 
   # Create HTML5 media.
-  base64_encoded_html5_zip = GetBase64EncodedHTML5ZipFromUrl(
-      'https://goo.gl/9Y7qI2')
+  html5_zip = GetHTML5ZipFromUrl('https://goo.gl/9Y7qI2')
   # Create a media bundle containing the zip file with all the HTML5 components.
   media_bundle = {
       'xsi_type': 'MediaBundle',
-      'data': base64_encoded_html5_zip,
+      'data': html5_zip,
       'entryPoint': 'carousel/index.html',
       'type': 'MEDIA_BUNDLE'
   }
@@ -98,11 +96,11 @@ def main(client, ad_group_id):
            % (ad['ad']['id'], ad['ad']['displayUrl']))
 
 
-def GetBase64EncodedHTML5ZipFromUrl(url):
+def GetHTML5ZipFromUrl(url):
   """Retrieve zip file from the given URL."""
   response = urllib2.urlopen(url)
   # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
-  return base64.b64encode(response.read()).decode('utf-8')
+  return response.read().decode('utf-8')
 
 
 if __name__ == '__main__':

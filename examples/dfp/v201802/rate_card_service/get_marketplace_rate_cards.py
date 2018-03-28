@@ -41,7 +41,7 @@ def main(client):
             'Rate card with ID "%d", name "%s", and currency code "%s" was '
             'found.\n'
             % (rate_card['id'], rate_card['name'], rate_card['currencyCode']))
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

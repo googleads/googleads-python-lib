@@ -48,7 +48,7 @@ def main(client):
           {'xsi_type': 'DeactivateLabels'}, statement.ToStatement())
       if result and int(result['numChanges']) > 0:
         labels_deactivated += int(result['numChanges'])
-      statement.offset += dfp.SUGGESTED_PAGE_LIMIT
+      statement.offset += statement.limit
     else:
       break
 

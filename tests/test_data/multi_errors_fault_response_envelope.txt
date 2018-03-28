@@ -1,6 +1,6 @@
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header>
-    <ResponseHeader xmlns="https://www.google.com/apis/ads/publisher/v201611">
+    <ResponseHeader xmlns="https://www.google.com/apis/ads/publisher/{VERSION}">
       <requestId>644a8c6efd398cf8643c29ff68fe574e</requestId>
       <responseTime>22</responseTime>
     </ResponseHeader>
@@ -10,7 +10,7 @@
       <faultcode>soap:Server</faultcode>
       <faultstring>[Error 1, Error 2]</faultstring>
       <detail>
-        <ApiExceptionFault xmlns="https://www.google.com/apis/ads/publisher/v201611">
+        <ApiExceptionFault xmlns="https://www.google.com/apis/ads/publisher/{VERSION}">
           <message>Multiple errors occurred</message>
           <errors xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="AuthenticationError">
             <fieldPath/>

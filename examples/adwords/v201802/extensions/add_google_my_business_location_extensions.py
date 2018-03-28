@@ -30,9 +30,6 @@ section of our README.
 import time
 import uuid
 
-# Import appropriate modules from the client library.
-import suds
-
 from googleads import adwords
 from googleads import errors
 
@@ -127,7 +124,7 @@ def main(client, gmb_email_address, gmb_access_token,
     try:
       added_customer_feed = customer_feed_service.mutate([
           customer_feed_operation])['value'][0]
-    except suds.WebFault:
+    except errors.GoogleAdsServerFault:
       # Wait using exponential backoff policy
       sleep_seconds = 2 ** i
       print ('Attempt %d to add the CustomerFeed was not successful.'

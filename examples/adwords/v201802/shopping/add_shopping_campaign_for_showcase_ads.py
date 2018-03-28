@@ -22,11 +22,10 @@ directory. For more information, see the "Caching authentication information"
 section of our README.
 """
 
-import base64
 import uuid
 
 from googleads import adwords
-from suds import WebFault
+from googleads import errors
 
 
 BUDGET_ID = 'INSERT_BUDGET_ID_HERE'
@@ -175,7 +174,7 @@ def main(client, budget_id, merchant_id, expanded_image_filepath,
 
     product_partition_tree = CreateProductPartition(client, adgroup['id'])
     print 'Final tree:\n%s' % product_partition_tree
-  except WebFault:
+  except errors.GoogleAdsServerFault:
     print 'Failed to create shopping campaign for showcase ads.'
     raise
 
@@ -344,7 +343,7 @@ def UploadImage(client, filepath):
   media_service = client.GetService('MediaService', 'v201802')
 
   with open(filepath, 'rb') as image_handle:
-    image_data = base64.encodestring(image_handle.read()).decode('utf-8')
+    image_data = image_handle.read().decode('utf-8')
 
   image = [{
       'xsi_type': 'Image',
