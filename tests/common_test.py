@@ -1136,6 +1136,26 @@ class TestZeepArgumentPacking(unittest.TestCase):
       self.zeep_client._PackArgumentsHelper(b64_type, data, False)
       self.assertTrue(len(googleads.common._logger.warn.mock_calls))
 
+  def testPackArgumentsMultipleSchemas(self):
+    header_handler = mock.Mock()
+
+    wsdl_path = os.path.join(
+        TEST_DIR, 'test_data/traffic_estimator_service.xml')
+    zeep_client = googleads.common.ZeepServiceProxy(
+        wsdl_path, header_handler, None, googleads.common.ProxyConfig(), 100)
+
+    element = zeep_client.zeep_client.get_type('ns0:Criterion')
+    data = {'xsi_type': 'Location', 'id': '2840'}
+
+    result = zeep_client._PackArgumentsHelper(element, data, False)
+    self.assertEqual(result.id, '2840')
+
+  def testPackArgumentsBadType(self):
+    element = self.zeep_client.zeep_client.get_type('ns0:Image')
+    data = {'xsi_type': 'nope'}
+    with self.assertRaises(zeep.exceptions.LookupError):
+      self.zeep_client._PackArgumentsHelper(element, data, False)
+
 
 class SudsServiceProxyTest(unittest.TestCase):
   """Tests for the googleads.common.SudsServiceProxy class."""

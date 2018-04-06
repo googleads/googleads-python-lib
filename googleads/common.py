@@ -78,7 +78,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '11.0.0'
+VERSION = '11.0.1'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
@@ -1239,8 +1239,18 @@ class ZeepServiceProxy(GoogleSoapService):
     if isinstance(data, dict):  # Dict so it's a complex type.
       xsi_type = data.get('xsi_type')
       if xsi_type:  # This has a type override so look it up.
-        elem_type = self.zeep_client.get_type(
-            '{%s}%s' % (self._GetBindingNamespace(), xsi_type))
+        elem_type = None
+        last_exception = None
+        for ns_prefix in self.zeep_client.wsdl.types.prefix_map.values():
+          try:
+            elem_type = self.zeep_client.get_type(
+                '{%s}%s' % (ns_prefix, xsi_type))
+          except zeep.exceptions.LookupError as e:
+            last_exception = e
+            continue
+          break
+        if not elem_type:
+          raise last_exception
       else:
         elem_type = elem.type
       elem_arguments = dict(elem_type.elements)

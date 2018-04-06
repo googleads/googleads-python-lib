@@ -222,7 +222,8 @@ You can also disable caching in similar fashion with zeep
 ```python
 adwords_client = adwords.AdWordsClient(
   developer_token, oauth2_client, user_agent,
-  client_customer_id=client_customer_id, cache=None)
+  client_customer_id=client_customer_id,
+  cache=googleads.common.ZeepServiceProxy.NO_CACHE)
 ```
 
 And with suds:

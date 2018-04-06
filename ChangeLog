@@ -1,3 +1,8 @@
+11.0.1 -- 04/06/18
+* Fixed bug related to creating types from services that
+  contain multiple schemas.
+* Fixed bug in README.md related to zeep caching.
+
 11.0.0 -- 03/21/18
 * Removed support and examples for AdWords v201705, and v201708.
 * The default SOAP backend is now zeep. If you encounter any issues,

@@ -1,0 +1,3313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated file, do not edit -->
+<!-- Copyright 2018 Google Inc. All Rights Reserved -->
+<wsdl:definitions
+  targetNamespace="https://adwords.google.com/api/adwords/o/v201802"
+  xmlns:tns="https://adwords.google.com/api/adwords/o/v201802"
+  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <wsdl:types>
+    <schema elementFormDefault="qualified" jaxb:version="1.0"
+      targetNamespace="https://adwords.google.com/api/adwords/cm/v201802"
+      xmlns="http://www.w3.org/2001/XMLSchema"
+      xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" xmlns:tns="https://adwords.google.com/api/adwords/cm/v201802">
+      <complexType name="AdxError">
+        <annotation>
+          <documentation>
+            Errors that are thrown when a non-AdX feature is accessed by an AdX customer.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:AdxError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType abstract="true" name="ApiError">
+        <annotation>
+          <documentation>
+            The API error base class that provides details about an error that occurred
+            while processing a service request.
+            
+            &lt;p&gt;The OGNL field path is provided for parsers to identify the request data
+            element that may have caused the error.&lt;/p&gt;
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="fieldPath" type="xsd:string">
+            <annotation>
+              <documentation>
+                The OGNL field path to identify cause of error.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="unbounded" minOccurs="0"
+            name="fieldPathElements" type="tns:FieldPathElement">
+            <annotation>
+              <documentation>
+                A parsed copy of the field path. For example, the field path "operations[1].operand"
+                corresponds to this list: {FieldPathElement(field = "operations", index = 1),
+                FieldPathElement(field = "operand", index = null)}.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="trigger" type="xsd:string">
+            <annotation>
+              <documentation>
+                The data that caused the error.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="errorString" type="xsd:string">
+            <annotation>
+              <documentation>
+                A simple string representation of the error and reason.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="ApiError.Type" type="xsd:string">
+            <annotation>
+              <documentation>
+                Indicates that this instance is a subtype of ApiError.
+                Although this field is returned in the response, it is ignored on input
+                and cannot be selected. Specify xsi:type instead.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="ApiException">
+        <annotation>
+          <documentation>
+            Exception class for holding a list of service errors.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApplicationException">
+            <sequence>
+              <element maxOccurs="unbounded" minOccurs="0" name="errors" type="tns:ApiError">
+                <annotation>
+                  <documentation>
+                    List of errors.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="ApplicationException">
+        <annotation>
+          <documentation>
+            Base class for exceptions.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="message" type="xsd:string">
+            <annotation>
+              <documentation>
+                Error message.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0"
+            name="ApplicationException.Type" type="xsd:string">
+            <annotation>
+              <documentation>
+                Indicates that this instance is a subtype of ApplicationException.
+                Although this field is returned in the response, it is ignored on input
+                and cannot be selected. Specify xsi:type instead.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="AuthenticationError">
+        <annotation>
+          <documentation>
+            Errors returned when Authentication failed.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:AuthenticationError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="AuthorizationError">
+        <annotation>
+          <documentation>
+            Errors encountered when trying to authorize a user.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:AuthorizationError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="ClientTermsError">
+        <annotation>
+          <documentation>
+            Error due to user not accepting the AdWords terms of service.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:ClientTermsError.Reason"/>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="CollectionSizeError">
+        <annotation>
+          <documentation>
+            Errors associated with the size of the given collection being
+            out of bounds.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:CollectionSizeError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType abstract="true" name="ComparableValue">
+        <annotation>
+          <documentation>
+            Comparable types for constructing ranges with.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0"
+            name="ComparableValue.Type" type="xsd:string">
+            <annotation>
+              <documentation>
+                Indicates that this instance is a subtype of ComparableValue.
+                Although this field is returned in the response, it is ignored on input
+                and cannot be selected. Specify xsi:type instead.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="Criterion">
+        <annotation>
+          <documentation>
+            Represents a criterion (such as a keyword, placement, or vertical).
+            &lt;span class="constraint AdxEnabled"&gt;This is disabled for AdX when it is contained within Operators: ADD, SET.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="id" type="xsd:long">
+            <annotation>
+              <documentation>
+                ID of this criterion.
+                &lt;span class="constraint Selectable"&gt;This field can be selected using the value "Id".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                &lt;span class="constraint Required"&gt;This field is required and should not be {@code null} when it is contained within {@link Operator}s : SET, REMOVE.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="type" type="tns:Criterion.Type">
+            <annotation>
+              <documentation>
+                &lt;span class="constraint Selectable"&gt;This field can be selected using the value "CriteriaType".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="Criterion.Type" type="xsd:string">
+            <annotation>
+              <documentation>
+                Indicates that this instance is a subtype of Criterion.
+                Although this field is returned in the response, it is ignored on input
+                and cannot be selected. Specify xsi:type instead.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="DatabaseError">
+        <annotation>
+          <documentation>
+            Errors that are thrown due to a database access problem.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:DatabaseError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="DateError">
+        <annotation>
+          <documentation>
+            Errors associated with invalid dates and date ranges.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:DateError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="DistinctError">
+        <annotation>
+          <documentation>
+            Errors related to distinct ids or content.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:DistinctError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="DoubleValue">
+        <annotation>
+          <documentation>
+            Number value type for constructing double valued ranges.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:NumberValue">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="number" type="xsd:double">
+                <annotation>
+                  <documentation>
+                    the underlying double value.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="EntityAccessDenied">
+        <annotation>
+          <documentation>
+            Reports permission problems trying to access an entity.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:EntityAccessDenied.Reason">
+                <annotation>
+                  <documentation>
+                    Reason for this error.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="EntityNotFound">
+        <annotation>
+          <documentation>
+            An id did not correspond to an entity, or it referred to an entity which does not belong to the
+            customer.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:EntityNotFound.Reason">
+                <annotation>
+                  <documentation>
+                    Reason for this error.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="FieldPathElement">
+        <annotation>
+          <documentation>
+            A segment of a field path. Each dot in a field path defines a new segment.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="field" type="xsd:string">
+            <annotation>
+              <documentation>
+                The name of a field in lower camelcase. (e.g. "biddingStrategy")
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="index" type="xsd:int">
+            <annotation>
+              <documentation>
+                For list fields, this is a 0-indexed position in the list. Null for non-list fields.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="IdError">
+        <annotation>
+          <documentation>
+            Errors associated with the ids.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:IdError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="InternalApiError">
+        <annotation>
+          <documentation>
+            Indicates that a server-side error has occured. {@code InternalApiError}s
+            are generally not the result of an invalid request or message sent by the
+            client.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:InternalApiError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="Keyword">
+        <annotation>
+          <documentation>
+            Represents a keyword.
+            &lt;span class="constraint AdxEnabled"&gt;This is disabled for AdX when it is contained within Operators: ADD, SET.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="text" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    Text of this keyword (at most 80 characters and ten words).
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "KeywordText".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                    &lt;span class="constraint MatchesRegex"&gt;Keyword text must not contain NUL (code point 0x0) characters. This is checked by the regular expression '[^\x00]*'.&lt;/span&gt;
+                    &lt;span class="constraint Required"&gt;This field is required and should not be {@code null} when it is contained within {@link Operator}s : ADD.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="matchType" type="tns:KeywordMatchType">
+                <annotation>
+                  <documentation>
+                    Match type of this keyword.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "KeywordMatchType".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                    &lt;span class="constraint Required"&gt;This field is required and should not be {@code null} when it is contained within {@link Operator}s : ADD.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="Language">
+        <annotation>
+          <documentation>
+            Represents a Language criterion.
+            &lt;p&gt;A criterion of this type can only be created using an ID.
+            &lt;span class="constraint AdxEnabled"&gt;This is enabled for AdX.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="code" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="name" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="Location">
+        <annotation>
+          <documentation>
+            Represents Location criterion.
+            &lt;p&gt;A criterion of this type can only be created using an ID.
+            &lt;span class="constraint AdxEnabled"&gt;This is enabled for AdX.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="locationName" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    Name of the location criterion. &lt;b&gt; Note:&lt;/b&gt; This field is filterable only in
+                    LocationCriterionService. If used as a filter, a location name cannot be greater than 300
+                    characters.
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="displayType" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    Display type of the location criterion.
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0"
+                name="targetingStatus" type="tns:LocationTargetingStatus">
+                <annotation>
+                  <documentation>
+                    The targeting status of the location criterion.
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="unbounded" minOccurs="0"
+                name="parentLocations" type="tns:Location">
+                <annotation>
+                  <documentation>
+                    Ordered list of parents of the location criterion.
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="LongValue">
+        <annotation>
+          <documentation>
+            Number value type for constructing long valued ranges.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:NumberValue">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="number" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    the underlying long value.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="MobileAppCategory">
+        <annotation>
+          <documentation>
+            Represents the mobile app category to be targeted.
+            &lt;a href="/adwords/api/docs/appendix/mobileappcategories"&gt;View the complete list of
+            available mobile app categories&lt;/a&gt;.
+            &lt;span class="constraint AdxEnabled"&gt;This is enabled for AdX.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0"
+                name="mobileAppCategoryId" type="xsd:int">
+                <annotation>
+                  <documentation>
+                    ID of this mobile app category. A complete list of the available mobile app categories is
+                    available &lt;a href="/adwords/api/docs/appendix/mobileappcategories"&gt;here&lt;/a&gt;.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "MobileAppCategoryId".&lt;/span&gt;
+                    &lt;span class="constraint Required"&gt;This field is required and should not be {@code null} when it is contained within {@link Operator}s : ADD.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="displayName" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    Name of this mobile app category.
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="MobileApplication">
+        <annotation>
+          <documentation>
+            Represents the mobile application to be targeted.
+            &lt;span class="constraint AdxEnabled"&gt;This is enabled for AdX.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="appId" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    A string that uniquely identifies a mobile application to AdWords API. The format of this
+                    string is "&lt;code&gt;{platform}-{platform_native_id}&lt;/code&gt;", where &lt;code&gt;platform&lt;/code&gt; is "1"
+                    for iOS apps and "2" for Android apps, and where &lt;code&gt;platform_native_id&lt;/code&gt; is the mobile
+                    application identifier native to the corresponding platform.
+                    For iOS, this native identifier is the 9 digit string that appears at the end of an App Store
+                    URL (e.g., "476943146" for "Flood-It! 2" whose App Store link is
+                    http://itunes.apple.com/us/app/flood-it!-2/id476943146).
+                    For Android, this native identifier is the application's package name (e.g.,
+                    "com.labpixies.colordrips" for "Color Drips" given Google Play link
+                    https://play.google.com/store/apps/details?id=com.labpixies.colordrips).
+                    A well formed app id for AdWords API would thus be "1-476943146" for iOS and
+                    "2-com.labpixies.colordrips" for Android.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "AppId".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                    &lt;span class="constraint Required"&gt;This field is required and should not be {@code null} when it is contained within {@link Operator}s : ADD.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="displayName" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    Title of this mobile application.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "DisplayName".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="Money">
+        <annotation>
+          <documentation>
+            Represents a money amount.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ComparableValue">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="microAmount" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    Amount in micros. One million is equivalent to one unit.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="NetworkSetting">
+        <annotation>
+          <documentation>
+            Network settings for a Campaign.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="targetGoogleSearch" type="xsd:boolean">
+            <annotation>
+              <documentation>
+                Ads will be served with Google.com search results.
+                &lt;span class="constraint AdxEnabled"&gt;This is disabled for AdX.&lt;/span&gt;
+                &lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel type SEARCH.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype UNIVERSAL_APP_CAMPAIGN.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to false for campaign channel type DISPLAY.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype SHOPPING_UNIVERSAL_ADS.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0"
+            name="targetSearchNetwork" type="xsd:boolean">
+            <annotation>
+              <documentation>
+                Ads will be served on partner sites in the Google Search Network
+                (requires {@code GOOGLE_SEARCH}).
+                &lt;span class="constraint AdxEnabled"&gt;This is disabled for AdX.&lt;/span&gt;
+                &lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype UNIVERSAL_APP_CAMPAIGN.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype SHOPPING_UNIVERSAL_ADS.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0"
+            name="targetContentNetwork" type="xsd:boolean">
+            <annotation>
+              <documentation>
+                Ads will be served on specified placements in the Google Display Network.
+                Placements are specified using {@code Placement} criteria.
+                &lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype UNIVERSAL_APP_CAMPAIGN.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to false for campaign channel subtype SEARCH_MOBILE_APP.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype SHOPPING_UNIVERSAL_ADS.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0"
+            name="targetPartnerSearchNetwork" type="xsd:boolean">
+            <annotation>
+              <documentation>
+                Ads will be served on the Google Partner Network. This is available to
+                only some specific Google partner accounts.
+                &lt;span class="constraint AdxEnabled"&gt;This is disabled for AdX.&lt;/span&gt;
+                &lt;span class="constraint CampaignType"&gt;This field may only be set to false for campaign channel subtype UNIVERSAL_APP_CAMPAIGN.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="NotEmptyError">
+        <annotation>
+          <documentation>
+            Errors corresponding with violation of a NOT EMPTY check.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:NotEmptyError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="NullError">
+        <annotation>
+          <documentation>
+            Errors associated with violation of a NOT NULL check.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:NullError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType abstract="true" name="NumberValue">
+        <annotation>
+          <documentation>
+            Number value types for constructing number valued ranges.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ComparableValue">
+            <sequence/>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="OperationAccessDenied">
+        <annotation>
+          <documentation>
+            Operation not permitted due to the invoked service's access policy.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:OperationAccessDenied.Reason"/>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="OperatorError">
+        <annotation>
+          <documentation>
+            Errors due to the use of unsupported operations.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:OperatorError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="Placement">
+        <annotation>
+          <documentation>
+            A placement used for modifying bids for sites when targeting the content
+            network.
+            &lt;span class="constraint AdxEnabled"&gt;This is enabled for AdX.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="url" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    Url of the placement.
+                    
+                    &lt;p&gt;For example, "http://www.domain.com".
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "PlacementUrl".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                    &lt;span class="constraint Required"&gt;This field is required and should not be {@code null} when it is contained within {@link Operator}s : ADD.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="Platform">
+        <annotation>
+          <documentation>
+            Represents Platform criterion.
+            &lt;p&gt;A criterion of this type can only be created using an ID.
+            &lt;span class="constraint AdxEnabled"&gt;This is enabled for AdX.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="platformName" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="QuotaCheckError">
+        <annotation>
+          <documentation>
+            Encapsulates the errors thrown during developer quota checks.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:QuotaCheckError.Reason"/>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="RangeError">
+        <annotation>
+          <documentation>
+            A list of all errors associated with the Range constraint.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:RangeError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="RateExceededError">
+        <annotation>
+          <documentation>
+            Signals that a call failed because a measured rate exceeded.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:RateExceededError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="rateName" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    Cause of the rate exceeded error.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="rateScope" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    The scope of the rate (ACCOUNT/DEVELOPER).
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0"
+                name="retryAfterSeconds" type="xsd:int">
+                <annotation>
+                  <documentation>
+                    The amount of time (in seconds) the client should wait before retrying the request.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="ReadOnlyError">
+        <annotation>
+          <documentation>
+            Errors from attempting to write to read-only fields.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:ReadOnlyError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="RegionCodeError">
+        <annotation>
+          <documentation>
+            A list of all errors associated with the @RegionCode constraints.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:RegionCodeError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="RejectedError">
+        <annotation>
+          <documentation>
+            Indicates that a field was rejected due to compatibility issues.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:RejectedError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="RequestError">
+        <annotation>
+          <documentation>
+            Encapsulates the generic errors thrown when there's an error with user
+            request.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:RequestError.Reason"/>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="RequiredError">
+        <annotation>
+          <documentation>
+            Errors due to missing required field.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:RequiredError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="SizeLimitError">
+        <annotation>
+          <documentation>
+            Indicates that the number of entries in the request or response exceeds the system limit.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:SizeLimitError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="SoapHeader">
+        <annotation>
+          <documentation>
+            Defines the required and optional elements within the header of a SOAP request.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="clientCustomerId" type="xsd:string">
+            <annotation>
+              <documentation>
+                The header identifies the customer id of the client of the AdWords manager, if an AdWords
+                manager is acting on behalf of their client or the customer id of the advertiser managing their
+                own account.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="developerToken" type="xsd:string">
+            <annotation>
+              <documentation>
+                Developer token to identify that the person making the call has enough
+                quota.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="userAgent" type="xsd:string">
+            <annotation>
+              <documentation>
+                UserAgent is used to track distribution of API client programs and
+                application usage. The client is responsible for putting in a meaningful
+                value for tracking purposes. To be clear this is not the same as an HTTP
+                user agent.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="validateOnly" type="xsd:boolean">
+            <annotation>
+              <documentation>
+                Used to validate the request without executing it.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="partialFailure" type="xsd:boolean">
+            <annotation>
+              <documentation>
+                If true, API will try to commit as many error free operations as possible and
+                report the other operations' errors.
+                
+                &lt;p&gt;Ignored for non-mutate calls.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="SoapResponseHeader">
+        <annotation>
+          <documentation>
+            Defines the elements within the header of a SOAP response.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="requestId" type="xsd:string">
+            <annotation>
+              <documentation>
+                Unique id that identifies this request. If developers have any support issues, sending us
+                this id will enable us to find their request more easily.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="serviceName" type="xsd:string">
+            <annotation>
+              <documentation>
+                The name of the service being invoked.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="methodName" type="xsd:string">
+            <annotation>
+              <documentation>
+                The name of the method being invoked.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="operations" type="xsd:long">
+            <annotation>
+              <documentation>
+                Number of operations performed for this SOAP request.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="responseTime" type="xsd:long">
+            <annotation>
+              <documentation>
+                Elapsed time in milliseconds between the AdWords API receiving the request and sending the
+                response.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="StringFormatError">
+        <annotation>
+          <documentation>
+            A list of error code for reporting invalid content of input strings.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:StringFormatError.Reason"/>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="StringLengthError">
+        <annotation>
+          <documentation>
+            Errors associated with the length of the given string being
+            out of bounds.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:StringLengthError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="CriterionUserInterest">
+        <annotation>
+          <documentation>
+            User Interest represents a particular interest-based vertical to be targeted.
+            &lt;span class="constraint AdxEnabled"&gt;This is enabled for AdX.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="userInterestId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    Id of this user interest. This is a required field.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "UserInterestId".&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0"
+                name="userInterestParentId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    Parent Id of this user interest.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "UserInterestParentId".&lt;/span&gt;
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0"
+                name="userInterestName" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    Name of this user interest.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "UserInterestName".&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="CriterionUserList">
+        <annotation>
+          <documentation>
+            UserList - represents a user list that is defined by the advertiser to be targeted.
+            &lt;span class="constraint AdxEnabled"&gt;This is enabled for AdX.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="userListId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    Id of this user list. This is a required field.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "UserListId".&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="userListName" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "UserListName".&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0"
+                name="userListMembershipStatus" type="tns:CriterionUserList.MembershipStatus">
+                <annotation>
+                  <documentation>
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "UserListMembershipStatus".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0"
+                name="userListEligibleForSearch" type="xsd:boolean">
+                <annotation>
+                  <documentation>
+                    Determines whether a user list is eligible for targeting in the google.com
+                    (search) network.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "UserListEligibleForSearch".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0"
+                name="userListEligibleForDisplay" type="xsd:boolean">
+                <annotation>
+                  <documentation>
+                    Determines whether a user list is eligible for targeting in the display network.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "UserListEligibleForDisplay".&lt;/span&gt;&lt;span class="constraint Filterable"&gt;This field can be filtered on.&lt;/span&gt;
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="Vertical">
+        <annotation>
+          <documentation>
+            Use verticals to target or exclude placements in the Google Display Network
+            based on the category into which the placement falls (for example, "Pets &amp;amp;
+            Animals/Pets/Dogs").
+            &lt;a href="/adwords/api/docs/appendix/verticals"&gt;View the complete list
+            of available vertical categories.&lt;/a&gt;
+            &lt;span class="constraint AdxEnabled"&gt;This is enabled for AdX.&lt;/span&gt;
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Criterion">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="verticalId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    Id of this vertical.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "VerticalId".&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0"
+                name="verticalParentId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    Id of the parent of this vertical.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "VerticalParentId".&lt;/span&gt;
+                    &lt;span class="constraint ReadOnly"&gt;This field is read only and will be ignored when sent to the API.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="unbounded" minOccurs="0" name="path" type="xsd:string">
+                <annotation>
+                  <documentation>
+                    The category to target or exclude. Each subsequent element in the array
+                    describes a more specific sub-category. For example,
+                    &lt;code&gt;{"Pets &amp;amp; Animals", "Pets", "Dogs"}&lt;/code&gt; represents the "Pets &amp;amp;
+                    Animals/Pets/Dogs" category. A complete list of available vertical categories
+                    is available &lt;a href="/adwords/api/docs/appendix/verticals"&gt;here&lt;/a&gt;
+                    This field is required and must not be empty.
+                    &lt;span class="constraint Selectable"&gt;This field can be selected using the value "Path".&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <simpleType name="AdxError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the AdX error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="UNSUPPORTED_FEATURE">
+            <annotation>
+              <documentation>
+                Attempt to use non-AdX feature by AdX customer.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="AuthenticationError.Reason">
+        <annotation>
+          <documentation>
+            The single reason for the authentication failure.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="AUTHENTICATION_FAILED">
+            <annotation>
+              <documentation>
+                Authentication of the request failed.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CLIENT_CUSTOMER_ID_IS_REQUIRED">
+            <annotation>
+              <documentation>
+                Client Customer Id is required if CustomerIdMode is set to CLIENT_EXTERNAL_CUSTOMER_ID.
+                Starting version V201409 ClientCustomerId will be required for all requests except
+                for {@link CustomerService#get}
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CLIENT_EMAIL_REQUIRED">
+            <annotation>
+              <documentation>
+                Client Email is required if CustomerIdMode is set to CLIENT_EXTERNAL_EMAIL_FIELD.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CLIENT_CUSTOMER_ID_INVALID">
+            <annotation>
+              <documentation>
+                Client customer Id is not a number.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CLIENT_EMAIL_INVALID">
+            <annotation>
+              <documentation>
+                Client customer Id is not a number.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CLIENT_EMAIL_FAILED_TO_AUTHENTICATE">
+            <annotation>
+              <documentation>
+                Client email is not a valid customer email.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CUSTOMER_NOT_FOUND">
+            <annotation>
+              <documentation>
+                No customer found for the customer id provided in the header.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="GOOGLE_ACCOUNT_DELETED">
+            <annotation>
+              <documentation>
+                Client's Google Account is deleted.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="GOOGLE_ACCOUNT_COOKIE_INVALID">
+            <annotation>
+              <documentation>
+                Google account login token in the cookie is invalid.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="FAILED_TO_AUTHENTICATE_GOOGLE_ACCOUNT">
+            <annotation>
+              <documentation>
+                problem occurred during Google account authentication.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="GOOGLE_ACCOUNT_USER_AND_ADS_USER_MISMATCH">
+            <annotation>
+              <documentation>
+                The user in the google account login token does not match the UserId in the cookie.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="LOGIN_COOKIE_REQUIRED">
+            <annotation>
+              <documentation>
+                Login cookie is required for authentication.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="NOT_ADS_USER">
+            <annotation>
+              <documentation>
+                User in the cookie is not a valid Ads user.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OAUTH_TOKEN_INVALID">
+            <annotation>
+              <documentation>
+                Oauth token in the header is not valid.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OAUTH_TOKEN_EXPIRED">
+            <annotation>
+              <documentation>
+                Oauth token in the header has expired.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OAUTH_TOKEN_DISABLED">
+            <annotation>
+              <documentation>
+                Oauth token in the header has been disabled.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OAUTH_TOKEN_REVOKED">
+            <annotation>
+              <documentation>
+                Oauth token in the header has been revoked.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OAUTH_TOKEN_HEADER_INVALID">
+            <annotation>
+              <documentation>
+                Oauth token HTTP header is malformed.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="LOGIN_COOKIE_INVALID">
+            <annotation>
+              <documentation>
+                Login cookie is not valid.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="FAILED_TO_RETRIEVE_LOGIN_COOKIE">
+            <annotation>
+              <documentation>
+                Failed to decrypt the login cookie.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="USER_ID_INVALID">
+            <annotation>
+              <documentation>
+                User Id in the header is not a valid id.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="AuthorizationError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the authorization error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="UNABLE_TO_AUTHORIZE">
+            <annotation>
+              <documentation>
+                Could not complete authorization due to an internal problem.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="NO_ADWORDS_ACCOUNT_FOR_CUSTOMER">
+            <annotation>
+              <documentation>
+                Customer has no AdWords account.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="USER_PERMISSION_DENIED">
+            <annotation>
+              <documentation>
+                User doesn't have permission to access customer.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="EFFECTIVE_USER_PERMISSION_DENIED">
+            <annotation>
+              <documentation>
+                Effective user doesn't have permission to access this customer.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CUSTOMER_NOT_ACTIVE">
+            <annotation>
+              <documentation>
+                Access denied since the customer is not active.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="USER_HAS_READONLY_PERMISSION">
+            <annotation>
+              <documentation>
+                User has read-only permission cannot mutate.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="NO_CUSTOMER_FOUND">
+            <annotation>
+              <documentation>
+                No customer found.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="SERVICE_ACCESS_DENIED">
+            <annotation>
+              <documentation>
+                Developer doesn't have permission to access service.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="ClientTermsError.Reason">
+        <annotation>
+          <documentation>
+            Enums for the various reasons an error can be thrown as a result of
+            ClientTerms violation.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="INCOMPLETE_SIGNUP_CURRENT_ADWORDS_TNC_NOT_AGREED">
+            <annotation>
+              <documentation>
+                Customer has not agreed to the latest AdWords Terms &amp; Conditions
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="CollectionSizeError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the target error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="TOO_FEW"/>
+          <enumeration value="TOO_MANY"/>
+        </restriction>
+      </simpleType>
+      <simpleType name="Criterion.Type">
+        <annotation>
+          <documentation>
+            The types of criteria.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="CONTENT_LABEL">
+            <annotation>
+              <documentation>
+                Content label for exclusion.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="KEYWORD">
+            <annotation>
+              <documentation>
+                Keyword. e.g. 'mars cruise'
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PLACEMENT">
+            <annotation>
+              <documentation>
+                Placement. aka Website. e.g. 'www.flowers4sale.com'
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="VERTICAL">
+            <annotation>
+              <documentation>
+                Vertical, e.g. 'category::Animals&gt;Pets'  This is for vertical targeting on the content
+                network.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="USER_LIST">
+            <annotation>
+              <documentation>
+                User lists, are links to sets of users defined by the advertiser.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="USER_INTEREST">
+            <annotation>
+              <documentation>
+                User interests, categories of interests the user is interested in.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="MOBILE_APPLICATION">
+            <annotation>
+              <documentation>
+                Mobile applications to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="MOBILE_APP_CATEGORY">
+            <annotation>
+              <documentation>
+                Mobile application categories to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PRODUCT_PARTITION">
+            <annotation>
+              <documentation>
+                Product partition (product group) in a shopping campaign.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="IP_BLOCK">
+            <annotation>
+              <documentation>
+                IP addresses to exclude.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="WEBPAGE">
+            <annotation>
+              <documentation>
+                Webpages of an advertiser's website to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="LANGUAGE">
+            <annotation>
+              <documentation>
+                Languages to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="LOCATION">
+            <annotation>
+              <documentation>
+                Geographic regions to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="AGE_RANGE">
+            <annotation>
+              <documentation>
+                Age Range to exclude.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CARRIER">
+            <annotation>
+              <documentation>
+                Mobile carriers to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OPERATING_SYSTEM_VERSION">
+            <annotation>
+              <documentation>
+                Mobile operating system versions to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="MOBILE_DEVICE">
+            <annotation>
+              <documentation>
+                Mobile devices to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="GENDER">
+            <annotation>
+              <documentation>
+                Gender to exclude.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PARENT">
+            <annotation>
+              <documentation>
+                Parent to target and exclude.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PROXIMITY">
+            <annotation>
+              <documentation>
+                Proximity (area within a radius) to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PLATFORM">
+            <annotation>
+              <documentation>
+                Platforms to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PREFERRED_CONTENT">
+            <annotation>
+              <documentation>
+                Representing preferred content bid modifier.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="AD_SCHEDULE">
+            <annotation>
+              <documentation>
+                AdSchedule or specific days and time intervals to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="LOCATION_GROUPS">
+            <annotation>
+              <documentation>
+                Targeting based on location groups.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PRODUCT_SCOPE">
+            <annotation>
+              <documentation>
+                Scope of products. Contains a list of product dimensions, all of which a product has to match
+                to be included in the campaign.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="YOUTUBE_VIDEO">
+            <annotation>
+              <documentation>
+                YouTube video to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="YOUTUBE_CHANNEL">
+            <annotation>
+              <documentation>
+                YouTube channel to target.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="APP_PAYMENT_MODEL">
+            <annotation>
+              <documentation>
+                Enables advertisers to target paid apps.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INCOME_RANGE">
+            <annotation>
+              <documentation>
+                Income range to target and exclude.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INTERACTION_TYPE">
+            <annotation>
+              <documentation>
+                Interaction type to bid modify.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="UNKNOWN">
+            <annotation>
+              <documentation>
+                &lt;span class="constraint Rejected"&gt;Used for return value only. An enumeration could not be processed, typically due to incompatibility with your WSDL version.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="DatabaseError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the database error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="CONCURRENT_MODIFICATION">
+            <annotation>
+              <documentation>
+                A concurrency problem occurred as two threads were attempting to modify same object.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PERMISSION_DENIED">
+            <annotation>
+              <documentation>
+                The permission was denied to access an object.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="ACCESS_PROHIBITED">
+            <annotation>
+              <documentation>
+                The user's access to an object has been prohibited.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CAMPAIGN_PRODUCT_NOT_SUPPORTED">
+            <annotation>
+              <documentation>
+                Requested campaign belongs to a product that is not supported by the api.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="DUPLICATE_KEY">
+            <annotation>
+              <documentation>
+                a duplicate key was detected upon insertion
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="DATABASE_ERROR">
+            <annotation>
+              <documentation>
+                a database error has occurred
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="UNKNOWN">
+            <annotation>
+              <documentation>
+                an unknown error has occurred
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="DateError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the target error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="INVALID_FIELD_VALUES_IN_DATE">
+            <annotation>
+              <documentation>
+                Given field values do not correspond to a valid date.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INVALID_FIELD_VALUES_IN_DATE_TIME">
+            <annotation>
+              <documentation>
+                Given field values do not correspond to a valid date time.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INVALID_STRING_DATE">
+            <annotation>
+              <documentation>
+                The string date's format should be yyyymmdd.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INVALID_STRING_DATE_RANGE">
+            <annotation>
+              <documentation>
+                The string date range's format should be yyyymmdd yyyymmdd.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INVALID_STRING_DATE_TIME">
+            <annotation>
+              <documentation>
+                The string date time's format should be yyyymmdd hhmmss [tz].
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="EARLIER_THAN_MINIMUM_DATE">
+            <annotation>
+              <documentation>
+                Date is before allowed minimum.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="LATER_THAN_MAXIMUM_DATE">
+            <annotation>
+              <documentation>
+                Date is after allowed maximum.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="DATE_RANGE_MINIMUM_DATE_LATER_THAN_MAXIMUM_DATE">
+            <annotation>
+              <documentation>
+                Date range bounds are not in order.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="DATE_RANGE_MINIMUM_AND_MAXIMUM_DATES_BOTH_NULL">
+            <annotation>
+              <documentation>
+                Both dates in range are null.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="DistinctError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the validation error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="DUPLICATE_ELEMENT"/>
+          <enumeration value="DUPLICATE_TYPE"/>
+        </restriction>
+      </simpleType>
+      <simpleType name="EntityAccessDenied.Reason">
+        <restriction base="xsd:string">
+          <enumeration value="READ_ACCESS_DENIED">
+            <annotation>
+              <documentation>
+                User did not have read access.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="WRITE_ACCESS_DENIED">
+            <annotation>
+              <documentation>
+                User did not have write access.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="EntityNotFound.Reason">
+        <restriction base="xsd:string">
+          <enumeration value="INVALID_ID">
+            <annotation>
+              <documentation>
+                The specified id refered to an entity which either doesn't exist or is not accessible to the
+                customer. e.g. campaign belongs to another customer.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="IdError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the target error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="NOT_FOUND">
+            <annotation>
+              <documentation>
+                Id not found
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="InternalApiError.Reason">
+        <annotation>
+          <documentation>
+            The single reason for the internal API error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="UNEXPECTED_INTERNAL_API_ERROR">
+            <annotation>
+              <documentation>
+                API encountered an unexpected internal error.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="TRANSIENT_ERROR">
+            <annotation>
+              <documentation>
+                A temporary error occurred during the request. Please retry.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="UNKNOWN">
+            <annotation>
+              <documentation>
+                The cause of the error is not known or only defined in newer versions.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="DOWNTIME">
+            <annotation>
+              <documentation>
+                The API is currently unavailable for a planned downtime.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="ERROR_GENERATING_RESPONSE">
+            <annotation>
+              <documentation>
+                Mutate succeeded but server was unable to build response. Client should not retry mutate.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="KeywordMatchType">
+        <annotation>
+          <documentation>
+            Match type of a keyword. i.e. the way we match a keyword string with
+            search queries.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="EXACT">
+            <annotation>
+              <documentation>
+                Exact match
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PHRASE">
+            <annotation>
+              <documentation>
+                Phrase match
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="BROAD">
+            <annotation>
+              <documentation>
+                Broad match
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="LocationTargetingStatus">
+        <annotation>
+          <documentation>
+            Enum that represents the different Targeting Status values for a Location criterion.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="ACTIVE">
+            <annotation>
+              <documentation>
+                The location is active.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OBSOLETE">
+            <annotation>
+              <documentation>
+                The location is not available for targeting.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="PHASING_OUT">
+            <annotation>
+              <documentation>
+                The location is phasing out, it will marked obsolete soon.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="NotEmptyError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the validation error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="EMPTY_LIST"/>
+        </restriction>
+      </simpleType>
+      <simpleType name="NullError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the validation error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="NULL_CONTENT">
+            <annotation>
+              <documentation>
+                Specified list/container must not contain any null elements
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="OperationAccessDenied.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the operation access error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="ACTION_NOT_PERMITTED">
+            <annotation>
+              <documentation>
+                Unauthorized invocation of a service's method (get, mutate, etc.)
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="ADD_OPERATION_NOT_PERMITTED">
+            <annotation>
+              <documentation>
+                Unauthorized ADD operation in invoking a service's mutate method.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="REMOVE_OPERATION_NOT_PERMITTED">
+            <annotation>
+              <documentation>
+                Unauthorized REMOVE operation in invoking a service's mutate method.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="SET_OPERATION_NOT_PERMITTED">
+            <annotation>
+              <documentation>
+                Unauthorized SET operation in invoking a service's mutate method.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="MUTATE_ACTION_NOT_PERMITTED_FOR_CLIENT">
+            <annotation>
+              <documentation>
+                A mutate action is not allowed on this campaign, from this client.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OPERATION_NOT_PERMITTED_FOR_CAMPAIGN_TYPE">
+            <annotation>
+              <documentation>
+                This operation is not permitted on this campaign type
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="ADD_AS_REMOVED_NOT_PERMITTED">
+            <annotation>
+              <documentation>
+                An ADD operation may not set status to REMOVED.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY">
+            <annotation>
+              <documentation>
+                This operation is not allowed because the campaign or adgroup is removed.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="OPERATION_NOT_PERMITTED_FOR_AD_GROUP_TYPE">
+            <annotation>
+              <documentation>
+                This operation is not permitted on this ad group type.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="UNKNOWN">
+            <annotation>
+              <documentation>
+                The reason the invoked method or operation is prohibited is not known
+                (the client may be of an older version than the server).
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="OperatorError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the validation error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="OPERATOR_NOT_SUPPORTED"/>
+        </restriction>
+      </simpleType>
+      <simpleType name="QuotaCheckError.Reason">
+        <annotation>
+          <documentation>
+            Enums for all the reasons an error can be thrown to the user during
+            billing quota checks.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="INVALID_TOKEN_HEADER">
+            <annotation>
+              <documentation>
+                Customer passed in an invalid token in the header.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="ACCOUNT_DELINQUENT">
+            <annotation>
+              <documentation>
+                Customer is marked delinquent.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="ACCOUNT_INACCESSIBLE">
+            <annotation>
+              <documentation>
+                Customer is a fraudulent.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="ACCOUNT_INACTIVE">
+            <annotation>
+              <documentation>
+                Inactive Account.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INCOMPLETE_SIGNUP">
+            <annotation>
+              <documentation>
+                Signup not complete
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="DEVELOPER_TOKEN_NOT_APPROVED">
+            <annotation>
+              <documentation>
+                Developer token is not approved for production access, and the customer
+                is attempting to access a production account.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="TERMS_AND_CONDITIONS_NOT_SIGNED">
+            <annotation>
+              <documentation>
+                Terms and conditions are not signed.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="MONTHLY_BUDGET_REACHED">
+            <annotation>
+              <documentation>
+                Monthly budget quota reached.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="QUOTA_EXCEEDED">
+            <annotation>
+              <documentation>
+                Monthly budget quota exceeded.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="RangeError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the target error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="TOO_LOW"/>
+          <enumeration value="TOO_HIGH"/>
+        </restriction>
+      </simpleType>
+      <simpleType name="RateExceededError.Reason">
+        <annotation>
+          <documentation>
+            The reason for the rate exceeded error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="RATE_EXCEEDED">
+            <annotation>
+              <documentation>
+                Rate exceeded.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="ReadOnlyError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the target error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="READ_ONLY"/>
+        </restriction>
+      </simpleType>
+      <simpleType name="RegionCodeError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the validation error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="INVALID_REGION_CODE"/>
+        </restriction>
+      </simpleType>
+      <simpleType name="RejectedError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the target error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="UNKNOWN_VALUE">
+            <annotation>
+              <documentation>
+                Unknown value encountered
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="RequestError.Reason">
+        <restriction base="xsd:string">
+          <enumeration value="UNKNOWN">
+            <annotation>
+              <documentation>
+                Error reason is unknown.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INVALID_INPUT">
+            <annotation>
+              <documentation>
+                Invalid input.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="UNSUPPORTED_VERSION">
+            <annotation>
+              <documentation>
+                The api version in the request has been discontinued. Please update
+                to the new AdWords API version.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="RequiredError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the target error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="REQUIRED">
+            <annotation>
+              <documentation>
+                Missing required field.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="SizeLimitError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for Ad Scheduling errors.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="REQUEST_SIZE_LIMIT_EXCEEDED">
+            <annotation>
+              <documentation>
+                The number of entries in the request exceeds the system limit.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="RESPONSE_SIZE_LIMIT_EXCEEDED">
+            <annotation>
+              <documentation>
+                The number of entries in the response exceeds the system limit.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INTERNAL_STORAGE_ERROR">
+            <annotation>
+              <documentation>
+                The account is too large to load.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="UNKNOWN">
+            <annotation>
+              <documentation>
+                &lt;span class="constraint Rejected"&gt;Used for return value only. An enumeration could not be processed, typically due to incompatibility with your WSDL version.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="StringFormatError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the target error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="UNKNOWN"/>
+          <enumeration value="ILLEGAL_CHARS">
+            <annotation>
+              <documentation>
+                The input string value contains disallowed characters.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INVALID_FORMAT">
+            <annotation>
+              <documentation>
+                The input string value is invalid for the associated field.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <simpleType name="StringLengthError.Reason">
+        <annotation>
+          <documentation>
+            The reasons for the target error.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="TOO_SHORT"/>
+          <enumeration value="TOO_LONG"/>
+        </restriction>
+      </simpleType>
+      <simpleType name="CriterionUserList.MembershipStatus">
+        <annotation>
+          <documentation>
+            Membership status of the user list.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="OPEN">
+            <annotation>
+              <documentation>
+                Open status - list is accruing members and can be targeted to.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CLOSED">
+            <annotation>
+              <documentation>
+                Closed status - No new members being added. Can not be used for targeting a new campaign.
+                Existing campaigns can still work as long as the list is not removed as a targeting criteria.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+    </schema>
+    <schema elementFormDefault="qualified" jaxb:version="1.0"
+      targetNamespace="https://adwords.google.com/api/adwords/o/v201802"
+      xmlns="http://www.w3.org/2001/XMLSchema"
+      xmlns:cm="https://adwords.google.com/api/adwords/cm/v201802"
+      xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" xmlns:tns="https://adwords.google.com/api/adwords/o/v201802">
+      <xsd:import namespace="https://adwords.google.com/api/adwords/cm/v201802"/>
+      <annotation>
+        <appinfo>
+          <jaxb:globalBindings typesafeEnumMaxMembers="999999"/>
+        </appinfo>
+      </annotation>
+      <complexType name="AdGroupEstimate">
+        <annotation>
+          <documentation>
+            Represents the estimate results for a single ad group.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Estimate">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="adGroupId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    The adGroupId of the ad group specified in the request.
+                    
+                    This will be &lt;code&gt;null&lt;/code&gt; for new ad groups.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="unbounded" minOccurs="0"
+                name="keywordEstimates" type="tns:KeywordEstimate">
+                <annotation>
+                  <documentation>
+                    The estimates for the keywords specified in the request.
+                    
+                    The list of estimates are returned in the same order as the keywords that
+                    were sent in the request.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="AdGroupEstimateRequest">
+        <annotation>
+          <documentation>
+            Represents an ad group that will be estimated. Ad groups may be all
+            new or all existing, or a mixture of new and existing. Only existing
+            campaigns can contain estimates for existing ad groups.&lt;p&gt;
+            
+            &lt;p&gt;To make a keyword estimates request in which estimates do not consider
+            existing account information (e.g. historical ad group performance), set both
+            {@link #adGroupId} and the enclosing {@link CampaignEstimateRequest}'s
+            {@code campaignId} to {@code null}.
+            
+            &lt;p&gt;For more details on usage, refer to document at
+            {@link CampaignEstimateRequest}.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:EstimateRequest">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="adGroupId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    The adGroupId for an ad group that belongs to the containing campaign from
+                    {@link CampaignEstimateRequest} or {@code null}.
+                    
+                    &lt;p&gt;For usage, refer to document from {@link CampaignEstimateRequest}.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="unbounded" minOccurs="0"
+                name="keywordEstimateRequests" type="tns:KeywordEstimateRequest">
+                <annotation>
+                  <documentation>
+                    The keywords to estimate.
+                    &lt;span class="constraint ContentsDistinct"&gt;This field must contain distinct elements.&lt;/span&gt;
+                    &lt;span class="constraint ContentsNotNull"&gt;This field must not contain {@code null} elements.&lt;/span&gt;
+                    &lt;span class="constraint Required"&gt;This field is required and should not be {@code null}.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="maxCpc" type="cm:Money">
+                <annotation>
+                  <documentation>
+                    The max CPC bid to use for estimates for this ad group.
+                    
+                    &lt;p&gt;This value overrides the max CPC of AdGroup specified by
+                    {@link #adGroupId}.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="CampaignEstimate">
+        <annotation>
+          <documentation>
+            Represents the estimate results for a single campaign.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Estimate">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="campaignId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    The campaignId of the campaign specified in the request.
+                    
+                    This will be &lt;code&gt;null&lt;/code&gt; for new campaigns.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="unbounded" minOccurs="0"
+                name="adGroupEstimates" type="tns:AdGroupEstimate">
+                <annotation>
+                  <documentation>
+                    The estimates for the ad groups belonging to this campaign in the request.
+                    
+                    They will be returned in the same order that they were sent in the request.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="unbounded" minOccurs="0"
+                name="platformEstimates" type="tns:PlatformCampaignEstimate">
+                <annotation>
+                  <documentation>
+                    Traffic estimates segmented by platform for this campaign.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="CampaignEstimateRequest">
+        <annotation>
+          <documentation>
+            Represents a campaign that will be estimated.&lt;p&gt;
+            
+            Returns traffic estimates for the requested set of campaigns.
+            The campaigns can be all new or all existing, or a mixture of
+            new and existing. Only existing campaigns may contain estimates for existing
+            ad groups.&lt;p&gt;
+            
+            For existing campaigns, the campaign and optionally the ad group will be
+            used as context to produce more accurate estimates. Traffic estimates may
+            only be requested on keywords, so regardless of whether campaign and ad group
+            IDs are provided or left blank, at least one keyword is required to estimate
+            traffic.&lt;p&gt;
+            
+            To make a keyword estimates request in which estimates do not consider
+            existing account information (e.g. historical ad group performance), set
+            {@link #campaignId} to {@code null}.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:EstimateRequest">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="campaignId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    The campaignId of an existing campaign or {@code null}.&lt;p&gt;
+                    
+                    Refer to the {@link CampaignEstimateRequest} documentation for
+                    detailed usage.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="unbounded" minOccurs="0"
+                name="adGroupEstimateRequests" type="tns:AdGroupEstimateRequest">
+                <annotation>
+                  <documentation>
+                    The list of ad groups to estimate. This field is required and should not be {@code null}. At
+                    least one ad group is required.
+                    
+                    &lt;p&gt;New campaigns may only contain new ad groups. If an
+                    {@link AdGroupEstimateRequest} has an adGroupId but the campaign is new,
+                    the API will return an error.
+                    &lt;span class="constraint ContentsNotNull"&gt;This field must not contain {@code null} elements.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="unbounded" minOccurs="0"
+                name="criteria" type="cm:Criterion">
+                <annotation>
+                  <documentation>
+                    A list of {@link Criterion}s to be used for this Campaign. Criteria
+                    provide information about geographical and language targeting.
+                    
+                    &lt;p&gt;Values in this field override the current targets in the Campaign
+                    specified by {@link #campaignId} by the following mechanism:
+                    
+                    &lt;p&gt;This field accepts two types of {@link Criterion}s: {@link Location}, which should contain
+                    all geographic targeting and {@link Language}, which should contain all language targeting.
+                    If {@link Location}s are passed in, all geographic targeting in the campaign will be
+                    overridden.  If any {@link Language}s are passed in, all language targeting in the campaign
+                    will be overridden.
+                    
+                    &lt;p&gt;If multiple {@link Location}s are specified, the traffic estimate will
+                    be the sum of the estimates for each targeted area. This means that if
+                    criteria are chosen which overlap each other (for example, targeting both
+                    a country and a city within that country), the traffic estimate will be
+                    be larger than if no overlap were present - i. e., the overlap region will
+                    be double-counted in the estimate.
+                    
+                    &lt;p&gt;If no criteria are specified and this is for a new campaign then it
+                    will default to all languages in all countries and territories, and
+                    Google search.
+                    
+                    &lt;p&gt;If no criteria are specified and this is for an existing campaign
+                    then the current targeting on that campaign will be used.
+                    
+                    &lt;p&gt;While there's no solid limit on number of criteria,
+                    TrafficEstimatorService may return error with TOO_MANY_TARGETS if the
+                    request contains too many criteria across all
+                    {@link CampaignEstimateRequest}s in a {@link TrafficEstimatorSelector}.
+                    
+                    &lt;p&gt;Supported Criteria : {@link Language} and {@link Location}.
+                    &lt;span class="constraint ContentsDistinct"&gt;This field must contain distinct elements.&lt;/span&gt;
+                    &lt;span class="constraint ContentsNotNull"&gt;This field must not contain {@code null} elements.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="networkSetting" type="cm:NetworkSetting">
+                <annotation>
+                  <documentation>
+                    A {@link NetworkSetting} to be used for this Campaign. The value of this
+                    field overrides the current targets in the Campaign specified by
+                    {@link #campaignId}.
+                    
+                    &lt;p&gt;For non Google partner accounts, only
+                    {@link NetworkSetting#targetGoogleSearch} and
+                    {@link NetworkSetting#targetSearchNetwork} are supported, they may be
+                    combined to sum the estimates.
+                    
+                    &lt;p&gt;For some Google partner accounts, in addition
+                    {@link NetworkSetting#getTargetPartnerSearchNetwork} is supported.
+                    
+                    &lt;p&gt;If all request network settings and Campaign's network settings are
+                    empty, the default is {@link NetworkSetting#targetGoogleSearch}.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="dailyBudget" type="cm:Money">
+                <annotation>
+                  <documentation>
+                    Daily campaign budget to use in traffic estimation.  If not specified,
+                    the daily budget is unlimited.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="CurrencyCodeError">
+        <annotation>
+          <documentation>
+            Errors for currency codes.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="cm:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:CurrencyCodeError.Reason">
+                <annotation>
+                  <documentation>
+                    The error reason represented by an enum.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="Estimate">
+        <annotation>
+          <documentation>
+            Abstract class representing an reply to an {@link EstimateRequest}.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="Estimate.Type" type="xsd:string">
+            <annotation>
+              <documentation>
+                Indicates that this instance is a subtype of Estimate.
+                Although this field is returned in the response, it is ignored on input
+                and cannot be selected. Specify xsi:type instead.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType abstract="true" name="EstimateRequest">
+        <annotation>
+          <documentation>
+            Abstract class representing a request to estimate stats.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0"
+            name="EstimateRequest.Type" type="xsd:string">
+            <annotation>
+              <documentation>
+                Indicates that this instance is a subtype of EstimateRequest.
+                Although this field is returned in the response, it is ignored on input
+                and cannot be selected. Specify xsi:type instead.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="KeywordEstimate">
+        <annotation>
+          <documentation>
+            Represents the traffic estimate result for a single keyword.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:Estimate">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="criterionId" type="xsd:long">
+                <annotation>
+                  <documentation>
+                    The existing criterionId for this keyword, if any.
+                    
+                    This will not be returned if this is a new keyword.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="min" type="tns:StatsEstimate">
+                <annotation>
+                  <documentation>
+                    The lower bound on the estimated stats.
+                    
+                    &lt;p&gt;This is not a guarantee that actual performance will never be lower than
+                    these stats.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="max" type="tns:StatsEstimate">
+                <annotation>
+                  <documentation>
+                    The upper bound on the estimated stats.
+                    
+                    &lt;p&gt;This is not a guarantee that actual performance will never be higher than
+                    these stats.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="KeywordEstimateRequest">
+        <annotation>
+          <documentation>
+            Represents a keyword to be estimated.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="tns:EstimateRequest">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="keyword" type="cm:Keyword">
+                <annotation>
+                  <documentation>
+                    The {@link Keyword} to estimate. The keyword text is required regardless
+                    of whether the keyword ID is included. The keyword ID is optional and has
+                    the following characteristics:
+                    &lt;ul&gt;
+                    &lt;li&gt;When omitted, the ID indicates a new keyword to be estimated.&lt;/li&gt;
+                    &lt;li&gt;When present with a campaign and ad group also specified, the ID should
+                    be for an existing keyword in the ad group. This can improve the estimates
+                    since historical performance is known.&lt;/li&gt;
+                    &lt;li&gt;When present without a campaign and ad group specified, the ID is
+                    ignored.&lt;/li&gt;
+                    &lt;/ul&gt;
+                    &lt;span class="constraint Required"&gt;This field is required and should not be {@code null}.&lt;/span&gt;
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="maxCpc" type="cm:Money">
+                <annotation>
+                  <documentation>
+                    The max CPC bid for this keyword.
+                    
+                    In general, the {@code maxCpc} of a {@link KeywordEstimateRequest} is
+                    optional, since there is usually another {@code maxCpc} that can be used,
+                    such as the {@code maxCpc} on an existing keyword, an existing or
+                    overriding {@code maxCpc} of containing {@link AdGroupEstimateRequest}.
+                    However, if there is no backup value of {@code maxCpc} anywhere along the
+                    line, you must provide a value for {@code maxCpc} in
+                    {@link KeywordEstimateRequest}. This would happen, for example, if the
+                    {@link KeywordEstimateRequest} is for a new keyword.
+                  </documentation>
+                </annotation>
+              </element>
+              <element maxOccurs="1" minOccurs="0" name="isNegative" type="xsd:boolean">
+                <annotation>
+                  <documentation>
+                    Whether the keyword is negative or not. The default value is false.
+                    If negative, no current ad group ads will appear for searches containing
+                    this keyword.&lt;p&gt;
+                    
+                    The estimate for negative keywords should reflect no traffic and zero CPC,
+                    but including a negative keyword will affect the other estimates in the
+                    request.
+                  </documentation>
+                </annotation>
+              </element>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="PlatformCampaignEstimate">
+        <annotation>
+          <documentation>
+            Contains a campaign level estimate for a specified {@link Platform}.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="platform" type="cm:Platform">
+            <annotation>
+              <documentation>
+                The {@link Platform} associated with this estimate.
+                &lt;span class="constraint Required"&gt;This field is required and should not be {@code null}.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="minEstimate" type="tns:StatsEstimate">
+            <annotation>
+              <documentation>
+                Minimum estimate for the specified {@link Platform}.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="maxEstimate" type="tns:StatsEstimate">
+            <annotation>
+              <documentation>
+                Maximum estimate for the specified {@link Platform}.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="StatsEstimate">
+        <annotation>
+          <documentation>
+            Represents a set of stats for a daily traffic estimate.
+            
+            &lt;p&gt;{@code averageCpc}, {@code averagePosition} and {@code clickThroughRate} will be
+            {@code null} when not defined and {@code clicksPerDay} or {@code impressionsPerDay}
+            is {@code 0}, respectively.&lt;/p&gt;
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="1" minOccurs="0" name="averageCpc" type="cm:Money">
+            <annotation>
+              <documentation>
+                The estimated average CPC.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="averagePosition" type="xsd:double">
+            <annotation>
+              <documentation>
+                The estimated average position.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="clickThroughRate" type="xsd:double">
+            <annotation>
+              <documentation>
+                The estimated click through rate.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="clicksPerDay" type="xsd:float">
+            <annotation>
+              <documentation>
+                The estimated number of clicks, in floating point representation.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="impressionsPerDay" type="xsd:float">
+            <annotation>
+              <documentation>
+                The estimated number of impressions, in floating point representation.
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0" name="totalCost" type="cm:Money">
+            <annotation>
+              <documentation>
+                The estimated total cost.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="TrafficEstimatorError">
+        <annotation>
+          <documentation>
+            Base error class for {@link TrafficEstimatorService}.
+          </documentation>
+        </annotation>
+        <complexContent>
+          <extension base="cm:ApiError">
+            <sequence>
+              <element maxOccurs="1" minOccurs="0" name="reason" type="tns:TrafficEstimatorError.Reason"/>
+            </sequence>
+          </extension>
+        </complexContent>
+      </complexType>
+      <complexType name="TrafficEstimatorResult">
+        <annotation>
+          <documentation>
+            Contains results of traffic estimation request.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="unbounded" minOccurs="0"
+            name="campaignEstimates" type="tns:CampaignEstimate">
+            <annotation>
+              <documentation>
+                The estimates for the campaigns specified in the request.
+                
+                They are listed in the same order as the campaigns that were sent in the
+                request.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <complexType name="TrafficEstimatorSelector">
+        <annotation>
+          <documentation>
+            Contains a list of campaigns to perform a traffic estimate on.
+          </documentation>
+        </annotation>
+        <sequence>
+          <element maxOccurs="unbounded" minOccurs="0"
+            name="campaignEstimateRequests" type="tns:CampaignEstimateRequest">
+            <annotation>
+              <documentation>
+                A list of all campaigns to estimate.&lt;p&gt;
+                
+                To create a Keyword estimates request, use {@code null} campaign id.
+                &lt;span class="constraint CollectionSize"&gt;The maximum size of this collection is 5.&lt;/span&gt;
+                &lt;span class="constraint ContentsDistinct"&gt;This field must contain distinct elements.&lt;/span&gt;
+                &lt;span class="constraint ContentsNotNull"&gt;This field must not contain {@code null} elements.&lt;/span&gt;
+                &lt;span class="constraint NotEmpty"&gt;This field must contain at least one element.&lt;/span&gt;
+                &lt;span class="constraint Required"&gt;This field is required and should not be {@code null}.&lt;/span&gt;
+              </documentation>
+            </annotation>
+          </element>
+          <element maxOccurs="1" minOccurs="0"
+            name="platformEstimateRequested" type="xsd:boolean">
+            <annotation>
+              <documentation>
+                To request a list of campaign level estimates segmented by platform.
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </complexType>
+      <simpleType name="CurrencyCodeError.Reason">
+        <annotation>
+          <documentation>
+            Encodes the reason (cause) of a particular {@link CurrencyCodeError}.
+          </documentation>
+        </annotation>
+        <restriction base="xsd:string">
+          <enumeration value="UNSUPPORTED_CURRENCY_CODE"/>
+        </restriction>
+      </simpleType>
+      <simpleType name="TrafficEstimatorError.Reason">
+        <restriction base="xsd:string">
+          <enumeration value="NO_CAMPAIGN_FOR_AD_GROUP_ESTIMATE_REQUEST">
+            <annotation>
+              <documentation>
+                When the request with {@code null} campaign ID in {@link CampaignEstimateRequest} contains an
+                {@link AdGroupEstimateRequest} with an ID.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="NO_AD_GROUP_FOR_KEYWORD_ESTIMATE_REQUEST">
+            <annotation>
+              <documentation>
+                When the request with {@code null} adgroup ID in {@link AdGroupEstimateRequest} contains a
+                {@link KeywordEstimateRequest} with an ID.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="NO_MAX_CPC_FOR_KEYWORD_ESTIMATE_REQUEST">
+            <annotation>
+              <documentation>
+                All {@link KeywordEstimateRequest} items should have maxCpc associated with them.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="TOO_MANY_KEYWORD_ESTIMATE_REQUESTS">
+            <annotation>
+              <documentation>
+                When there are more {@link KeywordEstimateRequest}s in the request than
+                TrafficEstimatorService allows.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="TOO_MANY_CAMPAIGN_ESTIMATE_REQUESTS">
+            <annotation>
+              <documentation>
+                When there are more {@link CampaignEstimateRequest}s in the request than
+                TrafficEstimatorService allows.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="TOO_MANY_ADGROUP_ESTIMATE_REQUESTS">
+            <annotation>
+              <documentation>
+                When there are more {@link AdGroupEstimateRequest}s in the request than
+                TrafficEstimatorService allows.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="TOO_MANY_TARGETS">
+            <annotation>
+              <documentation>
+                When there are more targets in the request than TrafficEstimatorService allows. See
+                documentation on {@link CampaignEstimateRequest} for more information about this error.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="KEYWORD_TOO_LONG">
+            <annotation>
+              <documentation>
+                Request contains a keyword that is too long for backends to handle.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="KEYWORD_CONTAINS_BROAD_MATCH_MODIFIERS">
+            <annotation>
+              <documentation>
+                Request contains a keyword that contains broad match modifiers.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="INVALID_INPUT">
+            <annotation>
+              <documentation>
+                When an unexpected error occurs.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="SERVICE_UNAVAILABLE">
+            <annotation>
+              <documentation>
+                When backend service calls fail.
+              </documentation>
+            </annotation>
+          </enumeration>
+        </restriction>
+      </simpleType>
+      <element name="get">
+        <annotation>
+          <documentation>
+            Returns traffic estimates for specified criteria.
+            
+            @param selector Campaigns, ad groups and keywords for which traffic
+            should be estimated.
+            @return Traffic estimation results.
+            @throws ApiException if problems occurred while retrieving estimates
+          </documentation>
+        </annotation>
+        <complexType>
+          <sequence>
+            <element maxOccurs="1" minOccurs="0" name="selector" type="tns:TrafficEstimatorSelector">
+              <annotation>
+                <documentation>
+                  &lt;span class="constraint Required"&gt;This field is required and should not be {@code null}.&lt;/span&gt;
+                </documentation>
+              </annotation>
+            </element>
+          </sequence>
+        </complexType>
+      </element>
+      <element name="getResponse">
+        <complexType>
+          <sequence>
+            <element maxOccurs="1" minOccurs="0" name="rval" type="tns:TrafficEstimatorResult"/>
+          </sequence>
+        </complexType>
+      </element>
+      <element name="ApiExceptionFault" type="cm:ApiException">
+        <annotation>
+          <documentation>
+            A fault element of type ApiException.
+          </documentation>
+        </annotation>
+      </element>
+      <element name="RequestHeader" type="cm:SoapHeader"/>
+      <element name="ResponseHeader" type="cm:SoapResponseHeader"/>
+    </schema>
+  </wsdl:types>
+  <wsdl:message name="RequestHeader">
+    <wsdl:part element="tns:RequestHeader" name="RequestHeader"/>
+  </wsdl:message>
+  <wsdl:message name="ResponseHeader">
+    <wsdl:part element="tns:ResponseHeader" name="ResponseHeader"/>
+  </wsdl:message>
+  <wsdl:message name="getRequest">
+    <wsdl:part element="tns:get" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="getResponse">
+    <wsdl:part element="tns:getResponse" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="ApiException">
+    <wsdl:part element="tns:ApiExceptionFault" name="ApiException"/>
+  </wsdl:message>
+  <wsdl:portType name="TrafficEstimatorServiceInterface">
+    <wsdl:documentation>
+      Use this service to request traffic estimates for proposed or existing campaigns, ad
+      groups, and keywords.
+      
+      &lt;p&gt;
+      To simply retrieve estimates for a list of proposed keywords, create a
+      {@linkplain CampaignEstimateRequest campaign estimate request} and a child
+      {@linkplain AdGroupEstimateRequest ad group estimate request} with {@code null} IDs,
+      and then set the
+      {@link AdGroupEstimateRequest#keywordEstimateRequests keywordEstimateRequests}
+      to contain the keywords.&lt;/p&gt;
+      
+      &lt;p&gt;You can refine the traffic estimates by setting
+      {@linkplain CampaignEstimateRequest#targets campaign targeting options} in the request.
+      If an ad group ID is provided, all creatives from that ad group will be loaded and used
+      to improve estimates.&lt;/p&gt;
+      
+      &lt;p&gt;The maximum number of {@linkplain KeywordEstimateRequest keyword estimate
+      requests} across all campaign estimate requests and
+      ad group estimate requests is 2500.&lt;/p&gt;
+      
+      &lt;p&gt;The maximum number of {@linkplain AdGroupEstimateRequest adgroup estimate
+      requests} across all campaign estimate requests is 50.&lt;/p&gt;
+      
+      &lt;p&gt;Note that the API returns intervals whereas the Traffic Estimator UI displays averages.
+      Estimates are account specific since they are based on creatives already in the account.
+      When comparing numbers, use the same account for the API and UI.&lt;/p&gt;
+      &lt;span class="constraint AdxEnabled"&gt;This is disabled for AdX.&lt;/span&gt;
+    </wsdl:documentation>
+    <wsdl:operation name="get">
+      <wsdl:documentation>
+        Returns traffic estimates for specified criteria.
+        
+        @param selector Campaigns, ad groups and keywords for which traffic
+        should be estimated.
+        @return Traffic estimation results.
+        @throws ApiException if problems occurred while retrieving estimates
+      </wsdl:documentation>
+      <wsdl:input message="tns:getRequest" name="getRequest"/>
+      <wsdl:output message="tns:getResponse" name="getResponse"/>
+      <wsdl:fault message="tns:ApiException" name="ApiException"/>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="TrafficEstimatorServiceSoapBinding" type="tns:TrafficEstimatorServiceInterface">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="get">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getRequest">
+        <wsdlsoap:header message="tns:RequestHeader"
+          part="RequestHeader" use="literal"/>
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getResponse">
+        <wsdlsoap:header message="tns:ResponseHeader"
+          part="ResponseHeader" use="literal"/>
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="ApiException">
+        <wsdlsoap:fault name="ApiException" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="TrafficEstimatorService">
+    <wsdl:port binding="tns:TrafficEstimatorServiceSoapBinding" name="TrafficEstimatorServiceInterfacePort">
+      <wsdlsoap:address location="https://adwords.google.com/api/adwords/o/v201802/TrafficEstimatorService"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

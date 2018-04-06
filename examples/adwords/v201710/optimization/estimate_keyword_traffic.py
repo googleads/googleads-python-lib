@@ -157,10 +157,12 @@ def DisplayEstimate(message, min_estimate, max_estimate):
   # Find the mean of the min and max values.
   mean_avg_cpc = (_CalculateMean(min_estimate['averageCpc']['microAmount'],
                                  max_estimate['averageCpc']['microAmount'])
-                  if 'averageCpc' in min_estimate else None)
+                  if 'averageCpc' in min_estimate
+                  and min_estimate['averageCpc'] else None)
   mean_avg_pos = (_CalculateMean(min_estimate['averagePosition'],
                                  max_estimate['averagePosition'])
-                  if 'averagePosition' in min_estimate else None)
+                  if 'averagePosition' in min_estimate
+                  and min_estimate['averagePosition'] else None)
   mean_clicks = _CalculateMean(min_estimate['clicksPerDay'],
                                max_estimate['clicksPerDay'])
   mean_total_cost = _CalculateMean(min_estimate['totalCost']['microAmount'],
