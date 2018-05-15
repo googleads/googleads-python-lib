@@ -44,28 +44,6 @@ _data_downloader_logger = logging.getLogger(
 
 # A giant dictionary of DFP versions and the services they support.
 _SERVICE_MAP = {
-    'v201705':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
-         'CompanyService', 'ContactService', 'ContentBundleService',
-         'ContentMetadataKeyHierarchyService', 'ContentService',
-         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
-         'CreativeWrapperService', 'CustomFieldService',
-         'CustomTargetingService', 'ExchangeRateService', 'ForecastService',
-         'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService',
-         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
-         'OrderService', 'PackageService', 'PlacementService',
-         'PremiumRateService', 'ProductService', 'ProductPackageService',
-         'ProductPackageItemService', 'ProductTemplateService',
-         'ProposalLineItemService', 'ProposalService',
-         'PublisherQueryLanguageService', 'RateCardService',
-         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
-         'ReconciliationLineItemReportService',
-         'ReconciliationReportService', 'ReportService',
-         'SuggestedAdUnitService', 'TeamService', 'UserService',
-         'UserTeamAssociationService', 'WorkflowRequestService'),
     'v201708':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
@@ -118,6 +96,29 @@ _SERVICE_MAP = {
          'ContentService', 'CreativeService', 'CreativeSetService',
          'CreativeTemplateService', 'CreativeWrapperService',
          'CustomFieldService', 'CustomTargetingService', 'ExchangeRateService',
+         'ForecastService', 'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService',
+         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
+         'OrderService', 'PackageService', 'PlacementService',
+         'PremiumRateService', 'ProductService', 'ProductPackageService',
+         'ProductPackageItemService', 'ProductTemplateService',
+         'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationLineItemReportService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201805':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CdnConfigurationService', 'CompanyService', 'ContactService',
+         'ContentBundleService', 'ContentMetadataKeyHierarchyService',
+         'ContentService', 'CreativeService', 'CreativeSetService',
+         'CreativeTemplateService', 'CreativeWrapperService',
+         'CustomFieldService', 'CustomTargetingService',
+         'DaiAuthenticationKeyService', 'ExchangeRateService',
          'ForecastService', 'InventoryService', 'LabelService',
          'LineItemCreativeAssociationService', 'LineItemService',
          'LineItemTemplateService', 'LiveStreamEventService',
@@ -203,6 +204,7 @@ class DfpClient(googleads.common.CommonClient):
 
   def __init__(self, oauth2_client, application_name, network_code=None,
                cache=None, proxy_config=None, soap_impl='zeep', timeout=3600,
+               custom_http_headers=None,
                enable_compression=False):
     """Initializes a DfpClient.
 
@@ -226,6 +228,8 @@ class DfpClient(googleads.common.CommonClient):
       soap_impl: A string identifying which SOAP implementation to use. The
           options are 'zeep' or 'suds'.
       timeout: An integer timeout in MS for connections made to DFP.
+      custom_http_headers: A dictionary with HTTP headers to add to outgoing
+          requests.
       enable_compression: A boolean indicating if you want to enable compression
         of the SOAP response. If True, the SOAP response will use gzip
         compression, and will be decompressed for you automatically.
@@ -241,7 +245,9 @@ class DfpClient(googleads.common.CommonClient):
     self.application_name = application_name
     self.network_code = network_code
     self.cache = cache
-    self._header_handler = _DfpHeaderHandler(self, enable_compression)
+    self.custom_http_headers = custom_http_headers
+    self._header_handler = _DfpHeaderHandler(
+        self, enable_compression, custom_http_headers)
     self.proxy_config = (proxy_config if proxy_config
                          else googleads.common.ProxyConfig())
 
@@ -332,7 +338,7 @@ class _DfpHeaderHandler(googleads.common.HeaderHandler):
   # The name of the WSDL-defined SOAP Header class used in all requests.
   _SOAP_HEADER_CLASS = 'ns0:SoapRequestHeader'
 
-  def __init__(self, dfp_client, enable_compression):
+  def __init__(self, dfp_client, enable_compression, custom_http_headers=None):
     """Initializes a DfpHeaderHandler.
 
     Args:
@@ -342,9 +348,12 @@ class _DfpHeaderHandler(googleads.common.HeaderHandler):
       enable_compression: A boolean indicating if you want to enable compression
         of the SOAP response. If True, the SOAP response will use gzip
         compression, and will be decompressed for you automatically.
+      custom_http_headers: A dictionary of custom HTTP headers to send with all
+        requests.
     """
     self._dfp_client = dfp_client
     self.enable_compression = enable_compression
+    self.custom_http_headers = custom_http_headers or {}
 
   def GetSOAPHeaders(self, create_method):
     """Returns the SOAP headers required for request authorization.
@@ -372,6 +381,8 @@ class _DfpHeaderHandler(googleads.common.HeaderHandler):
     http_headers = self._dfp_client.oauth2_client.CreateHttpHeader()
     if self.enable_compression:
       http_headers['accept-encoding'] = 'gzip'
+
+    http_headers.update(self.custom_http_headers)
 
     return http_headers
 
@@ -732,6 +743,9 @@ class DataDownloader(object):
     self.proxy_config = self._dfp_client.proxy_config
     handlers = self.proxy_config.GetHandlers()
     self.url_opener = urllib2.build_opener(*handlers)
+    if self._dfp_client.custom_http_headers:
+      self.url_opener.addheaders.extend(
+          self._dfp_client.custom_http_headers.items())
 
   def _GetReportService(self):
     """Lazily initializes a report service client."""

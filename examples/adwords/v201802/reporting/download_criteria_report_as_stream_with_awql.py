@@ -26,15 +26,10 @@ section of our README.
 """
 
 
-import logging
 import StringIO
 import sys
 
 from googleads import adwords
-
-
-logging.basicConfig(level=logging.INFO)
-logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 
 # Specify where to download the file here.
 PATH = '/tmp/report_download.csv'

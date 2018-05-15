@@ -20,6 +20,7 @@ Configures the web application that will display the AdWords UI.
 
 
 from demo import DEBUG
+from requests_toolbelt.adapters import appengine
 from views import AddAdGroup
 from views import AddCampaign
 from views import InitView
@@ -32,6 +33,8 @@ from views import UpdateBudget
 from views import UpdateCredentials
 import webapp2
 
+# Patch requests library for use on App Engine.
+appengine.monkeypatch()
 
 app = webapp2.WSGIApplication([('/', InitView),
                                ('/showCredentials', ShowCredentials),

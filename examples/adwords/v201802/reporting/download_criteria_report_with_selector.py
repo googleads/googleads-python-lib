@@ -26,12 +26,8 @@ section of our README.
 """
 
 
-import logging
 import sys
 from googleads import adwords
-
-logging.basicConfig(level=logging.INFO)
-logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 
 
 def main(client):

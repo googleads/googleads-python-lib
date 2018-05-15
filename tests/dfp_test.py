@@ -28,6 +28,9 @@ import googleads.errors
 from . import testing
 
 
+URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
+
+
 class BaseValue(object):
 
   def __init__(self, original_object):
@@ -110,8 +113,9 @@ class DfpHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
   def setUp(self):
     self.dfp_client = mock.Mock()
     self.enable_compression = False
+    self.custom_headers = ()
     self.header_handler = googleads.dfp._DfpHeaderHandler(
-        self.dfp_client, self.enable_compression)
+        self.dfp_client, self.enable_compression, self.custom_headers)
     self.utility_name = 'TestUtility'
     self.default_sig_template = ' (%s, %s, %s)'
     self.util_sig_template = ' (%s, %s, %s, %s)'
@@ -135,6 +139,16 @@ class DfpHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
 
     # Check that the returned headers have the correct values.
     self.assertEqual(header_result, self.oauth_header)
+
+  def testGetHTTPHeadersWithCustomHeaders(self):
+    self.dfp_client.oauth2_client.CreateHttpHeader.return_value = (
+        self.oauth_header)
+    self.header_handler.custom_http_headers = {'X-My-Header': 'abc'}
+
+    header_result = self.header_handler.GetHTTPHeaders()
+
+    # Check that the returned headers have the correct values.
+    self.assertEqual(header_result, {'oauth': 'header', 'X-My-Header': 'abc'})
 
   def testGetSOAPHeaders(self):
     create_method = mock.Mock()
@@ -266,6 +280,7 @@ class DfpClientTest(unittest.TestCase):
     enable_compression = True
     application_name_gzip_template = '%s (gzip)'
     default_app_name = 'unit testing'
+    custom_headers = {'X-My-Header': 'abc'}
 
     with mock.patch('googleads.common.LoadFromStorage') as mock_load:
       with mock.patch('googleads.dfp._DfpHeaderHandler') as mock_h:
@@ -273,13 +288,15 @@ class DfpClientTest(unittest.TestCase):
             'network_code': 'abcdEFghIjkLMOpqRs',
             'oauth2_client': True,
             'application_name': default_app_name,
-            'enable_compression': enable_compression
+            'enable_compression': enable_compression,
+            'custom_http_headers': custom_headers
         }
         dfp_client = googleads.dfp.DfpClient.LoadFromStorage()
         self.assertEqual(
             application_name_gzip_template % default_app_name,
             dfp_client.application_name)
-        mock_h.assert_called_once_with(dfp_client, enable_compression)
+        mock_h.assert_called_once_with(
+            dfp_client, enable_compression, custom_headers)
 
 
 
@@ -390,10 +407,10 @@ class DataDownloaderTest(unittest.TestCase):
     application_name = 'application name'
     oauth2_client = 'unused'
     self.https_proxy = 'myproxy.com:443'
-    dfp_client = googleads.dfp.DfpClient(
+    self.dfp_client = googleads.dfp.DfpClient(
         oauth2_client, application_name, network_code, self.https_proxy)
     self.version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
-    self.report_downloader = dfp_client.GetDataDownloader()
+    self.report_downloader = self.dfp_client.GetDataDownloader()
     self.pql_service = mock.Mock()
     self.report_service = mock.Mock()
     self.report_downloader._pql_service = self.pql_service
@@ -688,6 +705,19 @@ class DataDownloaderTest(unittest.TestCase):
     self.report_downloader._GetPqlService()
     self.report_downloader._dfp_client.GetService.assert_called_once_with(
         'PublisherQueryLanguageService', self.version, 'https://ads.google.com')
+
+  def testDownloadHasCustomHeaders(self):
+    self.dfp_client.custom_http_headers = {'X-My-Headers': 'abc'}
+
+    class MyOpener(object):
+      addheaders = [('a', 'b')]
+    opener = MyOpener()
+
+    with mock.patch('%s.build_opener' % URL_REQUEST_PATH) as mock_build_opener:
+      mock_build_opener.return_value = opener
+
+      self.dfp_client.GetDataDownloader()
+      self.assertEqual(opener.addheaders, [('a', 'b'), ('X-My-Headers', 'abc')])
 
 
 class StatementBuilderTest(testing.CleanUtilityRegistryTestCase):

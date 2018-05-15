@@ -78,7 +78,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '11.0.1'
+VERSION = '12.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
@@ -99,6 +99,9 @@ _OAUTH2_SERVICE_ACCT_KEYS_OPTIONAL = ('delegated_account',)
 # A key used to configure the client to accept and automatically decompress
 # gzip encoded SOAP responses.
 ENABLE_COMPRESSION_KEY = 'enable_compression'
+
+# A key used to configure the client to send arbitrary headers in SOAP requests.
+CUSTOM_HEADERS_KEY = 'custom_http_headers'
 
 # A key used to specify the SOAP implementation to use.
 SOAP_IMPLEMENTATION_KEY = 'soap_impl'
@@ -219,6 +222,8 @@ def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
 
   client_kwargs[ENABLE_COMPRESSION_KEY] = data.get(
       ENABLE_COMPRESSION_KEY, False)
+
+  client_kwargs[CUSTOM_HEADERS_KEY] = data.get(CUSTOM_HEADERS_KEY, None)
 
   if SOAP_IMPLEMENTATION_KEY in data:
     client_kwargs[SOAP_IMPLEMENTATION_KEY] = data[SOAP_IMPLEMENTATION_KEY]
@@ -739,7 +744,15 @@ class SudsSchemaHelper(GoogleSchemaHelper):
            the proxy settings needed.
        namespace_override: A string to doctor the WSDL namespace with.
        cache: An instance of suds.cache.Cache to use for caching.
+
+    Raises:
+      GoogleAdsValueError: The wrong type was given for caching.
     """
+
+    if cache and not isinstance(cache, suds.cache.Cache):
+      raise googleads.errors.GoogleAdsValueError(
+          'Must use a proper suds cache with suds.')
+
     transport = _SudsProxyTransport(timeout, proxy_config)
     try:
       doctor = suds.xsd.doctor.ImportDoctor(
@@ -787,7 +800,16 @@ class ZeepSchemaHelper(GoogleSchemaHelper):
            the proxy settings needed.
        namespace_override: A string to doctor the WSDL namespace with.
        cache: An instance of zeep.cache.Base to use for caching.
+
+    Raises:
+      GoogleAdsValueError: The wrong type was given for caching.
     """
+
+    if cache and not (isinstance(cache, zeep.cache.Base) or
+                      cache == ZeepServiceProxy.NO_CACHE):
+      raise googleads.errors.GoogleAdsValueError(
+          'Must use a proper zeep cache with zeep.')
+
     transport = _ZeepProxyTransport(timeout, proxy_config, cache)
     try:
       data = transport.load(endpoint)
@@ -930,12 +952,13 @@ class SudsServiceProxy(GoogleSoapService):
           library for caching.
 
     Raises:
-      ValueError: The wrong type was given for caching.
+      GoogleAdsValueError: The wrong type was given for caching.
     """
     super(SudsServiceProxy, self).__init__(header_handler, packer)
 
     if cache and not isinstance(cache, suds.cache.Cache):
-      raise ValueError('Must use a proper suds cache with suds.')
+      raise googleads.errors.GoogleAdsValueError(
+          'Must use a proper suds cache with suds.')
 
     transport = _SudsProxyTransport(timeout, proxy_config)
     self._method_proxies = {}
@@ -1023,7 +1046,7 @@ class SudsServiceProxy(GoogleSoapService):
           _logger.warning('Response summary - %s',
                           _ExtractResponseSummaryFields(e.document))
 
-        _logger.info('SOAP response:\n%s', e.document.str())
+        _logger.debug('SOAP response:\n%s', e.document.str())
 
         if not hasattr(e.fault, 'detail'):
           exc = (googleads.errors.
@@ -1111,13 +1134,14 @@ class ZeepServiceProxy(GoogleSoapService):
           googleads.common.ZeepServiceProxy.NO_CACHE.
 
     Raises:
-      ValueError: The wrong type was given for caching.
+      GoogleAdsValueError: The wrong type was given for caching.
     """
     super(ZeepServiceProxy, self).__init__(header_handler, packer)
 
     if cache and not (isinstance(cache, zeep.cache.Base) or
                       cache == self.NO_CACHE):
-      raise ValueError('Must use a proper zeep cache with zeep.')
+      raise googleads.errors.GoogleAdsValueError(
+          'Must use a proper zeep cache with zeep.')
 
     transport = _ZeepProxyTransport(timeout, proxy_config, cache)
     plugins = [_ZeepAuthHeaderPlugin(header_handler),

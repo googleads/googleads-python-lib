@@ -291,6 +291,7 @@ class AdWordsClient(googleads.common.CommonClient):
     self.client_customer_id = kwargs.get('client_customer_id')
     self.user_agent = user_agent
     self.soap_impl = soap_impl
+    self.custom_http_headers = kwargs.get('custom_http_headers')
     # Verify that the provided user_agent contains only ASCII characters. In
     # both Python 2 and Python 3, a UnicodeEncodeError will be raised if it
     # contains a non-ASCII character.
@@ -356,7 +357,8 @@ class AdWordsClient(googleads.common.CommonClient):
     service = googleads.common.GetServiceClassForLibrary(self.soap_impl)(
         self._SOAP_SERVICE_FORMAT % (
             server, version_service_mapping, version, service_name),
-        _AdWordsHeaderHandler(self, version, self.enable_compression),
+        _AdWordsHeaderHandler(
+            self, version, self.enable_compression, self.custom_http_headers),
         _AdWordsPacker,
         self.proxy_config,
         self.timeout,
@@ -433,7 +435,8 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
   # The content type of report download requests
   _CONTENT_TYPE = 'application/x-www-form-urlencoded'
 
-  def __init__(self, adwords_client, version, enable_compression):
+  def __init__(self, adwords_client, version,
+               enable_compression, custom_http_headers=None):
     """Initializes an AdWordsHeaderHandler.
 
     Args:
@@ -445,10 +448,13 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
       enable_compression: A boolean indicating if you want to enable compression
         of the SOAP response. If True, the SOAP response will use gzip
         compression, and will be decompressed for you automatically.
+      custom_http_headers: A dictionary of custom HTTP headers to send with all
+        requests.
     """
     self._adwords_client = adwords_client
     self._version = version
     self.enable_compression = enable_compression
+    self.custom_http_headers = custom_http_headers or {}
 
   def GetSOAPHeaders(self, create_method):
     """Returns the SOAP headers required for request authorization.
@@ -479,6 +485,9 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
     http_headers = self._adwords_client.oauth2_client.CreateHttpHeader()
     if self.enable_compression:
       http_headers['accept-encoding'] = 'gzip'
+
+    http_headers.update(self.custom_http_headers)
+
     return http_headers
 
   def GetReportDownloadHeaders(self, **kwargs):
@@ -525,6 +534,7 @@ class _AdWordsHeaderHandler(googleads.common.HeaderHandler):
             googleads.common.GenerateLibSig(self._PRODUCT_SIG),
             ',gzip'])
     })
+    headers.update(self.custom_http_headers)
 
     updated_kwargs = dict(self._adwords_client.report_download_headers)
     updated_kwargs.update(kwargs)
@@ -1062,6 +1072,10 @@ class IncrementalUploadHelper(object):
     self._is_last = is_last
     self._url_opener = urllib2.build_opener(
         *self._request_builder.client.proxy_config.GetHandlers())
+    if self._request_builder.client.custom_http_headers:
+      self._url_opener.addheaders.extend(
+          self._request_builder.client.custom_http_headers.items())
+
     self._upload_url = self._InitializeURL(upload_url, current_content_length)
 
   def _InitializeURL(self, upload_url, current_content_length):
@@ -1230,10 +1244,14 @@ class ReportDownloader(object):
     self._namespace = self._NAMESPACE_FORMAT % version
     self._end_point = self._END_POINT_FORMAT % (server, version)
     self._header_handler = _AdWordsHeaderHandler(
-        adwords_client, version, self._adwords_client.enable_compression)
+        adwords_client, version, self._adwords_client.enable_compression,
+        self._adwords_client.custom_http_headers)
     self.proxy_config = self._adwords_client.proxy_config
     handlers = self.proxy_config.GetHandlers()
     self.url_opener = urllib2.build_opener(*handlers)
+    if self._adwords_client.custom_http_headers:
+      self.url_opener.addheaders.extend(
+          adwords_client.custom_http_headers.items())
 
     schema_url = self._SCHEMA_FORMAT % (server, version)
     service_class = (googleads.common

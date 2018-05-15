@@ -16,4 +16,4 @@
 """AdWords App Engine demo web application."""
 
 DEBUG = False  # Enable to see debug logs in the App Engine console.
-VERSION = '1.0.0'
+VERSION = '1.0.3'

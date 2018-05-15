@@ -122,3 +122,10 @@ dfp:
 # issues please report them and fall back to suds.                             #
 ################################################################################
 # soap_impl: zeep
+################################################################################
+# Custom HTTP headers (optional)                                               #
+# Specify one or more custom headers to pass along with all requests to        #
+# the API.                                                                     #
+################################################################################
+# custom_http_headers:
+#   X-My-Header: 'content'

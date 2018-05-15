@@ -42,6 +42,7 @@ except ImportError:
 
 CURRENT_VERSION = sorted(googleads.adwords._SERVICE_MAP.keys())[-1]
 TEST_DIR = os.path.dirname(__file__)
+URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
 
 
 def GetAdWordsClient(soap_impl, **kwargs):
@@ -141,7 +142,7 @@ class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
         validate_only=self.validate_only, partial_failure=self.partial_failure,
         report_downloader_headers=self.report_downloader_headers)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
-        self.aw_client, CURRENT_VERSION, self.enable_compression)
+        self.aw_client, CURRENT_VERSION, self.enable_compression, None)
 
     @googleads.common.RegisterUtility(self.utility_name)
     class TestUtility(object):
@@ -155,6 +156,14 @@ class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
     header_result = self.header_handler.GetHTTPHeaders()
     # Check that the returned headers have the correct values.
     self.assertEqual(header_result, self.oauth_header)
+
+  def testGetHTTPHeadersWithCustomHeaders(self):
+    self.header_handler.custom_http_headers = {'X-My-Header': 'abc'}
+
+    header_result = self.header_handler.GetHTTPHeaders()
+
+    self.assertEqual(
+        header_result, {'Authorization': 'header', 'X-My-Header': 'abc'})
 
   def testGetSOAPHeaders(self):
     create_method = mock.Mock()
@@ -344,7 +353,7 @@ class AdWordsClientTest(unittest.TestCase):
     self.adwords_client = GetAdWordsClient('zeep')
     self.aw_client = GetAdWordsClient('zeep', proxy_config=self.proxy_config)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
-        self.adwords_client, CURRENT_VERSION, False)
+        self.adwords_client, CURRENT_VERSION, False, None)
 
 
   def testLoadFromStorage(self):
@@ -413,7 +422,7 @@ class AdWordsClientTest(unittest.TestCase):
 
         service = client.GetService(service_name, CURRENT_VERSION, server)
         mock_header_handler.assert_called_once_with(
-            client, CURRENT_VERSION, True)
+            client, CURRENT_VERSION, True, None)
         impl.assert_called_once_with(
             'https://testing.test.com/api/adwords/%s/%s/%s?wsdl' % (
                 namespace, CURRENT_VERSION, service_name),
@@ -1312,6 +1321,11 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
 
   """Test suite for the IncrementalUploadHelper."""
 
+  def GetIncrementalUploadHelper(self):
+    with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
+      mock_open.return_value.headers = {'location': self.initialized_url}
+      return self.batch_job_helper.GetIncrementalUploadHelper(self.original_url)
+
   def setUp(self):
     """Prepare tests."""
     self.client = GetAdWordsClient('zeep')
@@ -1321,14 +1335,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
         version=self.version, server=self.server)
     self.original_url = 'https://goo.gl/w8tkpK'
     self.initialized_url = 'https://goo.gl/Xtaq83'
-
-    with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
-      mock_open.return_value.headers = {
-          'location': self.initialized_url
-      }
-      self.incremental_uploader = (
-          self.batch_job_helper.GetIncrementalUploadHelper(
-              self.original_url))
+    self.incremental_uploader = self.GetIncrementalUploadHelper()
 
     self.incremental_uploader_dump = (
         '{current_content_length: 0, is_last: false, '
@@ -1412,6 +1419,20 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
         self.assertRaises(
             googleads.errors.AdWordsBatchJobServiceInvalidOperationError,
             self.incremental_uploader.UploadOperations, {})
+
+  def testRequestHasCustomHeaders(self):
+    class MyOpener(object):
+      addheaders = [('a', 'b')]
+    opener = MyOpener()
+
+    with mock.patch('%s.build_opener' % URL_REQUEST_PATH) as mock_build_opener,\
+        mock.patch('googleads.adwords.IncrementalUploadHelper._InitializeURL'):
+      mock_build_opener.return_value = opener
+      self.client.custom_http_headers = {'X-My-Headers': 'abc'}
+
+      self.GetIncrementalUploadHelper()
+
+      self.assertEqual(opener.addheaders, [('a', 'b'), ('X-My-Headers', 'abc')])
 
 
 class ResponseParserTest(testing.CleanUtilityRegistryTestCase):
@@ -1516,6 +1537,8 @@ class ReportDownloaderZeepTest(testing.CleanUtilityRegistryTestCase):
     self.adwords_client = mock.Mock()
     self.adwords_client.proxy_config = GetProxyConfig()
     self.adwords_client.soap_impl = 'zeep'
+    self.adwords_client.cache = googleads.common.ZeepServiceProxy.NO_CACHE
+    self.adwords_client.custom_http_headers = False
     self.header_handler = mock.Mock()
 
     # It's unfortunate that the target output is different between suds and
@@ -1606,6 +1629,7 @@ class ReportDownloaderSudsTest(testing.CleanUtilityRegistryTestCase):
     self.adwords_client = mock.Mock()
     self.adwords_client.proxy_config = GetProxyConfig()
     self.adwords_client.cache = suds.cache.NoCache()
+    self.adwords_client.custom_http_headers = False
     self.opener = mock.Mock()
 
     post_body_path = os.path.join(TEST_DIR,
@@ -1736,15 +1760,7 @@ class ReportDownloaderSudsTest(testing.CleanUtilityRegistryTestCase):
 class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
   """Tests for the googleads.adwords.ReportDownloader class."""
 
-  def setUp(self):
-    self.version = CURRENT_VERSION
-    self.marshaller = mock.Mock()
-    self.header_handler = mock.Mock()
-    self.adwords_client = mock.Mock()
-    self.adwords_client.proxy_config = GetProxyConfig()
-    self.adwords_client.cache = suds.cache.NoCache()
-    self.opener = mock.Mock()
-
+  def GetReportDownloader(self):
     with mock.patch(
         'googleads.adwords._AdWordsHeaderHandler') as mock_handler, \
         mock.patch('googleads.adwords.googleads.common'
@@ -1752,11 +1768,34 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
       mock_handler.return_value = self.header_handler
       mock_get_schema.return_value = mock.Mock()
 
-      self.report_downloader = googleads.adwords.ReportDownloader(
-          self.adwords_client, self.version
-      )
+      return googleads.adwords.ReportDownloader(
+          self.adwords_client, self.version)
 
-      self.report_downloader.url_opener = self.opener
+  def setUp(self):
+    self.version = CURRENT_VERSION
+    self.marshaller = mock.Mock()
+    self.header_handler = mock.Mock()
+    self.adwords_client = mock.Mock()
+    self.adwords_client.proxy_config = GetProxyConfig()
+    self.adwords_client.cache = suds.cache.NoCache()
+    self.adwords_client.custom_http_headers = False
+    self.opener = mock.Mock()
+
+    self.report_downloader = self.GetReportDownloader()
+    self.report_downloader.url_opener = self.opener
+
+  def testSetsCustomHeaders(self):
+
+    class MyOpener(object):
+      addheaders = [('a', 'b')]
+    opener = MyOpener()
+    self.adwords_client.custom_http_headers = {'X-My-Header': 'abc'}
+
+    with mock.patch('%s.build_opener' % URL_REQUEST_PATH) as mock_build_opener:
+      mock_build_opener.return_value = opener
+      self.GetReportDownloader()
+
+    self.assertEqual(opener.addheaders, [('a', 'b'), ('X-My-Header', 'abc')])
 
   @mock.patch.object(urllib2.OpenerDirector, 'open')
   def testDownloadReportAsString(self, mock_request):

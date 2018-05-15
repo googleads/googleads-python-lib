@@ -1,3 +1,15 @@
+12.0.0 -- 05/15/18
+* Added support and examples for DFP v201805.
+* Removed support for DFP v201705.
+* Removed examples for DFP v201708.
+* Using the wrong cache type will now raise GoogleAdsValueError instead of ValueError.
+* Added support for setting custom HTTP headers.
+* Resolved issues:
+- Issue 246: https://github.com/googleads/googleads-python-lib/issues/246
+- Issue 262: https://github.com/googleads/googleads-python-lib/issues/262
+- Issue 273: https://github.com/googleads/googleads-python-lib/issues/273
+- Issue 250: https://github.com/googleads/googleads-python-lib/issues/250
+
 11.0.1 -- 04/06/18
 * Fixed bug related to creating types from services that
   contain multiple schemas.

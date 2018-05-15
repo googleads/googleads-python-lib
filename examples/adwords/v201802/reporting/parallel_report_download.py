@@ -22,17 +22,15 @@ The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
 directory. For more information, see the "Caching authentication information"
 section of our README.
-
 """
 
-import logging
 import multiprocessing
+import os
 from Queue import Empty
 import time
-import googleads
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger('suds.transport').setLevel(logging.DEBUG)
+import googleads.adwords
+import googleads.errors
 
 # Timeout between retries in seconds.
 BACKOFF_FACTOR = 5
@@ -44,6 +42,143 @@ MAX_RETRIES = 5
 PAGE_SIZE = 100
 # Directory to download the reports to.
 REPORT_DOWNLOAD_DIRECTORY = 'INSERT_REPORT_DOWNLOAD_DIRECTORY'
+
+
+def _DownloadReport(process_id, report_download_directory, customer_id,
+                    report_definition):
+  """Helper function used by ReportWorker to download customer report.
+
+  Note that multiprocessing differs between Windows / Unix environments. A
+  Process or its subclasses in Windows must be serializable with pickle, but
+  that is not possible for AdWordsClient or ReportDownloader. This top-level
+  function is used as a work-around for Windows support.
+
+  Args:
+    process_id: The PID of the process downloading the report.
+    report_download_directory: A string indicating the directory where you
+        would like to download the reports.
+    customer_id: A str AdWords customer ID for which the report is being
+        downloaded.
+    report_definition: A dict containing the report definition to be used.
+
+  Returns:
+    A tuple indicating a boolean success/failure status, and dict request
+    context.
+  """
+  report_downloader = (googleads.adwords.AdWordsClient.LoadFromStorage()
+                       .GetReportDownloader())
+
+  filepath = os.path.join(report_download_directory,
+                          'adgroup_%d.csv' % customer_id)
+  retry_count = 0
+
+  while True:
+    print ('[%d/%d] Loading report for customer ID "%s" into "%s"...'
+           % (process_id, retry_count, customer_id, filepath))
+    try:
+      with open(filepath, 'wb') as handler:
+        report_downloader.DownloadReport(
+            report_definition, output=handler,
+            client_customer_id=customer_id)
+      return (True, {'customerId': customer_id})
+    except googleads.errors.AdWordsReportError as e:
+      if e.code == 500 and retry_count < MAX_RETRIES:
+        time.sleep(retry_count * BACKOFF_FACTOR)
+      else:
+        print ('Report failed for customer ID "%s" with code "%d" after "%d" '
+               'retries.' % (customer_id, e.code, retry_count+1))
+        return (False, {'customerId': customer_id, 'code': e.code,
+                        'message': e.message})
+
+
+class ReportWorker(multiprocessing.Process):
+  """A worker Process used to download reports for a set of customer IDs."""
+
+  def __init__(self, report_download_directory, report_definition,
+               input_queue, success_queue, failure_queue):
+    """Initializes a ReportWorker.
+
+    Args:
+      report_download_directory: A string indicating the directory where you
+        would like to download the reports.
+      report_definition: A dict containing the report definition that you would
+        like to run against all customer IDs in the input_queue.
+      input_queue: A Queue instance containing all of the customer IDs that
+        the report_definition will be run against.
+      success_queue: A Queue instance that the details of successful report
+        downloads will be saved to.
+      failure_queue: A Queue instance that the details of failed report
+        downloads will be saved to.
+    """
+    super(ReportWorker, self).__init__()
+    self.report_download_directory = report_download_directory
+    self.report_definition = report_definition
+    self.input_queue = input_queue
+    self.success_queue = success_queue
+    self.failure_queue = failure_queue
+
+  def run(self):
+    while True:
+      try:
+        customer_id = self.input_queue.get(timeout=0.01)
+      except Empty:
+        break
+      result = _DownloadReport(self.ident, self.report_download_directory,
+                               customer_id, self.report_definition)
+      (self.success_queue if result[0] else self.failure_queue).put(result[1])
+
+
+def GetCustomerIDs(client):
+  """Retrieves all CustomerIds in the account hierarchy.
+
+  Note that your configuration file must specify a client_customer_id belonging
+  to an AdWords manager account.
+
+  Args:
+    client: an AdWordsClient instance.
+  Raises:
+    Exception: if no CustomerIds could be found.
+  Returns:
+    A Queue instance containing all CustomerIds in the account hierarchy.
+  """
+  # For this example, we will use ManagedCustomerService to get all IDs in
+  # hierarchy that do not belong to MCC accounts.
+  managed_customer_service = client.GetService('ManagedCustomerService',
+                                               version='v201802')
+
+  offset = 0
+
+  # Get the account hierarchy for this account.
+  selector = {
+      'fields': ['CustomerId'],
+      'predicates': [{
+          'field': 'CanManageClients',
+          'operator': 'EQUALS',
+          'values': [False]
+      }],
+      'paging': {
+          'startIndex': str(offset),
+          'numberResults': str(PAGE_SIZE)
+      }
+  }
+
+  # Using Queue to balance load between processes.
+  queue = multiprocessing.Queue()
+  more_pages = True
+
+  while more_pages:
+    page = managed_customer_service.get(selector)
+
+    if page and 'entries' in page and page['entries']:
+      for entry in page['entries']:
+        queue.put(entry['customerId'])
+    else:
+      raise Exception('Can\'t retrieve any customer ID.')
+    offset += PAGE_SIZE
+    selector['paging']['startIndex'] = str(offset)
+    more_pages = offset < int(page['totalNumEntries'])
+
+  return queue
 
 
 def main(client, report_download_directory):
@@ -75,7 +210,7 @@ def main(client, report_download_directory):
   print 'Retrieving %d reports with %d processes:' % (queue_size, num_processes)
 
   # Start all the processes.
-  processes = [ReportWorker(client, report_download_directory,
+  processes = [ReportWorker(report_download_directory,
                             report_definition, input_queue, reports_succeeded,
                             reports_failed)
                for _ in range(num_processes)]
@@ -102,127 +237,6 @@ def main(client, report_download_directory):
     print ('\tReport for CustomerId "%d" failed with error code "%s" and '
            'message: %s.' % (failure['customerId'], failure['code'],
                              failure['message']))
-
-
-class ReportWorker(multiprocessing.Process):
-  """A worker Process used to download reports for a set of customer IDs."""
-
-  _FILENAME_TEMPLATE = 'adgroup_%d.csv'
-  _FILEPATH_TEMPLATE = '%s/%s'
-
-  def __init__(self, client, report_download_directory, report_definition,
-               input_queue, success_queue, failure_queue):
-    """Initializes a ReportWorker.
-
-    Args:
-      client: An AdWordsClient instance.
-      report_download_directory: A string indicating the directory where you
-        would like to download the reports.
-      report_definition: A dict containing the report definition that you would
-        like to run against all customer IDs in the input_queue.
-      input_queue: A Queue instance containing all of the customer IDs that
-        the report_definition will be run against.
-      success_queue: A Queue instance that the details of successful report
-        downloads will be saved to.
-      failure_queue: A Queue instance that the details of failed report
-        downloads will be saved to.
-    """
-    super(ReportWorker, self).__init__()
-    self.report_downloader = client.GetReportDownloader(version='v201802')
-    self.report_download_directory = report_download_directory
-    self.report_definition = report_definition
-    self.input_queue = input_queue
-    self.success_queue = success_queue
-    self.failure_queue = failure_queue
-
-  def _DownloadReport(self, customer_id):
-    filepath = self._FILEPATH_TEMPLATE % (self.report_download_directory,
-                                          self._FILENAME_TEMPLATE % customer_id)
-    retry_count = 0
-
-    while True:
-      print ('[%d/%d] Loading report for customer ID "%s" into "%s"...'
-             % (self.ident, retry_count, customer_id, filepath))
-      try:
-        with open(filepath, 'wb') as handler:
-          self.report_downloader.DownloadReport(
-              self.report_definition, output=handler,
-              client_customer_id=customer_id)
-        return (True, {'customerId': customer_id})
-      except googleads.errors.AdWordsReportError, e:
-        if e.code == 500 and retry_count < MAX_RETRIES:
-          time.sleep(retry_count * BACKOFF_FACTOR)
-        else:
-          print ('Report failed for customer ID "%s" with code "%d" after "%d" '
-                 'retries.' % (customer_id, e.code, retry_count+1))
-          return (False, {'customerId': customer_id, 'code': e.code,
-                          'message': e.message})
-      except Exception, e:
-        print 'Report failed for customer ID "%s".' % customer_id
-        print 'e: %s' % e.__class__
-        return (False, {'customerId': customer_id, 'code': None,
-                        'message': e.message})
-
-  def run(self):
-    while True:
-      try:
-        customer_id = self.input_queue.get(timeout=0.01)
-      except Empty:
-        break
-      result = self._DownloadReport(customer_id)
-      (self.success_queue if result[0] else self.failure_queue).put(result[1])
-
-
-def GetCustomerIDs(client):
-  """Retrieves all CustomerIds in the account hierarchy.
-
-  Note that your configuration file must specify a client_customer_id belonging
-  to an AdWords manager account.
-
-  Args:
-    client: an AdWordsClient instance.
-
-  Raises:
-    Exception: if no CustomerIds could be found.
-
-  Returns:
-    A Queue instance containing all CustomerIds in the account hierarchy.
-  """
-  # For this example, we will use ManagedCustomerService to get all IDs in
-  # hierarchy that do not belong to MCC accounts.
-  managed_customer_service = client.GetService('ManagedCustomerService',
-                                               version='v201802')
-
-  offset = 0
-
-  # Get the account hierarchy for this account.
-  selector = {'fields': ['CustomerId'],
-              'predicates': [{
-                  'field': 'CanManageClients',
-                  'operator': 'EQUALS',
-                  'values': [False]
-              }],
-              'paging': {
-                  'startIndex': str(offset),
-                  'numberResults': str(PAGE_SIZE)}}
-
-  # Using Queue to balance load between processes.
-  queue = multiprocessing.Queue()
-  more_pages = True
-
-  while more_pages:
-    page = managed_customer_service.get(selector)
-
-    if page and 'entries' in page and page['entries']:
-      for entry in page['entries']:
-        queue.put(entry['customerId'])
-    else:
-      raise Exception('Can\'t retrieve any customer ID.')
-    offset += PAGE_SIZE
-    selector['paging']['startIndex'] = str(offset)
-    more_pages = offset < int(page['totalNumEntries'])
-
-  return queue
 
 
 if __name__ == '__main__':

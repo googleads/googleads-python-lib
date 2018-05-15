@@ -156,7 +156,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e',
                             'proxy_config': proxy_config.return_value,
-                            googleads.common.ENABLE_COMPRESSION_KEY: False},
+                            googleads.common.ENABLE_COMPRESSION_KEY: False,
+                            googleads.common.CUSTOM_HEADERS_KEY: None},
                            rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
@@ -165,7 +166,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     yaml_fname = self._CreateYamlFile(
         {'one': {'needed': 'd', 'keys': 'e', 'other': 'f'},
          googleads.common._LOGGING_KEY: logging_config,
-         googleads.common.SOAP_IMPLEMENTATION_KEY: 'suds'},
+         googleads.common.SOAP_IMPLEMENTATION_KEY: 'suds',
+         googleads.common.CUSTOM_HEADERS_KEY: {'X-My-Header': 'abc'}},
         'one', self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
@@ -184,7 +186,9 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                               'needed': 'd', 'keys': 'e', 'other': 'f',
                               'proxy_config': proxy_config.return_value,
                               googleads.common.ENABLE_COMPRESSION_KEY: False,
-                              googleads.common.SOAP_IMPLEMENTATION_KEY: 'suds'},
+                              googleads.common.SOAP_IMPLEMENTATION_KEY: 'suds',
+                              googleads.common.CUSTOM_HEADERS_KEY: {
+                                  'X-My-Header': 'abc'}},
                              rval)
             self.assertTrue(googleads.common._utility_registry._enabled)
 
@@ -212,7 +216,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         self.assertEqual({'oauth2_client': mock_client.return_value,
                           'proxy_config': proxy_config.return_value,
                           'needed': 'd', 'keys': 'e',
-                          googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+                          googleads.common.ENABLE_COMPRESSION_KEY: False,
+                          googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
         self.assertTrue(googleads.common._utility_registry._enabled)
 
   def _CreateYamlDoc(self, data, insert_oauth2_key=None, oauth_dict=None):
@@ -459,7 +464,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
-                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+                      googleads.common.ENABLE_COMPRESSION_KEY: False,
+                      googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
 
   def testLoadFromString_passesWithHTTPAndHTTPSProxy(self):
     yaml_doc = self._CreateYamlDoc(
@@ -482,7 +488,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
-                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+                      googleads.common.ENABLE_COMPRESSION_KEY: False,
+                      googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
 
   def testHTTPSProxyExtendsSSLSockTimeout(self):
     proxy_config = mock.MagicMock()
@@ -510,7 +517,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
-                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+                      googleads.common.ENABLE_COMPRESSION_KEY: False,
+                      googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
 
   def testLoadFromString_passesWithHTTPProxyLogin(self):
     yaml_doc = self._CreateYamlDoc(
@@ -531,7 +539,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
-                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+                      googleads.common.ENABLE_COMPRESSION_KEY: False,
+                      googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
 
   def testLoadFromString_passesWithHTTPSProxy(self):
     yaml_doc = self._CreateYamlDoc(
@@ -553,7 +562,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
-                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+                      googleads.common.ENABLE_COMPRESSION_KEY: False,
+                      googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
 
   def testLoadFromString_passesWithHTTPSProxyLogin(self):
     yaml_doc = self._CreateYamlDoc(
@@ -575,7 +585,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         'a', 'b', 'c', proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
-                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+                      googleads.common.ENABLE_COMPRESSION_KEY: False,
+                      googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
 
   def testLoadFromString_missingRequiredKeys(self):
     with mock.patch('googleads.common.open', self.fake_open, create=True):
@@ -619,7 +630,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e',
                             'proxy_config': proxy_config.return_value,
-                            googleads.common.ENABLE_COMPRESSION_KEY: False},
+                            googleads.common.ENABLE_COMPRESSION_KEY: False,
+                            googleads.common.CUSTOM_HEADERS_KEY: None},
                            rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
@@ -641,7 +653,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e', 'other': 'f',
                             'proxy_config': proxy_config.return_value,
-                            googleads.common.ENABLE_COMPRESSION_KEY: False},
+                            googleads.common.ENABLE_COMPRESSION_KEY: False,
+                            googleads.common.CUSTOM_HEADERS_KEY: None},
                            rval)
           self.assertTrue(googleads.common._utility_registry._enabled)
 
@@ -668,7 +681,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
                       'needed': 'd', 'keys': 'e',
-                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+                      googleads.common.ENABLE_COMPRESSION_KEY: False,
+                      googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
     self.assertTrue(googleads.common._utility_registry._enabled)
 
     # The optional key is present.
@@ -692,7 +706,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
                       'needed': 'd', 'keys': 'e', 'other': 'f',
-                      googleads.common.ENABLE_COMPRESSION_KEY: False}, rval)
+                      googleads.common.ENABLE_COMPRESSION_KEY: False,
+                      googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
     self.assertTrue(googleads.common._utility_registry._enabled)
 
 
@@ -716,7 +731,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
           self.assertEqual({'oauth2_client': mock_client.return_value,
                             'needed': 'd', 'keys': 'e',
                             'proxy_config': proxy_config.return_value,
-                            googleads.common.ENABLE_COMPRESSION_KEY: False},
+                            googleads.common.ENABLE_COMPRESSION_KEY: False,
+                            googleads.common.CUSTOM_HEADERS_KEY: None},
                            rval)
           self.assertFalse(googleads.common._utility_registry._enabled)
 
@@ -739,7 +755,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                 'oauth2_client': mock_client.return_value,
                 'Im': 'here',
                 'proxy_config': proxy_config.return_value,
-                googleads.common.ENABLE_COMPRESSION_KEY: False
+                googleads.common.ENABLE_COMPRESSION_KEY: False,
+                googleads.common.CUSTOM_HEADERS_KEY: None
             }, rval)
         self.assertTrue(googleads.common._utility_registry._enabled)
         self.assertEqual(len(captured_warnings), 1)
@@ -1016,10 +1033,15 @@ class ZeepServiceProxyTest(unittest.TestCase):
     header_handler = mock.Mock()
     packer = mock.Mock()
 
-    with mock_zeep_client(), self.assertRaises(ValueError):
+    with mock_zeep_client(), \
+        self.assertRaises(googleads.errors.GoogleAdsValueError):
       googleads.common.ZeepServiceProxy(
           'http://abc', header_handler, packer,
           self.empty_proxy_config, self.timeout_100, cache='not_a_zeep_cache')
+
+  def testSchemaHelperBadCacheType(self):
+    with self.assertRaises(googleads.errors.GoogleAdsValueError):
+      googleads.common.ZeepSchemaHelper(None, None, None, None, 'not_zeep')
 
   def testAllowsNoCache(self):
     header_handler = mock.Mock()
@@ -1346,9 +1368,14 @@ class SudsServiceProxyTest(unittest.TestCase):
           soapheaders='soap', headers='http')
 
   def testBadCache(self):
-    with self.mock_suds_api(), self.assertRaises(ValueError):
+    with self.mock_suds_api(), \
+        self.assertRaises(googleads.errors.GoogleAdsValueError):
       googleads.common.SudsServiceProxy(
           'https://endpoint', None, None, None, 1000, 'not_a_suds_cache')
+
+  def testSchemaHelperBadCache(self):
+    with self.assertRaises(googleads.errors.GoogleAdsValueError):
+      googleads.common.SudsSchemaHelper(None, None, None, None, 'not_cache')
 
 
 class LoggingMessagePluginTest(unittest.TestCase):

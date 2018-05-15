@@ -26,14 +26,9 @@ section of our README.
 """
 
 
-import logging
 import StringIO
 import sys
 from googleads import adwords
-
-
-logging.basicConfig(level=logging.INFO)
-logging.getLogger('suds.transport').setLevel(logging.DEBUG)
 
 # The chunk size used for the report download.
 CHUNK_SIZE = 16 * 1024

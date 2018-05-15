@@ -21,9 +21,9 @@ import time
 
 from demo import VERSION
 from googleads.adwords import AdWordsClient
+from googleads.common import ZeepServiceProxy
 from googleads.errors import GoogleAdsError
 from googleads.oauth2 import GoogleRefreshTokenClient
-from suds.cache import NoCache
 
 
 class APIHandler(object):
@@ -47,7 +47,7 @@ class APIHandler(object):
                                            refresh_token)
     self.client = AdWordsClient(dev_token, credentials, self._USER_AGENT,
                                 client_customer_id=manager_account_id,
-                                cache=NoCache())
+                                cache=ZeepServiceProxy.NO_CACHE)
 
   def AddAdGroup(self, client_customer_id, campaign_id, name, status):
     """Create a new ad group.
