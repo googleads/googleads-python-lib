@@ -41,12 +41,9 @@ def main(client):
               'xsi_type': 'AdWordsConversionTracker',
               'name': 'Mars cruise customers #%s' % uuid.uuid4(),
               'category': 'DEFAULT',
-              'textFormat': 'HIDDEN',
               # Optional fields.
               'status': 'ENABLED',
               'viewthroughLookbackWindow': '15',
-              'conversionPageLanguage': 'en',
-              'backgroundColor': '#0000FF',
               'defaultRevenueValue': '23.41',
               'alwaysUseDefaultRevenueValue': 'true'
           }
@@ -57,10 +54,9 @@ def main(client):
   # Display results.
   for conversion_tracker in conversion_trackers['value']:
     print ('Conversion tracker with id "%s", name "%s", status "%s" '
-           'and category "%s" and snippet \n"%s"\n was added.\n' %
+           'and category "%s"\n was added.\n' %
            (conversion_tracker['id'], conversion_tracker['name'],
-            conversion_tracker['status'], conversion_tracker['category'],
-            conversion_tracker['snippet']))
+            conversion_tracker['status'], conversion_tracker['category']))
 
 
 if __name__ == '__main__':

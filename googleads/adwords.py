@@ -143,6 +143,62 @@ _SERVICE_MAP = {
         'TrafficEstimatorService': 'o',
         'TrialAsyncErrorService': 'cm',
         'TrialService': 'cm'
+    },
+    'v201806': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'AssetService': 'cm',
+        'BatchJobService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignBidModifierService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignGroupPerformanceTargetService': 'cm',
+        'CampaignGroupService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomAffinityService': 'rm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerNegativeCriterionService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'DraftAsyncErrorService': 'cm',
+        'DraftService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedItemTargetService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'OfflineCallConversionFeedService': 'cm',
+        'OfflineConversionAdjustmentFeedService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'OfflineDataUploadService': 'rm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'TrialAsyncErrorService': 'cm',
+        'TrialService': 'cm'
     }
 }
 
@@ -899,7 +955,7 @@ class BatchJobHelper(object):
 
       Returns:
         An element containing the raw XML of the request to the given service
-        that would execute the given operations.
+        that would execute the given operations
 
       Raises:
         KeyError: If the given operation type is not supported.

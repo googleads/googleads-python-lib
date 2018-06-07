@@ -78,7 +78,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '12.0.0'
+VERSION = '12.1.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
@@ -1260,45 +1260,92 @@ class ZeepServiceProxy(GoogleSoapService):
     if self._packer:
       data = self._packer.Pack(data)
 
-    if isinstance(data, dict):  # Dict so it's a complex type.
-      xsi_type = data.get('xsi_type')
-      if xsi_type:  # This has a type override so look it up.
-        elem_type = None
-        last_exception = None
-        for ns_prefix in self.zeep_client.wsdl.types.prefix_map.values():
-          try:
-            elem_type = self.zeep_client.get_type(
-                '{%s}%s' % (ns_prefix, xsi_type))
-          except zeep.exceptions.LookupError as e:
-            last_exception = e
-            continue
-          break
-        if not elem_type:
-          raise last_exception
+    if isinstance(data, dict):  # Instantiate from simple Python dict
+      # See if there is a manually specified derived type.
+      type_override = data.get('xsi_type')
+      if type_override:
+        elem_type = self._DiscoverElementTypeFromLocalname(type_override)
       else:
         elem_type = elem.type
-      elem_arguments = dict(elem_type.elements)
-      # A post order traversal of the original data, need to instantiate from
-      # the bottom up.
-      instantiated_arguments = {
-          k: self._PackArgumentsHelper(elem_arguments[k], v, set_type_attrs)
-          for k, v in data.iteritems() if k != 'xsi_type'}
-      if set_type_attrs:
-        found_type_attr = next((e_name for e_name, _ in elem_type.elements
-                                if e_name.endswith('.Type')), None)
-        if found_type_attr:
-          instantiated_arguments[found_type_attr] = xsi_type
-      # Now go back through the tree instantiating SOAP types as we go.
-      return elem_type(**instantiated_arguments)
+
+      data_formatted = data.iteritems()
+      packed_result = self._CreateComplexTypeFromData(
+          elem_type, type_override is not None, data_formatted, set_type_attrs)
+    elif isinstance(data, zeep.xsd.CompoundValue):
+      # Here the data is already a SOAP element but we still need to look
+      # through it in case it has been edited with Python dicts.
+      elem_type = data._xsd_type
+      data_formatted = zip(dir(data), [data[k] for k in dir(data)])
+      packed_result = self._CreateComplexTypeFromData(
+          elem_type, False, data_formatted, set_type_attrs)
     elif isinstance(data, (list, tuple)):
-      return [self._PackArgumentsHelper(elem, item, set_type_attrs)
-              for item in data]
+      packed_result = [self._PackArgumentsHelper(elem, item, set_type_attrs)
+                       for item in data]
     else:
       if elem.type.name == 'base64Binary' and self._IsBase64(data):
         _logger.warn('Passing data to base64 field %s that may '
                      'already be encoded. Do not pre-encode base64 '
                      'fields with zeep.', elem.name)
-      return data
+      packed_result = data
+
+    return packed_result
+
+  def _DiscoverElementTypeFromLocalname(self, type_localname):
+    """Searches all namespaces for a type by name.
+
+    Args:
+      type_localname: The name of the type.
+
+    Returns:
+      A fully qualified SOAP type with the specified name.
+
+    Raises:
+      A zeep.exceptions.LookupError if the type cannot be found in any
+        namespace.
+    """
+    elem_type = None
+    last_exception = None
+    for ns_prefix in self.zeep_client.wsdl.types.prefix_map.values():
+      try:
+        elem_type = self.zeep_client.get_type(
+            '{%s}%s' % (ns_prefix, type_localname))
+      except zeep.exceptions.LookupError as e:
+        last_exception = e
+        continue
+      break
+    if not elem_type:
+      raise last_exception
+    return elem_type
+
+  def _CreateComplexTypeFromData(
+      self, elem_type, type_is_override, data, set_type_attrs):
+    """Initialize a SOAP element with specific data.
+
+    Args:
+      elem_type: The type of the element to create.
+      type_is_override: A boolean specifying if the type is being overridden.
+      data: The data to hydrate the type with.
+      set_type_attrs: A boolean indicating whether or not attributes that end
+        in .Type should be set. This is only necessary for batch job service.
+
+    Returns:
+      An fully initialized SOAP element.
+    """
+    elem_arguments = dict(elem_type.elements)
+
+    # A post order traversal of the original data, need to instantiate from
+    # the bottom up.
+    instantiated_arguments = {
+        k: self._PackArgumentsHelper(elem_arguments[k], v, set_type_attrs)
+        for k, v in data if k != 'xsi_type'}
+    if set_type_attrs:
+      found_type_attr = next((e_name for e_name, _ in elem_type.elements
+                              if e_name.endswith('.Type')), None)
+      if found_type_attr and type_is_override:
+        instantiated_arguments[found_type_attr] = elem_type.qname.localname
+    # Now go back through the tree instantiating SOAP types as we go.
+    return elem_type(**instantiated_arguments)
+
 
   def _GetZeepFormattedSOAPHeaders(self):
     """Returns a dict with SOAP headers in the right format for zeep."""

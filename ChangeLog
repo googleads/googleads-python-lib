@@ -1,3 +1,9 @@
+12.1.0 -- 06/06/18
+* Added support and examples for AdWords v201806.
+* Resolved issues:
+- Issue 282: https://github.com/googleads/googleads-python-lib/issues/282
+- Issue 288: https://github.com/googleads/googleads-python-lib/issues/288
+
 12.0.0 -- 05/15/18
 * Added support and examples for DFP v201805.
 * Removed support for DFP v201705.

@@ -1136,6 +1136,26 @@ class TestZeepArgumentPacking(unittest.TestCase):
     number_type = self.zeep_client.zeep_client.get_type('ns0:NumberValue')
     self.assertEqual(type(number_value), number_type._value_class)
 
+  def testPackArgumentsLooksThroughSoapElements(self):
+    map_type = self.zeep_client.zeep_client.get_type('ns0:String_ValueMapEntry')
+    string_type = self.zeep_client.zeep_client.get_type('ns0:TextValue')
+
+    element = self.zeep_client.zeep_client.get_type('ns0:ReportQuery')()
+    element.statement = self.zeep_client.zeep_client.get_type('ns0:Statement')()
+    element.statement.values = [{
+        'key': 'Key1',
+        'value': {
+            'xsi_type': 'NumberValue',
+            'value': 10
+        }
+    }, map_type(key='Key2', value=string_type(value='abc'))]
+
+    result = self.zeep_client._PackArguments(
+        'runReportJob', [{'reportQuery': element}])
+    result_values = result[0].reportQuery.statement.values
+    self.assertIsInstance(result_values[0], zeep.xsd.CompoundValue)
+    self.assertIsInstance(result_values[1], zeep.xsd.CompoundValue)
+
   def testPackArgumentsWithCustomPacker(self):
     class CustomPacker(googleads.common.SoapPacker):
 
