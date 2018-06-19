@@ -51,7 +51,7 @@ def main(client):
     page = (reconciliation_line_item_report_service
             .getReconciliationLineItemReportsByStatement(
                 statement.ToStatement()))
-    if 'results' in page:
+    if 'results' in page and len(page['results']):
       result_set_size += page['totalResultSetSize']
       # Iterate over individual results in the page.
       for line_item_report in page['results']:

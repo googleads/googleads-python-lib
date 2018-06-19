@@ -33,7 +33,7 @@ def main(client):
   while True:
     response = creative_set_service.getCreativeSetsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for creative_set in response['results']:
         # Print out some information for each creative set.
         print('Creative set with ID "%d" and name "%s" was found.\n' %

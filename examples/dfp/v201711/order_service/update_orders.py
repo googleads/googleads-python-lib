@@ -39,7 +39,7 @@ def main(client, order_id):
   # Get orders by statement.
   response = order_service.getOrdersByStatement(statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each local order object by changing its notes.
     updated_orders = []
     for order in response['results']:

@@ -33,7 +33,7 @@ def main(client):
   while True:
     response = native_style_service.getNativeStylesByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for native_style in response['results']:
         # Print out some information for each native style.
         print('Native style with ID "%d" and name "%s" was found.\n' %

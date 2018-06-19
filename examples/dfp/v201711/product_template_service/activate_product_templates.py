@@ -45,7 +45,7 @@ def main(client, product_template_id):
   while True:
     response = product_template_service.getProductTemplatesByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for product_template in response['results']:
         print ('Product template with id "%s" and name "%s" will be '
                'activated.' % (product_template['id'],

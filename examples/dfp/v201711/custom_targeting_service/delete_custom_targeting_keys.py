@@ -48,7 +48,7 @@ def main(client, key_name):
   while True:
     response = custom_targeting_service.getCustomTargetingKeysByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       key_ids = [str(key['id']) for key in response['results']]
       action = {'xsi_type': 'DeleteCustomTargetingKeys'}
       key_query = 'WHERE id IN (%s)' % ', '.join(key_ids)

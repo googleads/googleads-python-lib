@@ -34,7 +34,7 @@ def main(client):
   while True:
     response = activity_group_service.getActivityGroupsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for activity_group in response['results']:
         # Print out some information for each activity group.
         print('Activity group with ID "%d" and name "%s" was found.\n' %

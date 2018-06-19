@@ -48,7 +48,7 @@ def main(client, activity_group_id, advertiser_company_id):
   # Get activity groups by statement.
   response = activity_group_service.getActivityGroupsByStatement(
       statement.ToStatement())
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_activity_groups = []
     for activity_group in response['results']:
       activity_group['companyIds'].append(advertiser_company_id)

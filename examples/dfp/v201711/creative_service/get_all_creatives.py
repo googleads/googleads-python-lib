@@ -31,7 +31,7 @@ def main(client):
   # through until all creatives have been retrieved.
   while True:
     response = creative_service.getCreativesByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for creative in response['results']:
         # Print out some information for each creative.
         print('Creative with ID "%d" and name "%s" was found.\n' %

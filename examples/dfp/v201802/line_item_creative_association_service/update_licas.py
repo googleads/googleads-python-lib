@@ -38,7 +38,7 @@ def main(client):
     response = lica_service.getLineItemCreativeAssociationsByStatement(
         statement.ToStatement())
 
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       # Update each local LICA object by changing its destination URL.
       updated_licas = []
       for lica in response['results']:

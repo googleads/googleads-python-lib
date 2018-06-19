@@ -33,7 +33,7 @@ def main(client):
   while True:
     response = placement_service.getPlacementsByStatement(statement.ToStatement(
     ))
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for placement in response['results']:
         # Print out some information for each placement.
         print('Placement with ID "%d" and name "%s" was found.\n' %

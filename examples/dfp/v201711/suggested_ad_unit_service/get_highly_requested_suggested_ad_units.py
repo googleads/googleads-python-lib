@@ -36,7 +36,7 @@ def main(client, num_requests):
   while True:
     response = suggested_ad_unit_service.getSuggestedAdUnitsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for suggested_ad_unit in response['results']:
         # Print out some information for each suggested ad unit.
         print(

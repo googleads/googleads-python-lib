@@ -42,7 +42,7 @@ def main(client, exchange_rate_id):
   response = exchange_rate_service.getExchangeRatesByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     exchange_rate = response['results'][0]
 
     # Update the exchange rate value to 1.5.

@@ -32,7 +32,7 @@ def main(client):
   while True:
     response = activity_service.getActivitiesByStatement(statement.ToStatement(
     ))
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for activity in response['results']:
         # Print out some information for each activity.
         print('Activity with ID "%d" and name "%s" was found.\n' %

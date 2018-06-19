@@ -31,7 +31,7 @@ def main(client):
   # through until all packages have been retrieved.
   while True:
     response = pkg_service.getPackagesByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for pkg in response['results']:
         # Print out some information for each package.
         print(

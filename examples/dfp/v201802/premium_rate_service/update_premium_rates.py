@@ -43,7 +43,7 @@ def main(client, premium_rate_id):
   response = premium_rate_service.getPremiumRatesByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_premium_rates = []
     for premium_rate in response['results']:
       # Create a flat fee based premium rate value with a 10% increase.

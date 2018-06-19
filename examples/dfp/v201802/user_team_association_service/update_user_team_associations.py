@@ -48,7 +48,7 @@ def main(client, user_id):
   response = user_team_association_service.getUserTeamAssociationsByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_user_team_associations = []
     # Update each local user team association to read only access.
     for user_team_association in response['results']:

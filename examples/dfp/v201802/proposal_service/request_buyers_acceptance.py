@@ -37,7 +37,7 @@ def main(client, proposal_id):
   # Get proposals by statement.
   while True:
     response = proposal_service.getProposalsByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       # Display results.
       for proposal in response['results']:
         print ('Programmatic proposal with id "%s", name "%s", and status '

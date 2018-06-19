@@ -34,7 +34,7 @@ def main(client):
   while True:
     response = product_template_service.getProductTemplatesByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for product_template in response['results']:
         # Print out some information for each product template.
         print('Product template with ID "%d" and name "%s" was found.\n' %

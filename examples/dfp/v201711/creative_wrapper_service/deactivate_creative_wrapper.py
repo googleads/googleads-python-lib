@@ -47,7 +47,7 @@ def main(client, label_id):
   while True:
     response = creative_wrapper_service.getCreativeWrappersByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       # Display results.
       for creative_wrapper in response['results']:
         print ('Creative wrapper with ID "%s" applying to label "%s" with '

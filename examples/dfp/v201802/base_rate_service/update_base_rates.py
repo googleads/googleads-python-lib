@@ -42,7 +42,7 @@ def main(client, base_rate_id):
   response = base_rate_service.getBaseRatesByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each local base rate object by changing its value to $3 USD.
     new_rate = {
         'currencyCode': 'USD',

@@ -31,7 +31,7 @@ def main(client):
   # through until all contacts have been retrieved.
   while True:
     response = contact_service.getContactsByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for contact in response['results']:
         # Print out some information for each contact.
         print('Contact with ID "%d" and name "%s" was found.\n' %

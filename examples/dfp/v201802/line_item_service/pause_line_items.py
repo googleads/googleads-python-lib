@@ -44,7 +44,7 @@ def main(client):
   # Iterate over paged results from the statement.
   while should_continue:
     page = line_item_service.getLineItemsByStatement(statement.ToStatement())
-    if 'results' in page:
+    if 'results' in page and len(page['results']):
       result_set_size = page['totalResultSetSize']
       # Iterate over individual results in the page.
       for line_item in page['results']:

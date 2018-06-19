@@ -44,7 +44,7 @@ def main(client, order_id):
   while True:
     response = line_item_service.getLineItemsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       # Get custom field IDs from the line items of an order.
       for line_item in response['results']:
         if 'customFieldValues' in line_item:

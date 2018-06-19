@@ -48,7 +48,7 @@ def main(client, creative_wrapper_id):
   response = creative_wrapper_service.getCreativeWrappersByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_creative_wrappers = []
     for creative_wrapper in response['results']:
       creative_wrapper['ordering'] = 'OUTER'

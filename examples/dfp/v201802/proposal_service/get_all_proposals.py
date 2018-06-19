@@ -31,7 +31,7 @@ def main(client):
   # through until all proposals have been retrieved.
   while True:
     response = proposal_service.getProposalsByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for proposal in response['results']:
         # Print out some information for each proposal.
         print('Proposal with ID "%d" and name "%s" was found.\n' %

@@ -42,7 +42,7 @@ def main(client, key_id):
       statement.ToStatement())
 
   # Update each local custom targeting key object by changing its display name.
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_keys = []
     for key in response['results']:
       if not key['displayName']:

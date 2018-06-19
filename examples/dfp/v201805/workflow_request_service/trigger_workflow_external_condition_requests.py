@@ -46,7 +46,7 @@ def main(client, proposal_id):
   while True:
     response = workflow_request_service.getWorkflowRequestsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       # Display results.
       for workflow_request in response['results']:
         print ('Workflow external condition request with id "%s" for %s '

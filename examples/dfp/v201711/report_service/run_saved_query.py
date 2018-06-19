@@ -42,7 +42,7 @@ def main(client, saved_query_id):
   response = report_service.getSavedQueriesByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     saved_query = response['results'][0]
 
     if saved_query['isCompatibleWithApiVersion']:

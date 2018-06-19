@@ -54,7 +54,7 @@ def main(client, key_id):
   while True:
     response = custom_targeting_service.getCustomTargetingValuesByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       value_ids = [value['id'] for value in response['results']]
       action = {'xsi_type': 'DeleteCustomTargetingValues'}
       value_query = ('WHERE customTargetingKeyId = :keyId '

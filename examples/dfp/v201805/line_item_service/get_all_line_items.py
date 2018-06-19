@@ -32,7 +32,7 @@ def main(client):
   while True:
     response = line_item_service.getLineItemsByStatement(statement.ToStatement(
     ))
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for line_item in response['results']:
         # Print out some information for each line item.
         print('Line item with ID "%d" and name "%s" was found.\n' %

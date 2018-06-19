@@ -43,7 +43,7 @@ def main(client, audience_segment_id):
   response = audience_segment_service.getAudienceSegmentsByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_audience_segments = []
     for audience_segment in response['results']:
       print ('Audience segment with id "%s" and name "%s" will be updated.'

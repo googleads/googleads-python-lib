@@ -31,7 +31,7 @@ def main(client):
   # through until all users have been retrieved.
   while True:
     response = user_service.getUsersByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for user in response['results']:
         # Print out some information for each user.
         print('User with ID "%d" and name "%s" was found.\n' % (user['id'],

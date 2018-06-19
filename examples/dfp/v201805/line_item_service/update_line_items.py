@@ -44,7 +44,7 @@ def main(client, order_id):
   response = line_item_service.getLineItemsByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each local line item by changing its delivery rate type.
     updated_line_items = []
     for line_item in response['results']:

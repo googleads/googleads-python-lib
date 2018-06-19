@@ -33,7 +33,7 @@ def main(client):
   while True:
     response = lica_service.getLineItemCreativeAssociationsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for lica in response['results']:
         # Print out some information for each line item creative association.
         if 'creativeSetId' in lica:

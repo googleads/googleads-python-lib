@@ -43,7 +43,7 @@ def main(client, product_template_id):
   response = product_template_service.getProductTemplatesByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each local product template object by appending a new geo-target.
     for product_template in response['results']:
       # Create geo-targeting for Canada to append.

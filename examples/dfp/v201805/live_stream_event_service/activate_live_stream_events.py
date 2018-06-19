@@ -42,7 +42,7 @@ def main(client, live_stream_event_id):
   while True:
     response = live_stream_event_service.getLiveStreamEventsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for live_stream_event in response['results']:
         print('live stream event with id "%s" and name "%s" will be activated.'
               % (live_stream_event['id'], live_stream_event['name']))

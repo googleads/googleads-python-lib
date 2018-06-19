@@ -47,7 +47,7 @@ def main(client, order_id):
   while True:
     response = line_item_service.getLineItemsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for line_item in response['results']:
         print ('Line item with id "%s", belonging to order id "%s", and '
                'name "%s" will be activated.' %

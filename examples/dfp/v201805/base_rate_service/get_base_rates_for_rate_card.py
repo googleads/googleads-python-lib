@@ -35,7 +35,7 @@ def main(client, rate_card_id):
   while True:
     response = base_rate_service.getBaseRatesByStatement(statement.ToStatement(
     ))
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for base_rate in response['results']:
         # Print out some information for each base rate.
         print('Base rate with ID "%d", type "%s", and rate card ID "%d" was '

@@ -48,7 +48,7 @@ def main(client, creative_set_id, companion_creative_id):
   response = creative_set_service.getCreativeSetsByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_created_sets = []
     for creative_set in response['results']:
       creative_set['companionCreativeIds'].append(companion_creative_id)

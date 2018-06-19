@@ -31,7 +31,7 @@ def main(client):
   # through until all teams have been retrieved.
   while True:
     response = team_service.getTeamsByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for team in response['results']:
         # Print out some information for each team.
         print('Team with ID "%d" and name "%s" was found.\n' % (team['id'],

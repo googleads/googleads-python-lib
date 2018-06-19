@@ -31,7 +31,7 @@ def main(client):
   # through until all ad units have been retrieved.
   while True:
     response = ad_unit_service.getAdUnitsByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for ad_unit in response['results']:
         # Print out some information for each ad unit.
         print('Ad unit with ID "%s" and name "%s" was found.\n' %

@@ -39,7 +39,7 @@ def main(client):
   # Get labels by statement.
   while True:
     response = label_service.getLabelsByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for label in response['results']:
         print ('Label with id "%s" and name "%s" will be '
                'deactivated.' % (label['id'], label['name']))

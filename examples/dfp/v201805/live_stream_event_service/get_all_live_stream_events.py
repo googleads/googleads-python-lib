@@ -34,7 +34,7 @@ def main(client):
   while True:
     response = live_stream_event_service.getLiveStreamEventsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for live_stream_event in response['results']:
         # Print out some information for each live stream event.
         print('live stream event with id "%d" and name "%s" was found.' %

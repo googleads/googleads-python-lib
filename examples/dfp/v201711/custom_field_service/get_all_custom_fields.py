@@ -33,7 +33,7 @@ def main(client):
   while True:
     response = custom_field_service.getCustomFieldsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for custom_field in response['results']:
         # Print out some information for each custom field.
         print('Custom field with ID "%d" and name "%s" was found.\n' %

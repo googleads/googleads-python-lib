@@ -39,7 +39,7 @@ def main(client, reconciliation_report_id):
         reconciliation_order_report_service
         .getReconciliationOrderReportsByStatement(
             statement.ToStatement()))
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for reconciliation_order_report in response['results']:
         # Print out some information for each reconciliation order report.
         print('Reconciliation order report with ID "%d" and status "%s" was '

@@ -46,7 +46,7 @@ def main(client, activity_id):
   # Get activities by statement.
   response = activity_service.getActivitiesByStatement(
       statement.ToStatement())
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_activities = []
     for activity in response['results']:
       # Update the expected URL.

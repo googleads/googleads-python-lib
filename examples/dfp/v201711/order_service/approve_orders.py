@@ -41,7 +41,7 @@ def main(client):
   # Get orders by statement.
   while True:
     response = order_service.getOrdersByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       # Display results.
       for order in response['results']:
         print ('Order with id "%s", name "%s", and status "%s" will be '

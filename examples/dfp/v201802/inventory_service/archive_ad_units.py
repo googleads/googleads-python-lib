@@ -49,7 +49,7 @@ def main(client, parent_id):
   while True:
     response = inventory_service.getAdUnitsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for ad_unit in response['results']:
         print ('Ad unit with ID "%s" and name "%s" will be archived.'
                % (ad_unit['id'], ad_unit['name']))

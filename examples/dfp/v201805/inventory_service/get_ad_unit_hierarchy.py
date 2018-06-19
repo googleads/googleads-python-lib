@@ -66,7 +66,7 @@ def get_all_ad_units(inventory_service):
   found_ad_units = []
   while keep_iterating:
     page = inventory_service.getAdUnitsByStatement(statement.ToStatement())
-    if 'results' in page:
+    if 'results' in page and len(page['results']):
       total_results = page['totalResultSetSize']
       found_ad_units.extend(page['results'])
 

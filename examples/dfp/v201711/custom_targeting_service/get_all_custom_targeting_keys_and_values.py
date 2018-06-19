@@ -34,7 +34,7 @@ def main(client):
   while True:
     response = custom_targeting_service.getCustomTargetingKeysByStatement(
         targeting_key_statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       all_keys.extend(response['results'])
       targeting_key_statement.offset += targeting_key_statement.limit
     else:
@@ -51,7 +51,7 @@ def main(client):
     while True:
       response = custom_targeting_service.getCustomTargetingValuesByStatement(
           statement.ToStatement())
-      if 'results' in response:
+      if 'results' in response and len(response['results']):
         for custom_targeting_value in response['results']:
           # Print out some information for each custom targeting value.
           print('Custom targeting value with ID "%d", name "%s", display name '

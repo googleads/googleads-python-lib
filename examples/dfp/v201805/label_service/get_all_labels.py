@@ -31,7 +31,7 @@ def main(client):
   # through until all labels have been retrieved.
   while True:
     response = label_service.getLabelsByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for label in response['results']:
         # Print out some information for each label.
         print('Label with ID "%d" and name "%s" was found.\n' % (label['id'],

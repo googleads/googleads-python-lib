@@ -44,7 +44,7 @@ def main(client, live_stream_event_id):
   # Set adTags to be updated.
   new_ad_tags = ['INSERT_NEW_AD_TAGS_HERE']
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each local live stream event by changing its attributes.
     updated_live_stream_events = []
     for live_stream_event in response['results']:

@@ -32,7 +32,7 @@ def main(client):
   while True:
     response = rate_card_service.getRateCardsByStatement(statement.ToStatement(
     ))
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for rate_card in response['results']:
         # Print out some information for each rate card.
         print('Rate card with ID "%d", name "%s", and currency code "%s" was '

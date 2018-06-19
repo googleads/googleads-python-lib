@@ -44,7 +44,7 @@ def main(client, proposal_line_item_id):
   response = proposal_line_item_service.getProposalLineItemsByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each the proposal line item's notes field.
     proposal_line_item = response['results'][0]
     proposal_line_item['internalNotes'] = 'Proposal line is ready to submit.'

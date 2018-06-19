@@ -39,7 +39,7 @@ def main(client, label_id):
   # Get labels by filter.
   response = label_service.getLabelsByStatement(statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each local label object by changing the description.
     updated_labels = []
     for label in response['results']:

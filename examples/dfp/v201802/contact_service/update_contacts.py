@@ -47,7 +47,7 @@ def main(client, contact_id):
   response = contact_service.getContactsByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_contacts = []
     for contact in response['results']:
       contact['address'] = '123 New Street, New York, NY, 10011'

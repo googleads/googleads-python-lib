@@ -61,7 +61,7 @@ def main(client):
     response = inventory_service.getAdUnitsByStatement(
         statement.ToStatement())
 
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       # Separate the ad units by size.
       for ad_unit in response['results']:
         if 'adUnitSizes' in ad_unit:

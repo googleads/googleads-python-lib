@@ -33,7 +33,7 @@ def main(client):
   while True:
     response = audience_segment_service.getAudienceSegmentsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for audience_segment in response['results']:
         # Print out some information for each audience segment.
         print('Audience segment with ID "%d", name "%s", and size "%d" was '

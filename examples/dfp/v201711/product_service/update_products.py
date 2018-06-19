@@ -40,7 +40,7 @@ def main(client, product_id):
   # Get products by statement.
   response = product_service.getProductsByStatement(statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each local product object by changing its notes.
     updated_products = []
     for product in response['results']:

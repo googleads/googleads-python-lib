@@ -1,3 +1,6 @@
+12.2.0 -- 06/18/18
+- Fixed some DFP examples that would loop forever with Zeep.
+
 12.1.0 -- 06/06/18
 * Added support and examples for AdWords v201806.
 * Resolved issues:

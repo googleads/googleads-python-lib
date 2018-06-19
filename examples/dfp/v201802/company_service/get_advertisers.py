@@ -32,7 +32,7 @@ def main(client):
   # through until all companies have been retrieved.
   while True:
     response = company_service.getCompaniesByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for company in response['results']:
         # Print out some information for each company.
         print('Company with ID "%d", name "%s", and type "%s" was found.\n' %

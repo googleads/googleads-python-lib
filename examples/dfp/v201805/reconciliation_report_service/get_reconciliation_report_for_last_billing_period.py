@@ -43,7 +43,7 @@ def main(client):
         reconciliation_report_service
         .getReconciliationReportsByStatement(
             statement.ToStatement()))
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for reconciliation_report in response['results']:
         # Print out some information for each reconciliation report.
         print(

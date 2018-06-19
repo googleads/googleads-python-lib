@@ -46,7 +46,7 @@ def main(client, company_id):
   # Get companies by statement.
   response = company_service.getCompaniesByStatement(
       statement.ToStatement())
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_companies = []
     for company in response['results']:
       company['comment'] += ' Updated.'

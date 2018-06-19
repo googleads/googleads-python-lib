@@ -33,7 +33,7 @@ def main(client):
   while True:
     response = user_team_association_service.getUserTeamAssociationsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for user_team_association in response['results']:
         # Print out some information for each user team association.
         print('User team association with team id "%d" and user id "%d" was '

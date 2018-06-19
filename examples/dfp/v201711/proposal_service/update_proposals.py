@@ -40,7 +40,7 @@ def main(client, proposal_id):
   # Get proposals by statement.
   response = proposal_service.getProposalsByStatement(statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each local proposal object by changing its notes.
     updated_proposals = []
     for proposal in response['results']:

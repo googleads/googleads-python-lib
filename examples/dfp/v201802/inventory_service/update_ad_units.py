@@ -56,7 +56,7 @@ def main(client, ad_unit_id):
       'environmentType': 'BROWSER'
   }
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_ad_units = []
     for ad_unit in response['results']:
       if 'adUnitSizes' not in ad_unit:

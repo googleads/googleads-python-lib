@@ -36,7 +36,7 @@ def main(client):
         content_metadata_key_hierarchy_service
         .getContentMetadataKeyHierarchiesByStatement(
             statement.ToStatement()))
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for content_metadata_key_hierarchy in response['results']:
         # Print out some information for each content metadata key hierarchy.
         print('Content metadata key hierarchy with ID "%d" and name "%s" was '

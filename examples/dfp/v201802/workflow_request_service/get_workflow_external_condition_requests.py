@@ -37,7 +37,7 @@ def main(client):
   while True:
     response = workflow_request_service.getWorkflowRequestsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for workflow_request in response['results']:
         # Print out some information for each workflow request.
         print('Workflow request with ID "%d", entity type "%s", and entity ID '

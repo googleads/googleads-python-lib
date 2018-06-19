@@ -42,7 +42,7 @@ def main(client, key_id):
         statement.ToStatement())
 
     # Update each local custom targeting value object by changing its name.
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       updated_values = []
       for value in response['results']:
         if not value['displayName']:

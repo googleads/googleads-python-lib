@@ -36,7 +36,7 @@ def main(client, rate_card_id):
   while True:
     response = premium_rate_service.getPremiumRatesByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for premium_rate in response['results']:
         # Print out some information for each premium rate.
         print('Premium rate with ID "%d", premium feature "%s", and rate card '

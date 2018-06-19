@@ -38,7 +38,7 @@ def main(client, user_id):
   # Get users by statement.
   response = user_service.getUsersByStatement(statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     users = response['results']
     for user in users:
       user['name'] += ' Sr.'

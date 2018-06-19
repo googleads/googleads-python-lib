@@ -31,7 +31,7 @@ def main(client):
   # through until all products have been retrieved.
   while True:
     response = product_service.getProductsByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for product in response['results']:
         # Print out some information for each product.
         print('Product with ID "%d" and name "%s" was found.\n' %

@@ -31,7 +31,7 @@ def main(client):
   # through until all content have been retrieved.
   while True:
     response = content_service.getContentByStatement(statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for content in response['results']:
         # Print out some information for each content.
         print('Content with ID "%d" and name "%s" was found.\n' %

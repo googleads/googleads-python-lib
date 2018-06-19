@@ -44,7 +44,7 @@ def main(client, team_id):
   # Get teams by statement.
   response = team_service.getTeamsByStatement(statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     updated_teams = []
     # Update each local team object by changing its description.
     for team in response['results']:

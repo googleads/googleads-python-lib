@@ -47,7 +47,7 @@ def main(client, image_creative_id):
   response = creative_service.getCreativesByStatement(
       statement.ToStatement())
 
-  if 'results' in response:
+  if 'results' in response and len(response['results']):
     # Update each local creative object by changing its destination URL.
     updated_creatives = []
     for creative in response['results']:

@@ -45,7 +45,7 @@ def main(client, proposal_line_item_id):
   while True:
     response = proposal_line_item_service.getProposalLineItemsByStatement(
         statement.ToStatement())
-    if 'results' in response:
+    if 'results' in response and len(response['results']):
       for proposal_line_item in response['results']:
         print ('Proposal line item with id "%s", '
                'belonging to proposal id "%s", and '
