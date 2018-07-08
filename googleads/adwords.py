@@ -2079,7 +2079,7 @@ class _WhereBuilder(object):
     return self._query_builder
 
   def NotIn(self, *values):
-    """Sets the type of the WHERE clause as "in".
+    """Sets the type of the WHERE clause as "not in".
 
     Args:
       *values: The values to be used in the WHERE condition.
