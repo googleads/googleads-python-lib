@@ -41,57 +41,6 @@ _CHUNK_SIZE = 16 * 1024
 # A giant dictionary of AdWords versions, the services they support, and which
 # namespace those services are in.
 _SERVICE_MAP = {
-    'v201710': {
-        'AccountLabelService': 'mcm',
-        'AdCustomizerFeedService': 'cm',
-        'AdGroupAdService': 'cm',
-        'AdGroupBidModifierService': 'cm',
-        'AdGroupCriterionService': 'cm',
-        'AdGroupExtensionSettingService': 'cm',
-        'AdGroupFeedService': 'cm',
-        'AdGroupService': 'cm',
-        'AdParamService': 'cm',
-        'AdwordsUserListService': 'rm',
-        'BatchJobService': 'cm',
-        'BiddingStrategyService': 'cm',
-        'BudgetOrderService': 'billing',
-        'BudgetService': 'cm',
-        'CampaignBidModifierService': 'cm',
-        'CampaignCriterionService': 'cm',
-        'CampaignExtensionSettingService': 'cm',
-        'CampaignFeedService': 'cm',
-        'CampaignGroupPerformanceTargetService': 'cm',
-        'CampaignGroupService': 'cm',
-        'CampaignService': 'cm',
-        'CampaignSharedSetService': 'cm',
-        'ConstantDataService': 'cm',
-        'ConversionTrackerService': 'cm',
-        'CustomerExtensionSettingService': 'cm',
-        'CustomerFeedService': 'cm',
-        'CustomerNegativeCriterionService': 'cm',
-        'CustomerService': 'mcm',
-        'CustomerSyncService': 'ch',
-        'DataService': 'cm',
-        'DraftAsyncErrorService': 'cm',
-        'DraftService': 'cm',
-        'FeedItemService': 'cm',
-        'FeedMappingService': 'cm',
-        'FeedService': 'cm',
-        'LabelService': 'cm',
-        'LocationCriterionService': 'cm',
-        'ManagedCustomerService': 'mcm',
-        'MediaService': 'cm',
-        'OfflineCallConversionFeedService': 'cm',
-        'OfflineConversionFeedService': 'cm',
-        'OfflineDataUploadService': 'rm',
-        'ReportDefinitionService': 'cm',
-        'SharedCriterionService': 'cm',
-        'SharedSetService': 'cm',
-        'TargetingIdeaService': 'o',
-        'TrafficEstimatorService': 'o',
-        'TrialAsyncErrorService': 'cm',
-        'TrialService': 'cm'
-    },
     'v201802': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
@@ -2546,8 +2495,11 @@ class ServiceQuery(object):
     # method of determining if there is still a page left.
     if (self._PAGE_TYPE in page
         and page[self._PAGE_TYPE] in self._BID_LANDSCAPE_PAGES):
-      total_landscape_points = sum([len(bid_landscape[self._LANDSCAPE_POINTS])
-                                    for bid_landscape in page[self._ENTRIES]])
+      if self._ENTRIES in page:
+        total_landscape_points = sum([len(bid_landscape[self._LANDSCAPE_POINTS])
+                                      for bid_landscape in page[self._ENTRIES]])
+      else:
+        total_landscape_points = 0
       return total_landscape_points >= self._page_size
 
     if not self._total_num_entries:

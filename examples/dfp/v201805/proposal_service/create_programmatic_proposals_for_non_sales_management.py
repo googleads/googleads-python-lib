@@ -25,10 +25,11 @@ from googleads import dfp
 PROGRAMMATIC_BUYER_ID = 'INSERT_BUYER_ID_FROM_PQL_TABLE_HERE'
 PRIMARY_SALESPERSON_ID = 'INSERT_PRIMARY_SALESPERSON_ID_HERE'
 PRIMARY_TRAFFICKER_ID = 'INSERT_PRIMARY_TRAFFICKER_ID_HERE'
+ADVERTISER_ID = 'INSERT_ADVERTISER_ID_HERE'
 
 
 def main(client, programmatic_buyer_id, primary_salesperson_id,
-         primary_trafficker_id):
+         primary_trafficker_id, advertiser_id):
   proposal_service = client.GetService('ProposalService', version='v201805')
 
   proposal = {
@@ -39,12 +40,17 @@ def main(client, programmatic_buyer_id, primary_salesperson_id,
       },
       # Set common required fields for proposals.
       'name': 'Proposal #%s' % uuid.uuid4(),
+      # Set fields that are required before sending the proposal to the buyer.
+      'primaryTraffickerId': primary_trafficker_id,
+      'sellerContactIds': [primary_salesperson_id],
       'primarySalesperson': {
           'userId': primary_salesperson_id,
           'split': '100000'
       },
-      'primaryTraffickerId': primary_trafficker_id,
-      'probabilityOfClose': '100000',
+      'advertiser': {
+          'type': 'ADVERTISER',
+          'companyId': advertiser_id
+      },
   }
 
   proposals = proposal_service.createProposals([proposal])
@@ -59,4 +65,4 @@ if __name__ == '__main__':
   # Initialize client object.
   dfp_client = dfp.DfpClient.LoadFromStorage()
   main(dfp_client, PROGRAMMATIC_BUYER_ID, PRIMARY_SALESPERSON_ID,
-       PRIMARY_TRAFFICKER_ID)
+       PRIMARY_TRAFFICKER_ID, ADVERTISER_ID)

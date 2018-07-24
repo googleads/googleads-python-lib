@@ -35,7 +35,7 @@ def main(client, geo_target_type):
       suffix='.csv', mode='w', delete=False) as geo_data_file:
 
     geo_pql_query = ('SELECT Id, Name, CanonicalParentId, ParentIds, '
-                     'CountryCode '
+                     'CountryCode, Type '
                      'FROM Geo_Target '
                      'WHERE Type = :type AND Targetable = true '
                      'ORDER BY CountryCode ASC, Name ASC')

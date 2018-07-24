@@ -37,36 +37,20 @@ def main(client, ad_group_id, criterion_id):
   # Initialize appropriate service.
   data_service = client.GetService('DataService', version='v201806')
 
-  # Construct bid landscape selector object and retrieve bid landscape.
-  selector = {
-      'fields': ['AdGroupId', 'CriterionId', 'StartDate', 'EndDate', 'Bid',
-                 'BiddableConversions', 'BiddableConversionsValue',
-                 'LocalClicks', 'LocalCost', 'LocalImpressions'],
-      'predicates': [
-          {
-              'field': 'AdGroupId',
-              'operator': 'EQUALS',
-              'values': [ad_group_id]
-          },
-          {
-              'field': 'CriterionId',
-              'operator': 'EQUALS',
-              'values': [criterion_id]
-          }
-      ],
-      'paging': {
-          'startIndex': 0,
-          'numberResults': PAGE_SIZE
-      }
-  }
+  # Create a query to select all keyword bid simulations for the specified
+  # ad group and criterion ID.
+  query = (adwords.ServiceQueryBuilder()
+           .Select(
+               'AdGroupId', 'CriterionId', 'StartDate', 'EndDate', 'Bid',
+               'BiddableConversions', 'BiddableConversionsValue', 'LocalClicks',
+               'LocalCost', 'LocalImpressions')
+           .Where('AdGroupId').EqualTo(ad_group_id)
+           .Where('CriterionId').EqualTo(criterion_id)
+           .Limit(0, PAGE_SIZE)
+           .Build())
 
-  # Set initial values.
-  offset = 0
-  more_pages = True
-
-  while more_pages:
-    num_landscape_points = 0
-    page = data_service.getCriterionBidLandscape(selector)
+  while True:
+    page = data_service.queryCriterionBidLandscape(query)
 
     if page and 'entries' in page:
       entries = page['entries']
@@ -79,7 +63,6 @@ def main(client, ad_group_id, criterion_id):
                    bid_landscape['adGroupId'], bid_landscape['criterionId'],
                    bid_landscape['startDate'], bid_landscape['endDate']))
         for bid_landscape_point in bid_landscape['landscapePoints']:
-          num_landscape_points += 1
           print ('  bid: %s => clicks: %s, cost: %s, impressions: %s, '
                  'biddable conversions: %.2f, '
                  'biddable conversions value: %.2f'
@@ -90,11 +73,9 @@ def main(client, ad_group_id, criterion_id):
                     bid_landscape_point['biddableConversions'],
                     bid_landscape_point['biddableConversionsValue']))
 
-    # Need to increment by the total # of landscape points within the page,
-    # NOT the number of entries (bid landscapes) in the page.
-    offset += num_landscape_points
-    selector['paging']['startIndex'] = str(offset)
-    more_pages = num_landscape_points >= PAGE_SIZE
+    if not query.HasNext(page):
+      break
+    query.NextPage()
 
 
 if __name__ == '__main__':
