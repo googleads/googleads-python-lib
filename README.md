@@ -1,5 +1,8 @@
 # The googleads Python client library
 
+**Note:** DoubleClick for Publishers was recently renamed to Google Ad Manager, and this library
+was modified to follow suit. Please see the [migration guide](https://github.com/googleads/googleads-python-lib/wiki/dfp-rebrand)
+for more details.
 
 This client library simplifies accessing Google's SOAP Ads APIs - AdWords,
 and DoubleClick for Publishers. The library provides easy ways to store your
@@ -40,19 +43,19 @@ code to help you get started integrating with our APIs.
    **If you're accessing an API using your own credentials...**
 
    * [Using AdWords](https://github.com/googleads/googleads-python-lib/wiki/API-access-using-own-credentials-(installed-application-flow))
-   * [Using DFP](https://github.com/googleads/googleads-python-lib/wiki/API-access-using-own-credentials-(server-to-server-flow))
+   * [Using Ad Manager](https://github.com/googleads/googleads-python-lib/wiki/API-access-using-own-credentials-(server-to-server-flow))
 
    **If you're accessing an API on behalf of clients...**
 
-   * [Developing a web application (AdWords or DFP)](https://github.com/googleads/googleads-python-lib/wiki/API-access-on-behalf-of-your-clients-(web-flow))
+   * [Developing a web application (AdWords or Ad Manager)](https://github.com/googleads/googleads-python-lib/wiki/API-access-on-behalf-of-your-clients-(web-flow))
 
 #### Where can I find samples?
 
-You can find code examples for the latest versions of AdWords or DFP on the
+You can find code examples for the latest versions of AdWords or Ad Manager on the
 [releases](https://github.com/googleads/googleads-python-lib/releases) page.
 
 Alternatively, you can find [AdWords](https://github.com/googleads/googleads-python-lib/tree/master/examples/adwords)
-or [DFP](https://github.com/googleads/googleads-python-lib/tree/master/examples/dfp)
+or [Ad Manager](https://github.com/googleads/googleads-python-lib/tree/master/examples/ad_manager)
 samples in the examples directory of this repository.
 
 #### Where can I find the pydocs?
@@ -73,7 +76,7 @@ contents.
 adwords_client = adwords.AdWordsClient.LoadFromStorage()
 
 # Alternatively, pass in the location of the file:
-dfp_client = dfp.DfpClient.LoadFromStorage('C:\My\Directory\googleads.yaml')
+ad_manager_client = ad_manager.AdManagerClient.LoadFromStorage('C:\My\Directory\googleads.yaml')
 ```
 
 #### How do I change the Client Customer Id at runtime?
@@ -200,7 +203,7 @@ access a local file system that may not be available in certain hosting
 environments such as App Engine.
 
 You can pass an implementation of `suds.cache.Cache` or `zeep.cache.Base` to the `AdWordsClient` or
-`DfpClient` initializer to modify the default caching behavior.
+`AdManagerClient` initializer to modify the default caching behavior.
 
 For example, configuring a different location and duration of the cache file with zeep
 ```python

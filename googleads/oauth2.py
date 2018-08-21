@@ -32,7 +32,7 @@ import google.oauth2.service_account
 
 # The scopes used for authorizing with the APIs supported by this library.
 SCOPES = {'adwords': 'https://www.googleapis.com/auth/adwords',
-          'dfp': 'https://www.googleapis.com/auth/dfp'}
+          'ad_manager': 'https://www.googleapis.com/auth/dfp'}
 
 
 def GetAPIScope(api_name):
@@ -46,8 +46,8 @@ def GetAPIScope(api_name):
     A string that is the scope for the given API name.
 
   Raises:
-    GoogleAdsValueError: If the given api_name is invalid; accepted valus are
-        "adwords" and "dfp".
+    GoogleAdsValueError: If the given api_name is invalid; accepted values are
+        "adwords" and "ad_manager".
   """
   try:
     return SCOPES[api_name]

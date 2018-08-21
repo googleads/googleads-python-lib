@@ -64,7 +64,7 @@ The googleads Python Client Libraries
 The googleads Python Client Libraries support the following products:
 
 * AdWords API
-* DoubleClick for Publishers API
+* Google Ad Manager API
 
 You can find more information about the Google Ads Python Client Libraries
 `here <https://github.com/googleads/googleads-python-lib>`_.
@@ -119,7 +119,7 @@ setup(name='googleads',
       long_description=long_description,
       packages=PACKAGES,
       platforms='any',
-      keywords='adwords dfp google',
+      keywords='adwords dfp admanager google',
       classifiers=CLASSIFIERS,
       install_requires=DEPENDENCIES,
       tests_require=TEST_DEPENDENCIES,

@@ -78,7 +78,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '13.0.0'
+VERSION = '14.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
@@ -136,7 +136,7 @@ def GenerateLibSig(short_name):
 
 
 class CommonClient(object):
-  """Contains shared startup code between DFP and AdWords clients."""
+  """Contains shared startup code between Ad Manager and AdWords clients."""
 
   def __init__(self):
     # Warn users on deprecated Python versions on initialization.
@@ -183,6 +183,11 @@ def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
     required_client_values key was missing or an OAuth2 key was missing.
   """
   data = yaml.safe_load(yaml_doc) or {}
+
+  if 'dfp' in data:
+    raise googleads.errors.GoogleAdsValueError(
+        'Please replace the "dfp" key in the configuration YAML string with'
+        '"ad_manager" to fix this issue.')
 
   logging_config = data.get(_LOGGING_KEY)
   if logging_config:
@@ -415,11 +420,12 @@ def _PackForSuds(obj, factory, packer=None):
       # packed into a suds.null() object.
       for param, _ in new_obj:
         # Another problem is that the suds.mx.appender.ObjectAppender won't
-        # serialize object types with no fields set, but both AdWords and DFP
-        # rely on sending objects with just the xsi:type set. The below "if"
-        # statement is an ugly hack that gets this to work in all(?) situations
-        # by taking advantage of the fact that these classes generally all have
-        # a type field. The only other option is to monkey patch ObjectAppender.
+        # serialize object types with no fields set, but both AdWords and Ad
+        # Manager rely on sending objects with just the xsi:type set. The
+        # below "if" statement is an ugly hack that gets this to work in all(?)
+        # situations by taking advantage of the fact that these classes
+        # generally all have a type field. The only other option is to monkey
+        # patch ObjectAppender.
         if param.endswith('.Type'):
           setattr(new_obj, param, obj['xsi_type'])
         else:
@@ -1437,7 +1443,7 @@ def _ExtractRequestSummaryFields(document):
   if client_customer_id is not None:
     summary_fields['clientCustomerId'] = client_customer_id.text
 
-  # Extract DFP-specific fields if they exist.
+  # Extract Ad Manager-specific fields if they exist.
   # Note: We need to check if None because this will always evaluate False.
   network_code = headers.getChild('networkCode')
   if network_code is not None:

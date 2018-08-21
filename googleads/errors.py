@@ -108,20 +108,20 @@ class AdWordsBatchJobServiceInvalidOperationError(GoogleAdsError):
   pass
 
 
-class DfpReportError(GoogleAdsError):
-  """Error indicating that a DFP report download request failed.
+class AdManagerReportError(GoogleAdsError):
+  """Error indicating that an Ad Manager report download request failed.
 
   Attributes:
     report_job_id: The ID of the report job which failed.
   """
 
   def __init__(self, report_job_id):
-    """Initializes a DfpReportError.
+    """Initializes a AdManagerReportError.
 
     Args:
       report_job_id: The ID of the report job which failed.
     """
-    super(DfpReportError, self).__init__(
-        'DFP report job failed. The ID of the failed report is: %s'
+    super(AdManagerReportError, self).__init__(
+        'Ad Manager report job failed. The ID of the failed report is: %s'
         % report_job_id)
     self.report_job_id = report_job_id

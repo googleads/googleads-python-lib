@@ -38,9 +38,9 @@ class GetAPIScopeTest(unittest.TestCase):
 
   def setUp(self):
     self.api_name_adwords = 'adwords'
-    self.api_name_dfp = 'dfp'
+    self.api_name_ad_manager = 'ad_manager'
     self.scope_adwords = 'https://www.googleapis.com/auth/adwords'
-    self.scope_dfp = 'https://www.googleapis.com/auth/dfp'
+    self.scope_ad_manager = 'https://www.googleapis.com/auth/dfp'
 
   def testGetAPIScope_adwords(self):
     self.assertEquals(googleads.oauth2.GetAPIScope(self.api_name_adwords),
@@ -50,9 +50,9 @@ class GetAPIScopeTest(unittest.TestCase):
     self.assertRaises(googleads.errors.GoogleAdsValueError,
                       googleads.oauth2.GetAPIScope, 'fake_api_name')
 
-  def testGetAPIScope_dfp(self):
-    self.assertEquals(googleads.oauth2.GetAPIScope(self.api_name_dfp),
-                      self.scope_dfp)
+  def testGetAPIScope_ad_manager(self):
+    self.assertEqual(googleads.oauth2.GetAPIScope(self.api_name_ad_manager),
+                     self.scope_ad_manager)
 
 
 class GoogleOAuth2ClientTest(unittest.TestCase):

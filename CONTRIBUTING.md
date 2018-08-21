@@ -13,8 +13,7 @@ Follow either of the two links above to access the appropriate CLA and instructi
 - Sign a Contributor License Agreement (see above).
 - Join the appropriate product discussion forum.
   - AdWords API: https://developers.google.com/adwords/api/community/
-  - DFP API: https://developers.google.com/doubleclick-publishers/community
-  - DFA API: https://developers.google.com/doubleclick-advertisers/reporting/community
+  - Ad Manager API: https://developers.google.com/ad-manager/community
 - Create an issue on the library issue tracker if there isn't one already. Use this issue to co-ordinate the changes with the library maintainer.
 - Fork the library, make the changes and send a [pull request](https://help.github.com/articles/using-pull-requests).
 - The library maintainer will work with you to review and apply the patch.

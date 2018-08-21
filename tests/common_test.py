@@ -250,7 +250,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual(expected_result,
                      googleads.common._ExtractRequestSummaryFields(root))
 
-  def testExtractRequestSummaryFieldsForDfp(self):
+  def testExtractRequestSummaryFieldsForAdManager(self):
     root = suds.sax.element.Element('root', parent=None)
     network_code = '111111111'
     nc_element = suds.sax.element.Element('networkCode', parent=None)
@@ -608,6 +608,17 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                         googleads.common.LoadFromString, yaml_doc, 'three',
                         ['needed', 'keys'], [])
 
+  def testLoadFromString_migrateToAdManager(self):
+    with mock.patch('googleads.common.open', self.fake_open, create=True):
+      # Both keys are missing.
+      yaml_doc = self._CreateYamlDoc({
+          'dfp': {}
+      }, 'dfp', self._OAUTH_INSTALLED_APP_DICT)
+      with self.assertRaises(googleads.errors.GoogleAdsValueError) as ctx:
+        googleads.common.LoadFromString(yaml_doc, 'two', ['ad_manager'], [])
+
+      self.assertIn('Please replace', str(ctx.exception))
+
   def testLoadFromString(self):
     # No optional keys present.
     yaml_doc = self._CreateYamlDoc({
@@ -659,24 +670,26 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
           self.assertTrue(googleads.common._utility_registry._enabled)
 
   def testLoadFromString_serviceAccount(self):
-    dfp_scope = googleads.oauth2.GetAPIScope('dfp')
+    ad_manager_scope = googleads.oauth2.GetAPIScope('ad_manager')
     # No optional keys present.
     yaml_doc = self._CreateYamlDoc(
-        {'dfp': {'needed': 'd', 'keys': 'e'}},
-        insert_oauth2_key='dfp', oauth_dict=self._OAUTH_SERVICE_ACCT_DICT)
+        {'ad_manager': {'needed': 'd', 'keys': 'e'}},
+        insert_oauth2_key='ad_manager',
+        oauth_dict=self._OAUTH_SERVICE_ACCT_DICT)
     with mock.patch(
         'googleads.oauth2.GoogleServiceAccountClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
-              yaml_doc, 'dfp', ['needed', 'keys'], ['other'])
+              yaml_doc, 'ad_manager', ['needed', 'keys'], ['other'])
 
     proxy_config.assert_called_once_with(
         http_proxy=None, https_proxy=None, cafile=None,
         disable_certificate_validation=False)
     mock_client.assert_called_once_with(
-        '/test/test.json', dfp_scope, sub='delegated_account@example.com',
+        '/test/test.json', ad_manager_scope,
+        sub='delegated_account@example.com',
         proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
@@ -687,21 +700,22 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
     # The optional key is present.
     yaml_doc = self._CreateYamlDoc(
-        {'dfp': {'needed': 'd', 'keys': 'e', 'other': 'f'}}, 'dfp',
-        self._OAUTH_SERVICE_ACCT_DICT)
+        {'ad_manager': {'needed': 'd', 'keys': 'e', 'other': 'f'}},
+        'ad_manager', self._OAUTH_SERVICE_ACCT_DICT)
     with mock.patch(
         'googleads.oauth2.GoogleServiceAccountClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
-              yaml_doc, 'dfp', ['needed', 'keys'], ['other'])
+              yaml_doc, 'ad_manager', ['needed', 'keys'], ['other'])
 
     proxy_config.assert_called_once_with(
         http_proxy=None, https_proxy=None, cafile=None,
         disable_certificate_validation=False)
     mock_client.assert_called_once_with(
-        '/test/test.json', dfp_scope, sub='delegated_account@example.com',
+        '/test/test.json', ad_manager_scope,
+        sub='delegated_account@example.com',
         proxy_config=proxy_config.return_value)
     self.assertEqual({'oauth2_client': mock_client.return_value,
                       'proxy_config': proxy_config.return_value,
@@ -1096,7 +1110,8 @@ class TestZeepArgumentPacking(unittest.TestCase):
   def setUp(self):
     header_handler = mock.Mock()
 
-    wsdl_path = os.path.join(TEST_DIR, 'test_data/dfp_report_service.xml')
+    wsdl_path = os.path.join(
+        TEST_DIR, 'test_data/ad_manager_report_service.xml')
     self.zeep_client = googleads.common.ZeepServiceProxy(
         wsdl_path, header_handler, None, googleads.common.ProxyConfig(), 100)
 

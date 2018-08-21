@@ -1,3 +1,9 @@
+14.0.0 -- 08/21/18
+- DFP rebranded to Google Ad Manager.
+- Google Ad Manager v201808 release.
+- Removed support for DFP v201708.
+- Removed examples for DFP v201711.
+
 13.0.0 -- 07/25/18
 - Removed support for AdWords v201710.
 

@@ -19,8 +19,8 @@ import logging
 import os
 import unittest
 
+import googleads.ad_manager
 import googleads.adwords
-import googleads.dfp
 import googleads.errors
 import googleads.util
 from lxml import etree
@@ -61,16 +61,17 @@ class PatchesTest(unittest.TestCase):
     self.adwords_namespace_partial = (
         'https://adwords.google.com/api/adwords/%s/' + self.adwords_version)
 
-    # DfpClient setup
+    # AdManagerClient setup
     network_code = '12345'
     application_name = 'application name'
-    self.dfp_client = googleads.dfp.DfpClient(
+    self.ad_manager_client = googleads.ad_manager.AdManagerClient(
         oauth2_client, application_name, network_code, soap_impl=soap_impl)
 
-    self.dfp_version = sorted(googleads.dfp._SERVICE_MAP.keys())[-1]
-    self.dfp_namespace = (
+    self.ad_manager_version = sorted(
+        googleads.ad_manager._SERVICE_MAP.keys())[-1]
+    self.ad_manager_namespace = (
         'https://www.google.com/apis/ads/publisher/%s'
-        % self.dfp_version)
+        % self.ad_manager_version)
 
   def testPatchedSudsJurkoAppender(self):
     """Tests to confirm that the appender no longer removes empty objects."""
@@ -90,16 +91,16 @@ class PatchesTest(unittest.TestCase):
         }
     }]
     query = 'WHERE orderId = :orderId AND status = :status'
-    statement = googleads.dfp.FilterStatement(query, values)
+    statement = googleads.ad_manager.FilterStatement(query, values)
 
-    line_item_service = self.dfp_client.GetService('LineItemService')
+    line_item_service = self.ad_manager_client.GetService('LineItemService')
 
     line_item_action = {'xsi_type': 'ActivateLineItems'}
     request = line_item_service.GetRequestXML(
         'performLineItemAction', line_item_action, statement.ToStatement())
 
     line_item_action = request.find(
-        './/{%s}lineItemAction' % self.dfp_namespace)
+        './/{%s}lineItemAction' % self.ad_manager_namespace)
 
     # Assert that the request includes the action.
     self.assertIsNotNone(line_item_action)
@@ -233,12 +234,12 @@ class PatchesTest(unittest.TestCase):
   def testSingleErrorListIssue90(self):
     """Verifies that issue 90 has been resolved with the patch."""
     query = 'WHERE 1 = 0'
-    statement = googleads.dfp.FilterStatement(query)
-    line_item_service = self.dfp_client.GetService('LineItemService')
+    statement = googleads.ad_manager.FilterStatement(query)
+    line_item_service = self.ad_manager_client.GetService('LineItemService')
     line_item_action = {'xsi_type': 'ActivateLineItems'}
     st = statement.ToStatement()
     with self.mock_fault_response(
-        'test_data/fault_response_envelope.txt', self.dfp_version):
+        'test_data/fault_response_envelope.txt', self.ad_manager_version):
       try:
         line_item_service.performLineItemAction(line_item_action, st)
       except googleads.errors.GoogleAdsServerFault as e:
@@ -247,13 +248,13 @@ class PatchesTest(unittest.TestCase):
   def testSingleErrorListIssue90_emptyErrors(self):
     """Verifies that issue 90 has been resolved with the patch."""
     query = 'WHERE 1 = 0'
-    statement = googleads.dfp.FilterStatement(query)
-    line_item_service = self.dfp_client.GetService('LineItemService')
+    statement = googleads.ad_manager.FilterStatement(query)
+    line_item_service = self.ad_manager_client.GetService('LineItemService')
     line_item_action = {'xsi_type': 'ActivateLineItems'}
     st = statement.ToStatement()
 
     with self.mock_fault_response(
-        'test_data/empty_fault_response_envelope.txt', self.dfp_version):
+        'test_data/empty_fault_response_envelope.txt', self.ad_manager_version):
       try:
         line_item_service.performLineItemAction(line_item_action, st)
       except googleads.errors.GoogleAdsServerFault as e:
@@ -262,13 +263,14 @@ class PatchesTest(unittest.TestCase):
   def testSingleErrorListIssue90_multipleErrors(self):
     """Verifies that issue 90 has been resolved with the patch."""
     query = 'WHERE 1 = 0'
-    statement = googleads.dfp.FilterStatement(query)
-    line_item_service = self.dfp_client.GetService('LineItemService')
+    statement = googleads.ad_manager.FilterStatement(query)
+    line_item_service = self.ad_manager_client.GetService('LineItemService')
     line_item_action = {'xsi_type': 'ActivateLineItems'}
     st = statement.ToStatement()
 
     with self.mock_fault_response(
-        'test_data/multi_errors_fault_response_envelope.txt', self.dfp_version):
+        'test_data/multi_errors_fault_response_envelope.txt',
+        self.ad_manager_version):
       try:
         line_item_service.performLineItemAction(line_item_action, st)
       except googleads.errors.GoogleAdsServerFault as e:

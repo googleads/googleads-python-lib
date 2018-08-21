@@ -37,8 +37,8 @@ adwords:
     # use_raw_enum_values: False
 
 
-# DfpClient configurations
-dfp:
+# AdManagerClient configurations
+ad_manager:
   #############################################################################
   # Required Fields                                                           #
   #############################################################################
