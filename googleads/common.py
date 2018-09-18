@@ -186,7 +186,7 @@ def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
 
   if 'dfp' in data:
     raise googleads.errors.GoogleAdsValueError(
-        'Please replace the "dfp" key in the configuration YAML string with'
+        'Please replace the "dfp" key in the configuration YAML string with '
         '"ad_manager" to fix this issue.')
 
   logging_config = data.get(_LOGGING_KEY)
