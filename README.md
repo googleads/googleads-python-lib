@@ -94,13 +94,10 @@ If you have issues directly related to the client library, use the [issue
 tracker](https://github.com/googleads/googleads-python-lib/issues).
 
 
-If you have issues pertaining to a specific product, use the product support forums:
+If you have issues pertaining to a specific API, use the product support forums:
 
 * [AdWords](https://groups.google.com/forum/#!forum/adwords-api)
-* [DoubleClick for Publishers](https://groups.google.com/forum/#!forum/google-doubleclick-for-publishers-api)
-
-Make sure to subscribe to our [Google Plus page](https://plus.google.com/+GoogleAdsDevelopers)
-for API change announcements and other news.
+* [Ad Manager](https://groups.google.com/forum/#!forum/google-doubleclick-for-publishers-api)
 
 
 ## How do I log SOAP interactions?

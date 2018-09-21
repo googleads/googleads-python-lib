@@ -14,10 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
+"""This example downloads a criteria performance report.
 
-Note by default this account will only be accessible via its parent AdWords
-manager account..
+To get report fields, run get_report_fields.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -27,37 +26,31 @@ section of our README.
 """
 
 
-from datetime import datetime
+import sys
 from googleads import adwords
 
 
 def main(client):
-  # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+  report_downloader = client.GetReportDownloader(version='v201809')
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
-  operations = [{
-      'operator': 'ADD',
-      'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
+  report = {
+      'reportName': 'Last 7 days CRITERIA_PERFORMANCE_REPORT',
+      'dateRangeType': 'LAST_7_DAYS',
+      'reportType': 'CRITERIA_PERFORMANCE_REPORT',
+      'downloadFormat': 'CSV',
+      'selector': {
+          'fields': ['CampaignId', 'AdGroupId', 'Id', 'CriteriaType',
+                     'Criteria', 'FinalUrls', 'Impressions', 'Clicks', 'Cost']
       }
-  }]
+  }
 
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
-
-  # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID "%s" was successfully created.'
-           % account['customerId'])
+  # You can provide a file object to write the output to. For this demonstration
+  # we use sys.stdout to write the report to the screen.
+  report_downloader.DownloadReport(
+      report, sys.stdout, skip_report_header=False, skip_column_header=False,
+      skip_report_summary=False, include_zero_impressions=True)
 
 
 if __name__ == '__main__':
-  # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
   main(adwords_client)

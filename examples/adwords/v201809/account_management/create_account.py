@@ -34,7 +34,7 @@ from googleads import adwords
 def main(client):
   # Initialize appropriate service.
   managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+      'ManagedCustomerService', version='v201809')
 
   today = datetime.today().strftime('%Y%m%d %H:%M:%S')
   # Construct operations and add campaign.

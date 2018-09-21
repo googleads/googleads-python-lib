@@ -44,13 +44,7 @@ def main(client):
           'name': 'Account created with ManagedCustomerService on %s' % today,
           'currencyCode': 'EUR',
           'dateTimeZone': 'Europe/London',
-      },
-      # For whitelisted users only, uncomment the inviteeEmail and inviteeRole
-      # attributes to invite a user to have access to an account on an ADD. An
-      # email will be sent inviting the user to have access to the newly created
-      # account.
-      # 'inviteeEmail': 'invited_user1@example.com',
-      # 'inviteeRole': 'ADMINISTRATIVE'
+      }
   }]
 
   # Create the account. It is possible to create multiple accounts with one

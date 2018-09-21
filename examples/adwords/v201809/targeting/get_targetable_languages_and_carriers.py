@@ -14,10 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
-
-Note by default this account will only be accessible via its parent AdWords
-manager account..
+"""Retrieves all languages and carriers available for targeting.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -26,38 +23,35 @@ section of our README.
 
 """
 
-
-from datetime import datetime
 from googleads import adwords
 
 
 def main(client):
   # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+  constant_data_service = client.GetService(
+      'ConstantDataService', version='v201809')
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
-  operations = [{
-      'operator': 'ADD',
-      'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
-      }
-  }]
-
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
+  # Get all languages.
+  languages = constant_data_service.getLanguageCriterion()
 
   # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID "%s" was successfully created.'
-           % account['customerId'])
+  for language in languages:
+    print ('Language with name "%s" and ID "%s" was found.'
+           % (language['name'], language['id']))
+
+  # Get all carriers.
+  carriers = constant_data_service.getCarrierCriterion()
+
+  # Display results.
+  for carrier in carriers:
+    print ('Carrier with name "%s", ID "%s", and country code "%s" was '
+           'found.' % (
+               carrier['name'], carrier['id'],
+               getattr(carrier, 'countryCode', 'N/A')))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
+
   main(adwords_client)

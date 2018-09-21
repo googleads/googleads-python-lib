@@ -14,10 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
+"""This example deletes an ad using the 'REMOVE' operator.
 
-Note by default this account will only be accessible via its parent AdWords
-manager account..
+To get ads, run get_expanded_text_ads.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -26,38 +25,38 @@ section of our README.
 
 """
 
-
-from datetime import datetime
 from googleads import adwords
 
 
-def main(client):
-  # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
+AD_ID = 'INSERT_AD_ID_HERE'
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
+
+def main(client, ad_group_id, ad_id):
+  # Initialize appropriate service.
+  ad_group_ad_service = client.GetService('AdGroupAdService', version='v201809')
+
+  # Construct operations and delete ad.
   operations = [{
-      'operator': 'ADD',
+      'operator': 'REMOVE',
       'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
+          'xsi_type': 'AdGroupAd',
+          'adGroupId': ad_group_id,
+          'ad': {
+              'id': ad_id
+          }
       }
   }]
-
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
+  result = ad_group_ad_service.mutate(operations)
 
   # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID "%s" was successfully created.'
-           % account['customerId'])
+  for ad in result['value']:
+    print ('Ad with id "%s" and type "%s" was deleted.'
+           % (ad['ad']['id'], ad['ad']['Ad.Type']))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, AD_GROUP_ID, AD_ID)

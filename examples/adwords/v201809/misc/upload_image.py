@@ -14,10 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
+"""This example uploads an image.
 
-Note by default this account will only be accessible via its parent AdWords
-manager account..
+To get images, run get_all_images.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -27,37 +26,40 @@ section of our README.
 """
 
 
-from datetime import datetime
 from googleads import adwords
 
 
-def main(client):
+IMAGE_FILENAME = 'INSERT_IMAGE_PATH_HERE'
+
+
+def main(client, image_filename):
   # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+  media_service = client.GetService('MediaService', version='v201809')
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
-  operations = [{
-      'operator': 'ADD',
-      'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
-      }
+  with open(image_filename, 'rb') as image_handle:
+    image_data = image_handle.read().decode('utf-8')
+
+  # Construct media and upload image.
+  media = [{
+      'xsi_type': 'Image',
+      'data': image_data,
+      'type': 'IMAGE'
   }]
-
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
+  media = media_service.upload(media)[0]
 
   # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID "%s" was successfully created.'
-           % account['customerId'])
+  if media:
+    dimensions = dict([(entry['key'], entry['value'])
+                       for entry in media['dimensions']])
+    print ('Image with id "%s", dimensions \'%sx%s\', and MimeType "%s" was'
+           ' uploaded.' % (media['mediaId'], dimensions['FULL']['height'],
+                           dimensions['FULL']['width'], media['mimeType']))
+  else:
+    print 'No images were uploaded.'
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, IMAGE_FILENAME)

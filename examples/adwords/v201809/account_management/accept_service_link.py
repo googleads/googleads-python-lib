@@ -14,10 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
-
-Note by default this account will only be accessible via its parent AdWords
-manager account..
+"""This example accepts a pending Google Merchant Center invitation link.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -27,37 +24,39 @@ section of our README.
 """
 
 
-from datetime import datetime
 from googleads import adwords
 
 
-def main(client):
-  # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+SERVICE_LINK_ID = 'INSERT_SERVICE_LINK_ID_HERE'
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
+
+def main(client, service_link_id):
+  # Initialize appropriate service.
+  customer_service = client.GetService(
+      'CustomerService', version='v201809')
+
+  # Create the operation to set the status to ACTIVE.
   operations = [{
-      'operator': 'ADD',
+      'operator': 'SET',
       'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
+          'serviceLinkId': service_link_id,
+          'serviceType': 'MERCHANT_CENTER',
+          'linkStatus': 'ACTIVE',
       }
   }]
 
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
+  # Update the service link.
+  mutated_service_links = customer_service.mutateServiceLinks(operations)
 
   # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID "%s" was successfully created.'
-           % account['customerId'])
+  for mutated_service_link in mutated_service_links:
+    print ('Service link with service link ID "%s", type "%s" was updated '
+           'to status: "%s".' % (mutated_service_link['serviceLinkId'],
+                                 mutated_service_link['serviceType'],
+                                 mutated_service_link['linkStatus']))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+  main(adwords_client, SERVICE_LINK_ID)

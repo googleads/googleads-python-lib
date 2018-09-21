@@ -1,14 +1,19 @@
+14.1.0 -- 09/21/18
+* Added support and examples for AdWords v201809.
+* Resolved issues:
+- Issue 281: https://github.com/googleads/googleads-python-lib/issues/281
+
 14.0.0 -- 08/21/18
-- DFP rebranded to Google Ad Manager.
-- Google Ad Manager v201808 release.
-- Removed support for DFP v201708.
-- Removed examples for DFP v201711.
+* DFP rebranded to Google Ad Manager.
+* Google Ad Manager v201808 release.
+* Removed support for DFP v201708.
+* Removed examples for DFP v201711.
 
 13.0.0 -- 07/25/18
-- Removed support for AdWords v201710.
+* Removed support for AdWords v201710.
 
 12.2.0 -- 06/18/18
-- Fixed some DFP examples that would loop forever with Zeep.
+* Fixed some DFP examples that would loop forever with Zeep.
 
 12.1.0 -- 06/06/18
 * Added support and examples for AdWords v201806.

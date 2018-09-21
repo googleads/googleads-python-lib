@@ -14,10 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
-
-Note by default this account will only be accessible via its parent AdWords
-manager account..
+"""This example adds a label to multiple campaigns.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -26,38 +23,45 @@ section of our README.
 
 """
 
-
-from datetime import datetime
 from googleads import adwords
 
 
-def main(client):
+CAMPAIGN_ID1 = 'INSERT_FIRST_CAMPAIGN_ID_HERE'
+CAMPAIGN_ID2 = 'INSERT_SECOND_CAMPAIGN_ID_HERE'
+LABEL_ID = 'INSERT_LABEL_ID_HERE'
+
+
+def main(client, campaign_id1, campaign_id2, label_id):
   # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+  campaign_service = client.GetService('CampaignService', version='v201809')
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
-  operations = [{
-      'operator': 'ADD',
-      'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
+  operations = [
+      {
+          'operator': 'ADD',
+          'operand': {
+              'campaignId': campaign_id1,
+              'labelId': label_id,
+          }
+      },
+      {
+          'operator': 'ADD',
+          'operand': {
+              'campaignId': campaign_id2,
+              'labelId': label_id,
+          }
       }
-  }]
+  ]
 
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
+  result = campaign_service.mutateLabel(operations)
 
   # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID "%s" was successfully created.'
-           % account['customerId'])
+  for label in result['value']:
+    print ('CampaignLabel with campaignId "%s" and labelId "%s" was added.'
+           % (label['campaignId'], label['labelId']))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, CAMPAIGN_ID1, CAMPAIGN_ID2, LABEL_ID)

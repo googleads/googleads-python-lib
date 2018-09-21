@@ -14,10 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
+"""This example downloads a criteria performance report with AWQL.
 
-Note by default this account will only be accessible via its parent AdWords
-manager account..
+To get report fields, run get_report_fields.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -26,38 +25,34 @@ section of our README.
 
 """
 
-
-from datetime import datetime
+import sys
 from googleads import adwords
 
 
 def main(client):
   # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+  report_downloader = client.GetReportDownloader(version='v201809')
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
-  operations = [{
-      'operator': 'ADD',
-      'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
-      }
-  }]
+  # Create report query.
+  report_query = (adwords.ReportQueryBuilder()
+                  .Select('CampaignId', 'AdGroupId', 'Id', 'Criteria',
+                          'CriteriaType', 'FinalUrls', 'Impressions', 'Clicks',
+                          'Cost')
+                  .From('CRITERIA_PERFORMANCE_REPORT')
+                  .Where('Status').In('ENABLED', 'PAUSED')
+                  .During('LAST_7_DAYS')
+                  .Build())
 
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
-
-  # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID "%s" was successfully created.'
-           % account['customerId'])
+  # You can provide a file object to write the output to. For this
+  # demonstration we use sys.stdout to write the report to the screen.
+  report_downloader.DownloadReportWithAwql(
+      report_query, 'CSV', sys.stdout, skip_report_header=False,
+      skip_column_header=False, skip_report_summary=False,
+      include_zero_impressions=True)
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
+
   main(adwords_client)

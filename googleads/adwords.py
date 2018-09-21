@@ -15,9 +15,9 @@
 """Client library for the AdWords API."""
 
 import abc
+import codecs
 from collections import namedtuple
 import datetime
-import io
 import logging
 import os
 import re
@@ -26,10 +26,11 @@ import urllib
 import urllib2
 from xml.etree import ElementTree
 
-import xmltodict
-import yaml
 import googleads.common
 import googleads.errors
+import six
+import xmltodict
+import yaml
 
 
 _report_logger = logging.getLogger('%s.%s' % (__name__, 'report_downloader'))
@@ -94,6 +95,62 @@ _SERVICE_MAP = {
         'TrialService': 'cm'
     },
     'v201806': {
+        'AccountLabelService': 'mcm',
+        'AdCustomizerFeedService': 'cm',
+        'AdGroupAdService': 'cm',
+        'AdGroupBidModifierService': 'cm',
+        'AdGroupCriterionService': 'cm',
+        'AdGroupExtensionSettingService': 'cm',
+        'AdGroupFeedService': 'cm',
+        'AdGroupService': 'cm',
+        'AdParamService': 'cm',
+        'AdService': 'cm',
+        'AdwordsUserListService': 'rm',
+        'AssetService': 'cm',
+        'BatchJobService': 'cm',
+        'BiddingStrategyService': 'cm',
+        'BudgetOrderService': 'billing',
+        'BudgetService': 'cm',
+        'CampaignBidModifierService': 'cm',
+        'CampaignCriterionService': 'cm',
+        'CampaignExtensionSettingService': 'cm',
+        'CampaignFeedService': 'cm',
+        'CampaignGroupPerformanceTargetService': 'cm',
+        'CampaignGroupService': 'cm',
+        'CampaignService': 'cm',
+        'CampaignSharedSetService': 'cm',
+        'ConstantDataService': 'cm',
+        'ConversionTrackerService': 'cm',
+        'CustomAffinityService': 'rm',
+        'CustomerExtensionSettingService': 'cm',
+        'CustomerFeedService': 'cm',
+        'CustomerNegativeCriterionService': 'cm',
+        'CustomerService': 'mcm',
+        'CustomerSyncService': 'ch',
+        'DataService': 'cm',
+        'DraftAsyncErrorService': 'cm',
+        'DraftService': 'cm',
+        'FeedItemService': 'cm',
+        'FeedItemTargetService': 'cm',
+        'FeedMappingService': 'cm',
+        'FeedService': 'cm',
+        'LabelService': 'cm',
+        'LocationCriterionService': 'cm',
+        'ManagedCustomerService': 'mcm',
+        'MediaService': 'cm',
+        'OfflineCallConversionFeedService': 'cm',
+        'OfflineConversionAdjustmentFeedService': 'cm',
+        'OfflineConversionFeedService': 'cm',
+        'OfflineDataUploadService': 'rm',
+        'ReportDefinitionService': 'cm',
+        'SharedCriterionService': 'cm',
+        'SharedSetService': 'cm',
+        'TargetingIdeaService': 'o',
+        'TrafficEstimatorService': 'o',
+        'TrialAsyncErrorService': 'cm',
+        'TrialService': 'cm'
+    },
+    'v201809': {
         'AccountLabelService': 'mcm',
         'AdCustomizerFeedService': 'cm',
         'AdGroupAdService': 'cm',
@@ -1266,13 +1323,28 @@ class ReportDownloader(object):
         self.proxy_config, self._namespace, self._adwords_client.cache)
 
   def _DownloadReportCheckFormat(self, file_format, output):
-    mode = getattr(output, 'mode', 'w')
-    is_valid_gzip_mode = 'b' in mode and ('+' in mode or 'w' in mode)
+    """Verifies file format compatibility with given output."""
+    encoding = getattr(output, 'encoding', None)
 
-    if (file_format.startswith('GZIPPED_')
-        and not (is_valid_gzip_mode or isinstance(output, io.BytesIO))):
-      raise googleads.errors.GoogleAdsValueError('Need to specify a binary'
-                                                 ' output for GZIPPED formats.')
+    # In Python 2 binary file encoding will be set to None, and StringIO /
+    # BytesIO instances will not have an encoding attribute. In Python 3,
+    # binary files don't have an encoding attribute, StringIO instances have an
+    # encoding set to None, and BytesIO instances lack an encoding attribute.
+    # As a result, if encoding is ever set, it indicates that the specified
+    # output is incompatible with GZIPPED formats.
+    if encoding and file_format.startswith('GZIPPED_'):
+      raise googleads.errors.GoogleAdsValueError(
+          'Need to specify a binary output for GZIPPED formats.')
+
+    # Because Python 3 StringIO instances always have encoding set to None,
+    # it's necessary to verify that StringIO instances aren't used with GZIPPED
+    # formats. In Python 2, this wouldn't matter because StringIO instances
+    # store bytes (appropriate for GZIPPED formats) rather than unicode data.
+    if six.PY3:
+      if (file_format.startswith('GZIPPED_')
+          and isinstance(output, six.StringIO)):
+        raise googleads.errors.GoogleAdsValueError(
+            'Need to specify a binary output for GZIPPED formats.')
 
   def DownloadReport(self, report_definition, output=sys.stdout, **kwargs):
     """Downloads an AdWords report using a report definition.
@@ -1552,6 +1624,9 @@ class ReportDownloader(object):
   def _DownloadReport(self, post_body, output, **kwargs):
     """Downloads an AdWords report, writing the contents to the given file.
 
+    This will attempt to determine the encoding of the specified output and
+    read the report with the appropriate StreamReader.
+
     Args:
       post_body: The contents of the POST request's body as a URL encoded
           string.
@@ -1586,21 +1661,36 @@ class ReportDownloader(object):
     """
     response = None
     try:
-      # New
       response = self._DownloadReportAsStream(post_body, **kwargs)
+
+      # Determine encoding of provided output.
+      if six.PY3 and isinstance(output, six.StringIO):
+        encoding = 'utf-8'
+      else:
+        encoding = getattr(output, 'encoding', None)
+
+      # If any encoding is found, apply the appropriate StreamReader to the
+      # response. When reading in chunks, this prevents truncation of multi-byte
+      # characters; e.g. utf-8. For more details, see:
+      # https://github.com/googleads/googleads-python-lib/issues/281
+      if encoding:
+        stream_reader = codecs.getreader(encoding)
+        response = stream_reader(response)
+
       while True:
         chunk = response.read(_CHUNK_SIZE)
         if not chunk: break
-        output.write(chunk.decode('utf-8') if sys.version_info[0] == 3
-                     and (getattr(output, 'mode', 'w') == 'w'
-                          and not isinstance(output, io.BytesIO))
-                     else chunk)
+        output.write(chunk)
     finally:
       if response:
         response.close()
 
   def _DownloadReportAsStream(self, post_body, **kwargs):
-    """Downloads an AdWords report, returning a stream.
+    """Downloads an AdWords report, returning a stream-like object.
+
+    In Python 2, this will return a urllib2.addinfourl instance. In Python 3,
+    this will return a http.client.HTTPResponse instance. In either case,
+    reading from the stream-like object will return binary data.
 
     Args:
       post_body: The contents of the POST request's body as a URL encoded

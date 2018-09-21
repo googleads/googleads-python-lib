@@ -14,10 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
+"""This example deletes an ad group by setting the status to 'REMOVED'.
 
-Note by default this account will only be accessible via its parent AdWords
-manager account..
+To get ad groups, run get_ad_groups.py.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -26,38 +25,34 @@ section of our README.
 
 """
 
-
-from datetime import datetime
 from googleads import adwords
 
 
-def main(client):
-  # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+AD_GROUP_ID = 'INSERT_AD_GROUP_ID_HERE'
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
+
+def main(client, ad_group_id):
+  # Initialize appropriate service.
+  ad_group_service = client.GetService('AdGroupService', version='v201809')
+
+  # Construct operations and delete ad group.
   operations = [{
-      'operator': 'ADD',
+      'operator': 'SET',
       'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
+          'id': ad_group_id,
+          'status': 'REMOVED'
       }
   }]
-
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
+  result = ad_group_service.mutate(operations)
 
   # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID "%s" was successfully created.'
-           % account['customerId'])
+  for ad_group in result['value']:
+    print ('Ad group with name "%s" and id "%s" was deleted.'
+           % (ad_group['name'], ad_group['id']))
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, AD_GROUP_ID)

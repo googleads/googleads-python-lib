@@ -14,10 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This example illustrates how to create an account.
-
-Note by default this account will only be accessible via its parent AdWords
-manager account..
+"""This example gets report fields.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
@@ -26,38 +23,30 @@ section of our README.
 
 """
 
-
-from datetime import datetime
 from googleads import adwords
 
 
-def main(client):
+REPORT_TYPE = 'INSERT_REPORT_TYPE_HERE'
+
+
+def main(client, report_type):
   # Initialize appropriate service.
-  managed_customer_service = client.GetService(
-      'ManagedCustomerService', version='v201802')
+  report_definition_service = client.GetService(
+      'ReportDefinitionService', version='v201809')
 
-  today = datetime.today().strftime('%Y%m%d %H:%M:%S')
-  # Construct operations and add campaign.
-  operations = [{
-      'operator': 'ADD',
-      'operand': {
-          'name': 'Account created with ManagedCustomerService on %s' % today,
-          'currencyCode': 'EUR',
-          'dateTimeZone': 'Europe/London',
-      }
-  }]
-
-  # Create the account. It is possible to create multiple accounts with one
-  # request by sending an array of operations.
-  accounts = managed_customer_service.mutate(operations)
+  # Get report fields.
+  fields = report_definition_service.getReportFields(report_type)
 
   # Display results.
-  for account in accounts['value']:
-    print ('Account with customer ID "%s" was successfully created.'
-           % account['customerId'])
+  print 'Report type "%s" contains the following fields:' % report_type
+  for field in fields:
+    print ' - %s (%s)' % (field['fieldName'], field['fieldType'])
+    if 'enumValues' in field:
+      print '  := [%s]' % ', '.join(field['enumValues'])
 
 
 if __name__ == '__main__':
   # Initialize client object.
   adwords_client = adwords.AdWordsClient.LoadFromStorage()
-  main(adwords_client)
+
+  main(adwords_client, REPORT_TYPE)
