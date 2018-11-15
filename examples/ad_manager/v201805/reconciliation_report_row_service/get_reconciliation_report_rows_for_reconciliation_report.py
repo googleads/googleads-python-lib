@@ -30,7 +30,7 @@ def main(client, reconciliation_report_id):
       'ReconciliationReportRowService', version='v201805')
 
   # Create a statement to select reconciliation report rows.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where(('reconciliationReportId = :reportId '
                        'AND lineItemId != :lineItemId'))
                .WithBindVariable('lineItemId', 0)

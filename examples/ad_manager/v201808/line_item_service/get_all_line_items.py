@@ -25,7 +25,7 @@ def main(client):
   line_item_service = client.GetService('LineItemService', version='v201808')
 
   # Create a statement to select line items.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of line items at a time, paging
   # through until all line items have been retrieved.

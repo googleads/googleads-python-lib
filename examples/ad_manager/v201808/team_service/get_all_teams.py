@@ -25,7 +25,7 @@ def main(client):
   team_service = client.GetService('TeamService', version='v201808')
 
   # Create a statement to select teams.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of teams at a time, paging
   # through until all teams have been retrieved.

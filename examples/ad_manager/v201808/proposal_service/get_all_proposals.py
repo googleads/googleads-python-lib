@@ -25,7 +25,7 @@ def main(client):
   proposal_service = client.GetService('ProposalService', version='v201808')
 
   # Create a statement to select proposals.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of proposals at a time, paging
   # through until all proposals have been retrieved.

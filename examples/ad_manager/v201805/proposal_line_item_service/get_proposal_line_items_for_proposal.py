@@ -27,7 +27,7 @@ def main(client, proposal_id):
   proposal_line_item_service = client.GetService(
       'ProposalLineItemService', version='v201805')
   # Create a statement to select proposal line items.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('proposalId = :proposalId')
                .WithBindVariable('proposalId', proposal_id))
 

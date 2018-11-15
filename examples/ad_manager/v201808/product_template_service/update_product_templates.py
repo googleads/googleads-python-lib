@@ -33,7 +33,7 @@ def main(client, product_template_id):
       'ProductTemplateService', version='v201808')
 
   # Create a statement to select a single product template by ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .WithBindVariable('id', long(product_template_id))

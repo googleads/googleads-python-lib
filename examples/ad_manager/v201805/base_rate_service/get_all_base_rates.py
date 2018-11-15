@@ -25,7 +25,7 @@ def main(client):
   base_rate_service = client.GetService('BaseRateService', version='v201805')
 
   # Create a statement to select base rates.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of base rates at a time, paging
   # through until all base rates have been retrieved.

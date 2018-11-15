@@ -26,7 +26,7 @@ def main(client, rate_card_id):
   # Initialize appropriate service.
   base_rate_service = client.GetService('BaseRateService', version='v201805')
   # Create a statement to select base rates.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('rateCardId = :rateCardId')
                .WithBindVariable('rateCardId', rate_card_id))
 

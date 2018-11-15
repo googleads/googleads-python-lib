@@ -33,7 +33,7 @@ def main(client):
       'ReconciliationLineItemReportService', version='v201805'))
 
   # Create a statement to select reconciliation line item reports.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where(('reconciliationReportId = :reconciliationReportId AND '
                        'lineItemId != :lineItemId'))
                .OrderBy('lineItemId', ascending=True)

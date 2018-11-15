@@ -32,7 +32,7 @@ def main(client, audience_segment_id):
       'AudienceSegmentService', version='v201808')
 
   # Create statement object to get the specified first party audience segment.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('Type = :type AND Id = :audience_segment_id')
                .WithBindVariable('audience_segment_id',
                                  long(audience_segment_id))

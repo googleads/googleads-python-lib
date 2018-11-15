@@ -28,7 +28,7 @@ def main(client):
   workflow_request_service = client.GetService(
       'WorkflowRequestService', version='v201808')
   # Create a statement to select workflow requests.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('type = :type')
                .WithBindVariable('type', 'WORKFLOW_APPROVAL_REQUEST'))
 

@@ -26,7 +26,7 @@ def main(client):
       'CreativeWrapperService', version='v201808')
 
   # Create a statement to select creative wrappers.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of creative wrappers at a time, paging
   # through until all creative wrappers have been retrieved.

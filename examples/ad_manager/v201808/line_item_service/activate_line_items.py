@@ -36,7 +36,7 @@ def main(client, order_id):
   line_item_service = client.GetService('LineItemService', version='v201808')
 
   # Create query.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('orderId = :orderId AND status = :status')
                .WithBindVariable('status', 'NEEDS_CREATIVES')
                .WithBindVariable('orderId', long(order_id)))

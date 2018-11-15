@@ -26,7 +26,7 @@ def main(client):
       'ContentMetadataKeyHierarchyService', version='v201808')
 
   # Create a statement to select content metadata key hierarchies.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of content metadata key hierarchies at a time,
   # paging through until all content metadata key hierarchies have been

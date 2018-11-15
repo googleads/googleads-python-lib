@@ -25,7 +25,7 @@ def main(client):
   custom_field_service = client.GetService(
       'CustomFieldService', version='v201805')
   # Create a statement to select custom fields.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('entityType = :entityType')
                .WithBindVariable('entityType', 'LINE_ITEM'))
 

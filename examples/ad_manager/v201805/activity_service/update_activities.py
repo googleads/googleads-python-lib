@@ -38,7 +38,7 @@ def main(client, activity_id):
   activity_service = client.GetService('ActivityService', version='v201805')
 
   # Create statement object to select one activity by ID to update.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :activityId')
                .WithBindVariable('activityId', long(activity_id))
                .Limit(1))

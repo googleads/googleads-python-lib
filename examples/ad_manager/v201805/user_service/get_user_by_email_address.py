@@ -26,7 +26,7 @@ def main(client, email_address):
   # Initialize appropriate service.
   user_service = client.GetService('UserService', version='v201805')
   # Create a statement to select users.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('email = :email')
                .WithBindVariable('email', email_address))
 

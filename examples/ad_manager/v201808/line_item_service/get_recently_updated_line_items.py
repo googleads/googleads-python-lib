@@ -32,7 +32,7 @@ def main(client):
                    - timedelta(days=1))
 
   # Create a statement to select line items.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('lastModifiedDateTime >= :lastModifiedDateTime')
                .WithBindVariable('lastModifiedDateTime', last_modified))
 

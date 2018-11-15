@@ -33,7 +33,7 @@ def main(client, line_item_id):
       'LineItemCreativeAssociationService', version='v201808')
 
   # Create query.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('lineItemId = :lineItemId AND status = :status')
                .WithBindVariable('status', 'ACTIVE')
                .WithBindVariable('lineItemId', long(line_item_id)))

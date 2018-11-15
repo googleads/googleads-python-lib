@@ -25,7 +25,7 @@ def main(client):
   audience_segment_service = client.GetService(
       'AudienceSegmentService', version='v201805')
   # Create a statement to select audience segments.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('type = :type')
                .WithBindVariable('type', 'FIRST_PARTY'))
 

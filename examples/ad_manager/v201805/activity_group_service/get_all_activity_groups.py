@@ -26,7 +26,7 @@ def main(client):
       'ActivityGroupService', version='v201805')
 
   # Create a statement to select activity groups.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of activity groups at a time, paging
   # through until all activity groups have been retrieved.

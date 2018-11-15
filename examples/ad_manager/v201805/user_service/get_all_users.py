@@ -25,7 +25,7 @@ def main(client):
   user_service = client.GetService('UserService', version='v201805')
 
   # Create a statement to select users.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of users at a time, paging
   # through until all users have been retrieved.

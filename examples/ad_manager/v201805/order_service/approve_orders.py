@@ -32,7 +32,7 @@ def main(client):
 
   # Create a filter statement.
   today = datetime.date.today()
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where(('status in (\'DRAFT\', \'PENDING_APPROVAL\') '
                        'AND endDateTime >= :today AND isArchived = FALSE'))
                .WithBindVariable('today', today))

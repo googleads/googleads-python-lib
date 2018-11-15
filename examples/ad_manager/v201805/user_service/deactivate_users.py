@@ -33,7 +33,7 @@ def main(client, user_id):
   user_service = client.GetService('UserService', version='v201805')
 
   # Create query.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :userId')
                .WithBindVariable('userId', long(user_id)))
 

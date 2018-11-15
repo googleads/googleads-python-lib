@@ -1,3 +1,14 @@
+15.0.0 -- 11/14/2018
+* Added support for v201811.
+* Removed support for v201711.
+* Removed examples for v201802.
+* Remove ContentMetadataKeyHierarchyService
+* Added version parameter to PQL utilities to account for statement
+  differences among API versions. This parameter defaults to the most recent
+  API version. If you update your Python client library but don't plan on
+  migrating to the newest API version, you might need to explicitly declare the
+  version for the PQL utility to use.
+
 14.1.0 -- 09/21/18
 * Added support and examples for AdWords v201809.
 * Resolved issues:

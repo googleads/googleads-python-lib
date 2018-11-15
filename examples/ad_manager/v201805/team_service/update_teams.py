@@ -37,7 +37,7 @@ def main(client, team_id):
   team_service = client.GetService('TeamService', version='v201805')
 
   # Create a filter statement to select a single team by ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :teamId')
                .WithBindVariable('teamId', long(team_id)))
 

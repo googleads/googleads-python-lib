@@ -25,7 +25,7 @@ def main(client):
   creative_service = client.GetService('CreativeService', version='v201808')
 
   # Create a statement to select creatives.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of creatives at a time, paging
   # through until all creatives have been retrieved.

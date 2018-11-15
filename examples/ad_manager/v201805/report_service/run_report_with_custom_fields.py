@@ -33,7 +33,7 @@ def main(client, order_id):
   report_downloader = client.GetDataDownloader(version='v201805')
 
   # Filter for line items of a given order.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('orderId = :orderId')
                .WithBindVariable('orderId', long(order_id)))
 

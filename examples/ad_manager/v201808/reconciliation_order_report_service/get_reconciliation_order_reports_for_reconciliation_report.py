@@ -27,7 +27,7 @@ def main(client, reconciliation_report_id):
   reconciliation_order_report_service = client.GetService(
       'ReconciliationOrderReportService', version='v201808')
   # Create a statement to select reconciliation order reports.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('reconciliationReportId = :reconciliationReportId')
                .WithBindVariable('reconciliationReportId',
                                  reconciliation_report_id))

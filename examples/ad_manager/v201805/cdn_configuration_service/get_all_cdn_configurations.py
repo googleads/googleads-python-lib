@@ -29,7 +29,7 @@ def main(client):
                                          version='v201805')
 
   # Create a statement to select cdn configurations.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small number of configs at a time, paging
   # through until all have been retrieved.

@@ -24,7 +24,7 @@ def main(client):
   # Initialize appropriate service.
   line_item_service = client.GetService('LineItemService', version='v201805')
   # Create a statement to select line items.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('isMissingCreatives = :isMissingCreatives')
                .WithBindVariable('isMissingCreatives', True))
 

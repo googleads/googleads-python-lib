@@ -27,7 +27,7 @@ def main(client, rate_card_id):
   premium_rate_service = client.GetService(
       'PremiumRateService', version='v201805')
   # Create a statement to select premium rates.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('rateCardId = :rateCardId')
                .WithBindVariable('rateCardId', rate_card_id))
 

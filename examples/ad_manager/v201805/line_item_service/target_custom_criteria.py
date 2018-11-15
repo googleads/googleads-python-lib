@@ -81,7 +81,7 @@ def main(client, line_item_id, key_id1, key_id2, key_id3, value_id1, value_id2,
   }
 
   # Create statement to get the line item
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :lineItemId')
                .WithBindVariable('lineItemId', long(line_item_id))
                .Limit(1))

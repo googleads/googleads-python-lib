@@ -78,7 +78,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 2.7.9 or higher.')
 
 
-VERSION = '14.1.0'
+VERSION = '15.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
@@ -376,7 +376,7 @@ def _ExtractProxyConfig(product_yaml_key, proxy_config_data):
   return proxy_config
 
 
-def _PackForSuds(obj, factory, packer=None):
+def _PackForSuds(obj, factory, packer=None, version=None):
   """Packs SOAP input into the format we want for suds.
 
   The main goal here is to pack dictionaries with an 'xsi_type' key into
@@ -393,6 +393,7 @@ def _PackForSuds(obj, factory, packer=None):
         classes generated from the WSDL.
     packer: An optional subclass of googleads.common.SoapPacker that provides
         customized packing logic.
+    version: the version of the current API, e.g. 'v201811'
 
   Returns:
     If the given obj was a dictionary that contained the 'xsi_type' key, this
@@ -400,7 +401,7 @@ def _PackForSuds(obj, factory, packer=None):
     be the same data type as the input obj was.
   """
   if packer:
-    obj = packer.Pack(obj)
+    obj = packer.Pack(obj, version)
 
   if obj in ({}, None):
     # Force suds to serialize empty objects. There are legitimate use cases for
@@ -859,7 +860,7 @@ class GoogleSoapService(object):
   """
   __metaclass__ = abc.ABCMeta
 
-  def __init__(self, header_handler, packer):
+  def __init__(self, header_handler, packer, version):
     """Initializes a SOAP service.
 
     Args:
@@ -867,9 +868,11 @@ class GoogleSoapService(object):
       SOAP and HTTP headers.
       packer: A googleads.common.SoapPacker instance used to transform
       entities.
+      version: the version of the current API, e.g. 'v201811'
     """
     self._header_handler = header_handler
     self._packer = packer
+    self._version = version
     self._method_proxies = {}
 
 
@@ -943,7 +946,7 @@ class SudsServiceProxy(GoogleSoapService):
   """
 
   def __init__(self, endpoint, header_handler, packer, proxy_config,
-               timeout, cache=None):
+               timeout, version, cache=None):
     """Initializes a suds service proxy.
 
     Args:
@@ -954,13 +957,14 @@ class SudsServiceProxy(GoogleSoapService):
         customized packing logic.
       proxy_config: A ProxyConfig that represents proxy settings.
       timeout: An integer to set the connection timeout.
+      version: the current version of the library, e.g. 'v201811'
       cache: A suds.cache.Cache instance to pass to the underlying SOAP
           library for caching.
 
     Raises:
       GoogleAdsValueError: The wrong type was given for caching.
     """
-    super(SudsServiceProxy, self).__init__(header_handler, packer)
+    super(SudsServiceProxy, self).__init__(header_handler, packer, version)
 
     if cache and not isinstance(cache, suds.cache.Cache):
       raise googleads.errors.GoogleAdsValueError(
@@ -1124,7 +1128,7 @@ class ZeepServiceProxy(GoogleSoapService):
   NO_CACHE = 'zeep_no_cache'
 
   def __init__(self, endpoint, header_handler, packer,
-               proxy_config, timeout, cache=None):
+               proxy_config, timeout, version, cache=None):
     """Initializes a zeep service proxy.
 
     Args:
@@ -1135,6 +1139,7 @@ class ZeepServiceProxy(GoogleSoapService):
         customized packing logic.
       proxy_config: A ProxyConfig that represents proxy settings.
       timeout: An integer to set the connection timeout.
+      version: the version of the current API, e.g. 'v201811'
       cache: An instance of zeep.cache.Base to pass to the underlying SOAP
           library for caching. A file cache by default. To disable, pass
           googleads.common.ZeepServiceProxy.NO_CACHE.
@@ -1142,7 +1147,7 @@ class ZeepServiceProxy(GoogleSoapService):
     Raises:
       GoogleAdsValueError: The wrong type was given for caching.
     """
-    super(ZeepServiceProxy, self).__init__(header_handler, packer)
+    super(ZeepServiceProxy, self).__init__(header_handler, packer, version)
 
     if cache and not (isinstance(cache, zeep.cache.Base) or
                       cache == self.NO_CACHE):
@@ -1264,7 +1269,7 @@ class ZeepServiceProxy(GoogleSoapService):
       An instance of type 'elem'.
     """
     if self._packer:
-      data = self._packer.Pack(data)
+      data = self._packer.Pack(data, self._version)
 
     if isinstance(data, dict):  # Instantiate from simple Python dict
       # See if there is a manually specified derived type.

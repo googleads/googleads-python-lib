@@ -38,7 +38,7 @@ def main(client, contact_id):
   contact_service = client.GetService('ContactService', version='v201808')
 
   # Create statement object to select the single contact by ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :id')
                .WithBindVariable('id', long(contact_id))
                .Limit(1))

@@ -40,7 +40,7 @@ def main(client, creative_set_id, companion_creative_id):
                                            version='v201808')
 
   # Create statement to select a single creative set by ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :creativeSetId')
                .WithBindVariable('creativeSetId', long(creative_set_id)))
 

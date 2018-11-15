@@ -27,7 +27,7 @@ def main(client, master_creative_id):
   creative_set_service = client.GetService(
       'CreativeSetService', version='v201808')
   # Create a statement to select creative sets.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('masterCreativeId = :masterCreativeId')
                .WithBindVariable('masterCreativeId', master_creative_id))
 

@@ -38,7 +38,7 @@ def main(client, company_id):
   company_service = client.GetService('CompanyService', version='v201805')
 
   # Create statement object to only select a single company by ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .WithBindVariable('id', long(company_id))
                .Limit(1))

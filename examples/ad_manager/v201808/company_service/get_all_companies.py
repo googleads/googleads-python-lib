@@ -25,7 +25,7 @@ def main(client):
   company_service = client.GetService('CompanyService', version='v201808')
 
   # Create a statement to select companies.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of companies at a time, paging
   # through until all companies have been retrieved.

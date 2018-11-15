@@ -25,7 +25,7 @@ def main(client):
   rate_card_service = client.GetService('RateCardService', version='v201805')
 
   # Create a statement to select rate cards.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of rate cards at a time, paging
   # through until all rate cards have been retrieved.

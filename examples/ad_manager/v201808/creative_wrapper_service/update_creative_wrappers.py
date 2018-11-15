@@ -39,7 +39,7 @@ def main(client, creative_wrapper_id):
                                                version='v201808')
 
   # Create statement to get a creative wrapper by ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :creativeWrapperId')
                .WithBindVariable('creativeWrapperId',
                                  long(creative_wrapper_id)))

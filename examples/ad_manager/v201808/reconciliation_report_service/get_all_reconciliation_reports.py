@@ -26,7 +26,7 @@ def main(client):
       'ReconciliationReportService', version='v201808')
 
   # Create a statement to select reconciliation reports.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of reconciliation reports at a time, paging
   # through until all reconciliation reports have been retrieved.

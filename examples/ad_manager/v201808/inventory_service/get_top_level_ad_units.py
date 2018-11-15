@@ -31,7 +31,7 @@ def main(client):
   parent_ad_unit_id = current_network['effectiveRootAdUnitId']
 
   # Create a statement to select ad units under the parent ad unit.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('parentId = :parentId')
                .OrderBy('id', ascending=True)
                .WithBindVariable('parentId', parent_ad_unit_id))

@@ -25,7 +25,7 @@ def main(client):
   activity_group_service = client.GetService(
       'ActivityGroupService', version='v201805')
   # Create a statement to select activity groups.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('status = :status')
                .WithBindVariable('status', 'ACTIVE'))
 

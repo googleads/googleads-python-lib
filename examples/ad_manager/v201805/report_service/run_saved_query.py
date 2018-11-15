@@ -34,7 +34,7 @@ def main(client, saved_query_id):
   report_downloader = client.GetDataDownloader(version='v201805')
 
   # Create statement object to filter for an order.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .WithBindVariable('id', long(saved_query_id))
                .Limit(1))

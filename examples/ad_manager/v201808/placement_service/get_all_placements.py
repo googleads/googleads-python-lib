@@ -25,7 +25,7 @@ def main(client):
   placement_service = client.GetService('PlacementService', version='v201808')
 
   # Create a statement to select placements.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of placements at a time, paging
   # through until all placements have been retrieved.

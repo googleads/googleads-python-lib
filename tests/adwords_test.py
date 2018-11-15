@@ -430,6 +430,7 @@ class AdWordsClientTest(unittest.TestCase):
             googleads.adwords._AdWordsPacker,
             'proxy_config',
             'timeout',
+            CURRENT_VERSION,
             cache='cache')
         self.assertEqual(service, mock_service)
 
@@ -504,11 +505,12 @@ class AdWordsPackerTest(unittest.TestCase):
     query_regex = (r'SELECT (.*) WHERE Status = "ENABLED"'
                    r' ORDER BY Name ASC LIMIT 0,100')
 
-    self.assertRegexpMatches(self.packer.Pack(query), query_regex)
+    self.assertRegexpMatches(self.packer.Pack(query, CURRENT_VERSION),
+                             query_regex)
 
   def testAdWordsPackerForUnsupportedObjectType(self):
     obj = object()
-    self.assertEqual(self.packer.Pack(obj), obj)
+    self.assertEqual(self.packer.Pack(obj, CURRENT_VERSION), obj)
 
 
 class BatchJobHelperTest(testing.CleanUtilityRegistryTestCase):

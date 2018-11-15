@@ -32,7 +32,7 @@ def main(client, base_rate_id):
   base_rate_service = client.GetService('BaseRateService', version='v201808')
 
   # Create a filter statement for base rates for a single rate card.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .Limit(1)

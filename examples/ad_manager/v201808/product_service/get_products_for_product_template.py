@@ -27,7 +27,7 @@ def main(client, product_template_id):
   product_service = client.GetService('ProductService', version='v201808')
 
   # Create a statement to select products.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('productTemplateId = :productTemplateId')
                .WithBindVariable('productTemplateId', product_template_id))
 

@@ -39,7 +39,7 @@ def main(client, ad_unit_id):
   inventory_service = client.GetService('InventoryService', version='v201805')
 
   # Create a statement to select a single ad unit by ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .WithBindVariable('id', ad_unit_id))
 

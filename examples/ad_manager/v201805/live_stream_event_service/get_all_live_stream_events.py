@@ -27,7 +27,7 @@ def main(client):
       'LiveStreamEventService', version='v201805')
 
   # Create a statement to select live stream events.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of live stream events at a time, paging
   # through until all live stream events have been retrieved.

@@ -36,7 +36,7 @@ def main(client):
   location_criterion_service = client.GetService(
       'LocationCriterionService', version='v201809')
 
-  location_names = ['Paris', 'Quebec', 'Spain', 'Deutchland']
+  location_names = ['Paris', 'Quebec', 'Spain', 'Deutschland']
 
   # Create the selector.
   selector = {

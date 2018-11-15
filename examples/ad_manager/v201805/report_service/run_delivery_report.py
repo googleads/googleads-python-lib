@@ -32,7 +32,7 @@ ORDER_ID = 'INSERT_ORDER_ID_HERE'
 
 def main(client, order_id):
   # Create statement object to filter for an order.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('ORDER_ID = :id')
                .WithBindVariable('id', long(order_id))
                .Limit(None)  # No limit or offset for reports

@@ -39,7 +39,7 @@ def main(client, parent_id):
 
   # Create a query to select ad units under the parent ad unit and the parent ad
   # unit.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('parentId = :parentId or id = :parentId')
                .WithBindVariable('parentId', long(parent_id)))
 

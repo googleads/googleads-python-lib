@@ -32,7 +32,7 @@ def main(client):
       'SuggestedAdUnitService', version='v201805')
 
   # Create a filter statement.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('numRequests > :numRequests')
                .WithBindVariable('numRequests', THRESHOLD_NUMBER_OF_REQUESTS))
   num_approved_suggested_ad_units = 0

@@ -33,7 +33,7 @@ def main(client, order_id):
 
   # Create statement object to only select line items with even delivery rates.
 
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where(('deliveryRateType = :deliveryRateType AND '
                        'orderId = :orderId'))
                .WithBindVariable('orderId', long(order_id))

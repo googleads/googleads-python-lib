@@ -36,7 +36,7 @@ def main(client):
       'ReconciliationReportRowService', version='v201808'))
 
   # Create a statement to select reconciliation report rows.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where(('id = :reconciliationReportRowId AND '
                        'reconciliationReportId = :reconciliationReportId'))
                .OrderBy('id', ascending=True)

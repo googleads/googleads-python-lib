@@ -26,7 +26,7 @@ def main(client):
       'CustomTargetingService', version='v201805')
 
   # Create statement to get targeting keys for predefined values.
-  targeting_key_statement = (ad_manager.StatementBuilder()
+  targeting_key_statement = (ad_manager.StatementBuilder(version='v201805')
                              .Where('type = :type')
                              .WithBindVariable('type', 'PREDEFINED'))
 
@@ -44,7 +44,7 @@ def main(client):
 
   if all_keys:
     # Create a statement to select custom targeting values.
-    statement = (ad_manager.StatementBuilder()
+    statement = (ad_manager.StatementBuilder(version='v201805')
                  .Where('customTargetingKeyId IN (:ids)')
                  .WithBindVariable('ids', [key['id'] for key in all_keys]))
 

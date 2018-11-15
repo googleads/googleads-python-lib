@@ -25,7 +25,7 @@ def main(client):
   content_service = client.GetService('ContentService', version='v201808')
 
   # Create a statement to select content.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of content at a time, paging
   # through until all content have been retrieved.

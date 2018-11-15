@@ -34,7 +34,7 @@ def main(client, proposal_id):
                                                version='v201808')
 
   # Create a filter statement.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where(('entityId = :entityId and entityType = :entityType '
                        'and type = :type'))
                .WithBindVariable('entityId', proposal_id)

@@ -424,6 +424,7 @@ class AdWordsClient(googleads.common.CommonClient):
         _AdWordsPacker,
         self.proxy_config,
         self.timeout,
+        version,
         cache=self.cache)
 
     return service
@@ -616,12 +617,13 @@ class _AdWordsPacker(googleads.common.SoapPacker):
   """A utility applying customized packing logic for AdWords."""
 
   @classmethod
-  def Pack(cls, obj):
+  def Pack(cls, obj, version):
     """Pack the given object using AdWords-specific logic.
 
     Args:
       obj: an object to be packed for SOAP using AdWords-specific logic, if
           applicable.
+      version: the version of the current API, e.g. 'v201809'
 
     Returns:
       The given object packed with AdWords-specific logic for SOAP, if

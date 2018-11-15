@@ -33,7 +33,7 @@ def main(client, premium_rate_id):
                                            version='v201805')
 
   # Create statement object to select a single proposal by an ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .WithBindVariable('id', long(premium_rate_id))

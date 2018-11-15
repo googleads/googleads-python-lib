@@ -31,7 +31,7 @@ def main(client):
       'LineItemCreativeAssociationService', version='v201805')
 
   # Create statement object to get all LICAs.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   while True:
     # Get LICAs by statement.

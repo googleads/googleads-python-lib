@@ -26,7 +26,7 @@ def main(client):
       'AudienceSegmentService', version='v201808')
 
   # Create a statement to select audience segments.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of audience segments at a time, paging
   # through until all audience segments have been retrieved.

@@ -26,7 +26,7 @@ def main(client):
       'ExchangeRateService', version='v201805')
 
   # Create a statement to select exchange rates.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of exchange rates at a time, paging
   # through until all exchange rates have been retrieved.

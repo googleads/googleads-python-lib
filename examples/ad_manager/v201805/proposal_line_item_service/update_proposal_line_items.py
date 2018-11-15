@@ -35,7 +35,7 @@ def main(client, proposal_line_item_id):
 
   # Create statement to select a proposal line item.
 
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .WithBindVariable('id', long(proposal_line_item_id))
                .Limit(1))

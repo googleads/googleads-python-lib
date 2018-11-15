@@ -26,7 +26,7 @@ def main(client):
       'CreativeSetService', version='v201805')
 
   # Create a statement to select creative sets.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of creative sets at a time, paging
   # through until all creative sets have been retrieved.

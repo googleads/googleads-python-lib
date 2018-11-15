@@ -26,7 +26,7 @@ def main(client):
       'LineItemCreativeAssociationService', version='v201805')
 
   # Create a statement to select line item creative associations.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of line item creative associations at a time, paging
   # through until all line item creative associations have been retrieved.

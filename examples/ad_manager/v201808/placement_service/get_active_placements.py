@@ -24,7 +24,7 @@ def main(client):
   # Initialize appropriate service.
   placement_service = client.GetService('PlacementService', version='v201808')
   # Create a statement to select placements.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('status = :status')
                .WithBindVariable('status', 'ACTIVE'))
 

@@ -32,7 +32,7 @@ def main(client, key_id):
   custom_targeting_service = client.GetService(
       'CustomTargetingService', version='v201805')
 
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :keyId')
                .WithBindVariable('keyId', long(key_id))
                .Limit(1))

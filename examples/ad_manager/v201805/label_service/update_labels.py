@@ -32,7 +32,7 @@ def main(client, label_id):
   label_service = client.GetService('LabelService', version='v201805')
 
   # Create a statement to select only active labels.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :labelId')
                .WithBindVariable('labelId', long(label_id)))
 

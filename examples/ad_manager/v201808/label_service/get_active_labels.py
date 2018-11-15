@@ -24,7 +24,7 @@ def main(client):
   # Initialize appropriate service.
   label_service = client.GetService('LabelService', version='v201808')
   # Create a statement to select labels.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('isActive = :isActive')
                .WithBindVariable('isActive', True))
 

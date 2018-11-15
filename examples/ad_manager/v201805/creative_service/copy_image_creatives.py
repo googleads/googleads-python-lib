@@ -31,7 +31,7 @@ def main(client):
   creative_service = client.GetService('CreativeService', version='v201805')
 
   # Create a statement to get the image creative.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .WithBindVariable('id', CREATIVE_ID))

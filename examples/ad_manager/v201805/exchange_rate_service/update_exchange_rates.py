@@ -33,7 +33,7 @@ def main(client, exchange_rate_id):
                                             version='v201805')
 
   # Create a statement to get an exchange rate by its ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .WithBindVariable('id', long(exchange_rate_id))
                .Limit(1))

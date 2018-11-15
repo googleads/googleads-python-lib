@@ -26,7 +26,7 @@ def main(client):
       'ProductTemplateService', version='v201808')
 
   # Create a statement to select product templates.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of product templates at a time, paging
   # through until all product templates have been retrieved.

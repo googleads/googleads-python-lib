@@ -33,7 +33,7 @@ def main(client):
       'ReconciliationOrderReportService', version='v201805'))
 
   # Create a statement to select reconciliation order reports.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .Limit(1)

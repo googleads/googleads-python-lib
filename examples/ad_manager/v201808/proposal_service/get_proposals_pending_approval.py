@@ -24,7 +24,7 @@ def main(client):
   # Initialize appropriate service.
   proposal_service = client.GetService('ProposalService', version='v201808')
   # Create a statement to select proposals.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('status = :status')
                .WithBindVariable('status', 'PENDING_APPROVAL'))
 

@@ -26,7 +26,7 @@ def main(client):
       'SuggestedAdUnitService', version='v201805')
 
   # Create a statement to select suggested ad units.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of suggested ad units at a time, paging
   # through until all suggested ad units have been retrieved.

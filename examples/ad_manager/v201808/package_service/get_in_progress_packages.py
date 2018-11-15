@@ -24,7 +24,7 @@ def main(client):
   # Initialize appropriate service.
   pkg_service = client.GetService('PackageService', version='v201808')
   # Create a statement to select packages.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('status = :status')
                .WithBindVariable('status', 'IN_PROGRESS'))
 

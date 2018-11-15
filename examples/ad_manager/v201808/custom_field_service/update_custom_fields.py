@@ -39,7 +39,7 @@ def main(client, custom_field_id):
       'CustomFieldService', version='v201808')
 
   # Create statement to get a custom field.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :customFieldId')
                .WithBindVariable('customFieldId', long(custom_field_id)))
 

@@ -27,7 +27,7 @@ def main(client, line_item_id):
   lica_service = client.GetService(
       'LineItemCreativeAssociationService', version='v201808')
   # Create a statement to select line item creative associations.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('lineItemId = :lineItemId')
                .WithBindVariable('lineItemId', line_item_id))
 

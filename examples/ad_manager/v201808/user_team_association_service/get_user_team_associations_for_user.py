@@ -27,7 +27,7 @@ def main(client, user_id):
   user_team_association_service = client.GetService(
       'UserTeamAssociationService', version='v201808')
   # Create a statement to select user team associations.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('userId = :userId')
                .WithBindVariable('userId', long(user_id)))
 

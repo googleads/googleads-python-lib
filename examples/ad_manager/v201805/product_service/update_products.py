@@ -32,7 +32,7 @@ def main(client, product_id):
   product_service = client.GetService('ProductService', version='v201805')
 
   # Create statement object to select a single product by an ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .WithBindVariable('id', long(product_id))
                .Limit(1))

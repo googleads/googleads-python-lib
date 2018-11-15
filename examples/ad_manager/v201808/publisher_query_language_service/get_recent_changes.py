@@ -39,7 +39,7 @@ def main(client):
                    'AND ChangeDateTime < :endDateTime')
   pagination_query = 'Id < :id AND ' + initial_query
 
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Select(('Id, ChangeDateTime, EntityId, EntityType, '
                         'Operation, UserId'))
                .From('Change_History')

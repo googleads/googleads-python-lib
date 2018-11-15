@@ -31,7 +31,7 @@ def main(client, placement_id):
   placement_service = client.GetService('PlacementService', version='v201808')
 
   # Create query.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .Limit(1)

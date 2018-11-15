@@ -25,7 +25,7 @@ def main(client):
   label_service = client.GetService('LabelService', version='v201805')
 
   # Create a statement to select labels.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of labels at a time, paging
   # through until all labels have been retrieved.

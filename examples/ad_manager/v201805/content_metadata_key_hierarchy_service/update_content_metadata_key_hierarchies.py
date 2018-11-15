@@ -46,7 +46,7 @@ def main(client, content_metadata_key_hierarchy_id, custom_targeting_key_id):
 
   # Create a query to select a single content metadata key hierarchy.
 
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .WithBindVariable('id', long(content_metadata_key_hierarchy_id))

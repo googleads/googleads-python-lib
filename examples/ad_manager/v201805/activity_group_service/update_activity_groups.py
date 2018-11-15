@@ -40,7 +40,7 @@ def main(client, activity_group_id, advertiser_company_id):
                                              version='v201805')
 
   # Create statement object to select a single activity groups by ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :activityGroupId')
                .WithBindVariable('activityGroupId', long(activity_group_id))
                .Limit(1))

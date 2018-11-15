@@ -24,7 +24,7 @@ def main(client):
   # Initialize appropriate service.
   creative_service = client.GetService('CreativeService', version='v201805')
   # Create a statement to select creatives.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('creativeType = :creativeType')
                .WithBindVariable('creativeType', 'ImageCreative'))
 

@@ -29,7 +29,7 @@ def main(client, proposal_id):
   proposal_service = client.GetService('ProposalService', version='v201808')
 
   # Create query.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :proposalId')
                .WithBindVariable('proposalId', proposal_id))
   proposals_pushed_to_marketplace = 0

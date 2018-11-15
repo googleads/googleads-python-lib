@@ -27,7 +27,7 @@ def main(client, num_requests):
   suggested_ad_unit_service = client.GetService(
       'SuggestedAdUnitService', version='v201805')
   # Create a statement to select suggested ad units.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('numRequests >= :numRequests')
                .WithBindVariable('numRequests', long(num_requests)))
 

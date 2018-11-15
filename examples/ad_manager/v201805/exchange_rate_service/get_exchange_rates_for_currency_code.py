@@ -27,7 +27,7 @@ def main(client, currency_code):
   exchange_rate_service = client.GetService(
       'ExchangeRateService', version='v201805')
   # Create a statement to select exchange rates.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('currencyCode = :currencyCode')
                .WithBindVariable('currencyCode', currency_code))
 

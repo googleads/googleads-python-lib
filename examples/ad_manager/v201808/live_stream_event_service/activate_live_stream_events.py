@@ -29,7 +29,7 @@ def main(client, live_stream_event_id):
       'LiveStreamEventService', version='v201808')
 
   # Create query to find paused live stream events.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where(('id = :id AND '
                        'status = :status'))
                .WithBindVariable('status', 'PAUSED')

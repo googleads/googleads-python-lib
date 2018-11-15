@@ -34,7 +34,7 @@ def main(client):
       network_service.getCurrentNetwork()['effectiveRootAdUnitId'])
 
   # Set filter statement and bind value for reportQuery.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('PARENT_AD_UNIT_ID = :parentAdUnitId')
                .WithBindVariable('parentAdUnitId', long(root_ad_unit_id))
                .Limit(None)  # No limit or offset for reports

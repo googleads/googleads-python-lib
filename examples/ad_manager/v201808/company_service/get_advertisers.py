@@ -24,7 +24,7 @@ def main(client):
   # Initialize appropriate service.
   company_service = client.GetService('CompanyService', version='v201808')
   # Create a statement to select companies.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('type = :type')
                .WithBindVariable('type', 'ADVERTISER'))
 

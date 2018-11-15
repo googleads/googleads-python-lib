@@ -25,7 +25,7 @@ def main(client):
   creative_template_service = client.GetService(
       'CreativeTemplateService', version='v201805')
   # Create a statement to select creative templates.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('type = :type')
                .WithBindVariable('type', 'SYSTEM_DEFINED'))
 

@@ -25,7 +25,7 @@ def main(client):
   ad_unit_service = client.GetService('InventoryService', version='v201805')
 
   # Create a statement to select ad units.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of ad units at a time, paging
   # through until all ad units have been retrieved.

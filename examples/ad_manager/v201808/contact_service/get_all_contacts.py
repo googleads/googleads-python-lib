@@ -25,7 +25,7 @@ def main(client):
   contact_service = client.GetService('ContactService', version='v201808')
 
   # Create a statement to select contacts.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of contacts at a time, paging
   # through until all contacts have been retrieved.

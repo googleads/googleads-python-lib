@@ -41,6 +41,7 @@ import zeep.exceptions
 
 URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
 TEST_DIR = os.path.dirname(__file__)
+CURRENT_VERSION = 'v201811'
 
 
 class CommonTest(testing.CleanUtilityRegistryTestCase):
@@ -64,7 +65,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     self.test1_name = 'Test1'
     self.test2_name = 'Test2'
     self.test2_version = 'testing'
-
+    self.fake_version = 'ignored'
     locale_patcher = mock.patch('googleads.common.locale.getdefaultlocale',
                                 return_value=('en_us', 'UTF-8'))
     self.locale_patcher = locale_patcher.start()
@@ -897,7 +898,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
   def testPackForSuds_applyCustomPacker(self):
     class CustomPacker(googleads.common.SoapPacker):
       @classmethod
-      def Pack(cls, obj):
+      def Pack(cls, obj, version):
         if isinstance(obj, numbers.Number):
           return {'xsi_type': 'Integer', 'value': str(int(obj))}
         return obj
@@ -908,7 +909,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         [('Number.Type', 0), ('value', 1)])
     number = 3.14159265358979323846264
 
-    rval = googleads.common._PackForSuds(number, factory, CustomPacker)
+    rval = googleads.common._PackForSuds(number, factory, CustomPacker,
+                                         CURRENT_VERSION)
     self.assertEqual('Integer', getattr(rval, 'Number.Type'))
     self.assertEqual('3', rval.value)
 
@@ -945,6 +947,7 @@ class ZeepServiceProxyTest(unittest.TestCase):
 
     self.empty_proxy_config = googleads.common.ProxyConfig()
     self.timeout_100 = 100
+    self.fake_version = 'ignored'
 
   def testCreateZeepClient(self):
     header_handler = mock.Mock()
@@ -959,7 +962,8 @@ class ZeepServiceProxyTest(unittest.TestCase):
         mock.patch('googleads.common._ZeepProxyTransport') as zeep_transport, \
         mock.patch('googleads.util.ZeepLogger') as zeep_logger:
       zeep_wrapper = googleads.common.ZeepServiceProxy(
-          'http://abc', header_handler, packer, 'proxy', 'timeout', cache)
+          'http://abc', header_handler, packer, 'proxy', 'timeout',
+          self.fake_version, cache)
 
       zeep_auth.assert_called_once_with(header_handler)
       plugins = [zeep_auth.return_value, zeep_logger.return_value]
@@ -976,7 +980,7 @@ class ZeepServiceProxyTest(unittest.TestCase):
     with mock_zeep_client():
       zeep_wrapper = googleads.common.ZeepServiceProxy(
           'http://abc', header_handler, packer,
-          self.empty_proxy_config, self.timeout_100)
+          self.empty_proxy_config, self.timeout_100, self.fake_version)
 
       type_mock = mock.Mock()
       zeep_wrapper.zeep_client.get_type.return_value = type_mock
@@ -991,7 +995,7 @@ class ZeepServiceProxyTest(unittest.TestCase):
     with mock_zeep_client():
       zeep_wrapper = googleads.common.ZeepServiceProxy(
           'http://abc', header_handler, packer,
-          self.empty_proxy_config, self.timeout_100)
+          self.empty_proxy_config, self.timeout_100, self.fake_version)
 
       with mock.patch.object(zeep_wrapper, '_method_bindings') as mock_bindings:
         get_method = mock_bindings.get
@@ -1007,7 +1011,8 @@ class ZeepServiceProxyTest(unittest.TestCase):
 
       with self.assertRaises(googleads.errors.GoogleAdsSoapTransportError):
         googleads.common.ZeepServiceProxy(
-            'http://abc', None, None, self.empty_proxy_config, self.timeout_100)
+            'http://abc', None, None, self.empty_proxy_config, self.timeout_100,
+            self.fake_version)
 
   @mock.patch('googleads.common._ZeepProxyTransport')
   def testSchemaHelperRaisesGoogleError(self, mock_transport_class):
@@ -1024,7 +1029,7 @@ class ZeepServiceProxyTest(unittest.TestCase):
     with mock_zeep_client():
       zeep_wrapper = googleads.common.ZeepServiceProxy(
           'http://abc', header_handler, packer,
-          self.empty_proxy_config, self.timeout_100)
+          self.empty_proxy_config, self.timeout_100, self.fake_version)
 
       mock_create = zeep_wrapper.zeep_client.create_message
 
@@ -1051,7 +1056,8 @@ class ZeepServiceProxyTest(unittest.TestCase):
         self.assertRaises(googleads.errors.GoogleAdsValueError):
       googleads.common.ZeepServiceProxy(
           'http://abc', header_handler, packer,
-          self.empty_proxy_config, self.timeout_100, cache='not_a_zeep_cache')
+          self.empty_proxy_config, self.timeout_100, self.fake_version,
+          cache='not_a_zeep_cache')
 
   def testSchemaHelperBadCacheType(self):
     with self.assertRaises(googleads.errors.GoogleAdsValueError):
@@ -1065,7 +1071,7 @@ class ZeepServiceProxyTest(unittest.TestCase):
         mock.patch('googleads.common._ZeepProxyTransport') as zeep_transport:
       googleads.common.ZeepServiceProxy(
           'http://abc', header_handler, packer,
-          self.empty_proxy_config, self.timeout_100,
+          self.empty_proxy_config, self.timeout_100, self.fake_version,
           cache=googleads.common.ZeepServiceProxy.NO_CACHE)
 
       zeep_transport.assert_called_once_with(
@@ -1081,7 +1087,7 @@ class ZeepServiceProxyTest(unittest.TestCase):
     with mock_zeep_client():
       zeep_wrapper = googleads.common.ZeepServiceProxy(
           'http://abc', header_handler, packer,
-          googleads.common.ProxyConfig(), 100)
+          googleads.common.ProxyConfig(), 100, self.fake_version)
 
       zeep_wrapper.zeep_client.service['mymethod'].side_effect = fault
       zeep_wrapper._GetBindingNamespace = mock.Mock()
@@ -1109,11 +1115,12 @@ class TestZeepArgumentPacking(unittest.TestCase):
 
   def setUp(self):
     header_handler = mock.Mock()
-
+    self.fake_version = 'ignored'
     wsdl_path = os.path.join(
         TEST_DIR, 'test_data/ad_manager_report_service.xml')
     self.zeep_client = googleads.common.ZeepServiceProxy(
-        wsdl_path, header_handler, None, googleads.common.ProxyConfig(), 100)
+        wsdl_path, header_handler, None, googleads.common.ProxyConfig(), 100,
+        self.fake_version)
 
   def testPackArgumentsPrimitivesOnly(self):
     result = self.zeep_client._PackArguments('getReportJobStatus', [5])
@@ -1174,8 +1181,11 @@ class TestZeepArgumentPacking(unittest.TestCase):
   def testPackArgumentsWithCustomPacker(self):
     class CustomPacker(googleads.common.SoapPacker):
 
+      def __init__(self):
+        self._version = CURRENT_VERSION
+
       @classmethod
-      def Pack(cls, obj):
+      def Pack(cls, obj, version):
         if isinstance(obj, numbers.Number):
           return '50'
         return obj
@@ -1199,7 +1209,8 @@ class TestZeepArgumentPacking(unittest.TestCase):
     wsdl_path = os.path.join(
         TEST_DIR, 'test_data/traffic_estimator_service.xml')
     zeep_client = googleads.common.ZeepServiceProxy(
-        wsdl_path, header_handler, None, googleads.common.ProxyConfig(), 100)
+        wsdl_path, header_handler, None, googleads.common.ProxyConfig(), 100,
+        self.fake_version)
 
     element = zeep_client.zeep_client.get_type('ns0:Criterion')
     data = {'xsi_type': 'Location', 'id': '2840'}
@@ -1216,6 +1227,9 @@ class TestZeepArgumentPacking(unittest.TestCase):
 
 class SudsServiceProxyTest(unittest.TestCase):
   """Tests for the googleads.common.SudsServiceProxy class."""
+
+  def setUp(self):
+    self.fake_version = 'ignored'
 
   def testCreateSudsClient(self):
     class MyCache(suds.cache.Cache):
@@ -1238,7 +1252,7 @@ class SudsServiceProxyTest(unittest.TestCase):
 
           suds_wrapper = googleads.common.SudsServiceProxy(
               'https://endpoint', header_handler, packer, proxy_config,
-              1000, cache)
+              1000, self.fake_version, cache)
 
           mock_transport.assert_called_once_with(1000, proxy_config)
           mock_suds_client.assert_called_once_with(
@@ -1277,7 +1291,8 @@ class SudsServiceProxyTest(unittest.TestCase):
       mock_suds_client_class.return_value = mock_suds_client
 
       suds_wrapper = googleads.common.SudsServiceProxy(
-          'https://endpoint', header_handler, None, None, 1000, None
+          'https://endpoint', header_handler, None, None, 1000,
+          self.fake_version, None
       )
 
       with mock.patch.object(suds_wrapper, '_CreateMethod') as mock_create:
@@ -1387,7 +1402,7 @@ class SudsServiceProxyTest(unittest.TestCase):
   def testCreateSoapElementForType(self):
     with self.mock_suds_api():
       suds_wrapper = googleads.common.SudsServiceProxy(
-          'https://endpoint', None, None, None, 1000, None)
+          'https://endpoint', None, None, None, 1000, self.fake_version, None)
       suds_wrapper.suds_client.factory.create.return_value = 'result'
 
       result = suds_wrapper.CreateSoapElementForType('MyType')
@@ -1396,7 +1411,7 @@ class SudsServiceProxyTest(unittest.TestCase):
   def testSetHeaders(self):
     with self.mock_suds_api():
       suds_wrapper = googleads.common.SudsServiceProxy(
-          'https://endpoint', None, None, None, 1000, None)
+          'https://endpoint', None, None, None, 1000, self.fake_version, None)
 
       suds_wrapper.SetHeaders('soap', 'http')
       suds_wrapper.suds_client.set_options.assert_called_once_with(
@@ -1406,7 +1421,8 @@ class SudsServiceProxyTest(unittest.TestCase):
     with self.mock_suds_api(), \
         self.assertRaises(googleads.errors.GoogleAdsValueError):
       googleads.common.SudsServiceProxy(
-          'https://endpoint', None, None, None, 1000, 'not_a_suds_cache')
+          'https://endpoint', None, None, None, 1000, 'not_a_suds_cache',
+          self.fake_version)
 
   def testSchemaHelperBadCache(self):
     with self.assertRaises(googleads.errors.GoogleAdsValueError):

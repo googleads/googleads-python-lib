@@ -26,7 +26,7 @@ def main(client):
       'InventoryService', version='v201808')
 
   # Create a statement to select ad unit sizes.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of ad unit sizes at a time, paging
   # through until all ad unit sizes have been retrieved.

@@ -26,7 +26,7 @@ def main(client):
       'PremiumRateService', version='v201808')
 
   # Create a statement to select premium rates.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of premium rates at a time, paging
   # through until all premium rates have been retrieved.

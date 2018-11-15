@@ -32,7 +32,7 @@ def main(client, order_id):
 
   # Create statement object to select a single order by an ID.
 
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :orderId')
                .WithBindVariable('orderId', long(order_id)))
 

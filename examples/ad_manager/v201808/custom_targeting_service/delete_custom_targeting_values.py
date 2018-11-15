@@ -38,7 +38,7 @@ def main(client, key_id):
   custom_targeting_service = client.GetService(
       'CustomTargetingService', version='v201808')
 
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('customTargetingKeyId = :keyId')
                .WithBindVariable('keyId', key_id))
 
@@ -51,7 +51,7 @@ def main(client, key_id):
     if 'results' in response and len(response['results']):
       value_ids = [value['id'] for value in response['results']]
       action = {'xsi_type': 'DeleteCustomTargetingValues'}
-      value_statement = (ad_manager.StatementBuilder()
+      value_statement = (ad_manager.StatementBuilder(version='v201808')
                          .Where('customTargetingKeyId = :keyId '
                                 'AND id IN (%s)' % ', '.join(value_ids))
                          .WithBindVariable('keyId', key_id))

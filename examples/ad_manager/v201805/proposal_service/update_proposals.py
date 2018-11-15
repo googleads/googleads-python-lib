@@ -32,7 +32,7 @@ def main(client, proposal_id):
 
   # Create statement object to select a single proposal by an ID.
 
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :proposalId')
                .WithBindVariable('proposalId', long(proposal_id))
                .Limit(1))

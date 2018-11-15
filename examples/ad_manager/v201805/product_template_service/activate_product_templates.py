@@ -34,7 +34,7 @@ def main(client, product_template_id):
       'ProductTemplateService', version='v201805')
 
   # Create query.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .WithBindVariable('id', long(product_template_id))
                .Limit(1))

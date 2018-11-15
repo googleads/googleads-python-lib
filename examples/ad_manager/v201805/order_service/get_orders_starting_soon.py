@@ -31,7 +31,7 @@ def main(client):
   soon = now + timedelta(days=5)
 
   # Create a statement to select orders.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where(('status = :status AND startDateTime >= :now '
                        'AND startDateTime <= :soon'))
                .WithBindVariable('status', 'APPROVED')

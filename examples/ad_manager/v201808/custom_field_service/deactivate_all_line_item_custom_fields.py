@@ -37,7 +37,7 @@ def main(client):
 
   # Create statement to select only active custom fields that apply to
   # line items.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('entityType = :entityType and isActive = :isActive')
                .WithBindVariable('entityType', 'LINE_ITEM')
                .WithBindVariable('isActive', True))

@@ -31,7 +31,7 @@ def main(client):
   package_service = client.GetService('PackageService', version='v201805')
 
   # Create a statement to select the single package.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .Limit(1)

@@ -34,7 +34,7 @@ def main(client, proposal_line_item_id):
       'ProposalLineItemService', version='v201808')
 
   # Create query.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :id')
                .WithBindVariable('id', long(proposal_line_item_id))
                .Limit(1))

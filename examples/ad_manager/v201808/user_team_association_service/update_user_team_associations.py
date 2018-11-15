@@ -40,7 +40,7 @@ def main(client, user_id):
       'UserTeamAssociationService', version='v201808')
 
   # Create filter text to select user team associations by the user ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('userId = :userId')
                .WithBindVariable('userId', long(user_id)))
 

@@ -32,7 +32,7 @@ def main(client):
   last_month = first_of_the_month - timedelta(days=1)
 
   # Create a statement to select reconciliation reports.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('startDate = :startDate')
                .WithBindVariable('startDate', last_month))
 

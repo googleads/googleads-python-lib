@@ -55,7 +55,7 @@ def main(client):
   placement_list = []
 
   # Create statement to get all the ad units.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   while True:
     response = inventory_service.getAdUnitsByStatement(

@@ -25,7 +25,7 @@ def main(client):
   order_service = client.GetService('OrderService', version='v201808')
 
   # Create a statement to select orders.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of orders at a time, paging
   # through until all orders have been retrieved.

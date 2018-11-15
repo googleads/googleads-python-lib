@@ -36,7 +36,7 @@ def main(client, label_id):
                                                version='v201805')
 
   # Create a query to select the active creative wrappers for the given label.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('status = :status AND labelId = :labelId')
                .WithBindVariable('status', 'ACTIVE')
                .WithBindVariable('labelId', long(label_id)))

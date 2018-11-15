@@ -33,7 +33,7 @@ def main(client):
 
   # Create a statement to select the line item.
   # Change this to operate on more than one Line Item.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .WithBindVariable('id', LINE_ITEM_ID))

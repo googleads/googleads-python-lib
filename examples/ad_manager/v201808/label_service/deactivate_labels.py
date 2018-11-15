@@ -30,7 +30,7 @@ def main(client):
   label_service = client.GetService('LabelService', version='v201808')
 
   # Create query.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('isActive = :isActive')
                .WithBindVariable('isActive', True))
 

@@ -25,7 +25,7 @@ def main(client):
   activity_service = client.GetService('ActivityService', version='v201808')
 
   # Create a statement to select activities.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201808')
 
   # Retrieve a small amount of activities at a time, paging
   # through until all activities have been retrieved.

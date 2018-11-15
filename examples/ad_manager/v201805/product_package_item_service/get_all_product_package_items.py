@@ -26,7 +26,7 @@ def main(client):
       'ProductPackageItemService', version='v201805')
 
   # Create a statement to select product package items.
-  statement = ad_manager.StatementBuilder()
+  statement = ad_manager.StatementBuilder(version='v201805')
 
   # Retrieve a small amount of product package items at a time, paging
   # through until all product package items have been retrieved.

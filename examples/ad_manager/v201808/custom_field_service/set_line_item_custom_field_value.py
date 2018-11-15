@@ -47,7 +47,7 @@ def main(client, custom_field_id, drop_down_custom_field_id,
   line_item_service = client.GetService('LineItemService', version='v201808')
 
   # Create statement to get a custom field.
-  custom_field_statement = (ad_manager.StatementBuilder()
+  custom_field_statement = (ad_manager.StatementBuilder(version='v201808')
                             .Where('id = :customFieldId')
                             .WithBindVariable('customFieldId', custom_field_id)
                             .Limit(1))
@@ -58,7 +58,7 @@ def main(client, custom_field_id, drop_down_custom_field_id,
 
   # Create statement to get a drop down custom field.
   drop_down_custom_field_statement = (
-      ad_manager.StatementBuilder()
+      ad_manager.StatementBuilder(version='v201808')
       .Where('id = :dropDownCustomFieldId')
       .WithBindVariable('dropDownCustomFieldId', drop_down_custom_field_id)
       .Limit(1))
@@ -68,7 +68,7 @@ def main(client, custom_field_id, drop_down_custom_field_id,
       drop_down_custom_field_statement.ToStatement())['results'][0]
 
   # Create statement to get a line item.
-  line_item_statement = (ad_manager.StatementBuilder()
+  line_item_statement = (ad_manager.StatementBuilder(version='v201808')
                          .Where('id = :lineItemId')
                          .WithBindVariable('lineItemId', line_item_id)
                          .Limit(1))

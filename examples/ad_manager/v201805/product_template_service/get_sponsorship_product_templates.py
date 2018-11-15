@@ -25,7 +25,7 @@ def main(client):
   product_template_service = client.GetService(
       'ProductTemplateService', version='v201805')
   # Create a statement to select product templates.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201805')
                .Where('lineItemType = :lineItemType')
                .WithBindVariable('lineItemType', 'SPONSORSHIP'))
 

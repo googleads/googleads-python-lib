@@ -44,28 +44,6 @@ _data_downloader_logger = logging.getLogger(
 
 # A giant dictionary of Ad Manager versions and the services they support.
 _SERVICE_MAP = {
-    'v201711':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
-         'CdnConfigurationService', 'CompanyService', 'ContactService',
-         'ContentBundleService', 'ContentMetadataKeyHierarchyService',
-         'ContentService', 'CreativeService', 'CreativeSetService',
-         'CreativeTemplateService', 'CreativeWrapperService',
-         'CustomFieldService', 'CustomTargetingService', 'ExchangeRateService',
-         'ForecastService', 'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService',
-         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
-         'OrderService', 'PackageService', 'PlacementService',
-         'PremiumRateService', 'ProductService', 'ProductPackageService',
-         'ProductPackageItemService', 'ProductTemplateService',
-         'ProposalLineItemService', 'ProposalService',
-         'PublisherQueryLanguageService', 'RateCardService',
-         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
-         'ReconciliationLineItemReportService',
-         'ReconciliationReportService', 'ReportService',
-         'SuggestedAdUnitService', 'TeamService', 'UserService',
-         'UserTeamAssociationService', 'WorkflowRequestService'),
     'v201802':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
@@ -123,6 +101,28 @@ _SERVICE_MAP = {
          'ForecastService', 'InventoryService', 'LabelService',
          'LineItemCreativeAssociationService', 'LineItemService',
          'LineItemTemplateService', 'LiveStreamEventService',
+         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
+         'OrderService', 'PackageService', 'PlacementService',
+         'PremiumRateService', 'ProductService', 'ProductPackageService',
+         'ProductPackageItemService', 'ProductTemplateService',
+         'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'RateCardService',
+         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
+         'ReconciliationLineItemReportService',
+         'ReconciliationReportService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'UserService',
+         'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201811':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
+         'CdnConfigurationService', 'CompanyService', 'ContactService',
+         'ContentBundleService', 'ContentService', 'CreativeService',
+         'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'DaiAuthenticationKeyService',
+         'ExchangeRateService', 'ForecastService', 'InventoryService',
+         'LabelService', 'LineItemCreativeAssociationService',
+         'LineItemService', 'LineItemTemplateService', 'LiveStreamEventService',
          'MobileApplicationService', 'NativeStyleService', 'NetworkService',
          'OrderService', 'PackageService', 'PlacementService',
          'PremiumRateService', 'ProductService', 'ProductPackageService',
@@ -292,6 +292,7 @@ class AdManagerClient(googleads.common.CommonClient):
           _AdManagerPacker,
           self.proxy_config,
           self.timeout,
+          version,
           cache=self.cache)
 
       return service
@@ -396,27 +397,29 @@ class _AdManagerPacker(googleads.common.SoapPacker):
   """A utility applying customized packing logic for Ad Manager."""
 
   @classmethod
-  def Pack(cls, obj):
+  def Pack(cls, obj, version):
     """Pack the given object using Ad Manager-specific logic.
 
     Args:
       obj: an object to be packed for SOAP using Ad Manager-specific logic, if
           applicable.
+      version: the version of the current API, e.g. 'v201811'
 
     Returns:
       The given object packed with Ad Manager-specific logic for SOAP,
       if applicable. Otherwise, returns the given object unmodified.
     """
     if isinstance(obj, (datetime.datetime, datetime.date)):
-      return cls.AdManagerDateTimePacker(obj)
+      return cls.AdManagerDateTimePacker(obj, version)
     return obj
 
   @classmethod
-  def AdManagerDateTimePacker(cls, value):
+  def AdManagerDateTimePacker(cls, value, version):
     """Returns dicts formatted for Ad Manager SOAP based on date/datetime.
 
     Args:
       value: A date or datetime object to be converted.
+      version: the version of the current API, e.g. 'v201811'
 
     Returns:
       The value object correctly represented for Ad Manager SOAP.
@@ -427,13 +430,14 @@ class _AdManagerPacker(googleads.common.SoapPacker):
         raise googleads.errors.GoogleAdsValueError(
             'Datetime %s is not timezone aware.' % value
         )
-
       return {
-          'date': cls.AdManagerDateTimePacker(value.date()),
+          'date': cls.AdManagerDateTimePacker(value.date(), version),
           'hour': value.hour,
           'minute': value.minute,
           'second': value.second,
-          'timeZoneID': value.tzinfo.zone,
+          # As of V201811, timeZoneID was renamed timeZoneId
+          'timeZoneId' if version >= 'v201811' else 'timeZoneID':
+              value.tzinfo.zone,
       }
     elif isinstance(value, datetime.date):
       return {'year': value.year, 'month': value.month, 'day': value.day}
@@ -468,7 +472,8 @@ class StatementBuilder(object):
 
   def __init__(self, select_columns=None, from_table=None, where=None,
                order_by=None, order_ascending=True,
-               limit=SUGGESTED_PAGE_LIMIT, offset=0):
+               limit=SUGGESTED_PAGE_LIMIT, offset=0,
+               version=sorted(_SERVICE_MAP.keys())[-1]):
     """Initializes StatementBuilder.
 
     Args:
@@ -479,12 +484,17 @@ class StatementBuilder(object):
       order_ascending: a boolean specifying sort order ascending or descending.
       limit: an integer with the limit clause.
       offset: an integer with the offset clause.
+      version: A string identifying the Ad Manager version this statement is
+          compatible with. This defaults to what is currently the latest
+          version. This will be updated in future releases to point to what is
+          then the latest version.
     """
     self._select = select_columns
     self._from_ = from_table
     self._where = where
     self.limit = limit
     self.offset = offset
+    self._version = version
     if order_by:
       self._order_by = self._OrderByPair(column=order_by,
                                          ascending=order_ascending)
@@ -523,8 +533,8 @@ class StatementBuilder(object):
       query.append(self._OFFSET_PART % self.offset)
 
     return {'query': ' '.join(query),
-            'values': (PQLHelper.GetQueryValuesFromDict(self._values)
-                       if self._values else None)}
+            'values': (PQLHelper.GetQueryValuesFromDict(
+                self._values, self._version) if self._values else None)}
 
   def Select(self, columns):
     """Adds a SELECT clause.
@@ -612,7 +622,7 @@ class StatementBuilder(object):
     """
 
     # Make this call to throw the exception here if there is a problem
-    PQLHelper.GetValueRepresentation(value)
+    PQLHelper.GetValueRepresentation(value, self._version)
 
     self._values[key] = value
     return self
@@ -622,29 +632,40 @@ class PQLHelper(object):
   """Utility class for PQL."""
 
   @classmethod
-  def GetQueryValuesFromDict(cls, d):
+  def GetQueryValuesFromDict(cls, d, version=sorted(_SERVICE_MAP.keys())[-1]):
     """Converts a dict of python types into a list of PQL types.
 
     Args:
       d: A dictionary of variable names to python types.
+      version: A string identifying the Ad Manager version the values object
+          is compatible with. This defaults to what is currently the latest
+          version. This will be updated in future releases to point to what is
+          then the latest version.
 
     Returns:
-      A list of variables formatted for PQL statements.
+      A list of variables formatted for PQL statements which are compatible with
+      a particular API version.
     """
     return [{
         'key': key,
-        'value': cls.GetValueRepresentation(value)
+        'value': cls.GetValueRepresentation(value, version)
     } for key, value in d.iteritems()]
 
   @classmethod
-  def GetValueRepresentation(cls, value):
+  def GetValueRepresentation(cls, value,
+                             version=sorted(_SERVICE_MAP.keys())[-1]):
     """Converts a single python value to its PQL representation.
 
     Args:
       value: A python value.
+      version: A string identifying the Ad Manager version the value object
+          is compatible with. This defaults to what is currently the latest
+          version. This will be updated in future releases to point to what is
+          then the latest version.
 
     Returns:
-      The value formatted for PQL statements.
+      The value formatted for PQL statements which are compatible with a
+      particular API version.
     """
     if isinstance(value, str) or isinstance(value, unicode):
       return {'value': value, 'xsi_type': 'TextValue'}
@@ -671,7 +692,8 @@ class PQLHelper(object):
               'hour': value.hour,
               'minute': value.minute,
               'second': value.second,
-              'timeZoneID': value.tzinfo.zone,
+              'timeZoneId' if version >= 'v201811' else 'timeZoneID':
+                  value.tzinfo.zone,
           }
       }
     elif isinstance(value, datetime.date):
@@ -690,7 +712,7 @@ class PQLHelper(object):
 
       return {
           'xsi_type': 'SetValue',
-          'values': [cls.GetValueRepresentation(v) for v in value]
+          'values': [cls.GetValueRepresentation(v, version) for v in value]
       }
     else:
       raise googleads.errors.GoogleAdsValueError(
@@ -939,7 +961,7 @@ class DataDownloader(object):
               to the pql_query.
     """
     if isinstance(values, dict):
-      values = PQLHelper.GetQueryValuesFromDict(values)
+      values = PQLHelper.GetQueryValuesFromDict(values, self._version)
 
     pql_service = self._GetPqlService()
     current_offset = 0
@@ -988,8 +1010,13 @@ class DataDownloader(object):
                                       int(date_time_value['hour']),
                                       int(date_time_value['minute']),
                                       int(date_time_value['second']))
+    # v201808 is the last Ad Manager version to use timeZoneID.
+    if self._version > 'v201808':
+      time_zone_str = 'timeZoneId'
+    else:
+      time_zone_str = 'timeZoneID'
     date_time_str = pytz.timezone(
-        date_time_value['timeZoneID']).localize(date_time_obj).isoformat()
+        date_time_value[time_zone_str]).localize(date_time_obj).isoformat()
 
     if date_time_str[-5:] == '00:00':
       return date_time_str[:-6] + 'Z'

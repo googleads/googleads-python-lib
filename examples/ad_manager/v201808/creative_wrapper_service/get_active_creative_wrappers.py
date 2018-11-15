@@ -25,7 +25,7 @@ def main(client):
   creative_wrapper_service = client.GetService(
       'CreativeWrapperService', version='v201808')
   # Create a statement to select creative wrappers.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('status = :status')
                .WithBindVariable('status', 'ACTIVE'))
 

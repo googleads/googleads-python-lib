@@ -32,7 +32,7 @@ def main(client):
   root_ad_unit_id = current_network['effectiveRootAdUnitId']
 
   # Create a statement to select only the root ad unit by ID.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .Limit(1)
@@ -57,7 +57,7 @@ def get_all_ad_units(inventory_service):
     A list containing all ad units.
   """
   # Create a statement to get all ad units.
-  statement = (ad_manager.StatementBuilder()
+  statement = (ad_manager.StatementBuilder(version='v201808')
                .OrderBy('id', ascending=True))
 
   # Pull down all ad units into a list
