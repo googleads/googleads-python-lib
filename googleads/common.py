@@ -1389,9 +1389,12 @@ class ZeepServiceProxy(GoogleSoapService):
               '{%s}ApiExceptionFault' % self._GetBindingNamespace())
           fault_type = self.zeep_client.get_element(
               '{%s}ApiExceptionFault' % self._GetBindingNamespace())
-          fault = fault_type.parse(
+          try:
+            fault = fault_type.parse(
               underlying_exception, self.zeep_client.wsdl.types)
-          error_list = fault.errors or error_list
+            error_list = fault.errors or error_list
+          except AttributeError as ex:
+            pass
         raise googleads.errors.GoogleAdsServerFault(
             e.detail, errors=error_list, message=e.message)
     return MakeSoapRequest
