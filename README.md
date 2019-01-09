@@ -259,3 +259,5 @@ have Python 2.7.9 (or higher) or Python 3.4 (or higher) installed.
 
 ## Authors:
     Mark Saniscalchi
+    David Wihl
+    Ben Karl
