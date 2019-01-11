@@ -391,6 +391,7 @@ def GetBatchJobDownloadUrlWhenReady(client, batch_job_id,
     batch_job = GetBatchJob(client, batch_job_id)
     poll_attempt += 1
 
+  if batch_job['status'] == 'DONE':
     if 'downloadUrl' in batch_job:
       url = batch_job['downloadUrl']['url']
       print ('Batch Job with Id "%s", Status "%s", and DownloadUrl "%s" ready.'
