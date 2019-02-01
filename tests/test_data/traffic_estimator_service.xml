@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated file, do not edit -->
-<!-- Copyright 2018 Google Inc. All Rights Reserved -->
+<!-- Copyright 2019 Google Inc. All Rights Reserved -->
 <wsdl:definitions
-  targetNamespace="https://adwords.google.com/api/adwords/o/v201802"
-  xmlns:tns="https://adwords.google.com/api/adwords/o/v201802"
+  targetNamespace="https://adwords.google.com/api/adwords/o/v201809"
+  xmlns:tns="https://adwords.google.com/api/adwords/o/v201809"
   xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
   xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <wsdl:types>
     <schema elementFormDefault="qualified" jaxb:version="1.0"
-      targetNamespace="https://adwords.google.com/api/adwords/cm/v201802"
+      targetNamespace="https://adwords.google.com/api/adwords/cm/v201809"
       xmlns="http://www.w3.org/2001/XMLSchema"
-      xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" xmlns:tns="https://adwords.google.com/api/adwords/cm/v201802">
+      xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" xmlns:tns="https://adwords.google.com/api/adwords/cm/v201809">
       <complexType name="AdxError">
         <annotation>
           <documentation>
@@ -690,9 +690,9 @@
                 Ads will be served with Google.com search results.
                 &lt;span class="constraint AdxEnabled"&gt;This is disabled for AdX.&lt;/span&gt;
                 &lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel type SEARCH.&lt;/span&gt;
-&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype UNIVERSAL_APP_CAMPAIGN.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel type MULTI_CHANNEL.&lt;/span&gt;
 &lt;span class="constraint CampaignType"&gt;This field may only be set to false for campaign channel type DISPLAY.&lt;/span&gt;
-&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype SHOPPING_UNIVERSAL_ADS.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype SHOPPING_GOAL_OPTIMIZED_ADS.&lt;/span&gt;
               </documentation>
             </annotation>
           </element>
@@ -703,8 +703,8 @@
                 Ads will be served on partner sites in the Google Search Network
                 (requires {@code GOOGLE_SEARCH}).
                 &lt;span class="constraint AdxEnabled"&gt;This is disabled for AdX.&lt;/span&gt;
-                &lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype UNIVERSAL_APP_CAMPAIGN.&lt;/span&gt;
-&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype SHOPPING_UNIVERSAL_ADS.&lt;/span&gt;
+                &lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel type MULTI_CHANNEL.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype SHOPPING_GOAL_OPTIMIZED_ADS.&lt;/span&gt;
               </documentation>
             </annotation>
           </element>
@@ -714,9 +714,10 @@
               <documentation>
                 Ads will be served on specified placements in the Google Display Network.
                 Placements are specified using {@code Placement} criteria.
-                &lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype UNIVERSAL_APP_CAMPAIGN.&lt;/span&gt;
+                &lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel type MULTI_CHANNEL.&lt;/span&gt;
 &lt;span class="constraint CampaignType"&gt;This field may only be set to false for campaign channel subtype SEARCH_MOBILE_APP.&lt;/span&gt;
-&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype SHOPPING_UNIVERSAL_ADS.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel type DISPLAY with campaign channel subtype DISPLAY_SMART_CAMPAIGN.&lt;/span&gt;
+&lt;span class="constraint CampaignType"&gt;This field may only be set to true for campaign channel subtype SHOPPING_GOAL_OPTIMIZED_ADS.&lt;/span&gt;
               </documentation>
             </annotation>
           </element>
@@ -727,7 +728,7 @@
                 Ads will be served on the Google Partner Network. This is available to
                 only some specific Google partner accounts.
                 &lt;span class="constraint AdxEnabled"&gt;This is disabled for AdX.&lt;/span&gt;
-                &lt;span class="constraint CampaignType"&gt;This field may only be set to false for campaign channel subtype UNIVERSAL_APP_CAMPAIGN.&lt;/span&gt;
+                &lt;span class="constraint CampaignType"&gt;This field may only be set to false for campaign channel type MULTI_CHANNEL.&lt;/span&gt;
               </documentation>
             </annotation>
           </element>
@@ -1577,6 +1578,21 @@
               </documentation>
             </annotation>
           </enumeration>
+          <enumeration value="TWO_STEP_VERIFICATION_NOT_ENROLLED">
+            <annotation>
+              <documentation>
+                The customer has a policy to enforce 2-Step Verification, but the user is not enrolled.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="ADVANCED_PROTECTION_NOT_ENROLLED">
+            <annotation>
+              <documentation>
+                The customer has a policy to enforce enrollment in the Advanced Protection Program, but
+                the user is not enrolled.
+              </documentation>
+            </annotation>
+          </enumeration>
         </restriction>
       </simpleType>
       <simpleType name="ClientTermsError.Reason">
@@ -1788,6 +1804,20 @@
               <documentation>
                 Scope of products. Contains a list of product dimensions, all of which a product has to match
                 to be included in the campaign.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CUSTOM_AFFINITY">
+            <annotation>
+              <documentation>
+                Custom Affinity, a criterion used for custom audience targeting.
+              </documentation>
+            </annotation>
+          </enumeration>
+          <enumeration value="CUSTOM_INTENT">
+            <annotation>
+              <documentation>
+                Custom Intent, a criterion used for custom audience targeting.
               </documentation>
             </annotation>
           </enumeration>
@@ -2520,11 +2550,11 @@
       </simpleType>
     </schema>
     <schema elementFormDefault="qualified" jaxb:version="1.0"
-      targetNamespace="https://adwords.google.com/api/adwords/o/v201802"
+      targetNamespace="https://adwords.google.com/api/adwords/o/v201809"
       xmlns="http://www.w3.org/2001/XMLSchema"
-      xmlns:cm="https://adwords.google.com/api/adwords/cm/v201802"
-      xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" xmlns:tns="https://adwords.google.com/api/adwords/o/v201802">
-      <xsd:import namespace="https://adwords.google.com/api/adwords/cm/v201802"/>
+      xmlns:cm="https://adwords.google.com/api/adwords/cm/v201809"
+      xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" xmlns:tns="https://adwords.google.com/api/adwords/o/v201809">
+      <xsd:import namespace="https://adwords.google.com/api/adwords/cm/v201809"/>
       <annotation>
         <appinfo>
           <jaxb:globalBindings typesafeEnumMaxMembers="999999"/>
@@ -3307,7 +3337,7 @@
   </wsdl:binding>
   <wsdl:service name="TrafficEstimatorService">
     <wsdl:port binding="tns:TrafficEstimatorServiceSoapBinding" name="TrafficEstimatorServiceInterfacePort">
-      <wsdlsoap:address location="https://adwords.google.com/api/adwords/o/v201802/TrafficEstimatorService"/>
+      <wsdlsoap:address location="https://adwords.google.com/api/adwords/o/v201809/TrafficEstimatorService"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>
