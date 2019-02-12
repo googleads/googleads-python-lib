@@ -41,7 +41,7 @@ import zeep.exceptions
 
 URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
 TEST_DIR = os.path.dirname(__file__)
-CURRENT_VERSION = 'v201811'
+CURRENT_VERSION = 'v201902'
 
 
 class CommonTest(testing.CleanUtilityRegistryTestCase):
