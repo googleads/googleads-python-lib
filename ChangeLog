@@ -1,3 +1,7 @@
+18.1.0 -- 04/03/2019
+* Upgrade PyYAML to 5.1 >= 6.0
+* Update comment in get_all_images_and_videos example
+
 18.0.0 -- 03/28/2019
 * Removed support for AdWords v201806
 
