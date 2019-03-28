@@ -1,3 +1,6 @@
+18.0.0 -- 03/28/2019
+* Removed support for AdWords v201806
+
 17.0.0 -- 02/12/2019
 * Added support for Ad Manager v201902.
 * Removed support for Ad Manager v201802.
