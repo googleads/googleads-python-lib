@@ -16,8 +16,8 @@
 
 """This example gets all images and videos.
 
-To upload an image, run upload_image.py. To upload video, see:
-http://adwords.google.com/support/aw/bin/answer.py?hl=en&answer=39454.
+To upload an image, run upload_image.py. Use the Google Ads website to upload
+new videos.
 
 The LoadFromStorage method is pulling credentials and properties from a
 "googleads.yaml" file. By default, it looks for this file in your home
