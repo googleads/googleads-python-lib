@@ -217,16 +217,19 @@ class _SudsMXCoreFilter(_AbstractDevTokenSOAPFilter):
           d = dict(arg.value)
           if self._DEVELOPER_TOKEN in d:
             d[self._DEVELOPER_TOKEN] = self._REDACTED
-            record.args = list(record.args)
-            record.args[i] = suds.mx.Content(tag=self._REQUEST_HEADER, value=d)
+            args = list(record.args)
+            args[i] = suds.mx.Content(tag=self._REQUEST_HEADER, value=d)
+            record.args = tuple(args)
+
           break
         if arg.tag == self._DEVELOPER_TOKEN:
           # Rather than modifying the argument directly, sets args to a modified
           # copy so that we don't overwrite the headers to be sent in the actual
           # request.
-          record.args = list(record.args)
-          record.args[i] = suds.mx.Content(
+          args = list(record.args)
+          args[i] = suds.mx.Content(
               tag=self._DEVELOPER_TOKEN, value=self._REDACTED)
+          record.args = tuple(args)
           break
       elif isinstance(arg, suds.sax.element.Element):
         if arg.name == self._REQUEST_HEADER:
@@ -250,8 +253,9 @@ class _SudsMXCoreFilter(_AbstractDevTokenSOAPFilter):
             # Rather than modifying the argument directly, sets args to a
             # modified copy so that we don't overwrite the headers to be sent in
             # the actual request.
-            record.args = list(record.args)
-            record.args[i] = request_header
+            args = list(record.args)
+            args[i] = request_header
+            record.args = tuple(args)
             break
 
     return True
@@ -275,16 +279,18 @@ class _SudsMXLiteralFilter(_AbstractDevTokenSOAPFilter):
           d = dict(arg.value)
           if self._DEVELOPER_TOKEN in d:
             d[self._DEVELOPER_TOKEN] = self._REDACTED
-            record.args = list(record.args)
-            record.args[i] = suds.mx.Content(tag=self._REQUEST_HEADER, value=d)
+            args = list(record.args)
+            args[i] = suds.mx.Content(tag=self._REQUEST_HEADER, value=d)
+            record.args = tuple(args)
           break
         if arg.tag == self._DEVELOPER_TOKEN:
           # Rather than modifying the argument directly, sets args to a modified
           # copy so that we don't overwrite the headers to be sent in the actual
           # request.
-          record.args = list(record.args)
-          record.args[i] = suds.mx.Content(tag=self._DEVELOPER_TOKEN,
+          args = list(record.args)
+          args[i] = suds.mx.Content(tag=self._DEVELOPER_TOKEN,
                                            value=self._REDACTED)
+          record.args = tuple(args)
           break
 
     return True
