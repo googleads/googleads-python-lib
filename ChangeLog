@@ -1,3 +1,8 @@
+19.0.0 -- 05/09/2019
+* Added support for Ad Manager v201905
+* Removed support for Ad Manager v201805
+* Removed examples for Ad Manager v201808
+
 18.1.0 -- 04/03/2018
 * Upgrade PyYAML to 5.1 >= 6.0
 * Update comment in get_all_images_and_videos examples
