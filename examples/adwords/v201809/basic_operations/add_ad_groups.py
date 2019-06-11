@@ -104,8 +104,8 @@ def main(client, campaign_id):
 
   # Display results.
   for ad_group in ad_groups['value']:
-    print ('Ad group with name "%s" and id "%s" was added.'
-           % (ad_group['name'], ad_group['id']))
+    print('Ad group with name "%s" and id "%s" was added.'
+          % (ad_group['name'], ad_group['id']))
 
 
 if __name__ == '__main__':

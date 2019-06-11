@@ -59,7 +59,7 @@ def main(client, campaign_id, ad_group_id):
   # Optional: Target web pages matching the feed's label in the ad group.
   _AddDSATargeting(client, ad_group_id, DSA_PAGE_URL_LABEL)
 
-  print 'Dynamic page feed setup complete for campaign ID "%d".' % campaign_id
+  print('Dynamic page feed setup complete for campaign ID "%d".' % campaign_id)
 
 
 def _CreateFeed(client):
@@ -234,8 +234,8 @@ def _UpdateCampaignDSASetting(client, campaign_id, feed_id):
   }
 
   campaign_service.mutate([operation])
-  print 'DSA page feed for campaign ID "%d" was updated with feed ID "%d".' % (
-      campaign_id, feed_id)
+  print('DSA page feed for campaign ID "%d" was updated with feed ID "%d".' % (
+      campaign_id, feed_id))
 
 
 def _AddDSATargeting(client, ad_group_id, label_name):
@@ -247,7 +247,8 @@ def _AddDSATargeting(client, ad_group_id, label_name):
     label_name: a str label name.
 
   Returns:
-    A suds.sudsobject.Object representing the newly created webpage criterion.
+    A zeep.objects.BiddableAdGroupCriterion representing the newly created
+    webpage criterion.
   """
   # Get the AdGroupCriterionService.
   ad_group_criterion_service = client.GetService('AdGroupCriterionService',
@@ -284,8 +285,8 @@ def _AddDSATargeting(client, ad_group_id, label_name):
   }
 
   criterion = ad_group_criterion_service.mutate([operation])['value'][0]
-  print 'Web page criterion with ID "%d" and status "%s" was created.' % (
-      criterion['criterion']['id'], criterion['userStatus'])
+  print('Web page criterion with ID "%d" and status "%s" was created.' % (
+      criterion['criterion']['id'], criterion['userStatus']))
   return criterion
 
 

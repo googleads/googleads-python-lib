@@ -73,8 +73,8 @@ def CreateAdsWithCustomizations(client, adgroup_ids, feed_name):
 
   if response and 'value' in response:
     for ad in response['value']:
-      print ('Created an ad with ID "%s", type "%s", and status "%s".'
-             % (ad['ad']['id'], ad['ad']['Ad.Type'], ad['status']))
+      print('Created an ad with ID "%s", type "%s", and status "%s".'
+            % (ad['ad']['id'], ad['ad']['Ad.Type'], ad['status']))
   else:
     raise errors.GoogleAdsError('No ads were added.')
 
@@ -116,10 +116,10 @@ def CreateCustomizerFeed(client, feed_name):
         'priceId': feed['feedAttributes'][1]['id'],
         'dateId': feed['feedAttributes'][2]['id']
     }
-    print ('Feed with name "%s" and ID %s was added with:\n'
-           '\tName attribute ID %s and price attribute ID %s and date attribute'
-           'ID %s') % (feed['feedName'], feed['feedId'], feed_data['nameId'],
-                       feed_data['priceId'], feed_data['dateId'])
+    print('Feed with name "%s" and ID %s was added with:\n'
+          '\tName attribute ID %s and price attribute ID %s and date attribute'
+          'ID %s') % (feed['feedName'], feed['feedId'], feed_data['nameId'],
+                      feed_data['priceId'], feed_data['dateId'])
     return feed
   else:
     raise errors.GoogleAdsError('No feeds were added')
@@ -192,7 +192,7 @@ def CreateCustomizerFeedItems(client, adgroup_ids, ad_customizer_feed):
 
   if 'value' in response:
     for feed_item in response['value']:
-      print 'Added FeedItem with ID %d.' % feed_item['feedItemId']
+      print('Added FeedItem with ID %d.' % feed_item['feedItemId'])
   else:
     raise errors.GoogleAdsError('No FeedItems were added.')
 

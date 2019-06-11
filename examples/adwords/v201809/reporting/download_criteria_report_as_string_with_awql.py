@@ -46,9 +46,9 @@ def main(client):
                   .During('LAST_7_DAYS')
                   .Build())
 
-  print report_downloader.DownloadReportAsStringWithAwql(
-      report_query, 'CSV', skip_report_header=False, skip_column_header=False,
-      skip_report_summary=False, include_zero_impressions=True)
+  print(report_downloader.DownloadReportAsStringWithAwql(
+        report_query, 'CSV', skip_report_header=False, skip_column_header=False,
+        skip_report_summary=False, include_zero_impressions=True))
 
 
 if __name__ == '__main__':

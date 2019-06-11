@@ -35,7 +35,7 @@ def main(client, audience_segment_id):
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where('Type = :type AND Id = :audience_segment_id')
                .WithBindVariable('audience_segment_id',
-                                 long(audience_segment_id))
+                                 int(audience_segment_id))
                .WithBindVariable('type', 'FIRST_PARTY')
                .Limit(1))
 
@@ -46,8 +46,8 @@ def main(client, audience_segment_id):
   if 'results' in response and len(response['results']):
     updated_audience_segments = []
     for audience_segment in response['results']:
-      print ('Audience segment with id "%s" and name "%s" will be updated.'
-             % (audience_segment['id'], audience_segment['name']))
+      print('Audience segment with id "%s" and name "%s" will be updated.'
+            % (audience_segment['id'], audience_segment['name']))
 
       audience_segment['membershipExpirationDays'] = '180'
       updated_audience_segments.append(audience_segment)
@@ -56,10 +56,10 @@ def main(client, audience_segment_id):
         updated_audience_segments)
 
     for audience_segment in audience_segments:
-      print ('Audience segment with id "%s" and name "%s" was updated' %
-             (audience_segment['id'], audience_segment['name']))
+      print('Audience segment with id "%s" and name "%s" was updated' %
+            (audience_segment['id'], audience_segment['name']))
   else:
-    print 'No audience segment found to update.'
+    print('No audience segment found to update.')
 
 
 if __name__ == '__main__':

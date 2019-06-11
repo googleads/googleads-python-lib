@@ -48,12 +48,12 @@ def main(client):
       result_set_size = page['totalResultSetSize']
       # Iterate over individual results in the page.
       for line_item in page['results']:
-        print 'Pausing line item with ID %d' % line_item['id']
+        print('Pausing line item with ID %d' % line_item['id'])
     # Update statement for next page.
     statement.offset += statement.limit
     should_continue = statement.offset < result_set_size
 
-  print 'Pausing %d line item(s)' % result_set_size
+  print('Pausing %d line item(s)' % result_set_size)
 
   if result_set_size > 0:
     statement.offset = None
@@ -64,9 +64,9 @@ def main(client):
         {'xsi_type': 'PauseLineItems'}, statement.ToStatement())
 
     if update_result and update_result['numChanges'] > 0:
-      print 'Updated %d line item(s)' % update_result['numChanges']
+      print('Updated %d line item(s)' % update_result['numChanges'])
     else:
-      print 'No line items were paused'
+      print('No line items were paused')
 
 if __name__ == '__main__':
   # Initialize client object.

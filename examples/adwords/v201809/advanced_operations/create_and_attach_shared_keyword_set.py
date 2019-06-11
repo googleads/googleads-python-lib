@@ -60,9 +60,9 @@ def main(client, campaign_id):
     shared_set = response['value'][0]
     shared_set_id = shared_set['sharedSetId']
 
-    print 'Shared set with ID %d and name "%s" was successfully added.' % (
+    print('Shared set with ID %d and name "%s" was successfully added.' % (
         shared_set_id, shared_set['name']
-    )
+    ))
   else:
     raise errors.GoogleAdsError('No shared set was added.')
 
@@ -90,11 +90,11 @@ def main(client, campaign_id):
 
   if 'value' in response:
     for shared_criteria in response['value']:
-      print 'Added shared criterion ID %d "%s" to shared set with ID %d.' % (
+      print('Added shared criterion ID %d "%s" to shared set with ID %d.' % (
           shared_criteria['criterion']['id'],
           shared_criteria['criterion']['text'],
           shared_criteria['sharedSetId']
-      )
+      ))
   else:
     raise errors.GoogleAdsError('No shared keyword was added.')
 
@@ -114,9 +114,9 @@ def main(client, campaign_id):
   response = campaign_shared_set_service.mutate(operations)
 
   if 'value' in response:
-    print 'Shared set ID %d was attached to campaign ID %d' % (
+    print('Shared set ID %d was attached to campaign ID %d' % (
         response['value'][0]['sharedSetId'], response['value'][0]['campaignId']
-    )
+    ))
   else:
     raise errors.GoogleAdsError('No campaign shared set was added.')
 

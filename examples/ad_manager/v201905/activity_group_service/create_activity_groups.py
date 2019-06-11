@@ -62,8 +62,8 @@ def main(client, advertiser_company_id):
 
   # Display results.
   for activity_group in activity_groups:
-    print ('Activity group with ID "%s" and name "%s" was created.'
-           % (activity_group['id'], activity_group['name']))
+    print('Activity group with ID "%s" and name "%s" was created.'
+          % (activity_group['id'], activity_group['name']))
 
 if __name__ == '__main__':
   # Initialize client object.

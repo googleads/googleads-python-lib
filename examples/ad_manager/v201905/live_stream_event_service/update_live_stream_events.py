@@ -34,7 +34,7 @@ def main(client, live_stream_event_id):
   # Create statement object to only select matching live stream event.
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where(('Id = :id'))
-               .WithBindVariable('id', long(live_stream_event_id))
+               .WithBindVariable('id', int(live_stream_event_id))
                .Limit(500))
 
   # Get live stream events by statement.

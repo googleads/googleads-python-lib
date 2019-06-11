@@ -63,10 +63,10 @@ def main(client):
                   .updateReconciliationReportRows([row]))
 
   for updated_row in updated_rows:
-    print ('Reconciliation report row for line item ID %d and creative ID %d '
-           'was updated, with manual volume %d' % (updated_row['lineItemId'],
-                                                   updated_row['creativeId'],
-                                                   updated_row['manualVolume']))
+    print('Reconciliation report row for line item ID %d and creative ID %d '
+          'was updated, with manual volume %d' % (updated_row['lineItemId'],
+                                                  updated_row['creativeId'],
+                                                  updated_row['manualVolume']))
 
 
 if __name__ == '__main__':

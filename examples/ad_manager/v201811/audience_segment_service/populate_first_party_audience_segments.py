@@ -36,7 +36,7 @@ def main(client, audience_segment_id):
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('Type = :type AND Id = :audience_segment_id')
                .WithBindVariable('audience_segment_id',
-                                 long(audience_segment_id))
+                                 int(audience_segment_id))
                .WithBindVariable('type', 'FIRST_PARTY')
                .Limit(1))
 
@@ -47,7 +47,7 @@ def main(client, audience_segment_id):
     segments = response['results']
 
     for segment in segments:
-      print (
+      print(
           'Audience segment with id "%s" and name "%s" will be populated.'
           % (segment['id'], segment['name']))
 
@@ -59,10 +59,10 @@ def main(client, audience_segment_id):
         audience_segment_service.performAudienceSegmentAction(
             action, statement.ToStatement()))
 
-    print ('%s audience segment populated' %
-           populated_audience_segments['numChanges'])
+    print('%s audience segment populated' %
+          populated_audience_segments['numChanges'])
   else:
-    print 'No Results Found'
+    print('No Results Found')
 
 
 if __name__ == '__main__':

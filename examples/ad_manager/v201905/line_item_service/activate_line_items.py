@@ -39,7 +39,7 @@ def main(client, order_id):
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where('orderId = :orderId AND status = :status')
                .WithBindVariable('status', 'NEEDS_CREATIVES')
-               .WithBindVariable('orderId', long(order_id)))
+               .WithBindVariable('orderId', int(order_id)))
 
   line_items_activated = 0
 
@@ -49,9 +49,9 @@ def main(client, order_id):
         statement.ToStatement())
     if 'results' in response and len(response['results']):
       for line_item in response['results']:
-        print ('Line item with id "%s", belonging to order id "%s", and '
-               'name "%s" will be activated.' %
-               (line_item['id'], line_item['orderId'], line_item['name']))
+        print('Line item with id "%s", belonging to order id "%s", and '
+              'name "%s" will be activated.' %
+              (line_item['id'], line_item['orderId'], line_item['name']))
 
       # Perform action.
       result = line_item_service.performLineItemAction(
@@ -64,9 +64,9 @@ def main(client, order_id):
 
   # Display results.
   if line_items_activated > 0:
-    print 'Number of line items activated: %s' % line_items_activated
+    print('Number of line items activated: %s' % line_items_activated)
   else:
-    print 'No line items were activated.'
+    print('No line items were activated.')
 
 
 if __name__ == '__main__':

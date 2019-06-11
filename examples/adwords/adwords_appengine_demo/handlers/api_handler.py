@@ -246,7 +246,7 @@ class APIHandler(object):
           return campaigns['entries']
         else:
           return None
-      except Exception, e:
+      except Exception as e:
         if i == max_tries:
           raise GoogleAdsError(e)
         continue

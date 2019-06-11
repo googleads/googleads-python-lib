@@ -36,7 +36,7 @@ def main(client, base_rate_id):
                .Where('id = :id')
                .OrderBy('id', ascending=True)
                .Limit(1)
-               .WithBindVariable('id', long(base_rate_id)))
+               .WithBindVariable('id', int(base_rate_id)))
 
   # Get single base rate by statement.
   response = base_rate_service.getBaseRatesByStatement(
@@ -60,15 +60,15 @@ def main(client, base_rate_id):
     # Display results.
     if base_rates:
       for base_rate in base_rates:
-        print ('Base rate with ID "%s" and type "%s" belonging to '
-               'rate card ID "%s" was updated.' % (
-                   base_rate['id'],
-                   ad_manager.AdManagerClassType(base_rate),
-                   base_rate['rateCardId']))
+        print('Base rate with ID "%s" and type "%s" belonging to '
+              'rate card ID "%s" was updated.' % (
+                  base_rate['id'],
+                  ad_manager.AdManagerClassType(base_rate),
+                  base_rate['rateCardId']))
     else:
-      print 'No base rates were updated.'
+      print('No base rates were updated.')
   else:
-    print 'No base rates found to update.'
+    print('No base rates found to update.')
 
 
 if __name__ == '__main__':

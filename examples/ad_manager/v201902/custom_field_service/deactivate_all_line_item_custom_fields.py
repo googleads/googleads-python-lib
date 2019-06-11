@@ -51,8 +51,8 @@ def main(client):
     if 'results' in response and len(response['results']):
       # Display results.
       for custom_field in response['results']:
-        print ('Custom field with ID "%s" and name "%s" will'
-               ' be deactivated.' % (custom_field['id'], custom_field['name']))
+        print('Custom field with ID "%s" and name "%s" will'
+              ' be deactivated.' % (custom_field['id'], custom_field['name']))
         result = custom_field_service.performCustomFieldAction(
             {'xsi_type': 'DeactivateCustomFields'}, statement.ToStatement())
         if result and int(result['numChanges']) > 0:
@@ -62,9 +62,9 @@ def main(client):
       break
 
   if custom_fields_deactivated > 0:
-    print 'Number of custom fields deactivated: %s' % custom_fields_deactivated
+    print('Number of custom fields deactivated: %s' % custom_fields_deactivated)
   else:
-    print 'No custom fields were deactivated.'
+    print('No custom fields were deactivated.')
 
 
 if __name__ == '__main__':

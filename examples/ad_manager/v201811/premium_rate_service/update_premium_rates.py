@@ -36,7 +36,7 @@ def main(client, premium_rate_id):
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
-               .WithBindVariable('id', long(premium_rate_id))
+               .WithBindVariable('id', int(premium_rate_id))
                .Limit(1))
 
   # Get the premium rate.
@@ -72,13 +72,13 @@ def main(client, premium_rate_id):
     # Display results.
     if premium_rates:
       for premium_rate in premium_rates:
-        print ('Premium rate with ID "%s", associated with rate card id'
-               ' "%s" was updated.' % (premium_rate['id'],
-                                       premium_rate['rateCardId']))
+        print('Premium rate with ID "%s", associated with rate card id'
+              ' "%s" was updated.' % (premium_rate['id'],
+                                      premium_rate['rateCardId']))
     else:
-      print 'No premium rates were updated.'
+      print('No premium rates were updated.')
   else:
-    print 'No premium rates found to update.'
+    print('No premium rates found to update.')
 
 
 if __name__ == '__main__':

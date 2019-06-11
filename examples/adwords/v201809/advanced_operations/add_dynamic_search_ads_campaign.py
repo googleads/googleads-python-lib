@@ -37,7 +37,7 @@ def main(client):
   _CreateExpandedDSA(client, ad_group_id)
   _AddWebPageCriteria(client, ad_group_id)
 
-  print 'Dynamic Search Ads campaign setup is complete.'
+  print('Dynamic Search Ads campaign setup is complete.')
 
 
 def _CreateBudget(client):
@@ -47,7 +47,7 @@ def _CreateBudget(client):
     client: an AdWordsClient instance.
 
   Returns:
-    a suds.sudsobject.Object representation of the created budget.
+    a zeep.objects.Budget representation of the created budget.
   """
   budget_service = client.GetService('BudgetService', version='v201809')
 
@@ -65,8 +65,8 @@ def _CreateBudget(client):
 
   budget = budget_service.mutate([operation])['value'][0]
 
-  print 'Budget with ID "%d" and name "%s" was created.' % (
-      budget['budgetId'], budget['name'])
+  print('Budget with ID "%d" and name "%s" was created.' % (
+      budget['budgetId'], budget['name']))
 
   return budget
 
@@ -76,7 +76,7 @@ def _CreateCampaign(client, budget):
 
   Args:
     client: an AdWordsClient instance.
-    budget: a suds.sudsobject.Object representation of a created budget.
+    budget: a zeep.objects.Budget representation of a created budget.
 
   Returns:
     An integer campaign ID.
@@ -115,8 +115,8 @@ def _CreateCampaign(client, budget):
   campaign = campaign_service.mutate(operations)['value'][0]
   campaign_id = campaign['id']
 
-  print 'Campaign with ID "%d" and name "%s" was added.' % (
-      campaign_id, campaign['name'])
+  print('Campaign with ID "%d" and name "%s" was added.' % (
+      campaign_id, campaign['name']))
 
   return campaign_id
 
@@ -154,8 +154,8 @@ def _CreateAdGroup(client, campaign_id):
   ad_group = ad_group_service.mutate(operations)['value'][0]
   ad_group_id = ad_group['id']
 
-  print 'Ad group with ID "%d" and name "%s" was created.' % (
-      ad_group_id, ad_group['name'])
+  print('Ad group with ID "%d" and name "%s" was created.' % (
+      ad_group_id, ad_group['name']))
 
   return ad_group_id
 
@@ -195,9 +195,9 @@ def _CreateExpandedDSA(client, ad_group_id):
   ad = ad_group_ad_service.mutate(operations)['value'][0]['ad']
 
   # Display the results.
-  print ('Expanded dynamic search ad with ID "%d", description "%s", and '
-         'description 2 "%s" was added'
-         % (ad['id'], ad['description'], ad['description2']))
+  print('Expanded dynamic search ad with ID "%d", description "%s", and '
+        'description 2 "%s" was added'
+        % (ad['id'], ad['description'], ad['description2']))
 
 
 def _AddWebPageCriteria(client, ad_group_id):
@@ -248,8 +248,8 @@ def _AddWebPageCriteria(client, ad_group_id):
 
   criterion = ad_group_criterion_service.mutate(operations)['value'][0]
 
-  print 'Webpage criterion with ID "%d" was added to ad group ID "%d".' % (
-      criterion['criterion']['id'], criterion['adGroupId'])
+  print('Webpage criterion with ID "%d" was added to ad group ID "%d".' % (
+      criterion['criterion']['id'], criterion['adGroupId']))
 
 
 if __name__ == '__main__':

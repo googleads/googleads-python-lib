@@ -56,10 +56,10 @@ def main(client):
             .updateReconciliationLineItemReports([line_item_report]))
 
   for updated_report in result:
-    print ('Reconciliation line item report with ID %d for line item ID %d was '
-           'updated, with manual volume %d' % (updated_report['id'],
-                                               updated_report['lineItemId'],
-                                               updated_report['manualVolume']))
+    print('Reconciliation line item report with ID %d for line item ID %d was '
+          'updated, with manual volume %d' % (updated_report['id'],
+                                              updated_report['lineItemId'],
+                                              updated_report['manualVolume']))
 
 if __name__ == '__main__':
   # Initialize client object.

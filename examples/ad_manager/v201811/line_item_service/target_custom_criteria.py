@@ -83,7 +83,7 @@ def main(client, line_item_id, key_id1, key_id2, key_id3, value_id1, value_id2,
   # Create statement to get the line item
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :lineItemId')
-               .WithBindVariable('lineItemId', long(line_item_id))
+               .WithBindVariable('lineItemId', int(line_item_id))
                .Limit(1))
 
   # Set custom criteria targeting on the line item.
@@ -96,11 +96,11 @@ def main(client, line_item_id, key_id1, key_id2, key_id3, value_id1, value_id2,
 
   # Display results.
   if line_item:
-    print ('Line item with id "%s" updated with custom criteria targeting:'
-           % line_item['id'])
+    print('Line item with id "%s" updated with custom criteria targeting:'
+          % line_item['id'])
     pprint.pprint(line_item['targeting']['customTargeting'])
   else:
-    print 'No line items were updated.'
+    print('No line items were updated.')
 
 
 if __name__ == '__main__':

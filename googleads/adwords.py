@@ -22,13 +22,14 @@ import logging
 import os
 import re
 import sys
-import urllib
-import urllib2
+import io
+from urllib.request import Request, build_opener
+from urllib.parse import urlencode
+from urllib.error import HTTPError
 from xml.etree import ElementTree
 
 import googleads.common
 import googleads.errors
-import six
 import xmltodict
 import yaml
 
@@ -192,8 +193,7 @@ class AdWordsClient(googleads.common.CommonClient):
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, developer_token, oauth2_client,
-               user_agent=_DEFAULT_USER_AGENT, soap_impl='zeep',
-               timeout=3600, **kwargs):
+               user_agent=_DEFAULT_USER_AGENT, timeout=3600, **kwargs):
     """Initializes an AdWordsClient.
 
     For more information on these arguments, see our SOAP headers guide:
@@ -206,8 +206,6 @@ class AdWordsClient(googleads.common.CommonClient):
       user_agent: An arbitrary string containing only ASCII characters that will
           be used to identify your application. If not set, this will default to
           the string value "unknown".
-      soap_impl: A string identifying which SOAP implementation to use. The
-          options are 'zeep' or 'suds'.
       timeout: An integer time in MS to time out connections to AdWords.
       **kwargs: Optional keyword arguments.
 
@@ -223,9 +221,9 @@ class AdWordsClient(googleads.common.CommonClient):
           succeed, to result in a complete failure with no changes made or a
           partial failure with some changes made. Only certain services respect
           this header.
-      cache: A subclass of zeep.cache.Base or suds.cache.Cache. If not set,
-          this will default to a basic file cache. To disable caching for Zeep,
-          pass googleads.common.ZeepServiceProxy.NO_CACHE.
+      cache: A subclass of zeep.cache.Base. If not set, this will default to a
+          basic file cache. To disable caching for Zeep, pass
+          googleads.common.ZeepServiceProxy.NO_CACHE.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
         isn't being used.
       report_downloader_headers: A dict containing optional headers to be used
@@ -244,11 +242,9 @@ class AdWordsClient(googleads.common.CommonClient):
     self.oauth2_client = oauth2_client
     self.client_customer_id = kwargs.get('client_customer_id')
     self.user_agent = user_agent
-    self.soap_impl = soap_impl
     self.custom_http_headers = kwargs.get('custom_http_headers')
-    # Verify that the provided user_agent contains only ASCII characters. In
-    # both Python 2 and Python 3, a UnicodeEncodeError will be raised if it
-    # contains a non-ASCII character.
+    # Verify that the provided user_agent contains only ASCII characters. A
+    # UnicodeEncodeError will be raised if it contains a non-ASCII character.
     try:
       self.user_agent.encode('ascii')
     except UnicodeEncodeError:
@@ -267,7 +263,6 @@ class AdWordsClient(googleads.common.CommonClient):
     if self.enable_compression:
       self.user_agent = '%s (gzip)' % self.user_agent
 
-    self.message_plugin = googleads.common.LoggingMessagePlugin()
     self.timeout = timeout
 
   def GetService(self, service_name, version=None, server=None):
@@ -308,7 +303,7 @@ class AdWordsClient(googleads.common.CommonClient):
         raise googleads.errors.GoogleAdsValueError(
             msg_fmt % ('version', version, _SERVICE_MAP.keys()))
 
-    service = googleads.common.GetServiceClassForLibrary(self.soap_impl)(
+    service = googleads.common.GetServiceClassForLibrary()(
         self._SOAP_SERVICE_FORMAT % (
             server, version_service_mapping, version, service_name),
         _AdWordsHeaderHandler(
@@ -575,7 +570,7 @@ class BatchJobHelper(object):
         **kwargs: optional keyword arguments.
 
       Returns:
-        A urllib2.Request instance with the correct method, headers, and
+        A urllib.request.Request instance with the correct method, headers, and
         padding (if required) for the batch job upload.
       """
 
@@ -693,7 +688,7 @@ class BatchJobHelper(object):
           incremental upload.
 
       Returns:
-        A urllib2.Request instance with the correct method, headers, and
+        A urllib.request.Request instance with the correct method, headers, and
         padding (if required) for the batch job upload.
       """
       current_content_length = kwargs.get('current_content_length', 0)
@@ -703,7 +698,7 @@ class BatchJobHelper(object):
           operations,
           has_prefix=current_content_length == 0,
           has_suffix=is_last)
-      req = urllib2.Request(upload_url)
+      req = Request(upload_url)
       req.add_header('Content-Type', 'application/xml')
       # Determine length of this message and the required padding.
       new_content_length = current_content_length
@@ -786,9 +781,7 @@ class BatchJobHelper(object):
       # Ensure operations are formatted correctly for BatchJobService.
       for operations in method:
         self._FormatForBatchJobService(operations)
-        # Extract the operation type, ensure xsi:type is set for
-        # BatchJobService. Even if xsi_type is set earlier, suds will end up
-        # removing it when it sets Operation.Type.
+        # Extract the operation type, ensure xsi:type is set for BatchJobService.
         operation_type = operations.find('Operation.Type')
         if operation_type is None:
           raise googleads.errors.GoogleAdsValueError('No xsi_type specified '
@@ -796,18 +789,14 @@ class BatchJobHelper(object):
         operations.attrib[self.XSI_TYPE_STRING] = operation_type.text
       operations_xml = ''.join([ElementTree.tostring(operation).decode('utf-8')
                                 for operation in method])
-      # Force removal of this line, which suds produces.
-      operations_xml = operations_xml.replace(
-          'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"', '')
       return operations_xml
 
     def _FormatForBatchJobService(self, element):
       """Formats contents of all operations for use with the BatchJobService.
 
-      This will recursively remove unnecessary namespaces generated by suds that
-      would prevent the operations from executing via the BatchJobService. It
-      will also remove namespaces appended to the xsi:type in some cases that
-      also cause issues for the BatchJobService.
+      This will recursively remove unnecessary namespaces that would prevent the
+      operations from executing via the BatchJobService. It will also remove namespaces
+      appended to the xsi:type in some cases that also cause issues for the BatchJobService.
 
       Args:
         element: a starting Element to be modified to the correct format.
@@ -932,9 +921,9 @@ class BatchJobHelper(object):
     return cls._XMLToDictResponseParser(*args, **kwargs)
 
   def ParseResponse(self, batch_job_response):
-    """Parses a Batch Job Service response and returns it as a suds object.
+    """Parses a Batch Job Service response and returns it as a zeep object.
 
-    Note: Unlike suds objects generated via an API call with suds, type
+    Note: Unlike zeep objects generated via an API call with zeep, type
     information will be lost. All values are strings.
 
     Args:
@@ -942,7 +931,7 @@ class BatchJobHelper(object):
       BatchJobService.
 
     Returns:
-      A suds object response generated from the provided batch_job_response.
+      A zeep object response generated from the provided batch_job_response.
     """
     return self._response_parser.ParseResponse(batch_job_response)
 
@@ -1026,7 +1015,7 @@ class IncrementalUploadHelper(object):
           'Current content length %s is < 0.' % current_content_length)
     self._current_content_length = current_content_length
     self._is_last = is_last
-    self._url_opener = urllib2.build_opener(
+    self._url_opener = build_opener(
         *self._request_builder.client.proxy_config.GetHandlers())
     if self._request_builder.client.custom_http_headers:
       self._url_opener.addheaders.extend(
@@ -1057,7 +1046,7 @@ class IncrementalUploadHelper(object):
     }
 
     # Send an HTTP POST request to the given upload_url
-    req = urllib2.Request(upload_url, data={}, headers=headers)
+    req = Request(upload_url, data={}, headers=headers)
     resp = self._url_opener.open(req)
 
     return resp.headers['location']
@@ -1106,8 +1095,8 @@ class IncrementalUploadHelper(object):
     req = self._request_builder.BuildUploadRequest(
         self._upload_url, operations,
         current_content_length=self._current_content_length, is_last=is_last)
-    # Make the request, ignoring the urllib2.HTTPError raised due to HTTP status
-    # code 308 (for resumable uploads).
+    # Make the request, ignoring the urllib.error.HTTPError raised due to HTTP
+    # status code 308 (for resumable uploads).
     try:
       _batch_job_logger.debug('Outgoing request: %s %s %s',
                               req.get_full_url(), req.headers, req.data)
@@ -1117,7 +1106,7 @@ class IncrementalUploadHelper(object):
       if _batch_job_logger.isEnabledFor(logging.INFO):
         _batch_job_logger.info('Request summary: %s',
                                self._ExtractRequestSummaryFields(req))
-    except urllib2.HTTPError as e:
+    except HTTPError as e:
       if e.code != 308:
         if _batch_job_logger.isEnabledFor(logging.WARNING):
           _batch_job_logger.warning(
@@ -1132,9 +1121,9 @@ class IncrementalUploadHelper(object):
     """Extract fields used in the summary logs.
 
     Args:
-      request:  a urllib2.Request instance configured to make the request.
+      request: a urllib.request.Request instance configured to make the request.
       [optional]
-      error: a urllib2.HttpError instance used to retrieve error details.
+      error: a urllib.error.HttpError instance used to retrieve error details.
 
     Returns:
       A dict containing the fields to be output in the summary logs.
@@ -1204,14 +1193,13 @@ class ReportDownloader(object):
         self._adwords_client.custom_http_headers)
     self.proxy_config = self._adwords_client.proxy_config
     handlers = self.proxy_config.GetHandlers()
-    self.url_opener = urllib2.build_opener(*handlers)
+    self.url_opener = build_opener(*handlers)
     if self._adwords_client.custom_http_headers:
       self.url_opener.addheaders.extend(
           adwords_client.custom_http_headers.items())
 
     schema_url = self._SCHEMA_FORMAT % (server, version)
-    service_class = (googleads.common
-                     .GetSchemaHelperForLibrary(adwords_client.soap_impl))
+    service_class = googleads.common.GetSchemaHelperForLibrary()
     self.schema_helper = service_class(
         schema_url, self._adwords_client.timeout,
         self.proxy_config, self._namespace, self._adwords_client.cache)
@@ -1220,25 +1208,20 @@ class ReportDownloader(object):
     """Verifies file format compatibility with given output."""
     encoding = getattr(output, 'encoding', None)
 
-    # In Python 2 binary file encoding will be set to None, and StringIO /
-    # BytesIO instances will not have an encoding attribute. In Python 3,
-    # binary files don't have an encoding attribute, StringIO instances have an
-    # encoding set to None, and BytesIO instances lack an encoding attribute.
-    # As a result, if encoding is ever set, it indicates that the specified
-    # output is incompatible with GZIPPED formats.
+    # StringIO instances have an encoding set to None, and BytesIO instances
+    # lack an encoding attribute. As a result, if encoding is ever set, it
+    # indicates that the specified output is incompatible with GZIPPED formats.
     if encoding and file_format.startswith('GZIPPED_'):
       raise googleads.errors.GoogleAdsValueError(
           'Need to specify a binary output for GZIPPED formats.')
 
-    # Because Python 3 StringIO instances always have encoding set to None,
-    # it's necessary to verify that StringIO instances aren't used with GZIPPED
-    # formats. In Python 2, this wouldn't matter because StringIO instances
-    # store bytes (appropriate for GZIPPED formats) rather than unicode data.
-    if six.PY3:
-      if (file_format.startswith('GZIPPED_')
-          and isinstance(output, six.StringIO)):
-        raise googleads.errors.GoogleAdsValueError(
-            'Need to specify a binary output for GZIPPED formats.')
+    # Because StringIO instances always have encoding set to None, it's
+    # necessary to verify that StringIO instances aren't used with GZIPPED
+    # formats.
+    if (file_format.startswith('GZIPPED_')
+        and isinstance(output, io.StringIO)):
+      raise googleads.errors.GoogleAdsValueError(
+          'Need to specify a binary output for GZIPPED formats.')
 
   def DownloadReport(self, report_definition, output=sys.stdout, **kwargs):
     """Downloads an AdWords report using a report definition.
@@ -1548,8 +1531,7 @@ class ReportDownloader(object):
     Raises:
       AdWordsReportBadRequestError: if the report download fails due to
         improper input. In the event of certain other failures, a
-        urllib2.URLError (Python 2) or urllib.error.URLError (Python 3) will be
-        raised.
+        urllib.error.URLError will be raised.
       AdWordsReportError: if the request fails for any other reason; e.g. a
           network error.
     """
@@ -1558,7 +1540,7 @@ class ReportDownloader(object):
       response = self._DownloadReportAsStream(post_body, **kwargs)
 
       # Determine encoding of provided output.
-      if six.PY3 and isinstance(output, six.StringIO):
+      if isinstance(output, io.StringIO):
         encoding = 'utf-8'
       else:
         encoding = getattr(output, 'encoding', None)
@@ -1582,9 +1564,8 @@ class ReportDownloader(object):
   def _DownloadReportAsStream(self, post_body, **kwargs):
     """Downloads an AdWords report, returning a stream-like object.
 
-    In Python 2, this will return a urllib2.addinfourl instance. In Python 3,
-    this will return a http.client.HTTPResponse instance. In either case,
-    reading from the stream-like object will return binary data.
+    This will return a http.client.HTTPResponse instance, reading from which
+    will return binary data.
 
     Args:
       post_body: The contents of the POST request's body as a URL encoded
@@ -1614,15 +1595,14 @@ class ReportDownloader(object):
     Raises:
       AdWordsReportBadRequestError: if the report download fails due to
         improper input. In the event of certain other failures, a
-        urllib2.URLError (Python 2) or urllib.error.URLError (Python 3) will be
-        raised.
+        urllib.error.URLError will be raised.
       AdWordsReportError: if the request fails for any other reason; e.g. a
           network error.
     """
     if sys.version_info[0] == 3:
       post_body = bytes(post_body, 'utf8')
 
-    request = urllib2.Request(
+    request = Request(
         self._end_point, post_body,
         self._header_handler.GetReportDownloadHeaders(**kwargs))
     try:
@@ -1642,7 +1622,7 @@ class ReportDownloader(object):
                              self._ExtractResponseHeaders(response.headers),
                              response.code, response.msg)
       return response
-    except urllib2.HTTPError as e:
+    except HTTPError as e:
       error = self._ExtractError(e)
       if _report_logger.isEnabledFor(logging.WARNING):
         _report_logger.warning(
@@ -1689,7 +1669,7 @@ class ReportDownloader(object):
     """Extract fields used in the summary logs.
 
     Args:
-      request:  a urllib2.Request instance.
+      request:  a urllib.request.Request instance.
       [optional]
       error: a googleads.errors.AdWordsReportError instance or subclass used to
           retrieve error details. This should only be present when an error
@@ -1732,7 +1712,7 @@ class ReportDownloader(object):
       The given query and format URL encoded into the format needed for an
       AdWords report request as a string. This is intended to be a POST body.
     """
-    return urllib.urlencode({'__fmt': file_format, '__rdquery': str(query)})
+    return urlencode({'__fmt': file_format, '__rdquery': str(query)})
 
   def _SerializeReportDefinition(self, report_definition):
     """Serializes a report definition for transport.
@@ -1746,7 +1726,7 @@ class ReportDownloader(object):
       the format needed for an AdWords report request as a string. This is
       intended to be a POST body.
     """
-    return urllib.urlencode(
+    return urlencode(
         {'__rdxml': self.schema_helper.GetSoapXMLForComplexType(
             self._REPORT_DEFINITION_NAME, report_definition)})
 
@@ -1754,7 +1734,7 @@ class ReportDownloader(object):
     """Attempts to extract information from a report download error XML message.
 
     Args:
-      error: A urllib2.HTTPError describing the report download failure.
+      error: A urllib.error.HTTPError describing the report download failure.
 
     Returns:
       An error that should be raised. If the content was an XML error message,
@@ -2069,14 +2049,14 @@ class _WhereBuilder(object):
 
   def _CreateSingleValueCondition(self, value, operator):
     """Creates a single-value condition with the provided value and operator."""
-    if isinstance(value, str) or isinstance(value, unicode):
+    if isinstance(value, str):
       value = '"%s"' % value
     return '%s %s %s' % (self._field, operator, value)
 
   def _CreateMultipleValuesCondition(self, values, operator):
     """Creates a condition with the provided list of values and operator."""
-    values = ['"%s"' % value if isinstance(value, str) or
-              isinstance(value, unicode) else str(value) for value in values]
+    values = ['"%s"' % value if isinstance(value, str) else
+              str(value) for value in values]
     return '%s %s [%s]' % (self._field, operator, ', '.join(values))
 
 

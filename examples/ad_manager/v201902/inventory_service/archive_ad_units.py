@@ -41,7 +41,7 @@ def main(client, parent_id):
   # unit.
   statement = (ad_manager.StatementBuilder(version='v201902')
                .Where('parentId = :parentId or id = :parentId')
-               .WithBindVariable('parentId', long(parent_id)))
+               .WithBindVariable('parentId', int(parent_id)))
 
   ad_units_archived = 0
 
@@ -51,8 +51,8 @@ def main(client, parent_id):
         statement.ToStatement())
     if 'results' in response and len(response['results']):
       for ad_unit in response['results']:
-        print ('Ad unit with ID "%s" and name "%s" will be archived.'
-               % (ad_unit['id'], ad_unit['name']))
+        print('Ad unit with ID "%s" and name "%s" will be archived.'
+              % (ad_unit['id'], ad_unit['name']))
       # Perform action.
       result = inventory_service.performAdUnitAction(
           {'xsi_type': 'ArchiveAdUnits'}, statement.ToStatement())
@@ -64,9 +64,9 @@ def main(client, parent_id):
 
   # Display results.
   if ad_units_archived > 0:
-    print 'Number of ad units archived: %s' % ad_units_archived
+    print('Number of ad units archived: %s' % ad_units_archived)
   else:
-    print 'No ad units were archived.'
+    print('No ad units were archived.')
 
 
 if __name__ == '__main__':

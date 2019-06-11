@@ -46,7 +46,7 @@ def main(client):
     report_downloader.DownloadPqlResultToCsv(
         browser_pql_query, browser_data_file)
 
-  print 'Saved browser data to... %s' % browser_data_file.name
+  print('Saved browser data to... %s' % browser_data_file.name)
 
 
 if __name__ == '__main__':

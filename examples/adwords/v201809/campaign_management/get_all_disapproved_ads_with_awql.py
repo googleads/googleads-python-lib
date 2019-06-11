@@ -56,29 +56,29 @@ def main(client, ad_group_id):
         disapproved_count += 1
         policy_summary = ad['policySummary']
 
-        print ('Ad with id "%s" was disapproved with the following policy '
-               'topic entries:' % ad['ad']['id'])
+        print('Ad with id "%s" was disapproved with the following policy '
+              'topic entries:' % ad['ad']['id'])
         # Display the policy topic entries related to the ad disapproval.
         for policy_topic_entry in policy_summary['policyTopicEntries']:
-          print '  topic ID: %s, topic name: %s' % (
+          print('  topic ID: %s, topic name: %s' % (
               policy_topic_entry['policyTopicId'],
-              policy_topic_entry['policyTopicName'])
+              policy_topic_entry['policyTopicName']))
           # Display the attributes and values that triggered the policy topic.
           if ('policyTopicEvidences' in policy_topic_entry
               and policy_topic_entry['policyTopicEvidences']):
             for evidence in policy_topic_entry['policyTopicEvidences']:
-              print ('    evidence type: %s'
-                     % evidence['policyTopicEvidenceType'])
+              print('    evidence type: %s'
+                    % evidence['policyTopicEvidenceType'])
               evidence_text_list = evidence['evidenceTextList']
               if evidence_text_list:
                 for index, evidence_text in enumerate(evidence_text_list):
-                  print '      evidence text[%d]: %s' % (index, evidence_text)
+                  print('      evidence text[%d]: %s' % (index, evidence_text))
 
     if not query.HasNext(page):
       break
     query.NextPage()
 
-  print '%d disapproved ads were found.' % disapproved_count
+  print('%d disapproved ads were found.' % disapproved_count)
 
 
 if __name__ == '__main__':

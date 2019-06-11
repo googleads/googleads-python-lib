@@ -38,7 +38,7 @@ def DisplayAccountTree(account, accounts, links, depth=0):
     depth: int Depth of the current account in the tree.
   """
   prefix = '-' * depth * 2
-  print '%s%s, %s' % (prefix, account['customerId'], account['name'])
+  print('%s%s, %s' % (prefix, account['customerId'], account['name']))
   if account['customerId'] in links:
     for child_link in links[account['customerId']]:
       child_account = accounts[child_link['clientCustomerId']]
@@ -92,10 +92,10 @@ def main(client):
 
   # Display account tree.
   if root_account:
-    print 'CustomerId, Name'
+    print('CustomerId, Name')
     DisplayAccountTree(root_account, accounts, child_links, 0)
   else:
-    print 'Unable to determine a root account'
+    print('Unable to determine a root account')
 
 
 if __name__ == '__main__':

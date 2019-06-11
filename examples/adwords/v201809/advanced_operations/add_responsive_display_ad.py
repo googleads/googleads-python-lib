@@ -25,7 +25,7 @@ section of our README.
 
 """
 
-import urllib2
+from urllib.request import build_opener
 
 from googleads import adwords
 
@@ -37,7 +37,7 @@ def main(client, ad_group_id):
   # Initialize appropriate services.
   ad_group_ad_service = client.GetService('AdGroupAdService', version='v201809')
   media_service = client.GetService('MediaService', version='v201809')
-  opener = urllib2.build_opener(*client.proxy_config.GetHandlers())
+  opener = build_opener(*client.proxy_config.GetHandlers())
 
   try:
     # Create marketing image.
@@ -94,8 +94,8 @@ def main(client, ad_group_id):
 
     # Display results.
     for ad in ads['value']:
-      print ('ResponsiveDisplayAd with id "%d" and short headline "%s" was '
-             'added.' % (ad['ad']['id'], ad['ad']['shortHeadline']))
+      print('ResponsiveDisplayAd with id "%d" and short headline "%s" was '
+            'added.' % (ad['ad']['id'], ad['ad']['shortHeadline']))
 
   except:
     raise Exception('Failed to create responsive display ad.')
@@ -105,7 +105,7 @@ def _CreateImage(media_service, opener, url):
   """Creates an image and uploads it to the server.
 
   Args:
-    media_service: a SudsServiceProxy instance for AdWords's MediaService.
+    media_service: a ZeepServiceProxy instance for AdWords's MediaService.
     opener: an OpenerDirector instance.
     url: a str URL used to load image data.
 
@@ -127,7 +127,7 @@ def _CreateDynamicDisplayAdSettings(media_service, opener):
   """Creates settings for dynamic display ad.
 
   Args:
-    media_service: a SudsServiceProxy instance for AdWords's MediaService.
+    media_service: a ZeepServiceProxy instance for AdWords's MediaService.
     opener: an OpenerDirector instance.
 
   Returns:

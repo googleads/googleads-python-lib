@@ -68,11 +68,11 @@ def main(client):
                     else criterion['name'] if 'name' in criterion else
                     criterion['locationName'] if 'locationName' in criterion
                     else None)
-        print ('%sCampaign Criterion found for Campaign ID %s with type %s and '
-               'criteria "%s".' % (negative, campaign_criterion['campaignId'],
-                                   criterion['type'], criteria))
+        print('%sCampaign Criterion found for Campaign ID %s with type %s and '
+              'criteria "%s".' % (negative, campaign_criterion['campaignId'],
+                                  criterion['type'], criteria))
     else:
-      print 'No campaign targets were found.'
+      print('No campaign targets were found.')
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])

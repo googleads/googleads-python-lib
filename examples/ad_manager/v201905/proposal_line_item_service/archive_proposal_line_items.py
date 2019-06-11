@@ -36,7 +36,7 @@ def main(client, proposal_line_item_id):
   # Create query.
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where('id = :id')
-               .WithBindVariable('id', long(proposal_line_item_id))
+               .WithBindVariable('id', int(proposal_line_item_id))
                .Limit(1))
 
   proposal_line_items_archived = 0
@@ -47,11 +47,11 @@ def main(client, proposal_line_item_id):
         statement.ToStatement())
     if 'results' in response and len(response['results']):
       for proposal_line_item in response['results']:
-        print ('Proposal line item with id "%s", '
-               'belonging to proposal id "%s", and '
-               'name "%s" will be archived.' %
-               (proposal_line_item['id'], proposal_line_item['proposalId'],
-                proposal_line_item['name']))
+        print('Proposal line item with id "%s", '
+              'belonging to proposal id "%s", and '
+              'name "%s" will be archived.' %
+              (proposal_line_item['id'], proposal_line_item['proposalId'],
+               proposal_line_item['name']))
 
       # Perform action.
       result = proposal_line_item_service.performProposalLineItemAction(
@@ -64,10 +64,10 @@ def main(client, proposal_line_item_id):
 
   # Display results.
   if proposal_line_items_archived > 0:
-    print ('Number of proposal line items '
-           'archived: %s' % proposal_line_items_archived)
+    print('Number of proposal line items '
+          'archived: %s' % proposal_line_items_archived)
   else:
-    print 'No proposal line items were archived.'
+    print('No proposal line items were archived.')
 
 
 if __name__ == '__main__':

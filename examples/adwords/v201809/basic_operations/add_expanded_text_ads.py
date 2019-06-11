@@ -63,9 +63,9 @@ def main(client, ad_group_id):
 
   # Display results.
   for ad in ads['value']:
-    print ('Ad of type "%s" with id "%d" was added.'
-           '\n\theadlinePart1: %s\n\theadlinePart2: %s\n\theadlinePart3: %s'
-           % (ad['ad']['Ad.Type'], ad['ad']['id'],
+    print('Ad of type "%s" with id "%d" was added.'
+          '\n\theadlinePart1: %s\n\theadlinePart2: %s\n\theadlinePart3: %s'
+          % (ad['ad']['Ad.Type'], ad['ad']['id'],
               ad['ad']['headlinePart1'], ad['ad']['headlinePart2'],
               ad['ad']['headlinePart3']))
 

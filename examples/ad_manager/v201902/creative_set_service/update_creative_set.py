@@ -42,7 +42,7 @@ def main(client, creative_set_id, companion_creative_id):
   # Create statement to select a single creative set by ID.
   statement = (ad_manager.StatementBuilder(version='v201902')
                .Where('id = :creativeSetId')
-               .WithBindVariable('creativeSetId', long(creative_set_id)))
+               .WithBindVariable('creativeSetId', int(creative_set_id)))
 
   # Get creative set.
   response = creative_set_service.getCreativeSetsByStatement(
@@ -59,12 +59,12 @@ def main(client, creative_set_id, companion_creative_id):
 
     # Display results.
     for creative_set in creative_sets:
-      print (('Creative set with ID "%s", master creative ID "%s", and '
-              'companion creative IDs {%s} was updated.')
-             % (creative_set['id'], creative_set['masterCreativeId'],
+      print(('Creative set with ID "%s", master creative ID "%s", and '
+             'companion creative IDs {%s} was updated.')
+            % (creative_set['id'], creative_set['masterCreativeId'],
                 ','.join(creative_set['companionCreativeIds'])))
   else:
-    print 'No creative sets found to update.'
+    print('No creative sets found to update.')
 
 
 if __name__ == '__main__':

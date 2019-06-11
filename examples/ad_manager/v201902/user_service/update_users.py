@@ -33,7 +33,7 @@ def main(client, user_id):
   # Create query.
   statement = (ad_manager.StatementBuilder(version='v201902')
                .Where('id = :userId')
-               .WithBindVariable('userId', long(user_id)))
+               .WithBindVariable('userId', int(user_id)))
 
   # Get users by statement.
   response = user_service.getUsersByStatement(statement.ToStatement())
@@ -46,10 +46,10 @@ def main(client, user_id):
     # Update users on server.
     users = user_service.updateUsers(users)
     for user in users:
-      print ('User with id "%s" and name "%s" was updated.'
-             % (user['id'], user['name']))
+      print('User with id "%s" and name "%s" was updated.'
+            % (user['id'], user['name']))
   else:
-    print 'No users found to update.'
+    print('No users found to update.')
 
 
 if __name__ == '__main__':

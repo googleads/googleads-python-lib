@@ -59,7 +59,7 @@ class UpdateBudget(webapp2.RequestHandler):
 
       self.redirect('/showBudget?clientCustomerId=%s&budgetId=%s'
                     % (client_customer_id, budget_id))
-    except Exception, e:
+    except Exception as e:
       # Use template to write output to the page.
       template_values['error'] = str(e)
       path = os.path.join(os.path.dirname(__file__),

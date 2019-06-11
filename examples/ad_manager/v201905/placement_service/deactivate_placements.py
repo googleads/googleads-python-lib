@@ -33,7 +33,7 @@ def main(client, placement_id):
   # Create query.
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where('id = :placementId')
-               .WithBindVariable('placementId', long(placement_id))
+               .WithBindVariable('placementId', int(placement_id))
                .Limit(1))
 
   # Get placements by statement.
@@ -41,9 +41,9 @@ def main(client, placement_id):
       statement.ToStatement())
 
   for placement in placements:
-    print ('Placement with id "%s", name "%s", and status "%s" will be '
-           'deactivated.' % (placement['id'], placement['name'],
-                             placement['status']))
+    print('Placement with id "%s", name "%s", and status "%s" will be '
+          'deactivated.' % (placement['id'], placement['name'],
+                            placement['status']))
 
   # Perform action.
   result = placement_service.performPlacementAction(
@@ -51,9 +51,9 @@ def main(client, placement_id):
 
   # Display results.
   if result and int(result['numChanges']) > 0:
-    print 'Number of placements deactivated: %s' % result['numChanges']
+    print('Number of placements deactivated: %s' % result['numChanges'])
   else:
-    print 'No placements were deactivated.'
+    print('No placements were deactivated.')
 
 
 if __name__ == '__main__':

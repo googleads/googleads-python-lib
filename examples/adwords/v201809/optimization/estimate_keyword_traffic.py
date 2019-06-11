@@ -149,9 +149,9 @@ def DisplayEstimate(message, min_estimate, max_estimate):
 
   Args:
     message: str message to display for the given estimate.
-    min_estimate: sudsobject containing a minimum estimate from the
+    min_estimate: zeep.objects.StatsEstimate containing a minimum estimate from the
       TrafficEstimatorService response.
-    max_estimate: sudsobject containing a maximum estimate from the
+    max_estimate: zeep.objects.StatsEstimate containing a maximum estimate from the
       TrafficEstimatorService response.
   """
   # Find the mean of the min and max values.
@@ -168,11 +168,11 @@ def DisplayEstimate(message, min_estimate, max_estimate):
   mean_total_cost = _CalculateMean(min_estimate['totalCost']['microAmount'],
                                    max_estimate['totalCost']['microAmount'])
 
-  print message
-  print '  Estimated average CPC: %s' % _FormatMean(mean_avg_cpc)
-  print '  Estimated ad position: %s' % _FormatMean(mean_avg_pos)
-  print '  Estimated daily clicks: %s' % _FormatMean(mean_clicks)
-  print '  Estimated daily cost: %s' % _FormatMean(mean_total_cost)
+  print(message)
+  print('  Estimated average CPC: %s' % _FormatMean(mean_avg_cpc))
+  print('  Estimated ad position: %s' % _FormatMean(mean_avg_pos))
+  print('  Estimated daily clicks: %s' % _FormatMean(mean_clicks))
+  print('  Estimated daily cost: %s' % _FormatMean(mean_total_cost))
 
 
 if __name__ == '__main__':

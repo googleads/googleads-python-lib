@@ -4,7 +4,7 @@
       <tns:RequestHeader>
          <tns:clientCustomerId>000-000-0000</tns:clientCustomerId>
          <tns:developerToken>xxxxxxxxxxxxxxxxxxxx</tns:developerToken>
-         <tns:userAgent>notarealemail@fake.com (AwApi-Python, googleads/3.8.0, Python/2.7.6)</tns:userAgent>
+         <tns:userAgent>notarealemail@fake.com (AwApi-Python, googleads/3.8.0, Python/3.6.7)</tns:userAgent>
          <tns:validateOnly>false</tns:validateOnly>
          <tns:partialFailure>false</tns:partialFailure>
       </tns:RequestHeader>

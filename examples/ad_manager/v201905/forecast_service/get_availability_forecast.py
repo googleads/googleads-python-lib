@@ -176,17 +176,17 @@ def main(client, advertiser_id):
   contending_line_items = getattr(forecast, 'contendingLineItems', [])
 
   # Display results.
-  print '%s %s matched overall.' % (matched, unit_type)
-  print '%s%% %s available overall.' % (available_percent_overall, unit_type)
-  print '%d contending line items overall.' % len(contending_line_items)
+  print('%s %s matched overall.' % (matched, unit_type))
+  print('%s%% %s available overall.' % (available_percent_overall, unit_type))
+  print('%d contending line items overall.' % len(contending_line_items))
   if possible:
-    print '%s%% %s possible overall.' % (possible_percent_overall, unit_type)
+    print('%s%% %s possible overall.' % (possible_percent_overall, unit_type))
 
   if 'breakdowns' in forecast and len(forecast['breakdowns']):
     for breakdown in forecast['breakdowns']:
-      print 'For breakdown time period %s - %s:' % (
+      print('For breakdown time period %s - %s:' % (
           FormatSOAPDateTime(breakdown['startTime']),
-          FormatSOAPDateTime(breakdown['endTime']))
+          FormatSOAPDateTime(breakdown['endTime'])))
       for breakdown_entry in breakdown['breakdownEntries']:
         matched = breakdown_entry['forecast']['matched']
         available = breakdown_entry['forecast']['available']
@@ -194,13 +194,13 @@ def main(client, advertiser_id):
                     if 'possible' in breakdown_entry['forecast'] else None)
         name = breakdown_entry['name'] if 'name' in breakdown_entry else None
         if name:
-          print '\tFor targeting breakdown named \'%s\'' % name
+          print('\tFor targeting breakdown named \'%s\'' % name)
         available_percent, possible_percent = CalculateForecastStats(
             matched, available, possible)
-        print '\t\t%s %s matched.' % (matched, unit_type)
-        print '\t\t%s%% %s available.' % (available_percent, unit_type)
+        print('\t\t%s %s matched.' % (matched, unit_type))
+        print('\t\t%s%% %s available.' % (available_percent, unit_type))
         if possible:
-          print '\t\t%s%% %s possible.' % (possible_percent, unit_type)
+          print('\t\t%s%% %s possible.' % (possible_percent, unit_type))
 
 
 def FormatSOAPDateTime(value):

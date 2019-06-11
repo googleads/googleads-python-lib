@@ -51,8 +51,8 @@ def main(client):
   result = package_service.createPackages([package])
 
   for new_package in result:
-    print ('A package with ID %d and name "%s" was created' %
-           (new_package['id'], new_package['name']))
+    print('A package with ID %d and name "%s" was created' %
+          (new_package['id'], new_package['name']))
 
 
 if __name__ == '__main__':

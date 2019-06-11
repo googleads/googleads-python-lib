@@ -38,7 +38,7 @@ def main(client, campaign_id1, campaign_id2):
   campaign_group_id = _CreateCampaignGroup(client)
   _AddCampaignsToGroup(client, campaign_group_id, [campaign_id1, campaign_id2])
   _CreatePerformanceTarget(client, campaign_group_id)
-  print 'Campaign group and its performance target were setup successfully.'
+  print('Campaign group and its performance target were setup successfully.')
 
 
 def _CreateCampaignGroup(client):
@@ -67,8 +67,8 @@ def _CreateCampaignGroup(client):
   campaign_group_id = campaign_group['id']
 
   # Display the results.
-  print 'Campaign group with ID "%d" and name "%s" was created.' % (
-      campaign_group_id, campaign_group['name'])
+  print('Campaign group with ID "%d" and name "%s" was created.' % (
+      campaign_group_id, campaign_group['name']))
 
   return campaign_group_id
 
@@ -96,8 +96,8 @@ def _AddCampaignsToGroup(client, campaign_group_id, campaign_ids):
   campaign_service.mutate(operations)
 
   # Display the results.
-  print ('The following campaign IDs were added to the campaign group with ID '
-         '"%d":\n\t%s' % (campaign_group_id, campaign_ids))
+  print('The following campaign IDs were added to the campaign group with ID '
+        '"%d":\n\t%s' % (campaign_group_id, campaign_ids))
 
 
 def _CreatePerformanceTarget(client, campaign_group_id):
@@ -141,8 +141,8 @@ def _CreatePerformanceTarget(client, campaign_group_id):
   cgpt = cgpt_service.mutate(operations)['value'][0]
 
   # Display the results.
-  print ('Campaign performance target with ID "%d" was added for campaign '
-         'group ID "%d".' % (cgpt['id'], cgpt['campaignGroupId']))
+  print('Campaign performance target with ID "%d" was added for campaign '
+        'group ID "%d".' % (cgpt['id'], cgpt['campaignGroupId']))
 
 
 if __name__ == '__main__':

@@ -39,7 +39,7 @@ def main(client):
     report_downloader.DownloadPqlResultToCsv(
         line_items_pql_query, line_items_file)
 
-  print 'Saved line items to... %s' % line_items_file.name
+  print('Saved line items to... %s' % line_items_file.name)
 
 
 if __name__ == '__main__':

@@ -42,7 +42,7 @@ def main(client, activity_group_id, advertiser_company_id):
   # Create statement object to select a single activity groups by ID.
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :activityGroupId')
-               .WithBindVariable('activityGroupId', long(activity_group_id))
+               .WithBindVariable('activityGroupId', int(activity_group_id))
                .Limit(1))
 
   # Get activity groups by statement.
@@ -58,10 +58,10 @@ def main(client, activity_group_id, advertiser_company_id):
         updated_activity_groups)
 
     for activity_group in activity_groups:
-      print (('Activity group with ID "%s" and name "%s" was updated.')
-             % (activity_group['id'], activity_group['name']))
+      print(('Activity group with ID "%s" and name "%s" was updated.')
+            % (activity_group['id'], activity_group['name']))
   else:
-    print 'No activity groups found to update.'
+    print('No activity groups found to update.')
 
 
 if __name__ == '__main__':

@@ -34,7 +34,7 @@ def main(client, product_id):
   # Create statement object to select a single product by an ID.
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :id')
-               .WithBindVariable('id', long(product_id))
+               .WithBindVariable('id', int(product_id))
                .Limit(1))
 
   # Get products by statement.
@@ -53,13 +53,13 @@ def main(client, product_id):
     # Display results.
     if products:
       for product in products:
-        print ('Product with id "%s", name "%s", and '
-               'notes "%s" was updated.'
-               % (product['id'], product['name'], product['notes']))
+        print('Product with id "%s", name "%s", and '
+              'notes "%s" was updated.'
+              % (product['id'], product['name'], product['notes']))
     else:
-      print 'No products were updated.'
+      print('No products were updated.')
   else:
-    print 'No products found to update.'
+    print('No products found to update.')
 
 
 if __name__ == '__main__':

@@ -29,7 +29,7 @@ def main(client, user_id):
   # Create a statement to select user team associations.
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('userId = :userId')
-               .WithBindVariable('userId', long(user_id)))
+               .WithBindVariable('userId', int(user_id)))
 
   # Retrieve a small amount of user team associations at a time, paging
   # through until all user team associations have been retrieved.
@@ -46,7 +46,7 @@ def main(client, user_id):
     else:
       break
 
-  print '\nNumber of results found: %s' % response['totalResultSetSize']
+  print('\nNumber of results found: %s' % response['totalResultSetSize'])
 
 
 if __name__ == '__main__':

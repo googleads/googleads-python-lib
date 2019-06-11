@@ -58,7 +58,7 @@ class ShowBudget(webapp2.RequestHandler):
         budget = handler.GetBudget(client_customer_id, budget_id)
         # Use template to write output to the page.
         template_values['budget'] = budget
-      except Exception, e:
+      except Exception as e:
         template_values['error'] = str(e)
     finally:
       path = os.path.join(os.path.dirname(__file__),

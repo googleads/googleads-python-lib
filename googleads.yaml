@@ -116,13 +116,6 @@ ad_manager:
 ################################################################################
 # include_utilities_in_user_agent: True
 ################################################################################
-# SOAP implementation (optional)                                               #
-# Specify which SOAP implementation to use. This library currently supports    #
-# suds and zeep. Zeep is more modern, and is the default, if you have any      #
-# issues please report them and fall back to suds.                             #
-################################################################################
-# soap_impl: zeep
-################################################################################
 # Custom HTTP headers (optional)                                               #
 # Specify one or more custom headers to pass along with all requests to        #
 # the API.                                                                     #

@@ -62,9 +62,9 @@ def main(client):
 
   # Display the resulting campaign criteria.
   for negative_criterion in result['value']:
-    print ('Customer negative criterion with criterion ID "%s", and type "%s" '
-           'was added.' % (negative_criterion['criterion']['id'],
-                           negative_criterion['criterion']['type']))
+    print('Customer negative criterion with criterion ID "%s", and type "%s" '
+          'was added.' % (negative_criterion['criterion']['id'],
+                          negative_criterion['criterion']['type']))
 
 
 if __name__ == '__main__':

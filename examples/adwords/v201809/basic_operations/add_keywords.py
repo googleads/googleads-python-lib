@@ -78,9 +78,9 @@ def main(client, ad_group_id):
 
   # Display results.
   for criterion in ad_group_criteria:
-    print ('Keyword ad group criterion with ad group id "%s", criterion id '
-           '"%s", text "%s", and match type "%s" was added.'
-           % (criterion['adGroupId'], criterion['criterion']['id'],
+    print('Keyword ad group criterion with ad group id "%s", criterion id '
+          '"%s", text "%s", and match type "%s" was added.'
+          % (criterion['adGroupId'], criterion['criterion']['id'],
               criterion['criterion']['text'],
               criterion['criterion']['matchType']))
 

@@ -34,7 +34,7 @@ def main(client, reconciliation_report_id):
                .Where(('reconciliationReportId = :reportId '
                        'AND lineItemId != :lineItemId'))
                .WithBindVariable('lineItemId', 0)
-               .WithBindVariable('reportId', long(reconciliation_report_id)))
+               .WithBindVariable('reportId', int(reconciliation_report_id)))
 
   # Retrieve a small amount of reconciliation report rows at a time, paging
   # through until all reconciliation report rows have been retrieved.
@@ -55,7 +55,7 @@ def main(client, reconciliation_report_id):
     else:
       break
 
-  print '\nNumber of results found: %s' % response['totalResultSetSize']
+  print('\nNumber of results found: %s' % response['totalResultSetSize'])
 
 
 if __name__ == '__main__':

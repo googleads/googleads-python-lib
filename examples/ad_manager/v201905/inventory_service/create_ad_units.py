@@ -61,8 +61,8 @@ def main(client, parent_id):
 
   # Display results.
   for ad_unit in ad_units:
-    print ('Ad unit with ID "%s" and name "%s" was created.'
-           % (ad_unit['id'], ad_unit['name']))
+    print('Ad unit with ID "%s" and name "%s" was created.'
+          % (ad_unit['id'], ad_unit['name']))
 
 if __name__ == '__main__':
   # Initialize client object.

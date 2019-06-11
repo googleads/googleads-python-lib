@@ -39,7 +39,7 @@ def main(client, team_id):
   # Create a filter statement to select a single team by ID.
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :teamId')
-               .WithBindVariable('teamId', long(team_id)))
+               .WithBindVariable('teamId', int(team_id)))
 
   # Get teams by statement.
   response = team_service.getTeamsByStatement(statement.ToStatement())
@@ -56,10 +56,10 @@ def main(client, team_id):
 
     # Display results.
     for team in teams:
-      print ('Team with id "%s" and name "%s" was updated.'
-             % (team['id'], team['name']))
+      print('Team with id "%s" and name "%s" was updated.'
+            % (team['id'], team['name']))
   else:
-    print 'No teams found to update.'
+    print('No teams found to update.')
 
 
 if __name__ == '__main__':

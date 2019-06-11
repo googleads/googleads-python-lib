@@ -27,18 +27,15 @@ PACKAGES = ['googleads']
 DEPENDENCIES = ['google-auth>=1.0.0,<2.0.0',
                 'google-auth-oauthlib>=0.0.1,<1.0.0', 'pytz>=2015.7',
                 'PyYAML>=5.1, <6.0', 'requests>=2.0.0,<3.0.0',
-                'suds-jurko>=0.6,<0.7', 'xmltodict>=0.9.2,<1.0.0',
-                'zeep>=2.5.0']
+                'xmltodict>=0.9.2,<1.0.0', 'zeep>=2.5.0']
 
 # Note: Breaking change introduced in pyfakefs 3.3.
-TEST_DEPENDENCIES = ['mock>=2.0.0,<3.0.0', 'pyfakefs>=3.2,<3.3',
-                     'six>=1.11.0,<2.0.0']
+TEST_DEPENDENCIES = ['mock>=2.0.0,<3.0.0', 'pyfakefs>=3.2,<3.3']
 
 CLASSIFIERS = [
     'Intended Audience :: Developers',
     'License :: OSI Approved :: Apache Software License',
-    'Programming Language :: Python :: 2.7',
-    'Programming Language :: Python :: 3.4'
+    'Programming Language :: Python :: 3.6'
 ]
 
 
@@ -72,10 +69,7 @@ You can find more information about the Google Ads Python Client Libraries
 Supported Python Versions
 =========================
 
-This library is supported for Python 2 and 3, for versions 2.7+ and 3.4+
-respectively. It is recommended that Python 2 users use python 2.7.9+ to take
-advantage of the SSL Certificate Validation feature that is not included in
-earlier versions.
+This library is supported for Python 3.6+.
 
 Installation
 ============
@@ -105,10 +99,6 @@ feedback for how we can improve them? Feel free to let us know on our
 `issue tracker <https://github.com/googleads/googleads-python-lib/issues>`_.
 """
 
-extra_params = {}
-if sys.version_info[0] == 3:
-  extra_params['use_2to3'] = True
-
 setup(name='googleads',
       version=GetVersion(),
       description='Google Ads Python Client Library',
@@ -123,5 +113,4 @@ setup(name='googleads',
       classifiers=CLASSIFIERS,
       install_requires=DEPENDENCIES,
       tests_require=TEST_DEPENDENCIES,
-      test_suite='tests',
-      **extra_params)
+      test_suite='tests')

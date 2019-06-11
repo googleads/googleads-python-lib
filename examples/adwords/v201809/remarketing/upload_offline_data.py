@@ -156,13 +156,13 @@ def main(client, conversion_name, external_upload_id,
       'operand': offline_data_upload
   }]
 
-  # Upload offline data on the server and print the result.
+  # Upload offline data on the server and print(the result.)
   result = offline_data_upload_service.mutate(operations)
   offline_data_upload = result['value'][0]
 
-  print ('Uploaded offline data with external upload ID "%d" and upload status '
-         '"%s".' % (offline_data_upload['externalUploadId'],
-                    offline_data_upload['uploadStatus']))
+  print('Uploaded offline data with external upload ID "%d" and upload status '
+        '"%s".' % (offline_data_upload['externalUploadId'],
+                   offline_data_upload['uploadStatus']))
 
   # Print any partial data errors from the response.
   if result['partialFailureErrors']:
@@ -177,15 +177,15 @@ def main(client, conversion_name, external_upload_id,
         # field path elements.
         offline_data_list_index = _GetFieldPathElementIndex(
             api_error, 'offlineDataList')
-        print ('Offline data list entry "%d" in operation "%d" with external '
-               'upload ID "%d" and type "%s" has triggered failure for the '
-               'following reason: "%s"' % (
-                   offline_data_list_index, operation_index,
-                   failed_offline_data_upload['externalUploadId'],
-                   failed_offline_data_upload['uploadType'],
-                   api_error['errorString']))
+        print('Offline data list entry "%d" in operation "%d" with external '
+              'upload ID "%d" and type "%s" has triggered failure for the '
+              'following reason: "%s"' % (
+                  offline_data_list_index, operation_index,
+                  failed_offline_data_upload['externalUploadId'],
+                  failed_offline_data_upload['uploadType'],
+                  api_error['errorString']))
       else:
-        print ('A failure has occurred for the following reason: "%s".' % (
+        print('A failure has occurred for the following reason: "%s".' % (
             api_error['errorString']))
 
 

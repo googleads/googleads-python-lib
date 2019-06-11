@@ -44,9 +44,9 @@ def main(client):
     if 'results' in response and len(response['results']):
       # Print suggested ad units that will be approved.
       for suggested_ad_unit in response['results']:
-        print ('Suggested ad unit with id "%s", and number of requests "%s"'
-               ' will be approved.' % (suggested_ad_unit['id'],
-                                       suggested_ad_unit['numRequests']))
+        print('Suggested ad unit with id "%s", and number of requests "%s"'
+              ' will be approved.' % (suggested_ad_unit['id'],
+                                      suggested_ad_unit['numRequests']))
 
       # Approve suggested ad units.
       result = suggested_ad_unit_service.performSuggestedAdUnitAction(
@@ -58,10 +58,10 @@ def main(client):
       break
 
   if num_approved_suggested_ad_units > 0:
-    print ('Number of suggested ad units approved: %s' %
-           num_approved_suggested_ad_units)
+    print('Number of suggested ad units approved: %s' %
+          num_approved_suggested_ad_units)
   else:
-    print 'No suggested ad units were approved.'
+    print('No suggested ad units were approved.')
 
 if __name__ == '__main__':
   # Initialize client object.

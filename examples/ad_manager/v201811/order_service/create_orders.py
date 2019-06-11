@@ -50,8 +50,8 @@ def main(client, company_id, salesperson_id, trafficker_id):
 
   # Display results.
   for order in orders:
-    print ('Order with id "%s" and name "%s" was created.'
-           % (order['id'], order['name']))
+    print('Order with id "%s" and name "%s" was created.'
+          % (order['id'], order['name']))
 
 if __name__ == '__main__':
   # Initialize client object.

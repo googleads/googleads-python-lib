@@ -53,16 +53,16 @@ def main(client):
       for modifier in page['entries']:
         value = (modifier['bidModifier'] if 'bidModifier' in modifier
                  else 'unset')
-        print ('Campaign ID %s, AdGroup ID %s, Criterion ID %s has ad group '
-               'level modifier: %s' %
-               (modifier['campaignId'], modifier['adGroupId'],
-                modifier['criterion']['id'], value))
+        print('Campaign ID %s, AdGroup ID %s, Criterion ID %s has ad group '
+              'level modifier: %s' %
+              (modifier['campaignId'], modifier['adGroupId'],
+               modifier['criterion']['id'], value))
 
       # Increment values to request the next page.
       offset += PAGE_SIZE
       selector['paging']['startIndex'] = str(offset)
     else:
-      print 'No ad group bid modifiers returned.'
+      print('No ad group bid modifiers returned.')
     more_results = int(page['totalNumEntries']) > offset
 
 

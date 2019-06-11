@@ -36,7 +36,7 @@ def main(client, product_template_id):
   # Create query.
   statement = (ad_manager.StatementBuilder(version='v201902')
                .Where('id = :id')
-               .WithBindVariable('id', long(product_template_id))
+               .WithBindVariable('id', int(product_template_id))
                .Limit(1))
 
   product_templates_activated = 0
@@ -47,9 +47,9 @@ def main(client, product_template_id):
         statement.ToStatement())
     if 'results' in response and len(response['results']):
       for product_template in response['results']:
-        print ('Product template with id "%s" and name "%s" will be '
-               'activated.' % (product_template['id'],
-                               product_template['name']))
+        print('Product template with id "%s" and name "%s" will be '
+              'activated.' % (product_template['id'],
+                              product_template['name']))
 
       # Perform action.
       result = product_template_service.performProductTemplateAction(
@@ -62,10 +62,10 @@ def main(client, product_template_id):
 
   # Display results.
   if product_templates_activated > 0:
-    print ('Number of product templates '
-           'activated: %s' % product_templates_activated)
+    print('Number of product templates '
+          'activated: %s' % product_templates_activated)
   else:
-    print 'No product templates were activated.'
+    print('No product templates were activated.')
 
 
 if __name__ == '__main__':

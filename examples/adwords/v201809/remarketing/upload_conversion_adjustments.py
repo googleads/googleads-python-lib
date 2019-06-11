@@ -61,9 +61,9 @@ def main(client, conversion_name, gclid, adjustment_type, conversion_time,
 
   new_feed = offline_conversion_response['value'][0]
 
-  print ('Uploaded offline conversion adjustment value of "%s" for Google '
-         'Click ID "%s"' % (new_feed['adjustedValue'],
-                            new_feed['googleClickId']))
+  print('Uploaded offline conversion adjustment value of "%s" for Google '
+        'Click ID "%s"' % (new_feed['adjustedValue'],
+                           new_feed['googleClickId']))
 
 if __name__ == '__main__':
   # Initialize client object.

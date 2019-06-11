@@ -42,7 +42,7 @@ def main(client, user_id):
   # Create filter text to select user team associations by the user ID.
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where('userId = :userId')
-               .WithBindVariable('userId', long(user_id)))
+               .WithBindVariable('userId', int(user_id)))
 
   # Get user team associations by statement.
   response = user_team_association_service.getUserTeamAssociationsByStatement(
@@ -63,13 +63,13 @@ def main(client, user_id):
     # Display results.
     if user_team_associations:
       for user_team_association in user_team_associations:
-        print ('User team association between user with ID "%s" and team with'
-               ' ID "%s" was updated.' % (user_team_association['userId'],
-                                          user_team_association['teamId']))
+        print('User team association between user with ID "%s" and team with'
+              ' ID "%s" was updated.' % (user_team_association['userId'],
+                                         user_team_association['teamId']))
     else:
-      print 'No user team associations were updated.'
+      print('No user team associations were updated.')
   else:
-    print 'No user team associations found to update.'
+    print('No user team associations found to update.')
 
 
 if __name__ == '__main__':

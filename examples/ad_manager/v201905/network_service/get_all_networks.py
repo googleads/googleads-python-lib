@@ -31,7 +31,7 @@ def main(client):
     print('Network with network code "%s" and display name "%s" was found.'
           % (network['networkCode'], network['displayName']))
 
-  print '\nNumber of results found: %s' % len(networks)
+  print('\nNumber of results found: %s' % len(networks))
 
 
 if __name__ == '__main__':

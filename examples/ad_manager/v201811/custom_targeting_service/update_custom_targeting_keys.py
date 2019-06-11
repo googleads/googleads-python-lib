@@ -34,7 +34,7 @@ def main(client, key_id):
 
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :keyId')
-               .WithBindVariable('keyId', long(key_id))
+               .WithBindVariable('keyId', int(key_id))
                .Limit(1))
 
   # Get custom targeting keys by statement.
@@ -54,11 +54,11 @@ def main(client, key_id):
     # Display results.
     if keys:
       for key in keys:
-        print ('Custom targeting key with id "%s", name "%s", display name '
-               '"%s", and type "%s" was updated.'
-               % (key['id'], key['name'], key['displayName'], key['type']))
+        print('Custom targeting key with id "%s", name "%s", display name '
+              '"%s", and type "%s" was updated.'
+              % (key['id'], key['name'], key['displayName'], key['type']))
   else:
-    print 'No custom targeting keys were found to update.'
+    print('No custom targeting keys were found to update.')
 
 
 if __name__ == '__main__':

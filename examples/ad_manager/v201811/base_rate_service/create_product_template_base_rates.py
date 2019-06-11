@@ -53,10 +53,10 @@ def main(client, product_template_id, rate_card_id):
 
   if base_rates:
     for base_rate in base_rates:
-      print ('A product template base rate with ID "%s" and rate \'%.2f\' %s'
-             ' was created.' % (base_rate['id'],
-                                base_rate['rate']['microAmount'],
-                                base_rate['rate']['currencyCode']))
+      print('A product template base rate with ID "%s" and rate \'%.2f\' %s'
+            ' was created.' % (base_rate['id'],
+                               base_rate['rate']['microAmount'],
+                               base_rate['rate']['currencyCode']))
 
 
 if __name__ == '__main__':

@@ -34,7 +34,7 @@ def main(client, order_id):
 
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :orderId')
-               .WithBindVariable('orderId', long(order_id)))
+               .WithBindVariable('orderId', int(order_id)))
 
   # Get orders by statement.
   response = order_service.getOrdersByStatement(statement.ToStatement())
@@ -54,14 +54,14 @@ def main(client, order_id):
     # Display results.
     if orders:
       for order in orders:
-        print ('Order with id "%s", name "%s", advertiser id "%s", and '
-               'notes "%s" was updated.'
-               % (order['id'], order['name'], order['advertiserId'],
+        print('Order with id "%s", name "%s", advertiser id "%s", and '
+              'notes "%s" was updated.'
+              % (order['id'], order['name'], order['advertiserId'],
                   order['notes']))
     else:
-      print 'No orders were updated.'
+      print('No orders were updated.')
   else:
-    print 'No orders found to update.'
+    print('No orders found to update.')
 
 
 if __name__ == '__main__':

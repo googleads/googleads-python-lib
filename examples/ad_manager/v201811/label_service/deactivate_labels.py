@@ -41,8 +41,8 @@ def main(client):
     response = label_service.getLabelsByStatement(statement.ToStatement())
     if 'results' in response and len(response['results']):
       for label in response['results']:
-        print ('Label with id "%s" and name "%s" will be '
-               'deactivated.' % (label['id'], label['name']))
+        print('Label with id "%s" and name "%s" will be '
+              'deactivated.' % (label['id'], label['name']))
       # Perform action.
       result = label_service.performLabelAction(
           {'xsi_type': 'DeactivateLabels'}, statement.ToStatement())
@@ -54,9 +54,9 @@ def main(client):
 
   # Display results.
   if labels_deactivated > 0:
-    print 'Number of labels deactivated: %s' % labels_deactivated
+    print('Number of labels deactivated: %s' % labels_deactivated)
   else:
-    print 'No labels were deactivated.'
+    print('No labels were deactivated.')
 
 
 if __name__ == '__main__':

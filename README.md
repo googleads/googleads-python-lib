@@ -9,6 +9,9 @@ and DoubleClick for Publishers. The library provides easy ways to store your
 authentication and create SOAP web service clients. It also contains example
 code to help you get started integrating with our APIs.
 
+**NOTE**: As of v20.0.0 this library is _not_ compatible with Python versions less than Python 3.6.
+Also `suds` is no longer supported in this library, `zeep` is now the only supported SOAP client.
+
 ## Getting started
 1. Download and install the library
 
@@ -112,12 +115,6 @@ can do the following:
 logging.basicConfig(level=logging.INFO, format=googleads.util.LOGGER_FORMAT)
 logging.getLogger('googleads.soap').setLevel(logging.DEBUG)
 ```
-
-If you are using suds, you can achieve the same like this:
-```python
-logging.basicConfig(level=logging.INFO, format=googleads.util.LOGGER_FORMAT)
-logging.getLogger('suds.transport').setLevel(logging.DEBUG)
-```
 If you wish to log to a file, you'll need to attach a log handler to this source
 which is configured to write the output to a file.
 
@@ -138,60 +135,6 @@ class DangerousZeepLogger(zeep.Plugin):
 adwords_client.zeep_client.plugins.append(DangerousZeepLogger())
 ```
 
-When using suds, this library will apply log filters to the `googleads.common`,
-`suds.client`, and `suds.transport` loggers in order to omit sensitive data. If
-you need to see this data in your logs, you can disable the filters with the
-following:
-```python
-logging.getLogger('googleads.common').removeFilter(
-    googleads.util.GetGoogleAdsCommonFilter())
-logging.getLogger('suds.client').removeFilter(
-    googleads.util.GetSudsClientFilter())
-logging.getLogger('suds.mx.core').removeFilter(
-    googleads.util.GetSudsMXCoreFilter())
-logging.getLogger('suds.mx.literal').removeFilter(
-    googleads.util.GetSudsMXLiteralFilter())
-logging.getLogger('suds.transport').removeFilter(
-    googleads.util.GetSudsTransportFilter())
-```
-
-
-## I'm familiar with suds/zeep. Can I use those features in the library?
-Yes, you can. The services returned by the `client.GetService()` functions all
-have a reference to the underlying client stored in the `zeep_client` or `suds_client`
-attributes. You can retrieve the client and use it in familiar ways:
-```python
-client = AdWordsClient.LoadFromStorage()
-campaign_service = client.GetService('CampaignService')
-suds_client = campaign_service.suds_client
-
-campaign = suds_client.factory.create('Campaign')
-# Set any attributes on the campaign object which you need.
-campaign.name = 'My Campaign'
-campaign.status = 'PAUSED'
-
-operation = suds_client.factory.create('CampaignOperation')
-operation.operator = 'ADD'
-operation.operand = campaign
-
-# The service object returned from the client.GetService() call accepts suds
-# objects and will set the SOAP and HTTP headers for you.
-campaign_service.mutate([operation])
-
-# Alternatively, if you wish to set the headers yourself, you can use the
-# suds_client.service directly.
-soap_header = suds_client.factory.create('SoapHeader')
-soap_header.clientCustomerId = client.client_customer_id
-soap_header.developerToken = client.developer_token
-soap_header.userAgent = client.user_agent
-
-suds_client.set_options(
-    soapheaders=soap_header,
-    headers=client.oauth2_client.CreateHttpHeader())
-
-suds_client.service.mutate([operation])
-```
-
 ## How can I configure or disable caching?
 
 By default, clients are cached because reading and digesting the WSDL
@@ -199,20 +142,12 @@ can be expensive. However, the default caching method requires permission to
 access a local file system that may not be available in certain hosting
 environments such as App Engine.
 
-You can pass an implementation of `suds.cache.Cache` or `zeep.cache.Base` to the `AdWordsClient` or
+You can pass an implementation of `zeep.cache.Base` to the `AdWordsClient` or
 `AdManagerClient` initializer to modify the default caching behavior.
 
 For example, configuring a different location and duration of the cache file with zeep
 ```python
 doc_cache = zeep.cache.SqliteCache(path=cache_path)
-adwords_client = adwords.AdWordsClient(
-  developer_token, oauth2_client, user_agent,
-  client_customer_id=client_customer_id, cache=doc_cache)
-```
-
-And with suds:
-```python
-doc_cache = suds.cache.DocumentCache(location=cache_path, days=2)
 adwords_client = adwords.AdWordsClient(
   developer_token, oauth2_client, user_agent,
   client_customer_id=client_customer_id, cache=doc_cache)
@@ -226,26 +161,16 @@ adwords_client = adwords.AdWordsClient(
   cache=googleads.common.ZeepServiceProxy.NO_CACHE)
 ```
 
-And with suds:
-```python
-adwords_client = adwords.AdWordsClient(
-  developer_token, oauth2_client, user_agent,
-  client_customer_id=client_customer_id, cache=suds.cache.NoCache())
-```
-
-
 ## Requirements
 
 ### Python Versions
 
-This library supports both Python 2 and 3. To use this library, you will need to
-have Python 2.7.9 (or higher) or Python 3.4 (or higher) installed.
+This library only supports Python 3.6+.
 
 ### External Dependencies:
 
     - httplib2             -- https://pypi.python.org/pypi/httplib2/
     - oauth2client         -- https://pypi.python.org/pypi/oauth2client/
-    - suds-jurko           -- https://pypi.python.org/pypi/suds-jurko/
     - pysocks              -- https://pypi.python.org/pypi/PySocks/
     - pytz                 -- https://pypi.python.org/pypi/pytz
     - pyYAML               -- https://pypi.python.org/pypi/pyYAML/

@@ -45,8 +45,8 @@ def main(client, campaign_id):
   customer_tz = timezone(customer['dateTimeZone'])
   time_fmt = '%s %s' % ('%Y%m%d %H%M%S', customer_tz)
 
-  print ('Found customer ID %d with time zone "%s".'
-         % (customer['customerId'], customer['dateTimeZone']))
+  print('Found customer ID %d with time zone "%s".'
+        % (customer['customerId'], customer['dateTimeZone']))
 
   # Create the sitelinks
   sitelink1 = {
@@ -132,9 +132,9 @@ def main(client, campaign_id):
   response = campaign_extension_setting_service.mutate([operation])
 
   if 'value' in response:
-    print ('Extension setting with type "%s" was added to campaignId "%d".' %
-           (response['value'][0]['extensionType'],
-            response['value'][0]['campaignId']))
+    print('Extension setting with type "%s" was added to campaignId "%d".' %
+          (response['value'][0]['extensionType'],
+           response['value'][0]['campaignId']))
   else:
     raise errors.GoogleAdsError('No extension settings were added.')
 

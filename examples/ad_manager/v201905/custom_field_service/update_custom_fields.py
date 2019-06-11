@@ -41,7 +41,7 @@ def main(client, custom_field_id):
   # Create statement to get a custom field.
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where('id = :customFieldId')
-               .WithBindVariable('customFieldId', long(custom_field_id)))
+               .WithBindVariable('customFieldId', int(custom_field_id)))
 
   # Get custom field.
   custom_fields = custom_field_service.getCustomsFieldByStatement(
@@ -56,12 +56,12 @@ def main(client, custom_field_id):
 
     # Display results.
     for custom_field in custom_fields:
-      print (('Custom field with ID "%s", name "%s", and '
-              'description "%s" was updated.')
-             % (custom_field['id'], custom_field['name'],
+      print(('Custom field with ID "%s", name "%s", and '
+             'description "%s" was updated.')
+            % (custom_field['id'], custom_field['name'],
                 custom_field['description']))
   else:
-    print 'No custom fields found to update.'
+    print('No custom fields found to update.')
 
 
 if __name__ == '__main__':

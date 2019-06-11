@@ -40,10 +40,10 @@ def main(client, proposal_id):
     if 'results' in response and len(response['results']):
       # Display results.
       for proposal in response['results']:
-        print ('Programmatic proposal with id "%s", name "%s", and status '
-               '"%s" will be pushed to Marketplace.' % (proposal['id'],
-                                                        proposal['name'],
-                                                        proposal['status']))
+        print('Programmatic proposal with id "%s", name "%s", and status '
+              '"%s" will be pushed to Marketplace.' % (proposal['id'],
+                                                       proposal['name'],
+                                                       proposal['status']))
       # Perform action.
       result = proposal_service.performProposalAction(
           {'xsi_type': 'RequestBuyerAcceptance'}, statement.ToStatement())
@@ -55,10 +55,10 @@ def main(client, proposal_id):
 
   # Display results.
   if proposals_pushed_to_marketplace > 0:
-    print ('\nNumber of programmatic proposals pushed to Marketplace: %s'
-           % proposals_pushed_to_marketplace)
+    print('\nNumber of programmatic proposals pushed to Marketplace: %s'
+          % proposals_pushed_to_marketplace)
   else:
-    print '\nNo programmatic proposals were pushed to Marketplace.'
+    print('\nNo programmatic proposals were pushed to Marketplace.')
 
 
 if __name__ == '__main__':

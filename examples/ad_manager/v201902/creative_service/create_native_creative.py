@@ -29,8 +29,8 @@ directory. For more information, see the "Caching authentication information"
 section of our README.
 """
 
-import urllib2
 import uuid
+from urllib.request import urlopen
 
 # Import appropriate modules from the client library.
 from googleads import ad_manager
@@ -50,9 +50,9 @@ def main(client, advertiser_id):
   # Use the system defined native app install creative template.
   creative_template_id = '10004400'
 
-  image_data = urllib2.urlopen(ICON_URL).read()
+  image_data = urlopen(ICON_URL).read()
 
-  app_icon_data = urllib2.urlopen(APP_ICON_SMALL).read()
+  app_icon_data = urlopen(APP_ICON_SMALL).read()
 
   # Create creative from templates.
   creative = {
@@ -122,9 +122,9 @@ def main(client, advertiser_id):
   creative = creative_service.createCreatives([creative])[0]
 
   # Display results.
-  print ('Native creative with id "%s" and name "%s" was '
-         'created and can be previewed at %s.'
-         % (creative['id'], creative['name'], creative['previewUrl']))
+  print('Native creative with id "%s" and name "%s" was '
+        'created and can be previewed at %s.'
+        % (creative['id'], creative['name'], creative['previewUrl']))
 
 if __name__ == '__main__':
   # Initialize client object.

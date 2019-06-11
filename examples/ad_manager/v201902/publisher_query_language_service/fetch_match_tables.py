@@ -45,8 +45,8 @@ def main(client):
   line_items_file.close()
   ad_units_file.close()
 
-  print 'Saved line items to... %s' % line_items_file.name
-  print 'Saved ad units to... %s' % ad_units_file.name
+  print('Saved line items to... %s' % line_items_file.name)
+  print('Saved ad units to... %s' % ad_units_file.name)
 
 
 if __name__ == '__main__':

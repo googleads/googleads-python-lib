@@ -164,11 +164,11 @@ def main(client, ad_group_id):
   # Display results.
   if 'value' in ads:
     for ad in ads['value']:
-      print ('Added new responsive display ad ad with ID "%d" '
-             'and long headline "%s".'
-             % (ad['ad']['id'], ad['ad']['longHeadline']['asset']['assetText']))
+      print('Added new responsive display ad ad with ID "%d" '
+            'and long headline "%s".'
+            % (ad['ad']['id'], ad['ad']['longHeadline']['asset']['assetText']))
   else:
-    print 'No ads were added.'
+    print('No ads were added.')
 
 
 if __name__ == '__main__':

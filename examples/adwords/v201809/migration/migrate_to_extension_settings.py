@@ -471,7 +471,7 @@ def GetSitelinksFromFeed(client, feed):
           elif field_id == SITE_LINK_FIELDS['LINE3']:
             site_link_from_feed['line3'] = attribute_value['stringValue']
           else:
-            print 'No applicable Site Link Field found for Id: %s' % field_id
+            print('No applicable Site Link Field found for Id: %s' % field_id)
 
     feed_items[feed_item['feedItemId']] = site_link_from_feed
 
@@ -496,10 +496,10 @@ def main(client):
       feed_item_ids = GetFeedItemIdsForCampaign(campaign_feed)
 
       if feed_item_ids == 0:
-        print ('Migration skipped for campaign feed with campaign ID %d '
-               'and feed ID %d because no mapped feed item IDs were found in '
-               'the campaign feed\'s matching function.'
-               % (campaign_feed['campaign_id'], campaign_feed['feed_id']))
+        print('Migration skipped for campaign feed with campaign ID %d '
+              'and feed ID %d because no mapped feed item IDs were found in '
+              'the campaign feed\'s matching function.'
+              % (campaign_feed['campaign_id'], campaign_feed['feed_id']))
         continue
 
       platform_restrictions = GetPlatformRestrictions(campaign_feed)

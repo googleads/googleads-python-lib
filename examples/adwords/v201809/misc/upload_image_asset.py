@@ -54,14 +54,14 @@ def main(client):
 
   # Display results.
   if asset:
-    print ('Image asset with id %s, name "%s", and status %s was created.\n'
-           '\tSize is %sx%s and asset URL is %s.' %
-           (asset['assetId'], asset['assetName'], asset['assetStatus'],
-            asset['fullSizeInfo']['imageWidth'],
-            asset['fullSizeInfo']['imageHeight'],
-            asset['fullSizeInfo']['imageUrl']))
+    print('Image asset with id %s, name "%s", and status %s was created.\n'
+          '\tSize is %sx%s and asset URL is %s.' %
+          (asset['assetId'], asset['assetName'], asset['assetStatus'],
+           asset['fullSizeInfo']['imageWidth'],
+           asset['fullSizeInfo']['imageHeight'],
+           asset['fullSizeInfo']['imageUrl']))
   else:
-    print 'No images were uploaded.'
+    print('No images were uploaded.')
 
 
 if __name__ == '__main__':

@@ -73,8 +73,8 @@ def main(client, ad_group_id):
   }]
   try:
     ad_group_ad_service.mutate(operations)
-  except errors.GoogleAdsServerFault, e:
-    print 'Validation correctly failed with "%s".' % str(e)
+  except errors.GoogleAdsServerFault as e:
+    print('Validation correctly failed with "%s".' % str(e))
 
 
 if __name__ == '__main__':

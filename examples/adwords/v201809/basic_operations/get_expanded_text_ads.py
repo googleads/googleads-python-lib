@@ -71,13 +71,13 @@ def main(client, ad_group_id):
     # Display results.
     if 'entries' in page:
       for ad in page['entries']:
-        print ('ExpandedTextAd with id "%d", AdGroupId "%d", status "%s", '
-               'headlinePart1 "%s", headlinePart2 "%s", description "%s" was '
-               'found.' % (ad['ad']['id'], ad['adGroupId'], ad['status'],
-                           ad['ad']['headlinePart1'], ad['ad']['headlinePart2'],
-                           ad['ad']['description']))
+        print('ExpandedTextAd with id "%d", AdGroupId "%d", status "%s", '
+              'headlinePart1 "%s", headlinePart2 "%s", description "%s" was '
+              'found.' % (ad['ad']['id'], ad['adGroupId'], ad['status'],
+                          ad['ad']['headlinePart1'], ad['ad']['headlinePart2'],
+                          ad['ad']['description']))
     else:
-      print 'No ads were found.'
+      print('No ads were found.')
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])

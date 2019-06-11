@@ -60,12 +60,12 @@ def main(client, ad_group_id, bid_modifier):
   if response and response['value']:
     modifier = response['value'][0]
     value = modifier['bidModifier'] if 'bidModifier' in modifier else 'unset'
-    print ('Campaign ID %s, AdGroup ID %s, Criterion ID %s was updated with '
-           'ad group level modifier: %s' %
-           (modifier['campaignId'], modifier['adGroupId'],
-            modifier['criterion']['id'], value))
+    print('Campaign ID %s, AdGroup ID %s, Criterion ID %s was updated with '
+          'ad group level modifier: %s' %
+          (modifier['campaignId'], modifier['adGroupId'],
+           modifier['criterion']['id'], value))
   else:
-    print 'No modifiers were added.'
+    print('No modifiers were added.')
 
 
 if __name__ == '__main__':

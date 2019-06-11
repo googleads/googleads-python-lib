@@ -54,8 +54,8 @@ def main(client, label_id):
 
   # Display results.
   for creative_wrapper in creative_wrappers:
-    print ('Creative wrapper with ID "%s" applying to label "%s" was '
-           'created.' % (creative_wrapper['id'], creative_wrapper['labelId']))
+    print('Creative wrapper with ID "%s" applying to label "%s" was '
+          'created.' % (creative_wrapper['id'], creative_wrapper['labelId']))
 
 if __name__ == '__main__':
   # Initialize client object.

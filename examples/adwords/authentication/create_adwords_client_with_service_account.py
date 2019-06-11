@@ -44,10 +44,10 @@ def main(key_file, service_account_user, developer_token, user_agent,
                                                version='v201702')
   customers = customer_service.getCustomers()
 
-  print 'You are logged in as a user with access to the following customers:'
+  print('You are logged in as a user with access to the following customers:')
 
   for customer in customers:
-    print '\t%s' % customer['customerId']
+    print('\t%s' % customer['customerId'])
 
 
 if __name__ == '__main__':

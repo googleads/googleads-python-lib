@@ -199,11 +199,11 @@ def main(client):
 
   # Display results.
   for user_list in user_lists['value']:
-    print (('User list added with ID %d, name "%s", status "%s", list type'
-            ' "%s", accountUserListStatus "%s", description "%s".') %
-           (user_list['id'], user_list['name'],
-            user_list['status'], user_list['listType'],
-            user_list['accountUserListStatus'], user_list['description']))
+    print(('User list added with ID %d, name "%s", status "%s", list type'
+           ' "%s", accountUserListStatus "%s", description "%s".') %
+          (user_list['id'], user_list['name'],
+           user_list['status'], user_list['listType'],
+           user_list['accountUserListStatus'], user_list['description']))
 
 
 def AddMonths(start_date, months):

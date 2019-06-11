@@ -59,8 +59,8 @@ def main(client, ad_group_id, criterion_id):
 
   # Display results.
   for ad in ads:
-    print ('Text ad with id "%s" was successfully added to an ad group with '
-           'id "%s".' % (ad['adGroupId'], ad['ad']['id']))
+    print('Text ad with id "%s" was successfully added to an ad group with '
+          'id "%s".' % (ad['adGroupId'], ad['ad']['id']))
 
   # Construct operations for setting ad parameters.
   operations = [
@@ -87,9 +87,9 @@ def main(client, ad_group_id, criterion_id):
 
   # Display results.
   for ad_param in ad_params:
-    print ('Ad parameter with text "%s" was successfully set for criterion '
-           'with id "%s" and ad group id "%s".'
-           % (ad_param['insertionText'], ad_param['criterionId'],
+    print('Ad parameter with text "%s" was successfully set for criterion '
+          'with id "%s" and ad group id "%s".'
+          % (ad_param['insertionText'], ad_param['criterionId'],
               ad_param['adGroupId']))
 
 

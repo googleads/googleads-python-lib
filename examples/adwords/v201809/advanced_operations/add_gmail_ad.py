@@ -80,9 +80,9 @@ def main(client, ad_group_id):
 
     # Display results.
     for ad_group_ad in ad_group_ads['value']:
-      print ('A Gmail ad with id "%d" and short headline "%s" was '
-             'added.' % (ad_group_ad['ad']['id'],
-                         ad_group_ad['ad']['teaser']['headline']))
+      print('A Gmail ad with id "%d" and short headline "%s" was '
+            'added.' % (ad_group_ad['ad']['id'],
+                        ad_group_ad['ad']['teaser']['headline']))
   except Exception as e:
     raise Exception('Failed to create Gmail ad: %s' % e)
 
@@ -91,7 +91,7 @@ def _CreateImage(media_service, opener, url):
   """Creates an image and uploads it to the server.
 
   Args:
-    media_service: a SudsServiceProxy instance for AdWords's MediaService.
+    media_service: a ZeepServiceProxy instance for AdWords's MediaService.
     opener: an OpenerDirector instance.
     url: a str URL used to load image data.
 

@@ -40,7 +40,7 @@ def main(client, company_id):
   # Create statement object to only select a single company by ID.
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where('id = :id')
-               .WithBindVariable('id', long(company_id))
+               .WithBindVariable('id', int(company_id))
                .Limit(1))
 
   # Get companies by statement.
@@ -57,11 +57,11 @@ def main(client, company_id):
 
     # Display results.
     for company in companies:
-      print (('Company with ID "%s", name "%s", and comment "%s"'
-              ' was updated.')
-             % (company['id'], company['name'], company['comment']))
+      print(('Company with ID "%s", name "%s", and comment "%s"'
+             ' was updated.')
+            % (company['id'], company['name'], company['comment']))
   else:
-    print 'No companies found to update.'
+    print('No companies found to update.')
 
 
 if __name__ == '__main__':

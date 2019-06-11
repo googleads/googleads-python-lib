@@ -74,10 +74,10 @@ def main(client, ad_group_id):
     if 'entries' in page:
       for ad_group_ad in page['entries']:
         ad = ad_group_ad['ad']
-        print ('Responsive search ad with status %s and id "%d" was found.\n'
-               'Headlines:\n%s\n'
-               'Descriptions:\n%s'
-               % (ad_group_ad['status'], ad['id'],
+        print('Responsive search ad with status %s and id "%d" was found.\n'
+              'Headlines:\n%s\n'
+              'Descriptions:\n%s'
+              % (ad_group_ad['status'], ad['id'],
                   '\n'.join(['\t%s (pinned to %s)' %
                              (headline['asset']['assetText'],
                               headline['pinnedField'])
@@ -87,7 +87,7 @@ def main(client, ad_group_id):
                               headline['pinnedField'])
                              for headline in ad['descriptions']])))
     else:
-      print 'No ads were found.'
+      print('No ads were found.')
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])

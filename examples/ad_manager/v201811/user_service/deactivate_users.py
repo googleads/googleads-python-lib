@@ -35,18 +35,18 @@ def main(client, user_id):
   # Create query.
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :userId')
-               .WithBindVariable('userId', long(user_id)))
+               .WithBindVariable('userId', int(user_id)))
 
   # Get users by statement.
   response = user_service.getUsersByStatement(statement.ToStatement())
   users = response['results'] if 'results' in response else []
 
   for user in users:
-    print ('User with id "%s", email "%s", and status "%s" will be '
-           'deactivated.'
-           % (user['id'], user['email'],
+    print('User with id "%s", email "%s", and status "%s" will be '
+          'deactivated.'
+          % (user['id'], user['email'],
               {'true': 'ACTIVE', 'false': 'INACTIVE'}[user['isActive']]))
-  print 'Number of users to be deactivated: %s' % len(users)
+  print('Number of users to be deactivated: %s' % len(users))
 
   # Perform action.
   result = user_service.performUserAction({'xsi_type': 'DeactivateUsers'},
@@ -54,9 +54,9 @@ def main(client, user_id):
 
   # Display results.
   if result and int(result['numChanges']) > 0:
-    print 'Number of users deactivated: %s' % result['numChanges']
+    print('Number of users deactivated: %s' % result['numChanges'])
   else:
-    print 'No users were deactivated.'
+    print('No users were deactivated.')
 
 
 if __name__ == '__main__':

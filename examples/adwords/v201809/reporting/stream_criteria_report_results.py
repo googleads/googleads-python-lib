@@ -53,9 +53,9 @@ def main(client):
   finally:
     stream.close()
 
-  print 'Total impressions by ad network type 1:'
+  print('Total impressions by ad network type 1:')
   for ad_network_type, impressions in sorted(ad_network_map.iteritems()):
-    print '%s: %s' % (ad_network_type, impressions)
+    print('%s: %s' % (ad_network_type, impressions))
 
 
 def process_line(line, ad_network_map):

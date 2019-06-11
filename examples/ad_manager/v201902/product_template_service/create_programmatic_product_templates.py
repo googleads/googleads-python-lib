@@ -80,9 +80,9 @@ def main(client):
 
   if product_templates:
     for product_template in product_templates:
-      print ('A programmatic product template with ID "%s" and name "%s" '
-             'was created.' % (product_template['id'],
-                               product_template['name']))
+      print('A programmatic product template with ID "%s" and name "%s" '
+            'was created.' % (product_template['id'],
+                              product_template['name']))
 
 
 if __name__ == '__main__':

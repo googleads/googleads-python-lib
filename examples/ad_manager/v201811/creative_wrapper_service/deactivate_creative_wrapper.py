@@ -39,7 +39,7 @@ def main(client, label_id):
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('status = :status AND labelId = :labelId')
                .WithBindVariable('status', 'ACTIVE')
-               .WithBindVariable('labelId', long(label_id)))
+               .WithBindVariable('labelId', int(label_id)))
 
   creative_wrappers_deactivated = 0
 
@@ -50,11 +50,11 @@ def main(client, label_id):
     if 'results' in response and len(response['results']):
       # Display results.
       for creative_wrapper in response['results']:
-        print ('Creative wrapper with ID "%s" applying to label "%s" with '
-               'status "%s" will be deactivated.' %
-               (creative_wrapper['id'],
-                creative_wrapper['labelId'],
-                creative_wrapper['status']))
+        print('Creative wrapper with ID "%s" applying to label "%s" with '
+              'status "%s" will be deactivated.' %
+              (creative_wrapper['id'],
+               creative_wrapper['labelId'],
+               creative_wrapper['status']))
       # Perform action.
       result = creative_wrapper_service.performCreativeWrapperAction(
           {'xsi_type': 'DeactivateCreativeWrappers'}, statement.ToStatement())
@@ -66,10 +66,10 @@ def main(client, label_id):
 
   # Display results.
   if creative_wrappers_deactivated > 0:
-    print ('Number of creative wrappers deactivated: %s' %
-           creative_wrappers_deactivated)
+    print('Number of creative wrappers deactivated: %s' %
+          creative_wrappers_deactivated)
   else:
-    print 'No creative wrappers were deactivated.'
+    print('No creative wrappers were deactivated.')
 
 
 if __name__ == '__main__':

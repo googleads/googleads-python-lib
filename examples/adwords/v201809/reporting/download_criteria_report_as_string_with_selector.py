@@ -45,9 +45,9 @@ def main(client):
   }
 
   # Print out the report as a string
-  print report_downloader.DownloadReportAsString(
-      report, skip_report_header=False, skip_column_header=False,
-      skip_report_summary=False, include_zero_impressions=True)
+  print(report_downloader.DownloadReportAsString(
+        report, skip_report_header=False, skip_column_header=False,
+        skip_report_summary=False, include_zero_impressions=True))
 
 
 if __name__ == '__main__':

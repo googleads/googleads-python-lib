@@ -40,7 +40,7 @@ def main(client, image_creative_id):
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('creativeType = :type AND id = :id')
                .WithBindVariable('type', 'ImageCreative')
-               .WithBindVariable('id', long(image_creative_id))
+               .WithBindVariable('id', int(image_creative_id))
                .Limit(1))
 
   # Get creatives by statement.
@@ -59,10 +59,10 @@ def main(client, image_creative_id):
 
     # Display results.
     for creative in creatives:
-      print ('Image creative with id "%s" and destination URL "%s" was '
-             'updated.' % (creative['id'], creative['destinationUrl']))
+      print('Image creative with id "%s" and destination URL "%s" was '
+            'updated.' % (creative['id'], creative['destinationUrl']))
   else:
-    print 'No creatives found to update.'
+    print('No creatives found to update.')
 
 
 if __name__ == '__main__':

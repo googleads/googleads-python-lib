@@ -173,9 +173,9 @@ def main(client, budget_id, merchant_id, expanded_image_filepath,
                      collapsed_image_filepath)
 
     product_partition_tree = CreateProductPartition(client, adgroup['id'])
-    print 'Final tree:\n%s' % product_partition_tree
+    print('Final tree:\n%s' % product_partition_tree)
   except errors.GoogleAdsServerFault:
-    print 'Failed to create shopping campaign for showcase ads.'
+    print('Failed to create shopping campaign for showcase ads.')
     raise
 
 
@@ -190,7 +190,7 @@ def CreateShoppingCampaign(client, budget_id, merchant_id):
       shopping campaign.
 
   Returns:
-    The created Shopping Campaign as a sudsobject.
+    The created Shopping Campaign as a zeep.objects.Campaign.
   """
   campaign_service = client.GetService('CampaignService', 'v201809')
 
@@ -228,8 +228,8 @@ def CreateShoppingCampaign(client, budget_id, merchant_id):
   }]
 
   campaign = campaign_service.mutate(campaign_operations)['value'][0]
-  print ('Campaign with name "%s" and ID "%s" was added.'
-         % (campaign['name'], campaign['id']))
+  print('Campaign with name "%s" and ID "%s" was added.'
+        % (campaign['name'], campaign['id']))
 
   return campaign
 
@@ -242,7 +242,7 @@ def CreateAdGroup(client, campaign_id):
     campaign_id: the str ID of a shopping campaign.
 
   Returns:
-    The created AdGroup as a sudsobject.
+    The created AdGroup as a zeep.objects.AdGroup.
   """
   ad_group_service = client.GetService('AdGroupService', 'v201809')
 
@@ -273,8 +273,8 @@ def CreateAdGroup(client, campaign_id):
   # Make the mutate request to add the AdGroup to the Shopping Campaign
   adgroup = ad_group_service.mutate(adgroup_operations)['value'][0]
 
-  print ('AdGroup with name "%s" and ID "%s" was added.'
-         % (adgroup['name'], adgroup['id']))
+  print('AdGroup with name "%s" and ID "%s" was added.'
+        % (adgroup['name'], adgroup['id']))
 
   return adgroup
 
@@ -285,14 +285,14 @@ def CreateShowcaseAd(client, adgroup, expanded_image_filepath,
 
   Args:
     client: an AdWordsClient instance.
-    adgroup: a dict or suds object defining an AdGroup for a Shopping Campaign.
+    adgroup: a dict or zeep object defining an AdGroup for a Shopping Campaign.
     expanded_image_filepath: a str filepath to a .jpg file that will be used as
       the Showcase Ad's expandedImage.
     collapsed_image_filepath: a str filepath to a .jpg file that will be used as
       the Showcase Ad's collapsedImage.
 
   Returns:
-    The created Showcase Ad as a sudsobject.
+    The created Showcase Ad as a zeep.objects.Ad.
   """
   ad_group_ad_service = client.GetService('AdGroupAdService', 'v201809')
 
@@ -325,7 +325,7 @@ def CreateShowcaseAd(client, adgroup, expanded_image_filepath,
   # Make the mutate request to add the ProductAd to the AdGroup
   showcase_ad = ad_group_ad_service.mutate([ad_operation])['value'][0]
 
-  print 'ShowcaseAd with ID "%s" was added.' % showcase_ad['ad']['id']
+  print('ShowcaseAd with ID "%s" was added.' % showcase_ad['ad']['id'])
 
   return showcase_ad
 
@@ -338,7 +338,7 @@ def UploadImage(client, filepath):
     filepath: a str filepath to the .jpg file to be uploaded.
 
   Returns:
-    The created Image as a sudsobject.
+    The created Image as a zeep.objects.Image.
   """
   media_service = client.GetService('MediaService', 'v201809')
 
@@ -364,7 +364,7 @@ def CreateProductPartition(client, adgroup_id):
     adgroup_id: a str AdGroup ID.
 
   Returns:
-    The ProductPartition tree as a sudsobject.
+    The ProductPartition tree as a zeep.objects.ProductPartition.
   """
   ad_group_criterion_service = client.GetService('AdGroupCriterionService',
                                                  'v201809')

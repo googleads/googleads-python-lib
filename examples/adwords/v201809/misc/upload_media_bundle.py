@@ -18,7 +18,8 @@
 
 """
 
-import urllib2
+from urllib.request import urlopen
+
 from googleads import adwords
 
 
@@ -47,7 +48,7 @@ def main(client):
 
 def GetHTML5ZipFromUrl(url):
   """Retrieve zip file from the given URL."""
-  response = urllib2.urlopen(url)
+  response = urlopen(url)
   # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
   return response.read().decode('utf-8')
 

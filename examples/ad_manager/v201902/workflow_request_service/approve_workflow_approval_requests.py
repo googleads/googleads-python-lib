@@ -49,8 +49,8 @@ def main(client, proposal_id):
     if 'results' in response and len(response['results']):
       # Display results.
       for workflow_approval_request in response['results']:
-        print ('Workflow approval request with id "%s" will be'
-               ' approved.' % workflow_approval_request['id'])
+        print('Workflow approval request with id "%s" will be'
+              ' approved.' % workflow_approval_request['id'])
       # Perform action.
       result = workflow_request_service.performWorkflowRequestAction(
           {'xsi_type': 'ApproveWorkflowApprovalRequests',
@@ -64,10 +64,10 @@ def main(client, proposal_id):
 
   # Display results.
   if workflow_approval_requests_approved > 0:
-    print ('\nNumber of workflow approval requests approved: %s' %
-           workflow_approval_requests_approved)
+    print('\nNumber of workflow approval requests approved: %s' %
+          workflow_approval_requests_approved)
   else:
-    print '\nNo workflow approval requests were approved.'
+    print('\nNo workflow approval requests were approved.')
 
 if __name__ == '__main__':
   # Initialize client object.

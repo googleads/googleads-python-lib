@@ -57,14 +57,14 @@ def main(client, ad_id):
   result = ad_service.mutate(operations)
   updated_ad = result['value'][0]
 
-  print 'Expanded text ad with ID %s was updated.' % updated_ad['id']
-  print ('\tHeadline part 1: %s\nHeadline part 2: %s\nDescription: %s\n'
-         'Final URL: %s\nFinal mobile URL: %s' %
-         (updated_ad['headlinePart1'],
-          updated_ad['headlinePart2'],
-          updated_ad['description'],
-          updated_ad['finalUrls'][0],
-          updated_ad['finalMobileUrls'][0]))
+  print('Expanded text ad with ID %s was updated.' % updated_ad['id'])
+  print('\tHeadline part 1: %s\nHeadline part 2: %s\nDescription: %s\n'
+        'Final URL: %s\nFinal mobile URL: %s' %
+        (updated_ad['headlinePart1'],
+         updated_ad['headlinePart2'],
+         updated_ad['description'],
+         updated_ad['finalUrls'][0],
+         updated_ad['finalMobileUrls'][0]))
 
 
 if __name__ == '__main__':

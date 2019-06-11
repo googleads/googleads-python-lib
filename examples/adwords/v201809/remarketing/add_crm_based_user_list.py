@@ -82,8 +82,8 @@ def main(client):
 
   if 'userLists' in response:
     for user_list in response['userLists']:
-      print ('User list with name "%s" and ID "%d" was added.'
-             % (user_list['name'], user_list['id']))
+      print('User list with name "%s" and ID "%d" was added.'
+            % (user_list['name'], user_list['id']))
 
 
 def NormalizeAndSHA256(s):

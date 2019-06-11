@@ -63,25 +63,25 @@ def main(client, campaign_id):
     if 'entries' in page:
       for bid_modifier_landscape in page['entries']:
         num_landscape_points = 0
-        print ('Found campaign-level criterion bid modifier landscapes for '
-               'criterion with ID "%d", start date "%s", end date "%s", and '
-               'landscape points:') % (bid_modifier_landscape['criterionId'],
-                                       bid_modifier_landscape['startDate'],
-                                       bid_modifier_landscape['endDate'])
+        print('Found campaign-level criterion bid modifier landscapes for '
+              'criterion with ID "%d", start date "%s", end date "%s", and '
+              'landscape points:') % (bid_modifier_landscape['criterionId'],
+                                      bid_modifier_landscape['startDate'],
+                                      bid_modifier_landscape['endDate'])
         for landscape_point in bid_modifier_landscape['landscapePoints']:
           num_landscape_points += 1
-          print ('\tbid modifier: %f, clicks: %d, cost: %d, impressions: %d, '
-                 'total clicks: %d, total cost: %d, total impressions: %d, '
-                 'and required budget: %f') % (
-                     landscape_point['bidModifier'], landscape_point['clicks'],
-                     landscape_point['cost']['microAmount'],
-                     landscape_point['impressions'],
-                     landscape_point['totalLocalClicks'],
-                     landscape_point['totalLocalCost']['microAmount'],
-                     landscape_point['totalLocalImpressions'],
-                     landscape_point['requiredBudget']['microAmount'])
+          print('\tbid modifier: %f, clicks: %d, cost: %d, impressions: %d, '
+                'total clicks: %d, total cost: %d, total impressions: %d, '
+                'and required budget: %f') % (
+              landscape_point['bidModifier'], landscape_point['clicks'],
+              landscape_point['cost']['microAmount'],
+              landscape_point['impressions'],
+              landscape_point['totalLocalClicks'],
+              landscape_point['totalLocalCost']['microAmount'],
+              landscape_point['totalLocalImpressions'],
+              landscape_point['requiredBudget']['microAmount'])
     else:
-      print 'No bid modifier landscapes found.'
+      print('No bid modifier landscapes found.')
 
     # Need to increment by the total # of landscape points within the page,
     # NOT the number of entries (bid landscapes) in the page.

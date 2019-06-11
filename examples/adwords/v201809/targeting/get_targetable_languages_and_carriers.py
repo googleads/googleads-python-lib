@@ -36,18 +36,18 @@ def main(client):
 
   # Display results.
   for language in languages:
-    print ('Language with name "%s" and ID "%s" was found.'
-           % (language['name'], language['id']))
+    print('Language with name "%s" and ID "%s" was found.'
+          % (language['name'], language['id']))
 
   # Get all carriers.
   carriers = constant_data_service.getCarrierCriterion()
 
   # Display results.
   for carrier in carriers:
-    print ('Carrier with name "%s", ID "%s", and country code "%s" was '
-           'found.' % (
-               carrier['name'], carrier['id'],
-               getattr(carrier, 'countryCode', 'N/A')))
+    print('Carrier with name "%s", ID "%s", and country code "%s" was '
+          'found.' % (
+              carrier['name'], carrier['id'],
+              getattr(carrier, 'countryCode', 'N/A')))
 
 
 if __name__ == '__main__':

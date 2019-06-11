@@ -79,8 +79,8 @@ def main(client, budget_id, merchant_id, create_default_partition):
   result = campaign_service.mutate(campaign_operations)
 
   for campaign in result['value']:
-    print ('Campaign with name "%s" and ID "%s" was added.'
-           % (campaign['name'], campaign['id']))
+    print('Campaign with name "%s" and ID "%s" was added.'
+          % (campaign['name'], campaign['id']))
 
   # Create the AdGroup
   ad_group = {
@@ -97,8 +97,8 @@ def main(client, budget_id, merchant_id, create_default_partition):
   ad_group = ad_group_service.mutate(adgroup_operations)['value'][0]
   ad_group_id = ad_group['id']
 
-  print ('AdGroup with name "%s" and ID "%s" was added.'
-         % (ad_group['name'], ad_group_id))
+  print('AdGroup with name "%s" and ID "%s" was added.'
+        % (ad_group['name'], ad_group_id))
 
   # Create an AdGroup Ad
   adgroup_ad = {
@@ -119,7 +119,7 @@ def main(client, budget_id, merchant_id, create_default_partition):
   ad_result = ad_group_ad_service.mutate([ad_operation])
 
   for adgroup_ad in ad_result['value']:
-    print 'ProductAd with ID "%s" was added.' % adgroup_ad['ad']['id']
+    print('ProductAd with ID "%s" was added.' % adgroup_ad['ad']['id'])
 
   if create_default_partition:
     CreateDefaultPartition(client, ad_group_id)
@@ -160,8 +160,8 @@ def CreateDefaultPartition(client, ad_group_id):
 
   ad_group_criterion = ad_group_criterion_service.mutate(operations)['value'][0]
 
-  print ('Ad group criterion with ID "%d" in ad group with ID "%d" was added.'
-         % (ad_group_criterion['criterion']['id'],
+  print('Ad group criterion with ID "%d" in ad group with ID "%d" was added.'
+        % (ad_group_criterion['criterion']['id'],
             ad_group_criterion['adGroupId']))
 
 

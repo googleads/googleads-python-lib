@@ -105,8 +105,8 @@ def main(client, campaign_id):
 
   # Print the results.
   if 'value' in response:
-    print ('Extension setting with type "%s" was added to your account.'
-           % response['value'][0]['extensionType'])
+    print('Extension setting with type "%s" was added to your account.'
+          % response['value'][0]['extensionType'])
   else:
     raise errors.GoogleAdsError('No extension settings were added.')
 

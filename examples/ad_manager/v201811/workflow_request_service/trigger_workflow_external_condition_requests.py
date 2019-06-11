@@ -49,11 +49,11 @@ def main(client, proposal_id):
     if 'results' in response and len(response['results']):
       # Display results.
       for workflow_request in response['results']:
-        print ('Workflow external condition request with id "%s" for %s '
-               'with id "%s" will be triggered.' %
-               (workflow_request['id'],
-                workflow_request['entityType'],
-                workflow_request['entityId']))
+        print('Workflow external condition request with id "%s" for %s '
+              'with id "%s" will be triggered.' %
+              (workflow_request['id'],
+               workflow_request['entityType'],
+               workflow_request['entityId']))
       # Perform action.
       result = workflow_request_service.performWorkflowRequestAction(
           {'xsi_type': 'TriggerWorkflowExternalConditionRequests'},
@@ -67,10 +67,10 @@ def main(client, proposal_id):
 
   # Display results.
   if workflow_external_condition_requests_triggered > 0:
-    print ('\nNumber of workflow external condition requests triggered: %s' %
-           workflow_external_condition_requests_triggered)
+    print('\nNumber of workflow external condition requests triggered: %s' %
+          workflow_external_condition_requests_triggered)
   else:
-    print '\nNo workflow external condition requests were triggered.'
+    print('\nNo workflow external condition requests were triggered.')
 
 if __name__ == '__main__':
   # Initialize client object.

@@ -55,11 +55,11 @@ def main(client, team_id, user_ids):
   # Display results.
   if user_team_associations:
     for user_team_association in user_team_associations:
-      print ('A user team association between user with ID "%s" and team with'
-             ' ID "%s"was created.' % (user_team_association['userId'],
-                                       user_team_association['teamId']))
+      print('A user team association between user with ID "%s" and team with'
+            ' ID "%s"was created.' % (user_team_association['userId'],
+                                      user_team_association['teamId']))
   else:
-    print 'No user team associations created.'
+    print('No user team associations created.')
 
 if __name__ == '__main__':
   # Initialize client object.

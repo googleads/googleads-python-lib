@@ -16,19 +16,17 @@
 
 
 import datetime
-import sys
 import unittest
 
 import mock
 import pytz
-import six
+import io
 import googleads.ad_manager
 import googleads.common
 import googleads.errors
 from . import testing
 
 
-URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
 CURRENT_VERSION = sorted(googleads.ad_manager._SERVICE_MAP.keys())[-1]
 
 
@@ -590,7 +588,7 @@ class DataDownloaderTest(unittest.TestCase):
     }]
 
   def testDownloadPqlResultSetToCsv(self):
-    csv_file = six.StringIO()
+    csv_file = io.StringIO()
 
     self.pql_service.select.return_value = {'rows': self.generic_rval,
                                             'columnTypes': self.generic_header}
@@ -741,20 +739,19 @@ class DataDownloaderTest(unittest.TestCase):
     report_job_id = 't68t3278y429'
     report_download_url = 'http://google.com/something'
     report_data = 'THIS IS YOUR REPORT!'
-    report_contents = six.StringIO()
+    report_contents = io.StringIO()
     report_contents.write(report_data)
     report_contents.seek(0)
     fake_response = mock.Mock()
     fake_response.read = report_contents.read
     fake_response.msg = 'fake message'
     fake_response.code = '200'
-    outfile = six.StringIO()
+    outfile = io.StringIO()
 
     download_func = self.report_service.getReportDownloadUrlWithOptions
     download_func.return_value = report_download_url
 
-    with mock.patch('urllib2.OpenerDirector.open' if sys.version_info[0] == 2
-                    else 'urllib.request.OpenerDirector.open') as mock_open:
+    with mock.patch('urllib.request.OpenerDirector.open') as mock_open:
       mock_open.return_value = fake_response
 
       self.report_downloader.DownloadReportToFile(
@@ -794,7 +791,7 @@ class DataDownloaderTest(unittest.TestCase):
       addheaders = [('a', 'b')]
     opener = MyOpener()
 
-    with mock.patch('%s.build_opener' % URL_REQUEST_PATH) as mock_build_opener:
+    with mock.patch('googleads.ad_manager.build_opener') as mock_build_opener:
       mock_build_opener.return_value = opener
 
       self.ad_manager.GetDataDownloader()

@@ -155,9 +155,9 @@ def main(client, order_id, targeted_placement_ids):
 
   # Display results.
   for line_item in line_items:
-    print ('Line item with id "%s", belonging to order id "%s", and named '
-           '"%s" was created.' % (line_item['id'], line_item['orderId'],
-                                  line_item['name']))
+    print('Line item with id "%s", belonging to order id "%s", and named '
+          '"%s" was created.' % (line_item['id'], line_item['orderId'],
+                                 line_item['name']))
 
 if __name__ == '__main__':
   # Initialize client object.

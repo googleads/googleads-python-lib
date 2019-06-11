@@ -57,8 +57,8 @@ def main(client):
 
   # Display results.
   for custom_field in custom_fields:
-    print ('Custom field with ID "%s" and name "%s" was created.'
-           % (custom_field['id'], custom_field['name']))
+    print('Custom field with ID "%s" and name "%s" was created.'
+          % (custom_field['id'], custom_field['name']))
 
 if __name__ == '__main__':
   # Initialize client object.

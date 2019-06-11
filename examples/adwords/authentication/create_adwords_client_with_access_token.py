@@ -66,7 +66,7 @@ def main(access_token, token_expiry, client_customer_id, developer_token,
       client_customer_id=client_customer_id)
 
   customer = adwords_client.GetService('CustomerService').getCustomers()[0]
-  print 'You are logged in as customer: %s' % customer['customerId']
+  print('You are logged in as customer: %s' % customer['customerId'])
 
 
 if __name__ == '__main__':

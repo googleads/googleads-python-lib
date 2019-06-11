@@ -117,12 +117,12 @@ def main(client, campaign_id, ad_group_id=None):
     final_url_feed_attribute_id = feed['attributes'][1]['id']
     line_2_feed_attribute_id = feed['attributes'][2]['id']
     line_3_feed_attribute_id = feed['attributes'][3]['id']
-    print ('Feed with name "%s" and ID "%d" was added with' %
-           (feed['name'], feed['id']))
-    print ('\tText attribute ID "%d" and Final URL attribute ID "%d".' %
-           (link_text_feed_attribute_id, final_url_feed_attribute_id))
-    print ('\tLine 2 attribute ID "%d" and Line 3 attribute ID "%d".' %
-           (line_2_feed_attribute_id, line_3_feed_attribute_id))
+    print('Feed with name "%s" and ID "%d" was added with' %
+          (feed['name'], feed['id']))
+    print('\tText attribute ID "%d" and Final URL attribute ID "%d".' %
+          (link_text_feed_attribute_id, final_url_feed_attribute_id))
+    print('\tLine 2 attribute ID "%d" and Line 3 attribute ID "%d".' %
+          (line_2_feed_attribute_id, line_3_feed_attribute_id))
     sitelinks_data['feedId'] = feed['id']
     sitelinks_data['linkTextFeedId'] = link_text_feed_attribute_id
     sitelinks_data['finalUrlFeedId'] = final_url_feed_attribute_id
@@ -196,7 +196,7 @@ def main(client, campaign_id, ad_group_id=None):
   if 'value' in response:
     sitelinks_data['feedItemIds'] = []
     for feed_item in response['value']:
-      print 'Feed item with ID %d was added.' % feed_item['feedItemId']
+      print('Feed item with ID %d was added.' % feed_item['feedItemId'])
       sitelinks_data['feedItemIds'].append(feed_item['feedItemId'])
   else:
     raise errors.GoogleAdsError('No feed items were added.')
@@ -236,10 +236,10 @@ def main(client, campaign_id, ad_group_id=None):
   ])
   if 'value' in response:
     feed_mapping = response['value'][0]
-    print ('Feed mapping with ID %d and placeholder type %s was saved for feed'
-           ' with ID %d.' %
-           (feed_mapping['feedMappingId'], feed_mapping['placeholderType'],
-            feed_mapping['feedId']))
+    print('Feed mapping with ID %d and placeholder type %s was saved for feed'
+          ' with ID %d.' %
+          (feed_mapping['feedMappingId'], feed_mapping['placeholderType'],
+           feed_mapping['feedId']))
   else:
     raise errors.GoogleAdsError('No feed mappings were added.')
 
@@ -265,8 +265,8 @@ def main(client, campaign_id, ad_group_id=None):
   ])
   if 'value' in response:
     campaign_feed = response['value'][0]
-    print ('Campaign with ID %d was associated with feed with ID %d.' %
-           (campaign_feed['campaignId'], campaign_feed['feedId']))
+    print('Campaign with ID %d was associated with feed with ID %d.' %
+          (campaign_feed['campaignId'], campaign_feed['feedId']))
   else:
     raise errors.GoogleAdsError('No campaign feeds were added.')
 
@@ -288,9 +288,9 @@ def main(client, campaign_id, ad_group_id=None):
     response = feed_item_target_service.mutate(operations)
 
     if 'value' in response:
-      print ('Feed item target for feed ID "%d" and feed item ID "%d" was '
-             'created to restrict serving to ad group ID "%d".'
-             % (feed_item_target['feedId'], feed_item_target['feedItemId'],
+      print('Feed item target for feed ID "%d" and feed item ID "%d" was '
+            'created to restrict serving to ad group ID "%d".'
+            % (feed_item_target['feedId'], feed_item_target['feedItemId'],
                 feed_item_target['adGroupId']))
 
 if __name__ == '__main__':

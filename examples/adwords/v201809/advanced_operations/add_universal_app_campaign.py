@@ -121,13 +121,13 @@ def main(client):
   # Display results.
   if campaigns:
     for campaign in campaigns:
-      print ('Universal App Campaign with name "%s" and id "%s" was added.'
-             % (campaign['name'], campaign['id']))
+      print('Universal App Campaign with name "%s" and id "%s" was added.'
+            % (campaign['name'], campaign['id']))
       # Optional: Set the campaign's location and language targeting. No other
       # targeting criteria can be used for Universal App campaigns.
       SetCampaignTargetingCriteria(client, campaign)
   else:
-    print 'No Universal App campaigns were added.'
+    print('No Universal App campaigns were added.')
 
 
 def CreateBudget(client):
@@ -167,7 +167,7 @@ def SetCampaignTargetingCriteria(client, campaign):
 
   Args:
     client: An AdWordsClient instance.
-    campaign: A suds object representing the campaign we wish to attach
+    campaign: A zeep.objects.Campaign representing the campaign we wish to attach
       targeting criteria.
   """
   campaign_criterion_service = client.GetService('CampaignCriterionService')
@@ -206,8 +206,8 @@ def SetCampaignTargetingCriteria(client, campaign):
   if response and 'value' in response:
     # Display the added campaign targets.
     for criterion in response['value']:
-      print ('Campaign criteria of type "%s" and id "%s" was added.'
-             % (criterion['criterion']['type'],
+      print('Campaign criteria of type "%s" and id "%s" was added.'
+            % (criterion['criterion']['type'],
                 criterion['criterion']['id']))
 
 

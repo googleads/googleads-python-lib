@@ -35,12 +35,12 @@ def main(client):
       for content in response['results']:
         # Print out some information for each content.
         print('Content with ID "%d" and name "%s" was found.\n' %
-              (content['id'], content['name']))
+              (content['id'], content['name'].encode('utf-8')))
       statement.offset += statement.limit
     else:
       break
 
-  print '\nNumber of results found: %s' % response['totalResultSetSize']
+  print('\nNumber of results found: %s' % response['totalResultSetSize'])
 
 
 if __name__ == '__main__':

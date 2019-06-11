@@ -82,7 +82,7 @@ def main(client):
 
 def DisplayCategories(categories, prefix=''):
   for category in categories:
-    print '%s%s [%s]' % (prefix, category['name'], category['id'])
+    print('%s%s [%s]' % (prefix, category['name'], category['id']))
 
     if 'children' in category:
       DisplayCategories(category['children'], '%s%s > ' % (prefix,

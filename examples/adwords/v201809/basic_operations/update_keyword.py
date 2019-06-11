@@ -65,14 +65,14 @@ def main(client, ad_group_id, criterion_id):
   if 'value' in ad_group_criteria:
     for criterion in ad_group_criteria['value']:
       if criterion['criterion']['Criterion.Type'] == 'Keyword':
-        print ('Ad group criterion with ad group id "%s" and criterion id '
-               '"%s" currently has bids:'
-               % (criterion['adGroupId'], criterion['criterion']['id']))
+        print('Ad group criterion with ad group id "%s" and criterion id '
+              '"%s" currently has bids:'
+              % (criterion['adGroupId'], criterion['criterion']['id']))
         for bid in criterion['biddingStrategyConfiguration']['bids']:
-          print '\tType: "%s", value: %s' % (bid['Bids.Type'],
-                                             bid['bid']['microAmount'])
+          print('\tType: "%s", value: %s' % (bid['Bids.Type'],)
+                bid['bid']['microAmount'])
   else:
-    print 'No ad group criteria were updated.'
+    print('No ad group criteria were updated.')
 
 
 if __name__ == '__main__':

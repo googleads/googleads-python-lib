@@ -93,10 +93,10 @@ def main(client, ad_group_id):
   # Display results.
   for criterion in result['value']:
     if criterion['AdGroupCriterion.Type'] == 'BiddableAdGroupCriterion':
-      print ('Added keyword ad group criterion with ad group id "%s", '
-             'criterion id "%s", text "%s", and match type "%s" was '
-             'added.'
-             % (criterion['adGroupId'], criterion['criterion']['id'],
+      print('Added keyword ad group criterion with ad group id "%s", '
+            'criterion id "%s", text "%s", and match type "%s" was '
+            'added.'
+            % (criterion['adGroupId'], criterion['criterion']['id'],
                 criterion['criterion']['text'],
                 criterion['criterion']['matchType']))
 
@@ -120,8 +120,8 @@ def main(client, ad_group_id):
                adgroup_criterion['criterion']['text'],
                error['errorString']))
     else:
-      print ('A failure has occurred for the following reasons: %s\n'
-             % error['errorString'])
+      print('A failure has occurred for the following reasons: %s\n'
+            % error['errorString'])
 
 
 if __name__ == '__main__':

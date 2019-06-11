@@ -51,11 +51,11 @@ def main(client):
                   .During('LAST_7_DAYS')
                   .Build())
 
-  print report_downloader.DownloadReportAsStringWithAwql(
-      report_query, 'CSV', skip_report_header=False, skip_column_header=False,
-      skip_report_summary=False, include_zero_impressions=True)
+  print(report_downloader.DownloadReportAsStringWithAwql(
+        report_query, 'CSV', skip_report_header=False, skip_column_header=False,
+        skip_report_summary=False, include_zero_impressions=True))
 
-  # Retrieve the report stream and print it out
+  # Retrieve the report stream and print(it out)
   report_data = StringIO.StringIO()
   stream_data = report_downloader.DownloadReportAsStreamWithAwql(report_query,
                                                                  'CSV')
@@ -66,7 +66,7 @@ def main(client):
       if not chunk: break
       report_data.write(chunk.decode() if sys.version_info[0] == 3
                         and getattr(report_data, 'mode', 'w') == 'w' else chunk)
-    print report_data.getvalue()
+    print(report_data.getvalue())
   finally:
     report_data.close()
     stream_data.close()

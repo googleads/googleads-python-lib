@@ -63,11 +63,11 @@ def main(client):
   # Display results.
   if keys:
     for key in keys:
-      print ('A custom targeting key with id "%s", name "%s", and display '
-             'name "%s" was created.' % (key['id'], key['name'],
-                                         key['displayName']))
+      print('A custom targeting key with id "%s", name "%s", and display '
+            'name "%s" was created.' % (key['id'], key['name'],
+                                        key['displayName']))
   else:
-    print 'No keys were created.'
+    print('No keys were created.')
 
   # Create custom targeting value objects.
   values = [
@@ -119,12 +119,12 @@ def main(client):
   # Display results.
   if values:
     for value in values:
-      print ('A custom targeting value with id "%s", belonging to key with id'
-             ' "%s", name "%s", and display name "%s" was created.'
-             % (value['id'], value['customTargetingKeyId'], value['name'],
+      print('A custom targeting value with id "%s", belonging to key with id'
+            ' "%s", name "%s", and display name "%s" was created.'
+            % (value['id'], value['customTargetingKeyId'], value['name'],
                 value['displayName']))
   else:
-    print 'No values were created.'
+    print('No values were created.')
 
 if __name__ == '__main__':
   # Initialize client object.

@@ -62,8 +62,8 @@ def main(client, advertiser_company_id, agency_company_id):
 
   # Display results.
   for contact in contacts:
-    print ('Contact with ID "%s" name "%s" was created.'
-           % (contact['id'], contact['name']))
+    print('Contact with ID "%s" name "%s" was created.'
+          % (contact['id'], contact['name']))
 
 if __name__ == '__main__':
   # Initialize client object.

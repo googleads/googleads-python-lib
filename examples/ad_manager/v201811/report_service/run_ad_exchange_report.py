@@ -42,8 +42,8 @@ def main(client):
   try:
     # Run the report and wait for it to finish.
     report_job_id = report_downloader.WaitForReport(report_job)
-  except errors.AdManagerReportError, e:
-    print 'Failed to generate report. Error was: %s' % e
+  except errors.AdManagerReportError as e:
+    print('Failed to generate report. Error was: %s' % e)
 
   # Change to your preferred export format.
   export_format = 'CSV_DUMP'
@@ -57,8 +57,8 @@ def main(client):
   report_file.close()
 
   # Display results.
-  print 'Report job with id "%s" downloaded to:\n%s' % (
-      report_job_id, report_file.name)
+  print('Report job with id "%s" downloaded to:\n%s' % (
+      report_job_id, report_file.name))
 
 if __name__ == '__main__':
   # Initialize client object.

@@ -19,7 +19,6 @@ import datetime
 import unittest
 
 import mock
-import six
 import googleads.common
 import googleads.errors
 import googleads.oauth2
@@ -28,9 +27,6 @@ from pyfakefs import fake_tempfile
 from google.auth.exceptions import RefreshError
 from google.auth.transport import Request
 from google.oauth2.credentials import Credentials
-
-
-_BUILTIN_PATH = '__builtin__' if six.PY2 else 'builtins'
 
 
 class GetAPIScopeTest(unittest.TestCase):
@@ -250,7 +246,7 @@ class GoogleServiceAccountTest(unittest.TestCase):
 
     self.mock_credentials_instance.apply = mock.Mock(side_effect=apply)
     self.mock_credentials_instance.refresh = mock.Mock(side_effect=refresh)
-    with mock.patch('%s.open' % _BUILTIN_PATH, self.fake_open):
+    with mock.patch('builtins.open', self.fake_open):
       with mock.patch('google.oauth2.service_account.Credentials',
                       self.mock_credentials):
         self.sa_client = googleads.oauth2.GoogleServiceAccountClient(

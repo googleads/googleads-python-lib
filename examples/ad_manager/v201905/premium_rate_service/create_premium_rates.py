@@ -73,9 +73,9 @@ def main(client, rate_card_id):
 
   # Display results.
   for premium_rate in premium_rates:
-    print ('A premium rate for "%s" was added to the rate card with ID'
-           ' of "%s".\n'
-           % (ad_manager.AdManagerClassType(premium_rate['premiumFeature']),
+    print('A premium rate for "%s" was added to the rate card with ID'
+          ' of "%s".\n'
+          % (ad_manager.AdManagerClassType(premium_rate['premiumFeature']),
               premium_rate['id']))
 
 if __name__ == '__main__':

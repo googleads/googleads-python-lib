@@ -63,9 +63,9 @@ def main(client, campaign_id, bid_modifier):
 
   # Display the resulting campaign criteria.
   for campaign_criterion in result['value']:
-    print ('Campaign criterion with campaign id "%s" and criterion id "%s" '
-           'was updated with bid modifier "%s".'
-           % (campaign_criterion['campaignId'],
+    print('Campaign criterion with campaign id "%s" and criterion id "%s" '
+          'was updated with bid modifier "%s".'
+          % (campaign_criterion['campaignId'],
               campaign_criterion['criterion']['id'],
               campaign_criterion['bidModifier']))
 

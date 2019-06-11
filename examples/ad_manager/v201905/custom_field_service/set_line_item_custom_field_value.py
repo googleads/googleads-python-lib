@@ -127,10 +127,10 @@ def main(client, custom_field_id, drop_down_custom_field_id,
               '{ID: "%s", custom field option ID: "%s"}'
               % (value['customFieldId'], value['customFieldOptionId']))
         custom_field_value_strings.append(custom_field_value_string)
-      print ('Line item with ID "%s" set with custom field values %s.'
-             % (line_item['id'], ','.join(custom_field_value_strings)))
+      print('Line item with ID "%s" set with custom field values %s.'
+            % (line_item['id'], ','.join(custom_field_value_strings)))
   else:
-    print 'Line item or custom field not found.'
+    print('Line item or custom field not found.')
 
 if __name__ == '__main__':
   # Initialize client object.

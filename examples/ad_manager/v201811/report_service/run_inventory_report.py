@@ -36,7 +36,7 @@ def main(client):
   # Set filter statement and bind value for reportQuery.
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('PARENT_AD_UNIT_ID = :parentAdUnitId')
-               .WithBindVariable('parentAdUnitId', long(root_ad_unit_id))
+               .WithBindVariable('parentAdUnitId', int(root_ad_unit_id))
                .Limit(None)  # No limit or offset for reports
                .Offset(None))
 
@@ -58,8 +58,8 @@ def main(client):
   try:
     # Run the report and wait for it to finish.
     report_job_id = report_downloader.WaitForReport(report_job)
-  except errors.AdManagerReportError, e:
-    print 'Failed to generate report. Error was: %s' % e
+  except errors.AdManagerReportError as e:
+    print('Failed to generate report. Error was: %s' % e)
 
   # Change to your preferred export format.
   export_format = 'CSV_DUMP'
@@ -73,8 +73,8 @@ def main(client):
   report_file.close()
 
   # Display results.
-  print 'Report job with id "%s" downloaded to:\n%s' % (
-      report_job_id, report_file.name)
+  print('Report job with id "%s" downloaded to:\n%s' % (
+      report_job_id, report_file.name))
 
 if __name__ == '__main__':
   # Initialize client object.

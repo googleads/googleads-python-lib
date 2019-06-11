@@ -166,9 +166,9 @@ def main(client, html_snippet, css_snippet, creative_template_id, width,
 
   # Display results.
   for native_style in native_styles:
-    print ('A Native style with ID "%s", name "%s", and creative template ID'
-           '"%d" was created.' % (native_style['id'], native_style['name'],
-                                  native_style['creativeTemplateId']))
+    print('A Native style with ID "%s", name "%s", and creative template ID'
+          '"%d" was created.' % (native_style['id'], native_style['name'],
+                                 native_style['creativeTemplateId']))
 
 
 if __name__ == '__main__':

@@ -37,8 +37,8 @@ def main(key_file, application_name):
 
   networks = ad_manager_client.GetService('NetworkService').getAllNetworks()
   for network in networks:
-    print ('Network with network code "%s" and display name "%s" was found.'
-           % (network['networkCode'], network['displayName']))
+    print('Network with network code "%s" and display name "%s" was found.'
+          % (network['networkCode'], network['displayName']))
 
 
 if __name__ == '__main__':

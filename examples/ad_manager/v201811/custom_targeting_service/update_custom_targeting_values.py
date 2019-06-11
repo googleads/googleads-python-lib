@@ -34,7 +34,7 @@ def main(client, key_id):
 
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('customTargetingKeyId = :keyId')
-               .WithBindVariable('keyId', long(key_id)))
+               .WithBindVariable('keyId', int(key_id)))
 
   while True:
     # Get custom targeting values by statement.
@@ -54,15 +54,15 @@ def main(client, key_id):
 
       # Display results.
       for value in values:
-        print ('Custom targeting value with id "%s", name "%s", and display'
-               ' name "%s" was updated.'
-               % (value['id'], value['name'], value['displayName']))
+        print('Custom targeting value with id "%s", name "%s", and display'
+              ' name "%s" was updated.'
+              % (value['id'], value['name'], value['displayName']))
       statement.offset += statement.limit
     else:
       break
 
   if response['totalResultSetSize'] == 0:
-    print 'No custom targeting values were updated.'
+    print('No custom targeting values were updated.')
 
 
 if __name__ == '__main__':

@@ -51,11 +51,11 @@ def main(client, image_filename):
   if media:
     dimensions = dict([(entry['key'], entry['value'])
                        for entry in media['dimensions']])
-    print ('Image with id "%s", dimensions \'%sx%s\', and MimeType "%s" was'
-           ' uploaded.' % (media['mediaId'], dimensions['FULL']['height'],
-                           dimensions['FULL']['width'], media['mimeType']))
+    print('Image with id "%s", dimensions \'%sx%s\', and MimeType "%s" was'
+          ' uploaded.' % (media['mediaId'], dimensions['FULL']['height'],
+                          dimensions['FULL']['width'], media['mimeType']))
   else:
-    print 'No images were uploaded.'
+    print('No images were uploaded.')
 
 
 if __name__ == '__main__':

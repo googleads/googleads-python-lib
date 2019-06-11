@@ -70,8 +70,8 @@ def main(client, base_campaign_id):
   criterion = campaign_criterion_service.mutate([criterion_operation])[
       'value'][0]
 
-  print ('Draft updated to include criteria in campaign with ID %d' %
-         draft_campaign_id)
+  print('Draft updated to include criteria in campaign with ID %d' %
+        draft_campaign_id)
 
 
 if __name__ == '__main__':

@@ -265,8 +265,8 @@ def DisplayTree(node, children, level=0):
     else:
       value = (case_value['value'] if 'value' in case_value else 'OTHER')
 
-  print ('%sid: %s, node_type: %s, value: %s\n'
-         % (' ' * level, node['id'], node_type, value))
+  print('%sid: %s, node_type: %s, value: %s\n'
+        % (' ' * level, node['id'], node_type, value))
 
   for child_node in children[node['id']]:
     DisplayTree(child_node, children, level + 1)

@@ -52,7 +52,7 @@ class ShowCredentials(webapp2.RequestHandler):
         )
         template_values['dev_token'] = (app_user.developer_token if
                                         app_user.developer_token else '')
-      except Exception, e:
+      except Exception as e:
         template_values['error'] = str(e)
     finally:
       # Use template to write output to the page.

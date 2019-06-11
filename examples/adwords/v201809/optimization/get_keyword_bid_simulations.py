@@ -54,19 +54,19 @@ def main(client, ad_group_id, criterion_id):
 
     if page and 'entries' in page:
       entries = page['entries']
-      print 'Bid landscape(s) retrieved: %d.' % len(entries)
+      print('Bid landscape(s) retrieved: %d.' % len(entries))
 
       for bid_landscape in entries:
-        print ('Retrieved keyword bid landscape with ad group ID "%d", '
-               'keyword ID "%d", start date "%s", end date "%s", '
-               'with landscape points:' % (
-                   bid_landscape['adGroupId'], bid_landscape['criterionId'],
-                   bid_landscape['startDate'], bid_landscape['endDate']))
+        print('Retrieved keyword bid landscape with ad group ID "%d", '
+              'keyword ID "%d", start date "%s", end date "%s", '
+              'with landscape points:' % (
+                  bid_landscape['adGroupId'], bid_landscape['criterionId'],
+                  bid_landscape['startDate'], bid_landscape['endDate']))
         for bid_landscape_point in bid_landscape['landscapePoints']:
-          print ('  bid: %s => clicks: %s, cost: %s, impressions: %s, '
-                 'biddable conversions: %.2f, '
-                 'biddable conversions value: %.2f'
-                 % (bid_landscape_point['bid']['microAmount'],
+          print('  bid: %s => clicks: %s, cost: %s, impressions: %s, '
+                'biddable conversions: %.2f, '
+                'biddable conversions value: %.2f'
+                % (bid_landscape_point['bid']['microAmount'],
                     bid_landscape_point['clicks'],
                     bid_landscape_point['cost']['microAmount'],
                     bid_landscape_point['impressions'],

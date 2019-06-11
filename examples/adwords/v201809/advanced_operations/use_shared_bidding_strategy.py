@@ -77,10 +77,10 @@ def CreateBiddingStrategy(client):
   response = bidding_strategy_service.mutate([operation])
   new_bidding_strategy = response['value'][0]
 
-  print ('Shared bidding strategy with name "%s" and ID "%s" of type "%s"'
-         'was created.' %
-         (new_bidding_strategy['name'], new_bidding_strategy['id'],
-          new_bidding_strategy['biddingScheme']['BiddingScheme.Type']))
+  print('Shared bidding strategy with name "%s" and ID "%s" of type "%s"'
+        'was created.' %
+        (new_bidding_strategy['name'], new_bidding_strategy['id'],
+         new_bidding_strategy['biddingScheme']['BiddingScheme.Type']))
 
   return new_bidding_strategy
 
@@ -157,10 +157,10 @@ def CreateCampaignWithBiddingStrategy(client, bidding_strategy_id, budget_id):
   response = campaign_service.mutate([operation])
   new_campaign = response['value'][0]
 
-  print ('Campaign with name "%s", ID "%s" and bidding scheme ID "%s" '
-         'was created.' %
-         (new_campaign['name'], new_campaign['id'],
-          new_campaign['biddingStrategyConfiguration']['biddingStrategyId']))
+  print('Campaign with name "%s", ID "%s" and bidding scheme ID "%s" '
+        'was created.' %
+        (new_campaign['name'], new_campaign['id'],
+         new_campaign['biddingStrategyConfiguration']['biddingStrategyId']))
 
   return new_campaign
 

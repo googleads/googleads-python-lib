@@ -35,7 +35,7 @@ def main(client, exchange_rate_id):
   # Create a statement to get an exchange rate by its ID.
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where('id = :id')
-               .WithBindVariable('id', long(exchange_rate_id))
+               .WithBindVariable('id', int(exchange_rate_id))
                .Limit(1))
 
   # Get rate cards by statement.
@@ -46,23 +46,23 @@ def main(client, exchange_rate_id):
     exchange_rate = response['results'][0]
 
     # Update the exchange rate value to 1.5.
-    exchange_rate['exchangeRate'] = long(15000000000)
+    exchange_rate['exchangeRate'] = int(15000000000)
 
     exchange_rates = exchange_rate_service.updateExchangeRates([exchange_rate])
 
     if exchange_rates:
       for exchange_rate in exchange_rates:
-        print ('Exchange rate with id \'%s,\' currency code \'%s,\' '
-               'direction \'%s,\' and exchange rate \'%.2f\' '
-               'was updated.' % (exchange_rate['id'],
-                                 exchange_rate['currencyCode'],
-                                 exchange_rate['direction'],
-                                 (float(exchange_rate['exchangeRate']) /
-                                  10000000000)))
+        print('Exchange rate with id \'%s,\' currency code \'%s,\' '
+              'direction \'%s,\' and exchange rate \'%.2f\' '
+              'was updated.' % (exchange_rate['id'],
+                                exchange_rate['currencyCode'],
+                                exchange_rate['direction'],
+                                (float(exchange_rate['exchangeRate']) /
+                                 10000000000)))
     else:
-      print 'No exchange rates were updated.'
+      print('No exchange rates were updated.')
   else:
-    print 'No exchange rates found to update.'
+    print('No exchange rates found to update.')
 
 
 if __name__ == '__main__':

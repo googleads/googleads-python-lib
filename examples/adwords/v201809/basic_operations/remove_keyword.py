@@ -54,9 +54,9 @@ def main(client, ad_group_id, criterion_id):
 
   # Display results.
   for criterion in result['value']:
-    print ('Ad group criterion with ad group id "%s", criterion id "%s", '
-           'and type "%s" was deleted.'
-           % (criterion['adGroupId'], criterion['criterion']['id'],
+    print('Ad group criterion with ad group id "%s", criterion id "%s", '
+          'and type "%s" was deleted.'
+          % (criterion['adGroupId'], criterion['criterion']['id'],
               criterion['criterion']['Criterion.Type']))
 
 

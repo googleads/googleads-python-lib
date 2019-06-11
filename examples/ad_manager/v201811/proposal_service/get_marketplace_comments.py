@@ -47,7 +47,7 @@ def main(client, proposal_id):
     print('Marketplace comment with creation time "%s"and comment "%s" was '
           'found.\n' % (date_time_string, marketplace_comment['comment']))
 
-  print '\nNumber of results found: %s' % response['totalResultSetSize']
+  print('\nNumber of results found: %s' % response['totalResultSetSize'])
 
 
 if __name__ == '__main__':

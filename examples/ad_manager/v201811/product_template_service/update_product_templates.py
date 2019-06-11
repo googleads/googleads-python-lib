@@ -36,7 +36,7 @@ def main(client, product_template_id):
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :id')
                .OrderBy('id', ascending=True)
-               .WithBindVariable('id', long(product_template_id))
+               .WithBindVariable('id', int(product_template_id))
                .Limit(1))
 
   # Get product templates by statement.
@@ -80,12 +80,12 @@ def main(client, product_template_id):
     # Display results.
     if product_templates:
       for product_template in product_templates:
-        print ('Product template with id "%s" and name "%s" was '
-               'updated.' % (product_template['id'], product_template['name']))
+        print('Product template with id "%s" and name "%s" was '
+              'updated.' % (product_template['id'], product_template['name']))
     else:
-      print 'No product templates were updated.'
+      print('No product templates were updated.')
   else:
-    print 'No product templates found to update.'
+    print('No product templates found to update.')
 
 
 if __name__ == '__main__':

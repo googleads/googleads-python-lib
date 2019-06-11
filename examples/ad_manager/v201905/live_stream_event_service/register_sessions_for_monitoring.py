@@ -34,9 +34,9 @@ def main(client, session_ids):
   if session_ids:
     for session_id in session_ids:
       # Print out some information for each live stream event.
-      print 'Session with ID "%s" registered for monitoring.' % (session_id)
+      print('Session with ID "%s" registered for monitoring.' % (session_id))
 
-  print '\nNumber of results found: %s' % session_ids.size
+  print('\nNumber of results found: %s' % session_ids.size)
 
 
 if __name__ == '__main__':

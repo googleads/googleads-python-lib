@@ -44,8 +44,8 @@ def main(client):
     if 'results' in response and len(response['results']):
       # Display results.
       for order in response['results']:
-        print ('Order with id "%s", name "%s", and status "%s" will be '
-               'approved.' % (order['id'], order['name'], order['status']))
+        print('Order with id "%s", name "%s", and status "%s" will be '
+              'approved.' % (order['id'], order['name'], order['status']))
       # Perform action.
       result = order_service.performOrderAction(
           {'xsi_type': 'ApproveOrders'}, statement.ToStatement())
@@ -57,9 +57,9 @@ def main(client):
 
   # Display results.
   if orders_approved > 0:
-    print 'Number of orders approved: %s' % orders_approved
+    print('Number of orders approved: %s' % orders_approved)
   else:
-    print 'No orders were approved.'
+    print('No orders were approved.')
 
 if __name__ == '__main__':
   # Initialize client object.

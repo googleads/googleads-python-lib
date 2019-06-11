@@ -36,20 +36,20 @@ def main(client):
   exchange_rate = {
       'currencyCode': 'AUD',
       'direction': 'FROM_NETWORK',
-      'exchangeRate': long(15000000000),
+      'exchangeRate': int(15000000000),
       'refreshRate': 'FIXED'
   }
 
   created_exchange_rate = exchange_rate_service.createExchangeRates(
       [exchange_rate])[0]
 
-  print ('Exchange rate with id \'%s,\' currency code \'%s,\' '
-         'direction \'%s,\' and exchange rate \'%.2f\' '
-         'was created.' % (created_exchange_rate['id'],
-                           created_exchange_rate['currencyCode'],
-                           created_exchange_rate['direction'],
-                           (float(created_exchange_rate['exchangeRate']) /
-                            10000000000)))
+  print('Exchange rate with id \'%s,\' currency code \'%s,\' '
+        'direction \'%s,\' and exchange rate \'%.2f\' '
+        'was created.' % (created_exchange_rate['id'],
+                          created_exchange_rate['currencyCode'],
+                          created_exchange_rate['direction'],
+                          (float(created_exchange_rate['exchangeRate']) /
+                           10000000000)))
 
 
 if __name__ == '__main__':

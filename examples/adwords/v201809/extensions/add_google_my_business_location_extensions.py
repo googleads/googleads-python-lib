@@ -91,7 +91,7 @@ def main(client, gmb_email_address, gmb_access_token,
   gmb_response = client.GetService('FeedService', version='v201809').mutate(
       gmb_operations)
   added_feed = gmb_response['value'][0]
-  print 'Added GMB feed with ID: %d\n' % added_feed['id']
+  print('Added GMB feed with ID: %d\n' % added_feed['id'])
 
   # Add a CustomerFeed that associates the feed with this customer for the
   # LOCATION placeholder type.
@@ -127,8 +127,8 @@ def main(client, gmb_email_address, gmb_access_token,
     except errors.GoogleAdsServerFault:
       # Wait using exponential backoff policy
       sleep_seconds = 2 ** i
-      print ('Attempt %d to add the CustomerFeed was not successful.'
-             'Waiting %d seconds before trying again.\n' % (i, sleep_seconds))
+      print('Attempt %d to add the CustomerFeed was not successful.'
+            'Waiting %d seconds before trying again.\n' % (i, sleep_seconds))
 
       time.sleep(sleep_seconds)
     i += 1
@@ -138,8 +138,8 @@ def main(client, gmb_email_address, gmb_access_token,
         'Could not create the CustomerFeed after %s attempts. Please retry the '
         'CustomerFeed ADD operation later.' % MAX_CUSTOMER_FEED_ADD_ATTEMPTS)
 
-  print ('Added CustomerFeed for feed ID %d and placeholder type %d\n'
-         % (added_customer_feed['id'], added_customer_feed['placeholderTypes']))
+  print('Added CustomerFeed for feed ID %d and placeholder type %d\n'
+        % (added_customer_feed['id'], added_customer_feed['placeholderTypes']))
 
 if __name__ == '__main__':
   # Initialize client object.

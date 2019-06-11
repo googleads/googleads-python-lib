@@ -27,8 +27,8 @@ def main(client):
 
   current_network = network_service.getCurrentNetwork()
 
-  print ("Current network has network code '%s' and display name '%s'." %
-         (current_network['networkCode'], current_network['displayName']))
+  print("Current network has network code '%s' and display name '%s'." %
+        (current_network['networkCode'], current_network['displayName']))
 
 
 if __name__ == '__main__':

@@ -42,9 +42,9 @@ def main(client, proposal_id):
     if 'results' in response and len(response['results']):
       # Display results.
       for proposal in response['results']:
-        print ('Proposal with id "%s", name "%s", and status "%s" will be'
-               ' approved.' % (proposal['id'], proposal['name'],
-                               proposal['status']))
+        print('Proposal with id "%s", name "%s", and status "%s" will be'
+              ' approved.' % (proposal['id'], proposal['name'],
+                              proposal['status']))
       # Perform action.
       result = proposal_service.performProposalAction(
           {'xsi_type': 'SubmitProposalsForApproval'}, statement.ToStatement())
@@ -56,9 +56,9 @@ def main(client, proposal_id):
 
   # Display results.
   if proposals_approved > 0:
-    print '\nNumber of proposals approved: %s' % proposals_approved
+    print('\nNumber of proposals approved: %s' % proposals_approved)
   else:
-    print '\nNo proposals were approved.'
+    print('\nNo proposals were approved.')
 
 
 if __name__ == '__main__':

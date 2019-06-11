@@ -29,7 +29,7 @@ def main(client, num_requests):
   # Create a statement to select suggested ad units.
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('numRequests >= :numRequests')
-               .WithBindVariable('numRequests', long(num_requests)))
+               .WithBindVariable('numRequests', int(num_requests)))
 
   # Retrieve a small amount of suggested ad units at a time, paging
   # through until all suggested ad units have been retrieved.
@@ -46,7 +46,7 @@ def main(client, num_requests):
     else:
       break
 
-  print '\nNumber of results found: %s' % response['totalResultSetSize']
+  print('\nNumber of results found: %s' % response['totalResultSetSize'])
 
 
 if __name__ == '__main__':

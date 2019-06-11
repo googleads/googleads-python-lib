@@ -51,8 +51,8 @@ def main(client):
 
   # Display results.
   for team in teams:
-    print ('Team with ID "%s" and name "%s" was created.'
-           % (team['id'], team['name']))
+    print('Team with ID "%s" and name "%s" was created.'
+          % (team['id'], team['name']))
 
 if __name__ == '__main__':
   # Initialize client object.

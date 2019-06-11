@@ -51,7 +51,7 @@ class ShowAccounts(webapp2.RequestHandler):
 
         # Fetch account info for each client account and place in template.
         template_values['accounts'] = handler.GetAccounts()
-      except Exception, e:
+      except Exception as e:
         template_values['error'] = str(e)
     finally:
       # Use template to write output to the page.

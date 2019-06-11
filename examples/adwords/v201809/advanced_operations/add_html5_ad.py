@@ -26,7 +26,8 @@ section of our README.
 """
 
 
-import urllib2
+from urllib.request import urlopen
+
 from googleads import adwords
 
 
@@ -92,13 +93,13 @@ def main(client, ad_group_id):
 
   # Display results.
   for ad in ads['value']:
-    print ('New HTML5 Ad with id "%s" and of display url "%s" was added.'
-           % (ad['ad']['id'], ad['ad']['displayUrl']))
+    print('New HTML5 Ad with id "%s" and of display url "%s" was added.'
+          % (ad['ad']['id'], ad['ad']['displayUrl']))
 
 
 def GetHTML5ZipFromUrl(url):
   """Retrieve zip file from the given URL."""
-  response = urllib2.urlopen(url)
+  response = urlopen(url)
   # Note: The utf-8 decode is for 2to3 Python 3 compatibility.
   return response.read().decode('utf-8')
 

@@ -57,14 +57,14 @@ def main(client):
     # Display results.
     if 'entries' in page:
       for image in page['entries']:
-        print ('Image asset with id %s, name "%s", and status %s was found.\n'
-               '\tSize is %sx%s and asset URL is %s.' %
-               (image['assetId'], image['assetName'], image['assetStatus'],
-                image['fullSizeInfo']['imageWidth'],
-                image['fullSizeInfo']['imageHeight'],
-                image['fullSizeInfo']['imageUrl']))
+        print('Image asset with id %s, name "%s", and status %s was found.\n'
+              '\tSize is %sx%s and asset URL is %s.' %
+              (image['assetId'], image['assetName'], image['assetStatus'],
+               image['fullSizeInfo']['imageWidth'],
+               image['fullSizeInfo']['imageHeight'],
+               image['fullSizeInfo']['imageUrl']))
     else:
-      print 'No images/videos were found.'
+      print('No images/videos were found.')
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])

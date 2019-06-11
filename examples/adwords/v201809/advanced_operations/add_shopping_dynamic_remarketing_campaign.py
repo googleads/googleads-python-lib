@@ -44,21 +44,21 @@ def main(client, merchant_id, budget_id, user_list_id):
 
   campaign = CreateCampaign(client, merchant_id, budget_id)
   campaign_id = campaign['id']
-  print 'Campaign with name "%s" and ID "%d" was added.' % (
-      campaign['name'], campaign_id)
+  print('Campaign with name "%s" and ID "%d" was added.' % (
+      campaign['name'], campaign_id))
 
   ad_group = CreateAdGroup(client, campaign_id)
   ad_group_id = ad_group['id']
-  print 'Ad group with name "%s" and ID "%d" was added.' % (
-      ad_group['name'], ad_group_id)
+  print('Ad group with name "%s" and ID "%d" was added.' % (
+      ad_group['name'], ad_group_id))
 
   ad_group_ad = CreateAd(client, opener, ad_group_id)
-  print 'Responsive display ad with ID "%d" was added.' % (
-      ad_group_ad['ad']['id'])
+  print('Responsive display ad with ID "%d" was added.' % (
+      ad_group_ad['ad']['id']))
 
   AttachUserList(client, ad_group_id, user_list_id)
-  print 'User list with ID "%d" was attached to ad group with ID "%d".' % (
-      user_list_id, ad_group_id)
+  print('User list with ID "%d" was attached to ad group with ID "%d".' % (
+      user_list_id, ad_group_id))
 
 
 def CreateCampaign(client, merchant_id, budget_id):
@@ -276,7 +276,7 @@ def _CreateImage(media_service, opener, url):
   """Creates an image and uploads it to the server.
 
   Args:
-    media_service: a SudsServiceProxy instance for AdWords's MediaService.
+    media_service: a ZeepServiceProxy instance for AdWords's MediaService.
     opener: an OpenerDirector instance.
     url: a str URL used to load image data.
 

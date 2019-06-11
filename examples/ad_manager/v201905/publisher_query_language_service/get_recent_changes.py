@@ -70,17 +70,17 @@ def main(client):
       statement.Where(pagination_query)
       statement.WithBindVariable('id', last_id)
 
-      print ('%d) %d changes prior to ID "%s" were found.\n'
-             % (i, rows_length, last_id))
+      print('%d) %d changes prior to ID "%s" were found.\n'
+            % (i, rows_length, last_id))
 
     keep_iterating = rows and len(rows) == statement.limit
 
   # Print out columns header
-  print ','.join(column_types)
+  print(','.join(column_types))
 
   # Print out every row
   for row in total_rows:
-    print ConvertValueForCsv(row)
+    print(ConvertValueForCsv(row))
 
 
 def ConvertValueForCsv(pql_value):

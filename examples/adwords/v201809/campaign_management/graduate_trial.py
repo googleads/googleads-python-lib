@@ -67,9 +67,9 @@ def main(client, trial_id):
   # Graduation is a synchronous operation, so the campaign is already ready. If
   # you promote instead, make sure to see the polling scheme demonstrated in
   # add_trial.py to wait for the asynchronous operation to finish.
-  print ('Trial ID %d graduated. Campaign %d was given a new budget ID %d and '
-         'is no longer dependent on this trial.' % (
-             trial['id'], trial['trialCampaignId'], budget_id))
+  print('Trial ID %d graduated. Campaign %d was given a new budget ID %d and '
+        'is no longer dependent on this trial.' % (
+            trial['id'], trial['trialCampaignId'], budget_id))
 
 
 if __name__ == '__main__':

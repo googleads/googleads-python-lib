@@ -116,8 +116,8 @@ def main(client):
 
   # Display results.
   for campaign in campaigns['value']:
-    print ('Campaign with name "%s" and id "%s" was added.'
-           % (campaign['name'], campaign['id']))
+    print('Campaign with name "%s" and id "%s" was added.'
+          % (campaign['name'], campaign['id']))
 
 
 if __name__ == '__main__':

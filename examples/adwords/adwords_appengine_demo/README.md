@@ -33,7 +33,7 @@ Task Queue API to handle requests asynchronously. You can read more about this
 This guide assumes that you have already set up your AdWords account and have
 prepared your OAuth2 Credentials via the Google Developers Console.
 
-1. Install Python v2.7.9 or higher, which you can get
+1. Install Python v3.6 or higher, which you can get
    [here](https://www.python.org/downloads).
 
 1. Install [pip](http://pip.readthedocs.org/en/latest/installing.html),
@@ -90,13 +90,12 @@ Submit bug reports or feature requests to our
 
 ## External Dependencies:
 
-* [Python v2.7.9+](https://www.python.org/downloads/)
+* [Python v3.6+](https://www.python.org/downloads/)
 * [httplib2 v0.9+](https://pypi.python.org/pypi/httplib2)
 * [oauth2client v4.0.0+](https://pypi.python.org/pypi/oauth2client/)
 * [pysocks v1.5.0+](https://pypi.python.org/pypi/PySocks/)
 * [pytz 2014.7+](https://pypi.python.org/pypi/pytz)
 * [PyYAML 3.11+](https://pypi.python.org/pypi/PyYAML)
-* [suds-jurko 0.6+](https://pypi.python.org/pypi/suds-jurko)
 * [xmltodict 0.9.2+](https://pypi.python.org/pypi/xmltodict)
 * [App Engine SDK v1.9.11+](https://developers.google.com/appengine/downloads)
 * [Google Ads Python Client Library v10.1.0+](https://github.com/googleads/googleads-python-lib)

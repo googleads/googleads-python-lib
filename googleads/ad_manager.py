@@ -22,7 +22,7 @@ import numbers
 import os
 import sys
 import time
-import urllib2
+from urllib.request import build_opener
 
 import pytz
 import googleads.common
@@ -205,7 +205,7 @@ class AdManagerClient(googleads.common.CommonClient):
         cls._OPTIONAL_INIT_VALUES))
 
   def __init__(self, oauth2_client, application_name, network_code=None,
-               cache=None, proxy_config=None, soap_impl='zeep', timeout=3600,
+               cache=None, proxy_config=None, timeout=3600,
                custom_http_headers=None,
                enable_compression=False):
     """Initializes a AdManagerClient.
@@ -222,13 +222,11 @@ class AdManagerClient(googleads.common.CommonClient):
       network_code: A string identifying the network code of the network you are
           accessing. All requests other than getAllNetworks require this header
           to be set.
-      cache: A subclass of zeep.cache.Base or suds.cache.Cache. If not set,
+      cache: A subclass of zeep.cache.Base. If not set,
           this will default to a basic file cache. To disable caching for Zeep,
           pass googleads.common.ZeepServiceProxy.NO_CACHE.
       proxy_config: A googleads.common.ProxyConfig instance or None if a proxy
         isn't being used.
-      soap_impl: A string identifying which SOAP implementation to use. The
-          options are 'zeep' or 'suds'.
       timeout: An integer timeout in MS for connections made to Ad Manager.
       custom_http_headers: A dictionary with HTTP headers to add to outgoing
           requests.
@@ -256,7 +254,6 @@ class AdManagerClient(googleads.common.CommonClient):
     if enable_compression:
       self.application_name = '%s (gzip)' % self.application_name
 
-    self.soap_impl = soap_impl
     self.timeout = timeout
 
 
@@ -287,7 +284,7 @@ class AdManagerClient(googleads.common.CommonClient):
     server = server[:-1] if server[-1] == '/' else server
 
     try:
-      service = googleads.common.GetServiceClassForLibrary(self.soap_impl)(
+      service = googleads.common.GetServiceClassForLibrary()(
           self._SOAP_SERVICE_FORMAT % (server, version, service_name),
           self._header_handler,
           _AdManagerPacker,
@@ -650,7 +647,7 @@ class PQLHelper(object):
     return [{
         'key': key,
         'value': cls.GetValueRepresentation(value, version)
-    } for key, value in d.iteritems()]
+    } for key, value in d.items()]
 
   @classmethod
   def GetValueRepresentation(cls, value,
@@ -668,7 +665,7 @@ class PQLHelper(object):
       The value formatted for PQL statements which are compatible with a
       particular API version.
     """
-    if isinstance(value, str) or isinstance(value, unicode):
+    if isinstance(value, str):
       return {'value': value, 'xsi_type': 'TextValue'}
     elif isinstance(value, bool):
       return {'value': value, 'xsi_type': 'BooleanValue'}
@@ -763,7 +760,9 @@ class DataDownloader(object):
     if not server:
       server = DEFAULT_ENDPOINT
 
-    if server[-1] == '/': server = server[:-1]
+    if server[-1] == '/':
+      server = server[:-1]
+
     self._ad_manager_client = ad_manager_client
     self._version = version
     self._server = server
@@ -771,7 +770,8 @@ class DataDownloader(object):
     self._pql_service = None
     self.proxy_config = self._ad_manager_client.proxy_config
     handlers = self.proxy_config.GetHandlers()
-    self.url_opener = urllib2.build_opener(*handlers)
+    self.url_opener = build_opener(*handlers)
+
     if self._ad_manager_client.custom_http_headers:
       self.url_opener.addheaders.extend(
           self._ad_manager_client.custom_http_headers.items())
@@ -1026,10 +1026,10 @@ class DataDownloader(object):
 
 
 def AdManagerClassType(value):
-  """Returns the class type for the Suds object.
+  """Returns the class type for an object.
 
   Args:
-    value: generic Suds object to return type for.
+    value: generic object to return type for.
 
   Returns:
     str: A string representation of the value response type.

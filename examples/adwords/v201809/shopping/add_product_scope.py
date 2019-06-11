@@ -93,8 +93,8 @@ def main(client, campaign_id):
   result = campaign_criterion_service.mutate(operations)
 
   for criterion in result['value']:
-    print ('Created a ProductScope criterion with Id: %s'
-           % criterion['criterion']['id'])
+    print('Created a ProductScope criterion with Id: %s'
+          % criterion['criterion']['id'])
 
 
 if __name__ == '__main__':

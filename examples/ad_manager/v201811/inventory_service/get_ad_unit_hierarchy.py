@@ -101,8 +101,8 @@ def display_hierarchy_helper(root, parent_id_to_children, depth):
     parent_id_to_children: The overall map of parent ids to children.
     depth: The current depth.
   """
-  print '%s%s (%s)' % ('%s+--' % ('|'.join(['  '] * depth)),
-                       root['name'], root['id'])
+  print('%s%s (%s)' % ('%s+--' % ('|'.join(['  '] * depth)),
+        root['name'], root['id']))
 
   # Recurse for each child of this root that has children.
   for child in parent_id_to_children.get(root['id'], []):

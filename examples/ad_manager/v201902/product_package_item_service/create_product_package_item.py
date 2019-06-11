@@ -49,11 +49,11 @@ def main(client):
       [product_package_item])
 
   for new_product_package_item in result:
-    print ('A product package with ID %d created from product ID %d '
-           'belonging to product package with ID %d was created.' %
-           (new_product_package_item['id'],
-            new_product_package_item['productId'],
-            new_product_package_item['productPackageId']))
+    print('A product package with ID %d created from product ID %d '
+          'belonging to product package with ID %d was created.' %
+          (new_product_package_item['id'],
+           new_product_package_item['productId'],
+           new_product_package_item['productPackageId']))
 
 
 if __name__ == '__main__':

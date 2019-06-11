@@ -65,10 +65,10 @@ def main(client, key_name):
       break
 
   if deleted_custom_targeting_keys > 0:
-    print ('Number of custom targeting keys deleted: %s'
-           % deleted_custom_targeting_keys)
+    print('Number of custom targeting keys deleted: %s'
+          % deleted_custom_targeting_keys)
   else:
-    print 'No custom targeting keys were deleted.'
+    print('No custom targeting keys were deleted.')
 
 
 if __name__ == '__main__':

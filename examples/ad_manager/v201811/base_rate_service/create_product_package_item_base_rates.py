@@ -54,10 +54,10 @@ def main(client):
   result = base_rate_service.createBaseRates([product_package_item_base_rate])
 
   for new_base_rate in result:
-    print ('A product package item base rate with ID %d and rate %f %s '
-           'was created.' % (new_base_rate['id'],
-                             new_base_rate['microAmount'],
-                             new_base_rate['currencyCode']))
+    print('A product package item base rate with ID %d and rate %f %s '
+          'was created.' % (new_base_rate['id'],
+                            new_base_rate['microAmount'],
+                            new_base_rate['currencyCode']))
 
 
 if __name__ == '__main__':

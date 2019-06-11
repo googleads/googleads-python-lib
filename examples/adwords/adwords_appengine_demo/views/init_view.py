@@ -37,5 +37,5 @@ class InitView(webapp2.RequestHandler):
         self.redirect('/showAccounts')
       else:
         self.redirect('/showCredentials')
-    except Exception, e:
+    except Exception as e:
       logging.debug(str(e))

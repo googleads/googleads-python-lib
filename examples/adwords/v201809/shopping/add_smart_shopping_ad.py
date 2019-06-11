@@ -123,8 +123,8 @@ def CreateSmartCampaign(client, budget_id, merchant_id):
 
   result = campaign_service.mutate(campaign_operations)['value'][0]
 
-  print ('Smart Shopping campaign with name "%s" and ID "%s" was added.'
-         % (result['name'], result['id']))
+  print('Smart Shopping campaign with name "%s" and ID "%s" was added.'
+        % (result['name'], result['id']))
 
   return result['id']
 
@@ -156,8 +156,8 @@ def CreateSmartShoppingAdGroup(client, campaign_id):
   ad_group = ad_group_service.mutate(adgroup_operations)['value'][0]
   ad_group_id = ad_group['id']
 
-  print ('AdGroup with name "%s" and ID "%s" was added.'
-         % (ad_group['name'], ad_group_id))
+  print('AdGroup with name "%s" and ID "%s" was added.'
+        % (ad_group['name'], ad_group_id))
 
   return ad_group_id
 
@@ -188,7 +188,7 @@ def CreateSmartShoppingAd(client, ad_group_id):
   ad_result = ad_group_ad_service.mutate([ad_operation])
 
   for adgroup_ad in ad_result['value']:
-    print 'Smart Shopping ad with ID "%s" was added.' % adgroup_ad['ad']['id']
+    print('Smart Shopping ad with ID "%s" was added.' % adgroup_ad['ad']['id'])
 
 
 def CreateDefaultPartition(client, ad_group_id):
@@ -218,8 +218,8 @@ def CreateDefaultPartition(client, ad_group_id):
 
   ad_group_criterion = ad_group_criterion_service.mutate(operations)['value'][0]
 
-  print ('Ad group criterion with ID "%d" in ad group with ID "%d" was added.'
-         % (ad_group_criterion['criterion']['id'],
+  print('Ad group criterion with ID "%d" in ad group with ID "%d" was added.'
+        % (ad_group_criterion['criterion']['id'],
             ad_group_criterion['adGroupId']))
 
 

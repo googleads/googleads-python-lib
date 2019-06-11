@@ -22,7 +22,7 @@ from googleads import ad_manager
 
 def main(client):
   # Initialize appropriate service.
-  user_service = client.GetService('UserService', version='v201605')
+  user_service = client.GetService('UserService', version='v201905')
 
   roles = user_service.getAllRoles()
 
@@ -31,7 +31,7 @@ def main(client):
     print('Role with id "%s" and name "%s" was found.' %
           (role['id'], role['name']))
 
-  print '\nNumber of results found: %s' % len(roles)
+  print('\nNumber of results found: %s' % len(roles))
 
 
 if __name__ == '__main__':

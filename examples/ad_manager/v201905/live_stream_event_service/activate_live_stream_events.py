@@ -33,7 +33,7 @@ def main(client, live_stream_event_id):
                .Where(('id = :id AND '
                        'status = :status'))
                .WithBindVariable('status', 'PAUSED')
-               .WithBindVariable('id', long(live_stream_event_id))
+               .WithBindVariable('id', int(live_stream_event_id))
                .Limit(500))
 
   live_stream_events_activated = 0
@@ -59,10 +59,10 @@ def main(client, live_stream_event_id):
 
   # Display results.
   if live_stream_events_activated > 0:
-    print '# of live stream events activated: %s' % (
-        live_stream_events_activated)
+    print('# of live stream events activated: %s' % (
+        live_stream_events_activated))
   else:
-    print 'No live stream events were activated.'
+    print('No live stream events were activated.')
 
 
 if __name__ == '__main__':

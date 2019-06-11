@@ -49,7 +49,7 @@ def main(client):
       }
   }
 
-  # Retrieve the report stream and print it out
+  # Retrieve the report stream and print(it out)
   report_data = StringIO.StringIO()
   stream_data = report_downloader.DownloadReportAsStream(
       report, skip_report_header=False, skip_column_header=False,
@@ -61,7 +61,7 @@ def main(client):
       if not chunk: break
       report_data.write(chunk.decode() if sys.version_info[0] == 3
                         and getattr(report_data, 'mode', 'w') == 'w' else chunk)
-    print report_data.getvalue()
+    print(report_data.getvalue())
   finally:
     report_data.close()
     stream_data.close()

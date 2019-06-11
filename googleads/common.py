@@ -19,7 +19,6 @@ import base64
 import binascii
 from functools import wraps
 import inspect
-from itertools import izip
 import locale
 import logging
 import logging.config
@@ -27,19 +26,12 @@ import os
 import ssl
 import sys
 import threading
-import urllib2
 import warnings
+from urllib.request import HTTPSHandler, ProxyHandler, build_opener
 
 import lxml.builder
 import lxml.etree
 import requests.exceptions
-import suds
-import suds.cache
-import suds.client
-import suds.mx.literal
-import suds.plugin
-import suds.transport.http
-import suds.xsd.doctor
 import yaml
 import zeep
 import zeep.cache
@@ -51,22 +43,7 @@ import googleads.errors
 import googleads.oauth2
 import googleads.util
 
-try:
-  import urllib2.HTTPSHandler
-except ImportError:
-  # Python versions below 2.7.9 / 3.4 won't have this. In order to offer legacy
-  # support (for now) we will work around this gracefully, but users will
-  # not have certificate validation performed until they update.
-  pass
 
-
-logging.getLogger('suds.client').addFilter(googleads.util.GetSudsClientFilter())
-logging.getLogger('suds.mx.core').addFilter(
-    googleads.util.GetSudsMXCoreFilter())
-logging.getLogger('suds.mx.literal').addFilter(
-    googleads.util.GetSudsMXLiteralFilter())
-logging.getLogger('suds.transport.http').addFilter(
-    googleads.util.GetSudsTransportFilter())
 _logger = logging.getLogger(__name__)
 
 _PY_VERSION_MAJOR = sys.version_info.major
@@ -75,10 +52,10 @@ _PY_VERSION_MICRO = sys.version_info.micro
 _DEPRECATED_VERSION_TEMPLATE = (
     'This library is being run by an unsupported Python version (%s.%s.%s). In '
     'order to benefit from important security improvements and ensure '
-    'compatibility with this library, upgrade to Python 2.7.9 or higher.')
+    'compatibility with this library, upgrade to Python 3.6 or higher.')
 
 
-VERSION = '19.0.1'
+VERSION = '20.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
@@ -103,16 +80,10 @@ ENABLE_COMPRESSION_KEY = 'enable_compression'
 # A key used to configure the client to send arbitrary headers in SOAP requests.
 CUSTOM_HEADERS_KEY = 'custom_http_headers'
 
-# A key used to specify the SOAP implementation to use.
-SOAP_IMPLEMENTATION_KEY = 'soap_impl'
-
 # Global variables used to enable and store utility usage stats.
 _utility_registry = googleads.util.UtilityRegistry()
 _UTILITY_REGISTER_YAML_KEY = 'include_utilities_in_user_agent'
 _UTILITY_LOCK = threading.Lock()
-
-# Apply any necessary patches to dependency libraries.
-googleads.util.PatchHelper().Apply()
 
 
 def GenerateLibSig(short_name):
@@ -140,13 +111,9 @@ class CommonClient(object):
 
   def __init__(self):
     # Warn users on deprecated Python versions on initialization.
-    if _PY_VERSION_MAJOR == 2:
-      if _PY_VERSION_MINOR == 7 and _PY_VERSION_MICRO < 9:
-        _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
-                        _PY_VERSION_MINOR, _PY_VERSION_MICRO)
-      elif _PY_VERSION_MINOR < 7:
-        _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
-                        _PY_VERSION_MINOR, _PY_VERSION_MICRO)
+    if _PY_VERSION_MAJOR == 3 and _PY_VERSION_MINOR < 6:
+      _logger.warning(_DEPRECATED_VERSION_TEMPLATE, _PY_VERSION_MAJOR,
+                      _PY_VERSION_MINOR, _PY_VERSION_MICRO)
 
     # Warn users about using non-utf8 encoding
     _, encoding = locale.getdefaultlocale()
@@ -229,9 +196,6 @@ def LoadFromString(yaml_doc, product_yaml_key, required_client_values,
       ENABLE_COMPRESSION_KEY, False)
 
   client_kwargs[CUSTOM_HEADERS_KEY] = data.get(CUSTOM_HEADERS_KEY, None)
-
-  if SOAP_IMPLEMENTATION_KEY in data:
-    client_kwargs[SOAP_IMPLEMENTATION_KEY] = data[SOAP_IMPLEMENTATION_KEY]
 
   for value in optional_product_values:
     if value in product_data:
@@ -376,108 +340,6 @@ def _ExtractProxyConfig(product_yaml_key, proxy_config_data):
   return proxy_config
 
 
-def _PackForSuds(obj, factory, packer=None, version=None):
-  """Packs SOAP input into the format we want for suds.
-
-  The main goal here is to pack dictionaries with an 'xsi_type' key into
-  objects. This allows dictionary syntax to be used even with complex types
-  extending other complex types. The contents of dictionaries and lists/tuples
-  are recursively packed. Mutable types are copied - we don't mutate the input.
-
-  Args:
-    obj: A parameter for a SOAP request which will be packed. If this is
-        a dictionary or list, the contents will recursively be packed. If this
-        is not a dictionary or list, the contents will be recursively searched
-        for instances of unpacked dictionaries or lists.
-    factory: The suds.client.Factory object which can create instances of the
-        classes generated from the WSDL.
-    packer: An optional subclass of googleads.common.SoapPacker that provides
-        customized packing logic.
-    version: the version of the current API, e.g. 'v201811'
-
-  Returns:
-    If the given obj was a dictionary that contained the 'xsi_type' key, this
-    will be an instance of a class generated from the WSDL. Otherwise, this will
-    be the same data type as the input obj was.
-  """
-  if packer:
-    obj = packer.Pack(obj, version)
-
-  if obj in ({}, None):
-    # Force suds to serialize empty objects. There are legitimate use cases for
-    # this, for example passing in an empty SearchCriteria object to a DFA
-    # search method in order to select everything.
-    return suds.null()
-  elif isinstance(obj, dict):
-    if 'xsi_type' in obj:
-      try:
-        new_obj = factory.create(obj['xsi_type'])
-      except suds.TypeNotFound:
-        new_obj = factory.create(':'.join(['ns0', obj['xsi_type']]))
-      # Suds sends an empty XML element for enum types which are not set. None
-      # of Google's Ads APIs will accept this. Initializing all of the fields in
-      # a suds object to None will ensure that they don't get serialized at all
-      # unless the user sets a value. User values explicitly set to None will be
-      # packed into a suds.null() object.
-      for param, _ in new_obj:
-        # Another problem is that the suds.mx.appender.ObjectAppender won't
-        # serialize object types with no fields set, but both AdWords and Ad
-        # Manager rely on sending objects with just the xsi:type set. The
-        # below "if" statement is an ugly hack that gets this to work in all(?)
-        # situations by taking advantage of the fact that these classes
-        # generally all have a type field. The only other option is to monkey
-        # patch ObjectAppender.
-        if param.endswith('.Type'):
-          setattr(new_obj, param, obj['xsi_type'])
-        else:
-          setattr(new_obj, param, None)
-      for key in obj:
-        if key == 'xsi_type': continue
-        setattr(new_obj, key, _PackForSuds(obj[key], factory,
-                                           packer=packer))
-    else:
-      new_obj = {}
-      for key in obj:
-        new_obj[key] = _PackForSuds(obj[key], factory,
-                                    packer=packer)
-    return new_obj
-  elif isinstance(obj, (list, tuple)):
-    return [_PackForSuds(item, factory,
-                         packer=packer) for item in obj]
-  else:
-    _RecurseOverObject(obj, factory)
-    return obj
-
-
-def _RecurseOverObject(obj, factory, parent=None):
-  """Recurses over a nested structure to look for changes in Suds objects.
-
-  Args:
-    obj: A parameter for a SOAP request field which is to be inspected and
-        will be packed for Suds if an xsi_type is specified, otherwise will be
-        left unaltered.
-    factory: The suds.client.Factory object which can create instances of the
-        classes generated from the WSDL.
-    parent: The parent object that contains the obj parameter to be inspected.
-  """
-  if _IsSudsIterable(obj):
-    # Since in-place modification of the Suds object is taking place, the
-    # iterator should be done over a frozen copy of the unpacked fields.
-    copy_of_obj = tuple(obj)
-    for item in copy_of_obj:
-      if _IsSudsIterable(item):
-        if 'xsi_type' in item:
-          if isinstance(obj, tuple):
-            parent[obj[0]] = _PackForSuds(obj[1], factory)
-          else:
-            obj.remove(item)
-            obj.append(_PackForSuds(item, factory))
-        _RecurseOverObject(item, factory, obj)
-
-
-def _IsSudsIterable(obj):
-  """A short helper method to determine if a field is iterable for Suds."""
-  return obj and not isinstance(obj, basestring) and hasattr(obj, '__iter__')
 
 
 def IncludeUtilitiesInUserAgent(value):
@@ -574,8 +436,7 @@ class ProxyConfig(object):
 
     self.disable_certificate_validation = disable_certificate_validation
     self.cafile = None if disable_certificate_validation else cafile
-    # Initialize the context used to generate the urllib2.HTTPSHandler (in
-    # Python 2.7.9+ and 3.4+) used by suds and urllib2.
+    # Initialize the context used to generate the HTTPSHandler.
     self.ssl_context = self._InitSSLContext(
         self.cafile, self.disable_certificate_validation)
 
@@ -594,8 +455,6 @@ class ProxyConfig(object):
       An ssl.SSLContext instance, or None if the version of Python being used
       doesn't support it.
     """
-    # Attempt to create a context; this should succeed in Python 2 versions
-    # 2.7.9+ and Python 3 versions 3.4+.
     try:
       if disable_ssl_certificate_validation:
         ssl._create_default_https_context = ssl._create_unverified_context
@@ -614,43 +473,30 @@ class ProxyConfig(object):
   def BuildOpener(self):
     """Builds an OpenerDirector instance using the ProxyConfig settings.
 
-    In Python 2, this will return a urllib2.OpenerDirector instance. In Python
-    3, this will return a urllib.request.OpenerDirector instance.
+    This will return a urllib2.request.OpenerDirector instance.
 
     Returns:
       An OpenerDirector instance instantiated with settings defined in the
       ProxyConfig instance.
     """
-    return urllib2.build_opener(*self.GetHandlers())
+    return build_opener(*self.GetHandlers())
 
   def GetHandlers(self):
-    """Retrieve the appropriate urllib2 handlers for the given configuration.
+    """Retrieve the appropriate urllib handlers for the given configuration.
 
     Returns:
-      A list of urllib2.BaseHandler subclasses to be used when making calls
-      with proxy.
+      A list of urllib.request.BaseHandler subclasses to be used when making
+      calls with proxy.
     """
     handlers = []
 
     if self.ssl_context:
-      handlers.append(urllib2.HTTPSHandler(context=self.ssl_context))
+      handlers.append(HTTPSHandler(context=self.ssl_context))
 
     if self.proxies:
-      handlers.append(urllib2.ProxyHandler(self.proxies))
+      handlers.append(ProxyHandler(self.proxies))
 
     return handlers
-
-  def GetSudsProxyTransport(self):
-    """Retrieve a suds.transport.http.HttpTransport to be used with suds.
-
-    This will apply all handlers relevant to the usage of the proxy
-    configuration automatically.
-
-    Returns:
-      A _SudsProxyTransport instance used to make requests with suds using the
-      configured proxy.
-    """
-    return self._SudsProxyTransport(self.GetHandlers())
 
 
 class _ZeepProxyTransport(zeep.transports.Transport):
@@ -674,31 +520,6 @@ class _ZeepProxyTransport(zeep.transports.Transport):
     self.session.proxies = proxy_config.proxies
 
 
-class _SudsProxyTransport(suds.transport.http.HttpTransport):
-  """A transport that applies the given handlers for usage with a proxy."""
-
-  def __init__(self, timeout, proxy_config):
-    """Initializes SudsHTTPSTransport.
-
-    Args:
-      timeout: An integer for the connection timeout time.
-      proxy_config: A ProxyConfig instance representing proxy settings.
-    """
-    suds.transport.http.HttpTransport.__init__(self, timeout=timeout)
-    self.handlers = proxy_config.GetHandlers()
-
-  def u2handlers(self):
-    """Get a collection of urllib2 handlers to be installed in the opener.
-
-    Returns:
-      A list of handlers to be installed to the OpenerDirector used by suds.
-    """
-    # Start with the default set of handlers.
-    return_handlers = suds.transport.http.HttpTransport.u2handlers(self)
-    return_handlers.extend(self.handlers)
-
-    return return_handlers
-
 
 class SoapPacker(object):
   """A utility class to be passed to argument packing functions.
@@ -711,11 +532,10 @@ class SoapPacker(object):
   def Pack(cls, obj):
     raise NotImplementedError('You must subclass SoapPacker.')
 
-def GetSchemaHelperForLibrary(lib_name):
-  if lib_name == 'suds':
-    return SudsSchemaHelper
-  elif lib_name == 'zeep':
-    return ZeepSchemaHelper
+
+def GetSchemaHelperForLibrary():
+  return ZeepSchemaHelper
+
 
 class GoogleSchemaHelper(object):
   """Base class for type to xml conversion.
@@ -738,61 +558,6 @@ class GoogleSchemaHelper(object):
     """
     return
 
-class SudsSchemaHelper(GoogleSchemaHelper):
-  """Suds schema helper implementation."""
-  def __init__(self, endpoint, timeout,
-               proxy_config, namespace_override, cache):
-    """Initializes a SudsSchemaHelper.
-
-    Args:
-       endpoint: A string representing the URL to connect to.
-       timeout: An integer timeout in MS used to determine connection timeouts.
-       proxy_config: A googleads.common.ProxyConfig instance which represents
-           the proxy settings needed.
-       namespace_override: A string to doctor the WSDL namespace with.
-       cache: An instance of suds.cache.Cache to use for caching.
-
-    Raises:
-      GoogleAdsValueError: The wrong type was given for caching.
-    """
-
-    if cache and not isinstance(cache, suds.cache.Cache):
-      raise googleads.errors.GoogleAdsValueError(
-          'Must use a proper suds cache with suds.')
-
-    transport = _SudsProxyTransport(timeout, proxy_config)
-    try:
-      doctor = suds.xsd.doctor.ImportDoctor(
-          suds.xsd.doctor.Import(
-              namespace_override, endpoint))
-      self.suds_client = suds.client.Client(
-          endpoint,
-          transport=transport,
-          plugins=[LoggingMessagePlugin()],
-          cache=cache,
-          doctor=doctor)
-      self._namespace_override = namespace_override
-    except suds.transport.TransportError as e:
-      raise googleads.errors.GoogleAdsSoapTransportError(str(e))
-
-  def GetSoapXMLForComplexType(self, type_name, value):
-    """Return an XML string representing a SOAP complex type.
-
-    Args:
-      type_name: The name of the type with namespace prefix if necessary.
-      value: A python dictionary to hydrate the type instance with.
-
-    Returns:
-      A string containing the SOAP XML for the type.
-    """
-    schema = self.suds_client.wsdl.schema
-    definition_type = schema.elements[(type_name, self._namespace_override)]
-    marshaller = suds.mx.literal.Literal(schema)
-    content = suds.mx.Content(
-        tag=type_name, value=value,
-        name=type_name, type=definition_type)
-    data = marshaller.process(content)
-    return data
 
 class ZeepSchemaHelper(GoogleSchemaHelper):
   """Zeep schema helper implementation."""
@@ -846,11 +611,9 @@ class ZeepSchemaHelper(GoogleSchemaHelper):
     data = lxml.etree.tostring(result_element).strip()
     return data
 
-def GetServiceClassForLibrary(lib_name):
-  if lib_name == 'suds':
-    return SudsServiceProxy
-  elif lib_name == 'zeep':
-    return ZeepServiceProxy
+
+def GetServiceClassForLibrary():
+  return ZeepServiceProxy
 
 
 class GoogleSoapService(object):
@@ -929,157 +692,6 @@ class GoogleSoapService(object):
       return self._method_proxies[attr]
     else:
       raise googleads.errors.GoogleAdsValueError('Service %s not found' % attr)
-
-
-class SudsServiceProxy(GoogleSoapService):
-  """Wraps a suds service object, allowing custom logic to be injected.
-
-  This class is responsible for refreshing the HTTP and SOAP headers, so changes
-  to the client object will be reflected in future SOAP calls, and for
-  transforming SOAP call input parameters, allowing dictionary syntax to be used
-  with all SOAP complex types.
-
-  Attributes:
-    suds_client: The suds.client.Client this service belongs to. If you are
-        familiar with suds and want to use autogenerated classes, you can access
-        the client and its factory,
-  """
-
-  def __init__(self, endpoint, header_handler, packer, proxy_config,
-               timeout, version, cache=None):
-    """Initializes a suds service proxy.
-
-    Args:
-      endpoint: A URL for the service.
-      header_handler: A HeaderHandler responsible for setting the SOAP and HTTP
-          headers on the service client.
-      packer: An optional subclass of googleads.common.SoapPacker that provides
-        customized packing logic.
-      proxy_config: A ProxyConfig that represents proxy settings.
-      timeout: An integer to set the connection timeout.
-      version: the current version of the library, e.g. 'v201811'
-      cache: A suds.cache.Cache instance to pass to the underlying SOAP
-          library for caching.
-
-    Raises:
-      GoogleAdsValueError: The wrong type was given for caching.
-    """
-    super(SudsServiceProxy, self).__init__(header_handler, packer, version)
-
-    if cache and not isinstance(cache, suds.cache.Cache):
-      raise googleads.errors.GoogleAdsValueError(
-          'Must use a proper suds cache with suds.')
-
-    transport = _SudsProxyTransport(timeout, proxy_config)
-    self._method_proxies = {}
-    try:
-      self.suds_client = suds.client.Client(
-          endpoint,
-          timeout=timeout,
-          cache=cache,
-          transport=transport,
-          plugins=[LoggingMessagePlugin()])
-    except suds.transport.TransportError as e:
-      raise googleads.errors.GoogleAdsSoapTransportError(str(e))
-
-
-  def GetRequestXML(self, method, *args):
-    """Get the raw SOAP XML for a request.
-
-    Args:
-      method: The method name.
-      *args: A list of arguments to be passed to the method.
-
-    Returns:
-      An element containing the raw XML that would be sent as the request.
-    """
-    self.suds_client.set_options(nosend=True)
-    service_request = (getattr(self, method))(*args).envelope
-    self.suds_client.set_options(nosend=False)
-    return lxml.etree.fromstring(service_request)
-
-  def CreateSoapElementForType(self, type_name):
-    """Create an instance of a SOAP type.
-
-    Args:
-      type_name: The name of the type.
-
-    Returns:
-      An instance of type type_name.
-    """
-    return self.suds_client.factory.create(type_name)
-
-  def SetHeaders(self, soap_headers, http_headers):
-    """Set the headers for the underlying client.
-
-    Args:
-      soap_headers: A SOAP element for the SOAP headers.
-      http_headers: A dictionary for the http headers.
-    """
-    self.suds_client.set_options(soapheaders=soap_headers, headers=http_headers)
-
-  def _WsdlHasMethod(self, method_name):
-    """Determine if the wsdl contains a method.
-
-    Args:
-      method_name: The name of the method to search.
-
-    Returns:
-      True if the method is in the WSDL, otherwise False.
-    """
-    return method_name in self.suds_client.wsdl.services[0].ports[0].methods
-
-  def _CreateMethod(self, method_name):
-    """Create a method wrapping an invocation to the SOAP service.
-
-    Args:
-      method_name: A string identifying the name of the SOAP method to call.
-
-    Returns:
-      A callable that can be used to make the desired SOAP request.
-    """
-    soap_service_method = getattr(self.suds_client.service, method_name)
-
-    def MakeSoapRequest(*args):
-      """Perform a SOAP call."""
-      AddToUtilityRegistry('suds')
-      self.SetHeaders(
-          self._header_handler.GetSOAPHeaders(self.CreateSoapElementForType),
-          self._header_handler.GetHTTPHeaders())
-
-      try:
-        return soap_service_method(
-            *[_PackForSuds(arg, self.suds_client.factory,
-                           self._packer) for arg in args])
-      except suds.WebFault as e:
-        if _logger.isEnabledFor(logging.WARNING):
-          _logger.warning('Response summary - %s',
-                          _ExtractResponseSummaryFields(e.document))
-
-        _logger.debug('SOAP response:\n%s', e.document.str())
-
-        if not hasattr(e.fault, 'detail'):
-          exc = (googleads.errors.
-                 GoogleAdsServerFault(e.document, message=e.fault.faultstring))
-          raise exc  # Done this way for 2to3
-
-        # Before re-throwing the WebFault exception, an error object needs to be
-        # wrapped in a list for safe iteration.
-        fault = e.fault.detail.ApiExceptionFault
-        if not hasattr(fault, 'errors') or fault.errors is None:
-          exc = (googleads.errors.
-                 GoogleAdsServerFault(e.document, message=e.fault.faultstring))
-          raise exc  # Done this way for 2to3
-
-        obj = fault.errors
-        if not isinstance(obj, list):
-          fault.errors = [obj]
-
-        exc = googleads.errors.GoogleAdsServerFault(e.document, fault.errors,
-                                                    message=e.fault.faultstring)
-        raise exc  # Done this way for 2to3
-
-    return MakeSoapRequest
 
 
 class _ZeepAuthHeaderPlugin(zeep.Plugin):
@@ -1163,8 +775,8 @@ class ZeepServiceProxy(GoogleSoapService):
     except requests.exceptions.HTTPError as e:
       raise googleads.errors.GoogleAdsSoapTransportError(str(e))
 
-    first_service = list(self.zeep_client.wsdl.services.itervalues())[0]
-    first_port = list(first_service.ports.itervalues())[0]
+    first_service = list(self.zeep_client.wsdl.services.values())[0]
+    first_port = list(first_service.ports.values())[0]
     self._method_bindings = first_port.binding
 
 
@@ -1212,7 +824,7 @@ class ZeepServiceProxy(GoogleSoapService):
 
   def _GetBindingNamespace(self):
     """Return a string with the namespace of the service binding in the WSDL."""
-    return (list(self.zeep_client.wsdl.bindings.itervalues())[0]
+    return (list(self.zeep_client.wsdl.bindings.values())[0]
             .port_name.namespace)
 
   def _PackArguments(self, method_name, args, set_type_attrs=False):
@@ -1236,7 +848,7 @@ class ZeepServiceProxy(GoogleSoapService):
     op_params = self.zeep_client.get_element(
         '{%s}%s' % (self._GetBindingNamespace(), method_name)).type.elements
     result = [self._PackArgumentsHelper(param, param_data, set_type_attrs)
-              for ((_, param), param_data) in izip(op_params, args)]
+              for ((_, param), param_data) in zip(op_params, args)]
     return result
 
   @classmethod
@@ -1279,7 +891,7 @@ class ZeepServiceProxy(GoogleSoapService):
       else:
         elem_type = elem.type
 
-      data_formatted = data.iteritems()
+      data_formatted = data.items()
       packed_result = self._CreateComplexTypeFromData(
           elem_type, type_override is not None, data_formatted, set_type_attrs)
     elif isinstance(data, zeep.xsd.CompoundValue):
@@ -1293,10 +905,6 @@ class ZeepServiceProxy(GoogleSoapService):
       packed_result = [self._PackArgumentsHelper(elem, item, set_type_attrs)
                        for item in data]
     else:
-      if elem.type.name == 'base64Binary' and self._IsBase64(data):
-        _logger.warn('Passing data to base64 field %s that may '
-                     'already be encoded. Do not pre-encode base64 '
-                     'fields with zeep.', elem.name)
       packed_result = data
 
     return packed_result
@@ -1409,95 +1017,3 @@ class HeaderHandler(object):
   @abc.abstractmethod
   def GetHTTPHeaders(self):
     """Returns the required HTTP headers."""
-
-
-
-class LoggingMessagePlugin(suds.plugin.MessagePlugin):
-  """A MessagePlugin used to log request summaries."""
-
-  def marshalled(self, context):
-    if _logger.isEnabledFor(logging.INFO):
-      _logger.info('Request summary - %s',
-                   _ExtractRequestSummaryFields(context.envelope))
-
-  def parsed(self, context):
-    if _logger.isEnabledFor(logging.INFO):
-      _logger.info('Response summary - %s',
-                   _ExtractResponseSummaryFields(context.reply))
-
-
-def _ExtractRequestSummaryFields(document):
-  """Extract logging fields from the request's suds.sax.element.Element.
-
-  Args:
-    document: A suds.sax.element.Element instance containing the API request.
-
-  Returns:
-    A dict mapping logging field names to their corresponding value.
-  """
-  headers = document.childAtPath('Header/RequestHeader')
-  body = document.childAtPath('Body')
-
-  summary_fields = {
-      'methodName': body.getChildren()[0].name
-  }
-
-  # Extract AdWords-specific fields if they exist.
-  # Note: We need to check if None because this will always evaluate False.
-  client_customer_id = headers.getChild('clientCustomerId')
-  if client_customer_id is not None:
-    summary_fields['clientCustomerId'] = client_customer_id.text
-
-  # Extract Ad Manager-specific fields if they exist.
-  # Note: We need to check if None because this will always evaluate False.
-  network_code = headers.getChild('networkCode')
-  if network_code is not None:
-    summary_fields['networkCode'] = network_code.text
-
-  return summary_fields
-
-
-def _ExtractResponseSummaryFields(document):
-  """Extract logging fields from the response's suds.sax.document.Document.
-
-  Args:
-    document: A suds.sax.document.Document instance containing the parsed
-      API response for a given API request.
-
-  Returns:
-    A dict mapping logging field names to their corresponding value.
-  """
-  headers = document.childAtPath('Envelope/Header/ResponseHeader')
-  body = document.childAtPath('Envelope/Body')
-  summary_fields = {}
-
-  if headers is not None:
-    summary_fields['requestId'] = headers.getChild('requestId').text
-    summary_fields['responseTime'] = headers.getChild('responseTime').text
-
-    # Extract AdWords-specific summary fields if they are present.
-    # Note: We need to check if None because this will always evaluate False.
-    service_name = headers.getChild('serviceName')
-    if service_name is not None:
-      summary_fields['serviceName'] = service_name.text
-
-    method_name = headers.getChild('methodName')
-    if method_name is not None:
-      summary_fields['methodName'] = method_name.text
-
-    operations = headers.getChild('operations')
-    if operations is not None:
-      summary_fields['operations'] = operations.text
-
-  if body is not None:
-    # Extract fault if it exists.
-    fault = body.getChild('Fault')
-    if fault is not None:
-      summary_fields['isFault'] = True
-      # Cap length of faultstring to 16k characters for summary.
-      summary_fields['faultMessage'] = fault.getChild(
-          'faultstring').text[:16000]
-    else:
-      summary_fields['isFault'] = False
-
-  return summary_fields

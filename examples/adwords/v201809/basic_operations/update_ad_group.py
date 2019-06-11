@@ -72,9 +72,9 @@ def main(client, ad_group_id, bid_micro_amount=None):
             cpc_bid_micros = bid['bid']['microAmount']
             break
 
-    print ('Ad group with name "%s", and id "%s" was updated to have status '
-           '"%s" and CPC bid %d.'
-           % (ad_group['name'], ad_group['id'], ad_group['status'],
+    print('Ad group with name "%s", and id "%s" was updated to have status '
+          '"%s" and CPC bid %d.'
+          % (ad_group['name'], ad_group['id'], ad_group['status'],
               cpc_bid_micros))
 
 

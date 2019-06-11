@@ -81,12 +81,12 @@ def main(client, ad_group_id):
     criteria = response['value']
     for ad_group_criterion in criteria:
       criterion = ad_group_criterion['criterion']
-      print ('Ad group criterion with ad group ID %s, criterion ID %s and '
-             'type "%s" was added.' %
-             (ad_group_criterion['adGroupId'], criterion['id'],
-              criterion['type']))
+      print('Ad group criterion with ad group ID %s, criterion ID %s and '
+            'type "%s" was added.' %
+            (ad_group_criterion['adGroupId'], criterion['id'],
+             criterion['type']))
   else:
-    print 'No criteria were returned.'
+    print('No criteria were returned.')
 
 
 if __name__ == '__main__':

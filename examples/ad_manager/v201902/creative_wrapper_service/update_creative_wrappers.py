@@ -42,7 +42,7 @@ def main(client, creative_wrapper_id):
   statement = (ad_manager.StatementBuilder(version='v201902')
                .Where('id = :creativeWrapperId')
                .WithBindVariable('creativeWrapperId',
-                                 long(creative_wrapper_id)))
+                                 int(creative_wrapper_id)))
 
   # Get creative wrappers.
   response = creative_wrapper_service.getCreativeWrappersByStatement(
@@ -60,11 +60,11 @@ def main(client, creative_wrapper_id):
 
     # Display results.
     for creative_wrapper in creative_wrappers:
-      print (('Creative wrapper with ID "%s" and wrapping order "%s" '
-              'was updated.') % (creative_wrapper['id'],
-                                 creative_wrapper['ordering']))
+      print(('Creative wrapper with ID "%s" and wrapping order "%s" '
+             'was updated.') % (creative_wrapper['id'],
+                                creative_wrapper['ordering']))
   else:
-    print 'No creative wrappers found to update.'
+    print('No creative wrappers found to update.')
 
 
 if __name__ == '__main__':

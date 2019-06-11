@@ -55,18 +55,18 @@ def main(client):
       result_set_size += page['totalResultSetSize']
       # Iterate over individual results in the page.
       for line_item_report in page['results']:
-        print ('Reconciliation line item report with ID %d, line item ID %d, '
-               'reconciliation source "%s", and reconciled volume %d was '
-               'found.' % (line_item_report['id'],
-                           line_item_report['lineItemId'],
-                           line_item_report['reconciliationSource'],
-                           (line_item_report['reconciledVolume']
-                            if 'reconciledVolume' in line_item_report else 0)))
+        print('Reconciliation line item report with ID %d, line item ID %d, '
+              'reconciliation source "%s", and reconciled volume %d was '
+              'found.' % (line_item_report['id'],
+                          line_item_report['lineItemId'],
+                          line_item_report['reconciliationSource'],
+                          (line_item_report['reconciledVolume']
+                           if 'reconciledVolume' in line_item_report else 0)))
     # Update statement for next page.
     statement.offset += statement.limit
     should_continue = statement.offset < result_set_size
 
-  print 'Number of results found: %d' % result_set_size
+  print('Number of results found: %d' % result_set_size)
 
 
 if __name__ == '__main__':

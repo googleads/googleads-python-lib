@@ -27,10 +27,9 @@ def main(client):
   # Get current user.
   user = user_service.getCurrentUser()
 
-  print ('User with ID %d, name "%s", email "%s", and role "%s" '
-         'is the current user.' % (
-             user.id, user.name, user.email, user.roleName
-         ))
+  print('User with ID %d, name "%s", email "%s", and role "%s" '
+        'is the current user.' % (
+            user.id, user.name, user.email, user.roleName))
 
 
 if __name__ == '__main__':

@@ -42,9 +42,9 @@ def main(client):
 
   package = query_result['results'][0]
 
-  print ('Package with ID %d will create proposal line items using product '
-         'package with ID %d.' % (package['id'],
-                                  package['productPackageId']))
+  print('Package with ID %d will create proposal line items using product '
+        'package with ID %d.' % (package['id'],
+                                 package['productPackageId']))
 
   # Remove limit and offset from statement.
   statement.limit = None
@@ -56,10 +56,10 @@ def main(client):
       statement.ToStatement())
 
   if result and result['numChanges'] > 0:
-    print ('Number of packages that proposal line items were created for: %d' %
-           result['numChanges'])
+    print('Number of packages that proposal line items were created for: %d' %
+          result['numChanges'])
   else:
-    print 'No proposal line items were created.'
+    print('No proposal line items were created.')
 
 
 if __name__ == '__main__':

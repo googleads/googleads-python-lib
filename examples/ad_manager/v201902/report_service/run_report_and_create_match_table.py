@@ -59,8 +59,8 @@ def main(client):
   try:
     # Run the report and wait for it to finish.
     report_job_id = report_downloader.WaitForReport(report_job)
-  except errors.AdManagerReportError, e:
-    print 'Failed to generate report. Error was: %s' % e
+  except errors.AdManagerReportError as e:
+    print('Failed to generate report. Error was: %s' % e)
 
   with tempfile.NamedTemporaryFile(
       suffix='.csv.gz', mode='wb', delete=False) as report_file:

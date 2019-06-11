@@ -50,15 +50,15 @@ def main(client):
 
       # Display results.
       for lica in licas:
-        print ('LICA with line item id "%s", creative id "%s", and status '
-               '"%s" was updated.' % (lica['lineItemId'], lica['creativeId'],
-                                      lica['status']))
+        print('LICA with line item id "%s", creative id "%s", and status '
+              '"%s" was updated.' % (lica['lineItemId'], lica['creativeId'],
+                                     lica['status']))
       statement.offset += statement.limit
     else:
       break
 
   if response['totalResultSetSize'] == 0:
-    print 'No LICAs found to update.'
+    print('No LICAs found to update.')
 
 if __name__ == '__main__':
   # Initialize client object.

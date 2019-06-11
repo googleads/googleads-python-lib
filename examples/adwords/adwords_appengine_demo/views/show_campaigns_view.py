@@ -54,7 +54,7 @@ class ShowCampaigns(webapp2.RequestHandler):
                              app_user.developer_token)
 
         campaigns = handler.GetCampaigns(client_customer_id)
-      except Exception, e:
+      except Exception as e:
         template_values['error'] = str(e)
     finally:
       # Use template to write output to the page.

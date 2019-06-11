@@ -73,8 +73,8 @@ def _DownloadReport(process_id, report_download_directory, customer_id,
   retry_count = 0
 
   while True:
-    print ('[%d/%d] Loading report for customer ID "%s" into "%s"...'
-           % (process_id, retry_count, customer_id, filepath))
+    print('[%d/%d] Loading report for customer ID "%s" into "%s"...'
+          % (process_id, retry_count, customer_id, filepath))
     try:
       with open(filepath, 'wb') as handler:
         report_downloader.DownloadReport(
@@ -85,8 +85,8 @@ def _DownloadReport(process_id, report_download_directory, customer_id,
       if e.code == 500 and retry_count < MAX_RETRIES:
         time.sleep(retry_count * BACKOFF_FACTOR)
       else:
-        print ('Report failed for customer ID "%s" with code "%d" after "%d" '
-               'retries.' % (customer_id, e.code, retry_count+1))
+        print('Report failed for customer ID "%s" with code "%d" after "%d" '
+              'retries.' % (customer_id, e.code, retry_count+1))
         return (False, {'customerId': customer_id, 'code': e.code,
                         'message': e.message})
 
@@ -207,7 +207,7 @@ def main(client, report_download_directory):
 
   queue_size = input_queue.qsize()
   num_processes = min(queue_size, MAX_PROCESSES)
-  print 'Retrieving %d reports with %d processes:' % (queue_size, num_processes)
+  print('Retrieving %d reports with %d processes:' % (queue_size, num_processes))
 
   # Start all the processes.
   processes = [ReportWorker(report_download_directory,
@@ -221,22 +221,22 @@ def main(client, report_download_directory):
   for process in processes:
     process.join()
 
-  print 'Finished downloading reports with the following results:'
+  print('Finished downloading reports with the following results:')
   while True:
     try:
       success = reports_succeeded.get(timeout=0.01)
     except Empty:
       break
-    print '\tReport for CustomerId "%d" succeeded.' % success['customerId']
+    print('\tReport for CustomerId "%d" succeeded.' % success['customerId'])
 
   while True:
     try:
       failure = reports_failed.get(timeout=0.01)
     except Empty:
       break
-    print ('\tReport for CustomerId "%d" failed with error code "%s" and '
-           'message: %s.' % (failure['customerId'], failure['code'],
-                             failure['message']))
+    print('\tReport for CustomerId "%d" failed with error code "%s" and '
+          'message: %s.' % (failure['customerId'], failure['code'],
+                            failure['message']))
 
 
 if __name__ == '__main__':

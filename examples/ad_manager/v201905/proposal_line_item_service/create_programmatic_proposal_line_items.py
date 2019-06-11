@@ -91,10 +91,10 @@ def main(client, proposal_id, product_id, rate_card_id):
 
   # Display results.
   for proposal_line_item in proposal_line_items:
-    print ('Programmatic proposal line item with id "%s", belonging to '
-           'proposal id "%s", and named "%s" was created.' %
-           (proposal_line_item['id'], proposal_line_item['proposalId'],
-            proposal_line_item['name']))
+    print('Programmatic proposal line item with id "%s", belonging to '
+          'proposal id "%s", and named "%s" was created.' %
+          (proposal_line_item['id'], proposal_line_item['proposalId'],
+           proposal_line_item['name']))
 
 
 if __name__ == '__main__':

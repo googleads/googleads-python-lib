@@ -82,16 +82,16 @@ def main(client):
 
   # Display results.
   for conversion_tracker in conversion_trackers['value']:
-    print ('Conversion with ID "%d", name "%s", status "%s", and category '
-           '"%s" was added.'
-           % (conversion_tracker['id'], conversion_tracker['name'],
+    print('Conversion with ID "%d", name "%s", status "%s", and category '
+          '"%s" was added.'
+          % (conversion_tracker['id'], conversion_tracker['name'],
               conversion_tracker['status'], conversion_tracker['category']))
     if (conversion_tracker['ConversionTracker.Type']
         == 'AdWordsConversionTracker'):
-      print ('Google global site tag:\n%s\n\n'
-             % conversion_tracker['googleGlobalSiteTag'])
-      print ('Google event snippet:\n%s\n\n'
-             % conversion_tracker['googleEventSnippet'])
+      print('Google global site tag:\n%s\n\n'
+            % conversion_tracker['googleGlobalSiteTag'])
+      print('Google event snippet:\n%s\n\n'
+            % conversion_tracker['googleEventSnippet'])
 
 
 if __name__ == '__main__':

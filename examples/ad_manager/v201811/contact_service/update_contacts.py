@@ -40,7 +40,7 @@ def main(client, contact_id):
   # Create statement object to select the single contact by ID.
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where('id = :id')
-               .WithBindVariable('id', long(contact_id))
+               .WithBindVariable('id', int(contact_id))
                .Limit(1))
 
   # Get contacts by statement.
@@ -58,11 +58,11 @@ def main(client, contact_id):
 
     # Display results.
     for contact in contacts:
-      print (('Contact with ID "%s", name "%s", and address "%s" '
-              'was updated.')
-             % (contact['id'], contact['name'], contact['address']))
+      print(('Contact with ID "%s", name "%s", and address "%s" '
+             'was updated.')
+            % (contact['id'], contact['name'], contact['address']))
   else:
-    print 'No contacts found to update.'
+    print('No contacts found to update.')
 
 
 if __name__ == '__main__':

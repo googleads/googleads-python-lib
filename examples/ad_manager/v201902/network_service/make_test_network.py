@@ -41,11 +41,11 @@ def main(client):
   network = network_service.makeTestNetwork()
 
   # Display results.
-  print ('Test network with network code "%s" and display name "%s" '
-         'created.' % (network['networkCode'], network['displayName']))
-  print ('You may now sign in at '
-         'http://www.google.com/admanager/main?networkCode=%s'
-         % network['networkCode'])
+  print('Test network with network code "%s" and display name "%s" '
+        'created.' % (network['networkCode'], network['displayName']))
+  print('You may now sign in at '
+        'http://www.google.com/admanager/main?networkCode=%s'
+        % network['networkCode'])
 
 if __name__ == '__main__':
   # Initialize client object.

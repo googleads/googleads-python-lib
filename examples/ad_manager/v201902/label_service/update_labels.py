@@ -34,7 +34,7 @@ def main(client, label_id):
   # Create a statement to select only active labels.
   statement = (ad_manager.StatementBuilder(version='v201902')
                .Where('id = :labelId')
-               .WithBindVariable('labelId', long(label_id)))
+               .WithBindVariable('labelId', int(label_id)))
 
   # Get labels by filter.
   response = label_service.getLabelsByStatement(statement.ToStatement())
@@ -50,10 +50,10 @@ def main(client, label_id):
     labels = label_service.updateLabels(updated_labels)
 
     for label in labels:
-      print ('Label with id "%s" and name "%s" was updated.'
-             % (label['id'], label['name']))
+      print('Label with id "%s" and name "%s" was updated.'
+            % (label['id'], label['name']))
   else:
-    print 'No labels found to update.'
+    print('No labels found to update.')
 
 
 if __name__ == '__main__':

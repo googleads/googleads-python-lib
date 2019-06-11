@@ -44,7 +44,7 @@ class UpdateCredentials(webapp2.RequestHandler):
                             self.request.get('adwords_manager_cid'),
                             self.request.get('dev_token'))
       self.redirect('/showCredentials')
-    except Exception, e:
+    except Exception as e:
       template_values['error'] = str(e)
       # Use template to write output to the page.
       path = os.path.join(os.path.dirname(__file__),

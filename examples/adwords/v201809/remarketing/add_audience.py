@@ -84,17 +84,17 @@ def main(client):
           conversions_map[conversion_tracker['id']] = conversion_tracker
 
     for user_list in user_list_result['value']:
-      print ('User list with name "%s" and ID "%s" was added.'
-             % (user_list['name'], user_list['id']))
+      print('User list with name "%s" and ID "%s" was added.'
+            % (user_list['name'], user_list['id']))
       if user_list['conversionTypes']:
         for conversion_type in user_list['conversionTypes']:
           conversion_tracker = conversions_map[conversion_type['id']]
-          print ('Google global site tag:\n%s\n\n'
-                 % conversion_tracker['googleGlobalSiteTag'])
-          print ('Google event snippet:\n%s\n\n'
-                 % conversion_tracker['googleEventSnippet'])
+          print('Google global site tag:\n%s\n\n'
+                % conversion_tracker['googleGlobalSiteTag'])
+          print('Google event snippet:\n%s\n\n'
+                % conversion_tracker['googleEventSnippet'])
   else:
-    print 'No user lists were added.'
+    print('No user lists were added.')
 
 
 if __name__ == '__main__':

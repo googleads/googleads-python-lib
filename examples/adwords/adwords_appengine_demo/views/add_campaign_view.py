@@ -57,7 +57,7 @@ class AddCampaign(webapp2.RequestHandler):
                           ad_channel_type, budget)
 
       self.redirect('/showCampaigns?clientCustomerId=%s' % client_customer_id)
-    except Exception, e:
+    except Exception as e:
       template_values['error'] = str(e)
       # Use template to write output to the page.
       path = os.path.join(os.path.dirname(__file__),

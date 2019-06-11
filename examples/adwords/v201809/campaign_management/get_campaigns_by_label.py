@@ -66,10 +66,10 @@ def main(client, label_id):
     # Display results.
     if 'entries' in page:
       for campaign in page['entries']:
-        print ('Campaign found with Id "%s", name "%s", and labels: %s'
-               % (campaign['id'], campaign['name'], campaign['labels']))
+        print('Campaign found with Id "%s", name "%s", and labels: %s'
+              % (campaign['id'], campaign['name'], campaign['labels']))
     else:
-      print 'No campaigns were found.'
+      print('No campaigns were found.')
 
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)

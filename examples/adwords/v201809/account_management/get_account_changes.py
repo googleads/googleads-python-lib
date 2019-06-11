@@ -44,7 +44,7 @@ def main(client):
     for campaign in campaigns['entries']:
       campaign_ids.append(campaign['id'])
   else:
-    print 'No campaigns were found.'
+    print('No campaigns were found.')
     return
 
   # Construct selector and get all changes.
@@ -62,35 +62,35 @@ def main(client):
   # Display results.
   if account_changes:
     if 'lastChangeTimestamp' in account_changes:
-      print 'Most recent changes: %s' % account_changes['lastChangeTimestamp']
+      print('Most recent changes: %s' % account_changes['lastChangeTimestamp'])
     if account_changes['changedCampaigns']:
       for data in account_changes['changedCampaigns']:
-        print ('Campaign with id "%s" has change status "%s".'
-               % (data['campaignId'], data['campaignChangeStatus']))
+        print('Campaign with id "%s" has change status "%s".'
+              % (data['campaignId'], data['campaignChangeStatus']))
         if (data['campaignChangeStatus'] != 'NEW' and
             data['campaignChangeStatus'] != 'FIELDS_UNCHANGED'):
           if 'addedCampaignCriteria' in data:
-            print ('  Added campaign criteria: %s' %
-                   data['addedCampaignCriteria'])
+            print('  Added campaign criteria: %s' %
+                  data['addedCampaignCriteria'])
           if 'removedCampaignCriteria' in data:
-            print ('  Removed campaign criteria: %s' %
-                   data['removedCampaignCriteria'])
+            print('  Removed campaign criteria: %s' %
+                  data['removedCampaignCriteria'])
           if 'changedAdGroups' in data:
             for ad_group_data in data['changedAdGroups']:
-              print ('  Ad group with id "%s" has change status "%s".'
-                     % (ad_group_data['adGroupId'],
+              print('  Ad group with id "%s" has change status "%s".'
+                    % (ad_group_data['adGroupId'],
                         ad_group_data['adGroupChangeStatus']))
               if ad_group_data['adGroupChangeStatus'] != 'NEW':
                 if 'changedAds' in ad_group_data:
-                  print '    Changed ads: %s' % ad_group_data['changedAds']
+                  print('    Changed ads: %s' % ad_group_data['changedAds'])
                 if 'changedCriteria' in ad_group_data:
-                  print ('    Changed criteria: %s' %
-                         ad_group_data['changedCriteria'])
+                  print('    Changed criteria: %s' %
+                        ad_group_data['changedCriteria'])
                 if 'removedCriteria' in ad_group_data:
-                  print ('    Removed criteria: %s' %
-                         ad_group_data['removedCriteria'])
+                  print('    Removed criteria: %s' %
+                        ad_group_data['removedCriteria'])
   else:
-    print 'No changes were found.'
+    print('No changes were found.')
 
 
 if __name__ == '__main__':

@@ -22,38 +22,29 @@ import os
 import re
 import tempfile
 import unittest
+from urllib.error import HTTPError
+from urllib.parse import urlencode
+from urllib.request import urlopen
 from xml.etree import ElementTree
 
 import googleads.adwords
 import googleads.common
 import googleads.errors
+from . import testing
 import lxml.etree
 import mock
-import six
-import suds
-import yaml
 import yaml
 import zeep.transports
-from . import testing
-try:
-  import urllib2
-except ImportError:
-  import urllib.request as urllib2  # For Py3
 
 CURRENT_VERSION = sorted(googleads.adwords._SERVICE_MAP.keys())[-1]
 TEST_DIR = os.path.dirname(__file__)
-URL_REQUEST_PATH = 'urllib2' if six.PY2 else 'urllib.request'
 
 
-def GetAdWordsClient(soap_impl, **kwargs):
+def GetAdWordsClient(**kwargs):
   """Returns an initialized AdwordsClient for use in testing.
 
   If not specified, the keyword arguments will be set to default test values.
 
-  Args:
-    soap_impl: The SOAP implementation to pass to the client.
-    **kwargs: Optional keyword arguments that can be provided to customize the
-      generated AdWordsClient.
   Keyword Arguments:
     ccid: A str value for the AdWordsClient's client_customer_id.
     dev_token: A str value for the AdWordsClient's developer_token.
@@ -90,8 +81,7 @@ def GetAdWordsClient(soap_impl, **kwargs):
       cache=kwargs.get('cache'),
       proxy_config=kwargs.get('proxy_config'),
       validate_only=validate_only, partial_failure=partial_failure,
-      report_downloader_headers=report_downloader_headers,
-      soap_impl=soap_impl, timeout=timeout)
+      report_downloader_headers=report_downloader_headers, timeout=timeout)
 
   return client
 
@@ -137,7 +127,7 @@ class AdWordsHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
     self.default_sig_template = ' (%s, %s, %s)'
     self.util_sig_template = ' (%s, %s, %s, %s)'
     self.aw_client = GetAdWordsClient(
-        'zeep', ccid=self.ccid, dev_token=self.dev_token,
+        ccid=self.ccid, dev_token=self.dev_token,
         user_agent=self.user_agent, oauth2_client=self.oauth2_client,
         validate_only=self.validate_only, partial_failure=self.partial_failure,
         report_downloader_headers=self.report_downloader_headers)
@@ -348,10 +338,8 @@ class AdWordsClientTest(unittest.TestCase):
         os.path.dirname(__file__), 'test_data/adwords_googleads.yaml')
     self.https_proxy_uri = 'http://myproxy:443'
     self.proxy_config = GetProxyConfig(https_proxy_uri=self.https_proxy_uri)
-    self.file_cache = suds.cache.FileCache
-    self.no_cache = suds.cache.NoCache()
-    self.adwords_client = GetAdWordsClient('zeep')
-    self.aw_client = GetAdWordsClient('zeep', proxy_config=self.proxy_config)
+    self.adwords_client = GetAdWordsClient()
+    self.aw_client = GetAdWordsClient(proxy_config=self.proxy_config)
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.adwords_client, CURRENT_VERSION, False, None)
 
@@ -400,7 +388,7 @@ class AdWordsClientTest(unittest.TestCase):
 
   def testGetService_success(self):
     client = GetAdWordsClient(
-        'zeep', timeout='timeout', cache='cache', proxy_config='proxy_config')
+        timeout='timeout', cache='cache', proxy_config='proxy_config')
     client.enable_compression = True
 
     service_name = list(googleads.adwords._SERVICE_MAP[CURRENT_VERSION])[0]
@@ -481,8 +469,8 @@ class AdWordsClientIntegrationTest(unittest.TestCase):
       for service, mapping in services.items():
         wsdl_url = wsdl_url_template % (server, mapping, version, service)
         try:
-          six.moves.urllib.request.urlopen(wsdl_url)
-        except six.moves.urllib.error.HTTPError:
+          urlopen(wsdl_url)
+        except HTTPError:
           raise ValueError('AdWords API %s does not contain "%s" with mapping '
                            '"%s". The generated WSDL URL does not exist:\n%s'
                            % (version, service, mapping, wsdl_url))
@@ -519,7 +507,7 @@ class BatchJobHelperTest(testing.CleanUtilityRegistryTestCase):
 
   def setUp(self):
     """Prepare tests."""
-    self.client = GetAdWordsClient('zeep')
+    self.client = GetAdWordsClient()
     self.batch_job_helper = self.client.GetBatchJobHelper()
 
   def testGetId(self):
@@ -539,21 +527,20 @@ class BatchJobHelperTest(testing.CleanUtilityRegistryTestCase):
       with mock.patch('googleads.adwords.IncrementalUploadHelper'
                       '._InitializeURL') as mock_init:
         mock_init.return_value = 'https://www.google.com'
-        with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
+        with mock.patch('urllib.request.OpenerDirector.open') as mock_open:
           self.batch_job_helper.UploadOperations([[]])
           mock_open.assert_called_with(mock_request)
 
 
-@testing.MultiBackendTest
 class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
 
   """Test suite for the BatchJobUploadRequestBuilder."""
 
   ENVELOPE_NS = 'http://schemas.xmlsoap.org/soap/envelope/'
 
-  def setUp(self, soap_impl):
+  def setUp(self):
     """Prepare tests."""
-    self.client = GetAdWordsClient(soap_impl)
+    self.client = GetAdWordsClient()
     self.request_builder = self.client.GetBatchJobHelper()._request_builder
     self.version = self.request_builder._version
     self.upload_url = 'https://goo.gl/IaQQsJ'
@@ -738,8 +725,7 @@ class BatchJobUploadRequestBuilderTest(testing.CleanUtilityRegistryTestCase):
 
     request = self.RAW_API_REQUEST_TEMPLATE % (
         self.version, self.version, method, ops_xml, method)
-    if six.PY3:
-      request = bytes(request, 'utf-8')
+    request = bytes(request, 'utf-8')
     request = lxml.etree.fromstring(request)
 
     return (ops, request)
@@ -1324,13 +1310,13 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
   """Test suite for the IncrementalUploadHelper."""
 
   def GetIncrementalUploadHelper(self):
-    with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
+    with mock.patch('urllib.request.OpenerDirector.open') as mock_open:
       mock_open.return_value.headers = {'location': self.initialized_url}
       return self.batch_job_helper.GetIncrementalUploadHelper(self.original_url)
 
   def setUp(self):
     """Prepare tests."""
-    self.client = GetAdWordsClient('zeep')
+    self.client = GetAdWordsClient()
     self.server = 'https://test.com'
     self.version = 'test_version'
     self.batch_job_helper = self.client.GetBatchJobHelper(
@@ -1357,9 +1343,9 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
     self.assertEqual(expected, dump_data)
 
   def testLoad(self):
-    s = six.StringIO(self.incremental_uploader_dump)
+    s = io.StringIO(self.incremental_uploader_dump)
 
-    with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
+    with mock.patch('urllib.request.OpenerDirector.open') as mock_open:
       mock_open.return_value.headers = {
           'location': self.initialized_url
       }
@@ -1386,7 +1372,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
+      with mock.patch('urllib.request.OpenerDirector.open') as mock_open:
         self.incremental_uploader.UploadOperations([[]], True)
         mock_open.assert_called_with(mock_request)
 
@@ -1395,7 +1381,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
     error_code = '404'
     error_message = 'I AM ERROR'
     error_headers = {}
-    http_error = six.moves.urllib.error.HTTPError(
+    http_error = HTTPError(
         error_url, error_code, error_message, error_headers, None)
 
     with mock.patch('googleads.adwords.BatchJobHelper.'
@@ -1403,10 +1389,10 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch.object(urllib2.OpenerDirector, 'open') as mock_open:
+      with mock.patch('urllib.request.OpenerDirector.open') as mock_open:
         mock_open.side_effect = http_error
         self.assertRaises(
-            six.moves.urllib.error.HTTPError,
+            HTTPError,
             self.incremental_uploader.UploadOperations, [[]], True)
         mock_open.assert_called_with(mock_request)
 
@@ -1416,7 +1402,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
                     'BuildUploadRequest') as mock_build_request:
       mock_request = mock.MagicMock()
       mock_build_request.return_value = mock_request
-      with mock.patch.object(urllib2.OpenerDirector, 'open'):
+      with mock.patch('urllib.request.OpenerDirector.open'):
         self.incremental_uploader.UploadOperations([[]], True)
         self.assertRaises(
             googleads.errors.AdWordsBatchJobServiceInvalidOperationError,
@@ -1427,7 +1413,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
       addheaders = [('a', 'b')]
     opener = MyOpener()
 
-    with mock.patch('%s.build_opener' % URL_REQUEST_PATH) as mock_build_opener,\
+    with mock.patch('googleads.adwords.build_opener') as mock_build_opener,\
         mock.patch('googleads.adwords.IncrementalUploadHelper._InitializeURL'):
       mock_build_opener.return_value = opener
       self.client.custom_http_headers = {'X-My-Headers': 'abc'}
@@ -1442,7 +1428,7 @@ class ResponseParserTest(testing.CleanUtilityRegistryTestCase):
 
   def setUp(self):
     """Prepare tests."""
-    self.client = GetAdWordsClient('zeep')
+    self.client = GetAdWordsClient()
     self.response_parser = googleads.adwords.BatchJobHelper.GetResponseParser()
 
   @classmethod
@@ -1525,10 +1511,7 @@ def GetVersionedXSD(version):
 
   with open(report_xsd, 'rb') as f:
     data = f.read()
-    if six.PY3:
-      return data.replace(b'{VERSION}', bytes(version, 'utf-8'))
-    else:
-      return data.replace('{VERSION}', version)
+    return data.replace(b'{VERSION}', bytes(version, 'utf-8'))
 
 
 class ReportDownloaderZeepTest(testing.CleanUtilityRegistryTestCase):
@@ -1538,14 +1521,10 @@ class ReportDownloaderZeepTest(testing.CleanUtilityRegistryTestCase):
     self.opener = mock.Mock()
     self.adwords_client = mock.Mock()
     self.adwords_client.proxy_config = GetProxyConfig()
-    self.adwords_client.soap_impl = 'zeep'
     self.adwords_client.cache = googleads.common.ZeepServiceProxy.NO_CACHE
     self.adwords_client.custom_http_headers = False
     self.header_handler = mock.Mock()
 
-    # It's unfortunate that the target output is different between suds and
-    # zeep. The reason is because suds pretty prints its xml in a very hardcoded
-    # hack way, and zeep does not. Not doing it is better.
     post_body_path = os.path.join(
         TEST_DIR, 'test_data/adwords_report_post_body_no_formatting.txt')
     with open(post_body_path, 'r') as f:
@@ -1563,17 +1542,16 @@ class ReportDownloaderZeepTest(testing.CleanUtilityRegistryTestCase):
       with mock.patch('googleads.common._ZeepProxyTransport') as mock_transport:
         mock_transport.return_value = XSDTransport()
 
-        self.adwords_client.soap_impl = 'zeep'
         self.report_downloader = googleads.adwords.ReportDownloader(
             self.adwords_client, self.version
         )
     self.report_downloader.url_opener = self.opener
 
   @mock.patch('googleads.adwords._report_logger')
-  @mock.patch.object(urllib2, 'Request')
+  @mock.patch.object(googleads.adwords, 'Request')
   def testDownloadReportWithZeep(self, mock_request, mock_logger):
     mock_logger.isEnabledFor.return_value = True
-    output_file = six.StringIO()
+    output_file = io.StringIO()
     report_definition = {
         'reportName': 'Last 7 days CRITERIA_PERFORMANCE_REPORT',
         'dateRangeType': 'LAST_7_DAYS',
@@ -1594,9 +1572,8 @@ class ReportDownloaderZeepTest(testing.CleanUtilityRegistryTestCase):
             self.report_downloader,
             '_ExtractResponseHeaders')) as mock_extract_response_headers:
       response_data = u'ABC 广告客户'
-      response_fp = six.BytesIO()
-      response_fp.write(response_data if six.PY2 else bytes(response_data,
-                                                            'utf-8'))
+      response_fp = io.BytesIO()
+      response_fp.write(bytes(response_data, 'utf-8'))
       response_fp.seek(0)
       mock_response = mock.Mock()
       mock_response.read.side_effect = response_fp.read
@@ -1609,8 +1586,7 @@ class ReportDownloaderZeepTest(testing.CleanUtilityRegistryTestCase):
 
       mock_request.assert_called_once_with(
           self.report_downloader._end_point,
-          (self.post_body_data if six.PY2
-           else bytes(self.post_body_data, 'utf-8')),
+          (bytes(self.post_body_data, 'utf-8')),
           mock_header_handler.GetReportDownloadHeaders.return_value)
 
       output_file.seek(0)
@@ -1619,145 +1595,6 @@ class ReportDownloaderZeepTest(testing.CleanUtilityRegistryTestCase):
           mock_request.return_value)
       mock_extract_response_headers.assert_called_once_with(
           mock_response.headers)
-
-
-class ReportDownloaderSudsTest(testing.CleanUtilityRegistryTestCase):
-  """Reporting integration tests for suds."""
-
-  def setUp(self):
-    self.version = CURRENT_VERSION
-    self.marshaller = mock.Mock()
-    self.header_handler = mock.Mock()
-    self.adwords_client = mock.Mock()
-    self.adwords_client.proxy_config = GetProxyConfig()
-    self.adwords_client.cache = suds.cache.NoCache()
-    self.adwords_client.custom_http_headers = False
-    self.opener = mock.Mock()
-
-    post_body_path = os.path.join(TEST_DIR,
-                                  'test_data/adwords_report_post_body.txt')
-    with open(post_body_path, 'r') as f:
-      self.post_body_data = f.read().replace('{VERSION}', self.version)
-
-    class XSDTransport(suds.transport.Transport):
-
-      def __init__(self):
-        suds.transport.Transport.__init__(self)
-        self.handlers = []
-
-      def open(self, request):
-        fp = io.BytesIO()
-        fp.write(GetVersionedXSD(CURRENT_VERSION))
-        fp.seek(0)
-        return fp
-
-    with mock.patch(
-        'googleads.adwords._AdWordsHeaderHandler') as mock_handler:
-      mock_handler.return_value = self.header_handler
-
-      with mock.patch('googleads.common._SudsProxyTransport') as mock_transport:
-        mock_transport.return_value = XSDTransport()
-
-        self.adwords_client.soap_impl = 'suds'
-        self.report_downloader = googleads.adwords.ReportDownloader(
-            self.adwords_client, self.version
-        )
-    self.report_downloader.url_opener = self.opener
-
-  @mock.patch('googleads.adwords._report_logger')
-  @mock.patch.object(urllib2, 'Request')
-  def testDownloadReportWithSuds(self, mock_request, mock_logger):
-    mock_logger.isEnabledFor.return_value = True
-    output_file = six.StringIO()
-    report_definition = {
-        'reportName': 'Last 7 days CRITERIA_PERFORMANCE_REPORT',
-        'dateRangeType': 'LAST_7_DAYS',
-        'reportType': 'CRITERIA_PERFORMANCE_REPORT',
-        'downloadFormat': 'CSV',
-        'selector': {
-            'fields': ['CampaignId', 'AdGroupId', 'Id', 'CriteriaType',
-                       'Criteria', 'FinalUrls', 'Impressions', 'Clicks', 'Cost']
-        }
-    }
-
-    with mock.patch.object(self.report_downloader,
-                           '_header_handler') as mock_header_handler, \
-        (mock.patch.object(
-            self.report_downloader,
-            '_ExtractRequestSummaryFields')) as mock_extract_request_summary, \
-        (mock.patch.object(
-            self.report_downloader,
-            '_ExtractResponseHeaders')) as mock_extract_response_headers:
-      response_data = u'ABC 广告客户'
-      response_fp = six.BytesIO()
-      response_fp.write(response_data if six.PY2 else bytes(response_data,
-                                                            'utf-8'))
-      response_fp.seek(0)
-      mock_response = mock.Mock()
-      mock_response.read.side_effect = response_fp.read
-      mock_response.code = '200'
-      self.opener.open.return_value = mock_response
-
-      self.report_downloader.DownloadReport(report_definition, output_file,
-                                            skip_report_header=True,
-                                            use_raw_enum_values=False)
-
-      mock_request.assert_called_once_with(
-          self.report_downloader._end_point,
-          (self.post_body_data if six.PY2
-           else bytes(self.post_body_data, 'utf-8')),
-          mock_header_handler.GetReportDownloadHeaders.return_value)
-
-      output_file.seek(0)
-      self.assertEqual(output_file.read(), response_data)
-      mock_extract_request_summary.assert_called_once_with(
-          mock_request.return_value)
-      mock_extract_response_headers.assert_called_once_with(
-          mock_response.headers)
-
-  @mock.patch.object(urllib2, 'Request')
-  def testDownloadReportWithBytesIO(self, mock_request):
-    output_file = six.BytesIO()
-    report_definition = {
-        'reportName': 'Last 7 days CRITERIA_PERFORMANCE_REPORT',
-        'dateRangeType': 'LAST_7_DAYS',
-        'reportType': 'CRITERIA_PERFORMANCE_REPORT',
-        'downloadFormat': 'CSV',
-        'selector': {
-            'fields': ['CampaignId', 'AdGroupId', 'Id', 'CriteriaType',
-                       'Criteria', 'FinalUrls', 'Impressions', 'Clicks', 'Cost']
-        }
-    }
-
-    with mock.patch.object(self.report_downloader,
-                           '_header_handler') as mock_header_handler, \
-        (mock.patch.object(self.report_downloader,
-                           '_ExtractRequestSummaryFields')), \
-        (mock.patch.object(self.report_downloader,
-                           '_ExtractResponseHeaders')):
-      response_data = u'CONTENT STRING 广告客户'
-      response_fp = six.BytesIO()
-      response_fp.write(response_data.encode('utf-8'))
-      response_fp.seek(0)
-      mock_response = mock.Mock()
-      mock_response.read.side_effect = response_fp.read
-      mock_response.code = '200'
-      self.opener.open.return_value = mock_response
-
-      self.report_downloader.DownloadReport(report_definition,
-                                            output_file,
-                                            skip_report_header=True,
-                                            use_raw_enum_values=False)
-
-      mock_request.assert_called_once_with(
-          self.report_downloader._end_point,
-          (self.post_body_data if six.PY2
-           else bytes(self.post_body_data, 'utf-8')),
-          mock_header_handler.GetReportDownloadHeaders.return_value)
-
-      output_file.seek(0)
-      self.assertEqual(output_file.read().decode('utf-8'), response_data)
-
 
 class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
   """Tests for the googleads.adwords.ReportDownloader class."""
@@ -1779,7 +1616,7 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     self.header_handler = mock.Mock()
     self.adwords_client = mock.Mock()
     self.adwords_client.proxy_config = GetProxyConfig()
-    self.adwords_client.cache = suds.cache.NoCache()
+    self.adwords_client.cache = googleads.common.ZeepServiceProxy.NO_CACHE
     self.adwords_client.custom_http_headers = False
     self.opener = mock.Mock()
 
@@ -1787,8 +1624,8 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     self.report_downloader.url_opener = self.opener
 
     test_dir = os.path.dirname(__file__)
-    with open(os.path.join(
-        test_dir, 'test_data/unicode_test_data.txt')) as handler:
+    test_data_path = os.path.join(test_dir, 'test_data/unicode_test_data.txt')
+    with open(test_data_path, encoding='utf-8') as handler:
       self.budget_template = handler.read()
 
   def testSetsCustomHeaders(self):
@@ -1798,13 +1635,13 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     opener = MyOpener()
     self.adwords_client.custom_http_headers = {'X-My-Header': 'abc'}
 
-    with mock.patch('%s.build_opener' % URL_REQUEST_PATH) as mock_build_opener:
+    with mock.patch('googleads.adwords.build_opener') as mock_build_opener:
       mock_build_opener.return_value = opener
       self.GetReportDownloader()
 
     self.assertEqual(opener.addheaders, [('a', 'b'), ('X-My-Header', 'abc')])
 
-  @mock.patch.object(urllib2.OpenerDirector, 'open')
+  @mock.patch('urllib.request.OpenerDirector.open')
   def testDownloadReportAsString(self, mock_request):
     serialize_response = mock.Mock()
     with mock.patch.object(
@@ -1827,23 +1664,21 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
   def testDownloadReportAsStringWithAwql(self):
     query = 'SELECT Id FROM Campaign WHERE NAME LIKE \'%Test%\''
     file_format = 'CSV'
-    post_body = six.moves.urllib.parse.urlencode({'__fmt': file_format,
+    post_body = urlencode({'__fmt': file_format,
                                                   '__rdquery': query})
-    if six.PY3:
-      post_body = bytes(post_body, 'utf-8')
+    post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
     report_data = u'CONTENT STRING アングリーバード'
     report_contents = io.BytesIO()
-    report_contents.write(report_data.encode('utf-8') if six.PY2
-                          else bytes(report_data, 'utf-8'))
+    report_contents.write(bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
     fake_response.read.side_effect = report_contents.read
     fake_response.msg = 'fake message'
     fake_response.code = '200'
 
-    with mock.patch.object(urllib2, 'Request') as mock_request:
+    with mock.patch.object(googleads.adwords, 'Request') as mock_request:
       mock_request_instance = mock.Mock()
       mock_request.return_value = mock_request_instance
       mock_request_instance.get_full_url.return_value = 'https://google.com/'
@@ -1877,11 +1712,11 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
       stream.return_value = open(os.path.join(
           test_dir, 'test_data/unicode_test_data.txt'), 'rb')
       report_definition = {'downloadFormat': 'CSV'}
-      s = six.StringIO()
+      s = io.StringIO()
       self.report_downloader.DownloadReport(report_definition, output=s)
 
   def testDownloadReportCheckFormat_CSVStringSuccess(self):
-    output_file = six.StringIO()
+    output_file = io.StringIO()
 
     try:
       self.report_downloader._DownloadReportCheckFormat('CSV', output_file)
@@ -1900,7 +1735,7 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                 'unexpectedly!')
 
   def testDownloadReportCheckFormat_GZIPPEDBytesIOSuccess(self):
-    output_file = six.BytesIO()
+    output_file = io.BytesIO()
 
     try:
       self.report_downloader._DownloadReportCheckFormat('GZIPPED_CSV',
@@ -1910,16 +1745,13 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                 'unexpectedly!')
 
   def testDownloadReportCheckFormat_GZIPPEDStringFailure(self):
-    # This would only fail in Python 3, where StringIO is unicode rather than
-    # bytes.
-    if six.PY3:
-      output_file = six.StringIO()
-      self.assertRaises(googleads.errors.GoogleAdsValueError,
-                        self.report_downloader._DownloadReportCheckFormat,
-                        'GZIPPED_CSV', output_file)
+    output_file = io.StringIO()
+    self.assertRaises(googleads.errors.GoogleAdsValueError,
+                      self.report_downloader._DownloadReportCheckFormat,
+                      'GZIPPED_CSV', output_file)
 
   def testDownloadReport_failure(self):
-    output_file = six.StringIO()
+    output_file = io.StringIO()
     report_definition = {
         'reportName': 'Last 7 days CRITERIA_PERFORMANCE_REPORT',
         'dateRangeType': 'LAST_7_DAYS',
@@ -1934,12 +1766,11 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     with mock.patch.object(self.report_downloader.url_opener,
                            'open') as mock_open:
       response_data = 'bad stuff happened'
-      response_fp = six.BytesIO()
-      response_fp.write(response_data if six.PY2 else bytes(
-          response_data, 'utf-8'))
+      response_fp = io.BytesIO()
+      response_fp.write(bytes(response_data, 'utf-8'))
       response_fp.seek(0)
 
-      mock_open.side_effect = six.moves.urllib.error.HTTPError(
+      mock_open.side_effect = HTTPError(
           'http://abc', '500', 'whoops!', {}, response_fp)
       with mock.patch.object(self.report_downloader, '_header_handler'):
         with self.assertRaises(googleads.errors.AdWordsReportError):
@@ -1948,29 +1779,27 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                                                 use_raw_enum_values=False)
 
   def testDownloadReportWithAwql(self):
-    output_file = six.StringIO()
+    output_file = io.StringIO()
     query = (googleads.adwords.ReportQueryBuilder()
              .Select('CampaignId').From('CAMPAIGN_PERFORMANCE_REPORT')
              .Where('CampaignStatus').EqualTo('ENABLED')
              .Build())
     file_format = 'CSV'
-    post_body = six.moves.urllib.parse.urlencode({'__fmt': file_format,
+    post_body = urlencode({'__fmt': file_format,
                                                   '__rdquery': query})
-    if six.PY3:
-      post_body = bytes(post_body, 'utf-8')
+    post_body = bytes(post_body, 'utf-8')
     headers = {'Authorization': 'ya29.something'}
     self.header_handler.GetReportDownloadHeaders.return_value = headers
     report_data = u'CONTENT STRING 广告客户'
-    report_contents = six.StringIO() if six.PY2 else io.BytesIO()
-    report_contents.write(report_data if six.PY2
-                          else bytes(report_data, 'utf-8'))
+    report_contents = io.BytesIO()
+    report_contents.write(bytes(report_data, 'utf-8'))
     report_contents.seek(0)
     fake_response = mock.Mock()
     fake_response.read.side_effect = report_contents.read
     fake_response.msg = 'fake message'
     fake_response.code = '200'
 
-    with mock.patch.object(urllib2, 'Request') as mock_request:
+    with mock.patch.object(googleads.adwords, 'Request') as mock_request:
       mock_request_instance = mock.Mock()
       mock_request.return_value = mock_request_instance
       mock_request_instance.get_full_url.return_value = 'https://google.com/'
@@ -1998,9 +1827,8 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
         '<reportDownloadError><ApiError><type>%s</type><trigger>%s</trigger>'
         '<fieldPath>%s</fieldPath></ApiError></reportDownloadError>')
     response_data = error_template % (type_, trigger, field_path)
-    response_fp = six.BytesIO()
-    response_fp.write(response_data if six.PY2
-                      else bytes(response_data, 'utf-8'))
+    response_fp = io.BytesIO()
+    response_fp.write(bytes(response_data, 'utf-8'))
     response_fp.seek(0)
     response.read.side_effect = response_fp.read
 
@@ -2015,9 +1843,8 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
 
     # Check that if the XML fields are empty, this still functions.
     response_data = error_template % ('', '', '')
-    response_fp = six.BytesIO()
-    response_fp.write(response_data if six.PY2
-                      else bytes(response_data, 'utf-8'))
+    response_fp = io.BytesIO()
+    response_fp.write(bytes(response_data, 'utf-8'))
     response_fp.seek(0)
     response.read.side_effect = response_fp.read
     rval = self.report_downloader._ExtractError(response)
@@ -2032,9 +1859,8 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
                      '<reportDownloadError><ApiError><type>1234</type>'
                      '<trigger>5678</trigger></ApiError></ExtraElement>'
                      '</reportDownloadError>')
-    response_fp = six.BytesIO()
-    response_fp.write(response_data if six.PY2
-                      else bytes(response_data, 'utf-8'))
+    response_fp = io.BytesIO()
+    response_fp.write(bytes(response_data, 'utf-8'))
     response_fp.seek(0)
     response.read.side_effect = response_fp.read
 
@@ -2048,8 +1874,7 @@ class ReportDownloaderTest(testing.CleanUtilityRegistryTestCase):
     response = mock.Mock()
     response.code = 400
     content = 'Page not found!'
-    response.read.return_value = (content if six.PY2
-                                  else bytes(content, 'utf-8'))
+    response.read.return_value = (bytes(content, 'utf-8'))
 
     rval = self.report_downloader._ExtractError(response)
     self.assertEqual(response.code, rval.code)
@@ -2311,9 +2136,8 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause can show fields listed in any orders.
-    six.assertCountEqual(
-        self, selected_fields,
-        [field.strip() for field in match.group(1).split(',')])
+    self.assertCountEqual(selected_fields,
+      [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testFailUsingCopyConstructor(self):
@@ -2332,9 +2156,8 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause can show fields listed in any orders.
-    six.assertCountEqual(
-        self, selected_fields,
-        [field.strip() for field in match.group(1).split(',')])
+    self.assertCountEqual(selected_fields,
+      [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testBuild_duplicateSelectedFieldsRetainOnlyUnique(self):
@@ -2347,9 +2170,8 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause retains only unique fields.
-    six.assertCountEqual(
-        self, set(selected_fields),
-        [field.strip() for field in match.group(1).split(',')])
+    self.assertCountEqual(set(selected_fields),
+      [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testBuild_whereConditions(self):
@@ -2369,9 +2191,8 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause can show fields listed in any orders.
-    six.assertCountEqual(
-        self, selected_fields,
-        [field.strip() for field in match.group(1).split(',')])
+    self.assertCountEqual(selected_fields,
+      [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testBuild_orderByDesc(self):
@@ -2387,9 +2208,8 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     match = re.match(awql_regex, str(actual_query))
 
     # The SELECT clause can show fields listed in any orders.
-    six.assertCountEqual(
-        self, selected_fields,
-        [field.strip() for field in match.group(1).split(',')])
+    self.assertCountEqual(selected_fields,
+      [field.strip() for field in match.group(1).split(',')])
     self.assertRegexpMatches(str(actual_query), awql_regex)
 
   def testBuild_selectIsNone(self):

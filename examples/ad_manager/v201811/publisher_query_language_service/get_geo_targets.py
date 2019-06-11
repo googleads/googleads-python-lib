@@ -26,7 +26,7 @@ from googleads import ad_manager
 GEO_TARGET_TYPE = 'City'
 
 
-def main(client, geo_target_type):
+def main(client):
   # Initialize a report downloader.
   report_downloader = client.GetDataDownloader(version='v201811')
 
@@ -44,7 +44,7 @@ def main(client, geo_target_type):
     report_downloader.DownloadPqlResultToCsv(
         geo_pql_query, geo_data_file, {'type': geo_target_type})
 
-  print 'Saved geo data to... %s' % geo_data_file.name
+  print('Saved geo data to... %s' % geo_data_file.name)
 
 
 if __name__ == '__main__':

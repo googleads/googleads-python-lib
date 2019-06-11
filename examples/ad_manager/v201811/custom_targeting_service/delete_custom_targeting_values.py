@@ -66,10 +66,10 @@ def main(client, key_id):
       break
 
   if deleted_custom_targeting_values > 0:
-    print ('Number of custom targeting values deleted: %s'
-           % deleted_custom_targeting_values)
+    print('Number of custom targeting values deleted: %s'
+          % deleted_custom_targeting_values)
   else:
-    print 'No custom targeting values were deleted.'
+    print('No custom targeting values were deleted.')
 
 if __name__ == '__main__':
   # Initialize client object.

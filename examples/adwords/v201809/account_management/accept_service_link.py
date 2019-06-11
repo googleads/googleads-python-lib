@@ -50,10 +50,10 @@ def main(client, service_link_id):
 
   # Display results.
   for mutated_service_link in mutated_service_links:
-    print ('Service link with service link ID "%s", type "%s" was updated '
-           'to status: "%s".' % (mutated_service_link['serviceLinkId'],
-                                 mutated_service_link['serviceType'],
-                                 mutated_service_link['linkStatus']))
+    print('Service link with service link ID "%s", type "%s" was updated '
+          'to status: "%s".' % (mutated_service_link['serviceLinkId'],
+                                mutated_service_link['serviceType'],
+                                mutated_service_link['linkStatus']))
 
 
 if __name__ == '__main__':

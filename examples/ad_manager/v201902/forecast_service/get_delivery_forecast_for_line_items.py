@@ -35,15 +35,15 @@ def main(client, line_item_id1, line_item_id2):
 
   # Get forecast for line item.
   forecast = forecast_service.getDeliveryForecastByIds(
-      [line_item_id1, line_item_id2], None)
+      [line_item_id1, line_item_id2], {'ignoredLineItemIds': []})
 
   for single_forecast in forecast['lineItemDeliveryForecasts']:
     unit_type = single_forecast['unitType']
-    print ('Forecast for line item %d:\n\t%d %s matched\n\t%d %s delivered\n\t'
-           '%d %s predicted\n' % (
-               single_forecast['lineItemId'], single_forecast['matchedUnits'],
-               unit_type, single_forecast['deliveredUnits'], unit_type,
-               single_forecast['predictedDeliveryUnits'], unit_type))
+    print('Forecast for line item %d:\n\t%d %s matched\n\t%d %s delivered\n\t'
+          '%d %s predicted\n' % (
+              single_forecast['lineItemId'], single_forecast['matchedUnits'],
+              unit_type, single_forecast['deliveredUnits'], unit_type,
+              single_forecast['predictedDeliveryUnits'], unit_type))
 
 
 if __name__ == '__main__':

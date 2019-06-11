@@ -74,9 +74,9 @@ def main(client, campaign_id):
     page = campaign_shared_set_service.get(selector)
     if 'entries' in page:
       for shared_set in page['entries']:
-        print 'Campaign shared set ID %d and name "%s"' % (
+        print('Campaign shared set ID %d and name "%s"' % (
             shared_set['sharedSetId'], shared_set['sharedSetName']
-        )
+        ))
         shared_set_ids.append(shared_set['sharedSetId'])
     # Increment values to request the next page.
     offset += PAGE_SIZE
@@ -108,17 +108,17 @@ def main(client, campaign_id):
     if 'entries' in page:
       for shared_criterion in page['entries']:
         if shared_criterion['criterion']['type'] == 'KEYWORD':
-          print ('Shared negative keyword with ID %d and text "%s" was'
-                 'found.' % (shared_criterion['criterion']['id'],
-                             shared_criterion['criterion']['text']))
+          print('Shared negative keyword with ID %d and text "%s" was'
+                'found.' % (shared_criterion['criterion']['id'],
+                            shared_criterion['criterion']['text']))
         elif shared_criterion['criterion']['type'] == 'PLACEMENT':
-          print ('Shared negative placement with ID %d and url "%s" was'
-                 'found.' % (shared_criterion['criterion']['id'],
-                             shared_criterion['criterion']['url']))
+          print('Shared negative placement with ID %d and url "%s" was'
+                'found.' % (shared_criterion['criterion']['id'],
+                            shared_criterion['criterion']['url']))
         else:
-          print 'Shared criterion with ID %d was found.' % (
+          print('Shared criterion with ID %d was found.' % (
               shared_criterion['criterion']['id'],
-          )
+          ))
         criterion_ids.append({
             'sharedSetId': shared_criterion['sharedSetId'],
             'criterionId': shared_criterion['criterion']['id']
@@ -142,10 +142,10 @@ def main(client, campaign_id):
     response = shared_criterion_service.mutate(operations)
     if 'value' in response:
       for criterion in response['value']:
-        print ('Criterion ID %d was successfully removed from shared set ID'
-               '%d.' % (criterion['criterion']['id'], criterion['sharedSetId']))
+        print('Criterion ID %d was successfully removed from shared set ID'
+              '%d.' % (criterion['criterion']['id'], criterion['sharedSetId']))
   else:
-    print 'No shared criteria were removed.'
+    print('No shared criteria were removed.')
 
 
 if __name__ == '__main__':

@@ -40,7 +40,7 @@ def main(client, user_id):
   # Create filter text to select user team associations by the user ID.
   statement = (ad_manager.StatementBuilder(version='v201902')
                .Where('userId = :userId')
-               .WithBindVariable('userId', long(user_id)))
+               .WithBindVariable('userId', int(user_id)))
 
   # Get user team associations by statement.
   response = user_team_association_service.getUserTeamAssociationsByStatement(
@@ -48,11 +48,11 @@ def main(client, user_id):
   user_team_associations = response['results'] if 'results' in response else []
 
   for user_team_association in user_team_associations:
-    print ('User team association between user with ID "%s" and team with '
-           'ID "%s" will be deleted.' % (user_team_association['userId'],
-                                         user_team_association['teamId']))
-  print ('Number of teams that the user will be removed from: %s' %
-         len(user_team_associations))
+    print('User team association between user with ID "%s" and team with '
+          'ID "%s" will be deleted.' % (user_team_association['userId'],
+                                        user_team_association['teamId']))
+  print('Number of teams that the user will be removed from: %s' %
+        len(user_team_associations))
 
   # Action doesn't require limit/offset
   statement.limit = None
@@ -65,10 +65,10 @@ def main(client, user_id):
 
   # Display results.
   if result and int(result['numChanges']) > 0:
-    print ('Number of teams that the user was removed from: %s'
-           % result['numChanges'])
+    print('Number of teams that the user was removed from: %s'
+          % result['numChanges'])
   else:
-    print 'No user team associations were deleted.'
+    print('No user team associations were deleted.')
 
 
 if __name__ == '__main__':

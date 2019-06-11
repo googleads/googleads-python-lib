@@ -36,7 +36,7 @@ def main(client, order_id):
   statement = (ad_manager.StatementBuilder(version='v201811')
                .Where(('deliveryRateType = :deliveryRateType AND '
                        'orderId = :orderId'))
-               .WithBindVariable('orderId', long(order_id))
+               .WithBindVariable('orderId', int(order_id))
                .WithBindVariable('deliveryRateType', 'EVENLY')
                .Limit(500))
 
@@ -58,14 +58,14 @@ def main(client, order_id):
     # Display results.
     if line_items:
       for line_item in line_items:
-        print ('Line item with id "%s", belonging to order id "%s", named '
-               '"%s", and delivery rate "%s" was updated.'
-               % (line_item['id'], line_item['orderId'], line_item['name'],
+        print('Line item with id "%s", belonging to order id "%s", named '
+              '"%s", and delivery rate "%s" was updated.'
+              % (line_item['id'], line_item['orderId'], line_item['name'],
                   line_item['deliveryRateType']))
     else:
-      print 'No line items were updated.'
+      print('No line items were updated.')
   else:
-    print 'No line items found to update.'
+    print('No line items found to update.')
 
 
 if __name__ == '__main__':

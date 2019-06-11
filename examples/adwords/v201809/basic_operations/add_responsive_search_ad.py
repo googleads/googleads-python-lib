@@ -91,10 +91,10 @@ def main(client, ad_group_id):
   # Display results.
   for ad in ads['value']:
     ad = ad['ad']
-    print ('Ad of type "%s" with id "%d" was added.\n'
-           'Headlines:\n%s\n'
-           'Descriptions:\n%s'
-           % (ad['Ad.Type'], ad['id'],
+    print('Ad of type "%s" with id "%d" was added.\n'
+          'Headlines:\n%s\n'
+          'Descriptions:\n%s'
+          % (ad['Ad.Type'], ad['id'],
               '\n'.join(['\t%s (pinned to %s)' %
                          (headline['asset']['assetText'],
                           headline['pinnedField'])

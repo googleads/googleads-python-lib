@@ -45,8 +45,8 @@ def main(client):
 
   report = page['results'][0]
 
-  print ('Reconciliation order report with ID %d will be submitted.' %
-         report['id'])
+  print('Reconciliation order report with ID %d will be submitted.' %
+        report['id'])
 
   # Remove limit and offset from statement.
   statement.limit = None
@@ -59,10 +59,10 @@ def main(client):
                 statement.ToStatement()))
 
   if result and result['numChanges'] > 0:
-    print ('Number of reconciliation order reports submitted: %d' %
-           result['numChanges'])
+    print('Number of reconciliation order reports submitted: %d' %
+          result['numChanges'])
   else:
-    print 'No reconciliation order reports were submitted.'
+    print('No reconciliation order reports were submitted.')
 
 
 if __name__ == '__main__':

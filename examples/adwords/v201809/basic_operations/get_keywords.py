@@ -67,14 +67,14 @@ def main(client, adgroup_id):
     # Display results.
     if 'entries' in page:
       for keyword in page['entries']:
-        print ('Keyword ID "%s", type "%s", text "%s", and match type '
-               '"%s" was found.' % (
-                   keyword['criterion']['id'],
-                   keyword['criterion']['type'],
-                   keyword['criterion']['text'],
-                   keyword['criterion']['matchType']))
+        print('Keyword ID "%s", type "%s", text "%s", and match type '
+              '"%s" was found.' % (
+                  keyword['criterion']['id'],
+                  keyword['criterion']['type'],
+                  keyword['criterion']['text'],
+                  keyword['criterion']['matchType']))
     else:
-      print 'No keywords were found.'
+      print('No keywords were found.')
     offset += PAGE_SIZE
     selector['paging']['startIndex'] = str(offset)
     more_pages = offset < int(page['totalNumEntries'])

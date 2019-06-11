@@ -40,7 +40,7 @@ def main(client):
 
   programmatic_buyers_file.close()
 
-  print 'Saved programmatic buyers to... %s' % programmatic_buyers_file.name
+  print('Saved programmatic buyers to... %s' % programmatic_buyers_file.name)
 
 
 if __name__ == '__main__':

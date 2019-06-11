@@ -95,13 +95,13 @@ def main(client, adgroup_id):
 
   if 'value' in response:
     for adgroup_ad in response['value']:
-      print 'AdGroupAd with ID "%s" was added.' % adgroup_ad['ad']['id']
-      print 'Upgraded URL properties:'
-      print 'Final Urls: %s' % adgroup_ad['ad']['finalUrls']
-      print 'Final Mobile URLs: %s' % adgroup_ad['ad']['finalMobileUrls']
-      print ('Tracking URL template: %s'
-             % adgroup_ad['ad']['trackingUrlTemplate'])
-      print 'Custom parameters: %s' % adgroup_ad['ad']['urlCustomParameters']
+      print('AdGroupAd with ID "%s" was added.' % adgroup_ad['ad']['id'])
+      print('Upgraded URL properties:')
+      print('Final Urls: %s' % adgroup_ad['ad']['finalUrls'])
+      print('Final Mobile URLs: %s' % adgroup_ad['ad']['finalMobileUrls'])
+      print('Tracking URL template: %s'
+            % adgroup_ad['ad']['trackingUrlTemplate'])
+      print('Custom parameters: %s' % adgroup_ad['ad']['urlCustomParameters'])
   else:
     raise errors.GoogleAdsError('Failed to create AdGroupAd.')
 

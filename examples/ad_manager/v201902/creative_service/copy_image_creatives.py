@@ -47,11 +47,11 @@ def main(client):
   image_creative['name'] = 'Copy of %s' % image_creative['name']
 
   result = creative_service.createCreatives([image_creative])[0]
-  print ('A creative with ID %d, name "%s", and type "%s" was created and '
-         'can be previewed at: %s' % (result['id'],
-                                      result['name'],
-                                      ad_manager.AdManagerClassType(result),
-                                      result['previewUrl']))
+  print('A creative with ID %d, name "%s", and type "%s" was created and '
+        'can be previewed at: %s' % (result['id'],
+                                     result['name'],
+                                     ad_manager.AdManagerClassType(result),
+                                     result['previewUrl']))
 
 
 if __name__ == '__main__':

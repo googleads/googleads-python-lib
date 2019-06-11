@@ -53,10 +53,10 @@ def main(client):
 
   # Display results.
   for conversion_tracker in conversion_trackers['value']:
-    print ('Conversion tracker with id "%s", name "%s", status "%s" '
-           'and category "%s" was added.\n' %
-           (conversion_tracker['id'], conversion_tracker['name'],
-            conversion_tracker['status'], conversion_tracker['category']))
+    print('Conversion tracker with id "%s", name "%s", status "%s" '
+          'and category "%s" was added.\n' %
+          (conversion_tracker['id'], conversion_tracker['name'],
+           conversion_tracker['status'], conversion_tracker['category']))
 
 
 if __name__ == '__main__':

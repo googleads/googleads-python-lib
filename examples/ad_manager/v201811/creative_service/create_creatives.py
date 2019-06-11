@@ -79,9 +79,9 @@ def main(client, advertiser_id):
 
   # Display results.
   for creative in creatives:
-    print ('Image creative with id "%s", name "%s", and type "%s" was '
-           'created and can be previewed at %s.'
-           % (creative['id'], creative['name'],
+    print('Image creative with id "%s", name "%s", and type "%s" was '
+          'created and can be previewed at %s.'
+          % (creative['id'], creative['name'],
               ad_manager.AdManagerClassType(creative), creative['previewUrl']))
 
 if __name__ == '__main__':

@@ -95,19 +95,19 @@ def main(client_id, client_secret, scopes):
 
   auth_url, _ = flow.authorization_url(prompt='consent')
 
-  print ('Log into the Google Account you use to access your Ad Manager account'
-         'and go to the following URL: \n%s\n' % (auth_url))
-  print 'After approving the token enter the verification code (if specified).'
+  print('Log into the Google Account you use to access your Ad Manager account'
+        'and go to the following URL: \n%s\n' % (auth_url))
+  print('After approving the token enter the verification code (if specified).')
   code = raw_input('Code: ').strip()
 
   try:
     flow.fetch_token(code=code)
   except InvalidGrantError as ex:
-    print 'Authentication has failed: %s' % ex
+    print('Authentication has failed: %s' % ex)
     sys.exit(1)
 
-  print 'Access token: %s' % flow.credentials.token
-  print 'Refresh token: %s' % flow.credentials.refresh_token
+  print('Access token: %s' % flow.credentials.token)
+  print('Refresh token: %s' % flow.credentials.refresh_token)
 
 
 if __name__ == '__main__':

@@ -36,7 +36,7 @@ def main(client, line_item_id):
   statement = (ad_manager.StatementBuilder(version='v201905')
                .Where('lineItemId = :lineItemId AND status = :status')
                .WithBindVariable('status', 'ACTIVE')
-               .WithBindVariable('lineItemId', long(line_item_id)))
+               .WithBindVariable('lineItemId', int(line_item_id)))
 
   num_deactivated_licas = 0
 
@@ -46,9 +46,9 @@ def main(client, line_item_id):
         statement.ToStatement())
     if 'results' in response and len(response['results']):
       for lica in response['results']:
-        print ('LICA with line item id "%s", creative id "%s", and status'
-               ' "%s" will be deactivated.' %
-               (lica['lineItemId'], lica['creativeId'], lica['status']))
+        print('LICA with line item id "%s", creative id "%s", and status'
+              ' "%s" will be deactivated.' %
+              (lica['lineItemId'], lica['creativeId'], lica['status']))
 
       # Perform action.
       result = lica_service.performLineItemCreativeAssociationAction(
@@ -62,9 +62,9 @@ def main(client, line_item_id):
 
   # Display results.
   if num_deactivated_licas > 0:
-    print 'Number of LICAs deactivated: %s' % num_deactivated_licas
+    print('Number of LICAs deactivated: %s' % num_deactivated_licas)
   else:
-    print 'No LICAs were deactivated.'
+    print('No LICAs were deactivated.')
 
 
 if __name__ == '__main__':

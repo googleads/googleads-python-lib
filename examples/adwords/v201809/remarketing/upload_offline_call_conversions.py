@@ -63,10 +63,10 @@ def main(client, caller_id, call_start_time, conversion_name, conversion_time,
 
   if values:
     for occ_feed in values:
-      print ('Uploaded offline call conversion value of "%s" for caller ID '
-             '"%s".\n' % (occ_feed['conversionName'], occ_feed['callerId']))
+      print('Uploaded offline call conversion value of "%s" for caller ID '
+            '"%s".\n' % (occ_feed['conversionName'], occ_feed['callerId']))
   else:
-    print 'No offline call conversions were added.'
+    print('No offline call conversions were added.')
 
 
 if __name__ == '__main__':

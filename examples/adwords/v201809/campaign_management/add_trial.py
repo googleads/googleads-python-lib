@@ -70,19 +70,19 @@ def main(client, base_campaign_id, draft_id):
 
   while is_pending and poll_attempts < MAX_POLL_ATTEMPTS:
     trial = trial_service.get(selector)['entries'][0]
-    print 'Trial ID %d has status "%s"' % (trial['id'], trial['status'])
+    print('Trial ID %d has status "%s"' % (trial['id'], trial['status']))
     poll_attempts += 1
     is_pending = trial['status'] == 'CREATING'
 
     if is_pending:
       sleep_seconds = 30 * (2 ** poll_attempts)
-      print 'Sleeping for %d seconds.' % sleep_seconds
+      print('Sleeping for %d seconds.' % sleep_seconds)
       time.sleep(sleep_seconds)
 
   if trial['status'] == 'ACTIVE':
     # The trial creation was successful.
-    print 'Trial created with ID %d and trial campaign ID %d' % (
-        trial['id'], trial['trialCampaignId'])
+    print('Trial created with ID %d and trial campaign ID %d' % (
+        trial['id'], trial['trialCampaignId']))
   elif trial['status'] == 'CREATION_FAILED':
     # The trial creation failed, and errors can be fetched from the
     # TrialAsyncErrorService.
@@ -98,16 +98,16 @@ def main(client, base_campaign_id, draft_id):
     errors = trial_async_error_service.get(selector)['entries']
 
     if not errors:
-      print 'Could not retrieve errors for trial %d' % trial['id']
+      print('Could not retrieve errors for trial %d' % trial['id'])
     else:
-      print 'Could not create trial due to the following errors:'
+      print('Could not create trial due to the following errors:')
       for error in errors:
-        print 'Error: %s' % error['asyncError']
+        print('Error: %s' % error['asyncError'])
   else:
     # Most likely, the trial is still being created. You can continue polling,
     # but we have limited the number of attempts in the example.
-    print ('Timed out waiting to create trial from draft %d with base campaign '
-           '%d' % (draft_id, base_campaign_id))
+    print('Timed out waiting to create trial from draft %d with base campaign '
+          '%d' % (draft_id, base_campaign_id))
 
 
 if __name__ == '__main__':
