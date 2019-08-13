@@ -386,15 +386,7 @@ class AdManagerPackerTest(unittest.TestCase):
     result = self.packer.Pack(input_date, CURRENT_VERSION)
     self.assertEqual(result, {'year': 2017, 'month': 1, 'day': 2})
 
-  def testPackDateTimePreV201811(self):
-    input_date = datetime.datetime(2017, 1, 2, 3, 4, 5)
-    input_date = pytz.timezone('America/New_York').localize(input_date)
-    result = self.packer.Pack(input_date, 'v201808')
-    self.assertEqual(result, {'date': {'year': 2017, 'month': 1, 'day': 2},
-                              'hour': 3, 'minute': 4, 'second': 5,
-                              'timeZoneID': 'America/New_York'})
-
-  def testPackDateTimePostV201811(self):
+  def testPackDateTime(self):
     input_date = datetime.datetime(2017, 1, 2, 3, 4, 5)
     input_date = pytz.timezone('America/New_York').localize(input_date)
     result = self.packer.Pack(input_date, CURRENT_VERSION)
@@ -425,14 +417,10 @@ class DataDownloaderTest(unittest.TestCase):
         oauth2_client, application_name, network_code, self.https_proxy)
     self.version = sorted(googleads.ad_manager._SERVICE_MAP.keys())[-1]
     self.report_downloader = self.ad_manager.GetDataDownloader()
-    self.report_downloader_201808 = self.ad_manager.GetDataDownloader(
-        version='v201808')
     self.pql_service = mock.Mock()
     self.report_service = mock.Mock()
     self.report_downloader._pql_service = self.pql_service
     self.report_downloader._report_service = self.report_service
-    self.report_downloader_201808._pql_service = self.pql_service
-    self.report_downloader_201808._report_service = self.report_service
     self.generic_header = [{'labelName': 'Some random header...'},
                            {'labelName': 'Another header...'}]
 
@@ -465,20 +453,6 @@ class DataDownloaderTest(unittest.TestCase):
             'minute': '12',
             'second': '12',
             'timeZoneId': 'PST8PDT'},
-        'xsi_type': 'DateTimeValue'
-    }
-
-    row1_field4_201808 = {
-        'value': {
-            'date': {
-                'year': '2012',
-                'month': '11',
-                'day': '05'
-            },
-            'hour': '12',
-            'minute': '12',
-            'second': '12',
-            'timeZoneID': 'PST8PDT'},
         'xsi_type': 'DateTimeValue'
     }
 
@@ -534,21 +508,6 @@ class DataDownloaderTest(unittest.TestCase):
         'xsi_type': 'DateTimeValue'
     }
 
-    row2_field4_201808 = {
-        'value': {
-            'date': {
-                'year': '2013',
-                'month': '01',
-                'day': '03'
-            },
-            'hour': '02',
-            'minute': '02',
-            'second': '02',
-            'timeZoneID': 'GMT'
-        },
-        'xsi_type': 'DateTimeValue'
-    }
-
     row2_field5 = {
         'value': '123456',
         'xsi_type': 'NumberValue'
@@ -570,21 +529,10 @@ class DataDownloaderTest(unittest.TestCase):
     row2 = [row2_field1, row2_field2, row2_field3, row2_field4, row2_field5,
             row2_field6]
 
-    row1_201808 = [row1_field1, row1_field2, row1_field3, row1_field4_201808,
-                   row1_field5, row1_field6]
-    row2_201808 = [row2_field1, row2_field2, row2_field3, row2_field4_201808,
-                   row2_field5, row2_field6]
-
     self.generic_rval = [{
         'values': [DecideValue(value) for value in row1]
     }, {
         'values': [DecideValue(value) for value in row2]
-    }]
-
-    self.generic_rval_201808 = [{
-        'values': [DecideValue(value) for value in row1_201808]
-    }, {
-        'values': [DecideValue(value) for value in row2_201808]
     }]
 
   def testDownloadPqlResultSetToCsv(self):
@@ -631,25 +579,6 @@ class DataDownloaderTest(unittest.TestCase):
             for field in self.generic_rval[0]['values']]
     row2 = [self.report_downloader._ConvertValueForCsv(field)
             for field in self.generic_rval[1]['values']]
-
-    self.pql_service.select.assert_called_once_with(
-        {'values': None,
-         'query': ('SELECT Id, Name FROM Line_Item LIMIT 500 OFFSET 0')})
-    self.assertEqual([[self.generic_header[0]['labelName'],
-                       self.generic_header[1]['labelName']],
-                      row1, row2], result_set)
-
-  def testDownloadPqlResultToList_201808(self):
-    self.pql_service.select.return_value = {'rows': self.generic_rval_201808,
-                                            'columnTypes': self.generic_header}
-
-    result_set = self.report_downloader_201808.DownloadPqlResultToList(
-        'SELECT Id, Name FROM Line_Item')
-
-    row1 = [self.report_downloader_201808._ConvertValueForCsv(field)
-            for field in self.generic_rval_201808[0]['values']]
-    row2 = [self.report_downloader_201808._ConvertValueForCsv(field)
-            for field in self.generic_rval_201808[1]['values']]
 
     self.pql_service.select.assert_called_once_with(
         {'values': None,
@@ -967,94 +896,6 @@ class StatementBuilderTest(testing.CleanUtilityRegistryTestCase):
                 'minute': 4,
                 'second': 5,
                 'timeZoneId': 'America/New_York'
-            },
-        }
-    }, {
-        'key': 'test_set_key',
-        'value': {
-            'xsi_type': 'SetValue',
-            'values': [
-                {'xsi_type': 'NumberValue', 'value': 1},
-                {'xsi_type': 'NumberValue', 'value': 2},
-            ],
-        }
-    }]
-    target_values.sort(key=lambda v: v['key'])
-
-    statement_result = test_statement.ToStatement()
-    self.assertEqual(statement_result['query'],
-                     ('WHERE bool_key = :test_bool_key '
-                      'AND number_key = :test_number_key '
-                      'AND date_key = :test_date_key '
-                      'AND datetime_key = :test_datetime_key '
-                      'AND set_key = :test_set_key '
-                      'LIMIT %s '
-                      'OFFSET 0' % googleads.ad_manager.SUGGESTED_PAGE_LIMIT
-                     ))
-
-    # The output order doesn't matter, and it's stored internally as a dict
-    # until rendered, which is fine, but we need to lock it down for this test.
-    self.assertEqual(
-        sorted(statement_result['values'], key=lambda v: v['key']),
-        target_values
-    )
-
-  def testWhereWithOtherTypes_201808(self):
-    test_statement = googleads.ad_manager.StatementBuilder(version='v201808')
-    test_statement.Where((
-        'bool_key = :test_bool_key '
-        'AND number_key = :test_number_key '
-        'AND date_key = :test_date_key '
-        'AND datetime_key = :test_datetime_key '
-        'AND set_key = :test_set_key'
-    ))
-
-    test_statement.WithBindVariable('test_bool_key', True)
-    test_statement.WithBindVariable('test_number_key', 5)
-    test_statement.WithBindVariable('test_date_key', datetime.date(2017, 1, 2))
-    test_dt = datetime.datetime(2017, 1, 2,
-                                hour=3, minute=4, second=5,
-                               )
-    test_dt = pytz.timezone('America/New_York').localize(test_dt)
-    test_statement.WithBindVariable('test_datetime_key', test_dt)
-    test_statement.WithBindVariable('test_set_key', [1, 2])
-
-    target_values = [{
-        'key': 'test_bool_key',
-        'value': {
-            'xsi_type': 'BooleanValue',
-            'value': True,
-        }
-    }, {
-        'key': 'test_number_key',
-        'value': {
-            'xsi_type': 'NumberValue',
-            'value': 5,
-        }
-    }, {
-        'key': 'test_date_key',
-        'value': {
-            'xsi_type': 'DateValue',
-            'value': {
-                'year': 2017,
-                'month': 1,
-                'day': 2,
-            },
-        }
-    }, {
-        'key': 'test_datetime_key',
-        'value': {
-            'xsi_type': 'DateTimeValue',
-            'value': {
-                'date': {
-                    'year': 2017,
-                    'month': 1,
-                    'day': 2,
-                },
-                'hour': 3,
-                'minute': 4,
-                'second': 5,
-                'timeZoneID': 'America/New_York'
             },
         }
     }, {

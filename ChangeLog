@@ -1,3 +1,9 @@
+21.0.0 -- 08/14/2019
+* Added support for Ad Manager v201908
+* Removed support for Ad Manager v201808
+* Removed examples for Ad Manager v201811
+* Updated all Ad Manager examples to reflect Sales Manager sunset
+
 20.0.0 -- 06/11/2019
 * Updated examples to be Python 3 compatible
 * Removed suds dependency leaving zeep as the only supported SOAP client

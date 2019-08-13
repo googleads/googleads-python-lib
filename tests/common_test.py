@@ -37,7 +37,7 @@ import zeep.exceptions
 
 
 TEST_DIR = os.path.dirname(__file__)
-CURRENT_VERSION = 'v201902'
+CURRENT_VERSION = 'v201908'
 
 
 class CommonTest(testing.CleanUtilityRegistryTestCase):

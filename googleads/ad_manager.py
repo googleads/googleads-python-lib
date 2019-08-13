@@ -44,29 +44,6 @@ _data_downloader_logger = logging.getLogger(
 
 # A giant dictionary of Ad Manager versions and the services they support.
 _SERVICE_MAP = {
-    'v201808':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
-         'CdnConfigurationService', 'CompanyService', 'ContactService',
-         'ContentBundleService', 'ContentMetadataKeyHierarchyService',
-         'ContentService', 'CreativeService', 'CreativeSetService',
-         'CreativeTemplateService', 'CreativeWrapperService',
-         'CustomFieldService', 'CustomTargetingService',
-         'DaiAuthenticationKeyService', 'ExchangeRateService',
-         'ForecastService', 'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService',
-         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
-         'OrderService', 'PackageService', 'PlacementService',
-         'PremiumRateService', 'ProductService', 'ProductPackageService',
-         'ProductPackageItemService', 'ProductTemplateService',
-         'ProposalLineItemService', 'ProposalService',
-         'PublisherQueryLanguageService', 'RateCardService',
-         'ReconciliationOrderReportService', 'ReconciliationReportRowService',
-         'ReconciliationLineItemReportService',
-         'ReconciliationReportService', 'ReportService',
-         'SuggestedAdUnitService', 'TeamService', 'UserService',
-         'UserTeamAssociationService', 'WorkflowRequestService'),
     'v201811':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdRuleService', 'AudienceSegmentService', 'BaseRateService',
@@ -135,6 +112,22 @@ _SERVICE_MAP = {
          'ReconciliationReportService', 'ReportService',
          'SuggestedAdUnitService', 'TeamService', 'TargetingPresetService',
          'UserService', 'UserTeamAssociationService', 'WorkflowRequestService'),
+    'v201908':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
+         'CdnConfigurationService', 'CmsMetadataService', 'CompanyService',
+         'ContactService', 'ContentBundleService', 'ContentService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'DaiAuthenticationKeyService',
+         'ForecastService', 'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService',
+         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
+         'OrderService', 'PlacementService', 'ProposalLineItemService',
+         'ProposalService', 'PublisherQueryLanguageService', 'ReportService',
+         'SuggestedAdUnitService', 'TeamService', 'TargetingPresetService',
+         'UserService', 'UserTeamAssociationService'),
 }
 
 
@@ -433,9 +426,7 @@ class _AdManagerPacker(googleads.common.SoapPacker):
           'hour': value.hour,
           'minute': value.minute,
           'second': value.second,
-          # As of V201811, timeZoneID was renamed timeZoneId
-          'timeZoneId' if version >= 'v201811' else 'timeZoneID':
-              value.tzinfo.zone,
+          'timeZoneId': value.tzinfo.zone,
       }
     elif isinstance(value, datetime.date):
       return {'year': value.year, 'month': value.month, 'day': value.day}
@@ -690,8 +681,7 @@ class PQLHelper(object):
               'hour': value.hour,
               'minute': value.minute,
               'second': value.second,
-              'timeZoneId' if version >= 'v201811' else 'timeZoneID':
-                  value.tzinfo.zone,
+              'timeZoneId': value.tzinfo.zone,
           }
       }
     elif isinstance(value, datetime.date):
@@ -1011,13 +1001,8 @@ class DataDownloader(object):
                                       int(date_time_value['hour']),
                                       int(date_time_value['minute']),
                                       int(date_time_value['second']))
-    # v201808 is the last Ad Manager version to use timeZoneID.
-    if self._version > 'v201808':
-      time_zone_str = 'timeZoneId'
-    else:
-      time_zone_str = 'timeZoneID'
     date_time_str = pytz.timezone(
-        date_time_value[time_zone_str]).localize(date_time_obj).isoformat()
+        date_time_value['timeZoneId']).localize(date_time_obj).isoformat()
 
     if date_time_str[-5:] == '00:00':
       return date_time_str[:-6] + 'Z'

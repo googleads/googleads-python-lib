@@ -40,7 +40,7 @@ def main(client):
   }
   campaigns = campaign_service.get(selector)
   campaign_ids = []
-  if 'entries' in campaigns:
+  if 'totalNumEntries' in campaigns and campaigns['totalNumEntries'] > 0:
     for campaign in campaigns['entries']:
       campaign_ids.append(campaign['id'])
   else:

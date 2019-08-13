@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,64 +14,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This code example creates new proposals.
-
-To determine which proposals exist, run get_all_proposals.py.
-"""
-
+"""This example creates a proposal."""
 
 import uuid
 
 # Import appropriate modules from the client library.
 from googleads import ad_manager
 
-ADVERTISER_ID = 'INSERT_ADVERTISER_ID_HERE'
+PROGRAMMATIC_BUYER_ID = 'INSERT_BUYER_ID_FROM_PQL_TABLE_HERE'
 PRIMARY_SALESPERSON_ID = 'INSERT_PRIMARY_SALESPERSON_ID_HERE'
-SECONDARY_SALESPERSON_ID = 'INSERT_SECONDARY_SALESPERSON_ID_HERE'
 PRIMARY_TRAFFICKER_ID = 'INSERT_PRIMARY_TRAFFICKER_ID_HERE'
 
 
-def main(client, advertiser_id, primary_salesperson_id,
-         secondary_salesperson_id, primary_trafficker_id):
-  # Initialize appropriate services.
+def main(client, programmatic_buyer_id, primary_salesperson_id,
+         primary_trafficker_id):
   proposal_service = client.GetService('ProposalService', version='v201902')
-  network_service = client.GetService('NetworkService', version='v201902')
 
-  # Create proposal objects.
   proposal = {
-      'name': 'Proposal #%s' % uuid.uuid4(),
-      'advertiser': {
-          'companyId': advertiser_id,
-          'type': 'ADVERTISER'
+      # Setting required Marketplace information.
+      'isProgrammatic': 'true',
+      'marketplaceInfo': {
+          'buyerAccountId': programmatic_buyer_id,
       },
+      # Set common required fields for proposals.
+      'name': 'Proposal #%s' % uuid.uuid4(),
       'primarySalesperson': {
           'userId': primary_salesperson_id,
-          'split': '75000'
+          'split': '100000'
       },
-      'secondarySalespeople': [{
-          'userId': secondary_salesperson_id,
-          'split': '25000'
-      }],
       'primaryTraffickerId': primary_trafficker_id,
       'probabilityOfClose': '100000',
-      'budget': {
-          'microAmount': '100000000',
-          'currencyCode': network_service.getCurrentNetwork()['currencyCode']
-      },
-      'billingCap': 'CAPPED_CUMULATIVE',
-      'billingSource': 'DFP_VOLUME'
   }
 
-  # Add proposals.
   proposals = proposal_service.createProposals([proposal])
 
   # Display results.
   for proposal in proposals:
-    print('Proposal with id "%s" and name "%s" was created.'
-          % (proposal['id'], proposal['name']))
+    print('Proposal with id "%s" and name "%s" was created.' %
+          (proposal['id'], proposal['name']))
+
 
 if __name__ == '__main__':
   # Initialize client object.
   ad_manager_client = ad_manager.AdManagerClient.LoadFromStorage()
-  main(ad_manager_client, ADVERTISER_ID, PRIMARY_SALESPERSON_ID,
-       SECONDARY_SALESPERSON_ID, PRIMARY_TRAFFICKER_ID)
+  main(ad_manager_client, PROGRAMMATIC_BUYER_ID, PRIMARY_SALESPERSON_ID,
+       PRIMARY_TRAFFICKER_ID)
