@@ -98,7 +98,7 @@ def main(client_id, client_secret, scopes):
   print('Log into the Google Account you use to access your AdWords account '
         'and go to the following URL: \n%s\n' % auth_url)
   print('After approving the token enter the verification code (if specified).')
-  code = raw_input('Code: ').strip()
+  code = input('Code: ').strip()
 
   try:
     flow.fetch_token(code=code)
