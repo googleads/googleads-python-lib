@@ -256,7 +256,7 @@ class AdWordsClient(googleads.common.CommonClient):
     proxy_config = kwargs.get('proxy_config')
     self.proxy_config = (proxy_config if proxy_config else
                          googleads.common.ProxyConfig())
-    self.report_download_headers = kwargs.get('report_download_headers', {})
+    self.report_download_headers = kwargs.get('report_downloader_headers', {})
     self.enable_compression = kwargs.get(
         googleads.common.ENABLE_COMPRESSION_KEY, False)
 
