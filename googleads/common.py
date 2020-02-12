@@ -55,7 +55,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'compatibility with this library, upgrade to Python 3.6 or higher.')
 
 
-VERSION = '22.0.0'
+VERSION = '23.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
