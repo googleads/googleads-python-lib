@@ -39,8 +39,8 @@ class GetAPIScopeTest(unittest.TestCase):
     self.scope_ad_manager = 'https://www.googleapis.com/auth/dfp'
 
   def testGetAPIScope_adwords(self):
-    self.assertEquals(googleads.oauth2.GetAPIScope(self.api_name_adwords),
-                      self.scope_adwords)
+    self.assertEqual(googleads.oauth2.GetAPIScope(self.api_name_adwords),
+                     self.scope_adwords)
 
   def testGetAPIScope_badKey(self):
     self.assertRaises(googleads.errors.GoogleAdsValueError,
@@ -153,7 +153,7 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
         header = self.refresh_client.CreateHttpHeader()
         self.assertEqual(mock_session_instance.proxies, {})
         self.assertEqual(mock_session_instance.verify, True)
-        self.assertEqual(mock_session_instance.cert, None)
+        self.assertIsNone(mock_session_instance.cert)
         self.mock_req.assert_called_once_with(session=mock_session_instance)
         self.assertEqual(expected_header, header)
         self.mock_credentials_instance.refresh.assert_called_once_with(
@@ -193,6 +193,49 @@ class GoogleRefreshTokenClientTest(unittest.TestCase):
       self.assertRaises(RefreshError,
                         self.refresh_client.CreateHttpHeader)
       self.assertFalse(self.mock_credentials_instance.apply.called)
+
+
+class GoogleCredentialsClientTest(unittest.TestCase):
+  """Tests for the googleads.oauth2.GoogleCredentialsClient class."""
+
+  def setUp(self):
+    self.access_token = 'a'
+
+    # Mock out google.auth.transport.Request for testing.
+    self.mock_req = mock.Mock(spec=Request)
+    self.mock_req.return_value = mock.Mock()
+    self.mock_req_instance = self.mock_req.return_value
+
+    # Mock out google.oauth2.credentials.Credentials for testing
+    self.mock_credentials = mock.Mock(spec=Credentials)
+    self.mock_credentials.expiry = None
+
+    def apply(headers, token=None):
+      headers['authorization'] = ('Bearer %s' % self.access_token)
+
+    self.mock_credentials.apply = mock.Mock(side_effect=apply)
+
+    self.client = googleads.oauth2.GoogleCredentialsClient(
+        self.mock_credentials)
+
+  def testRefresh(self):
+    with mock.patch('google.auth.transport.requests.Request', self.mock_req):
+      self.client.Refresh()
+      self.mock_req.assert_called_once()
+
+  def testCreateHttpHeader_credentialsExpired(self):
+    self.mock_credentials.expiry = object()
+    self.mock_credentials.expired = True
+    with mock.patch('google.auth.transport.requests.Request', self.mock_req):
+      self.client.CreateHttpHeader()
+      self.mock_req.assert_called_once()
+
+  def testCreateHttpHeader_applyCredentialsToken(self):
+    expected_header = {u'authorization': 'Bearer %s' % self.access_token}
+
+    with mock.patch('google.auth.transport.requests.Request', self.mock_req):
+      header = self.client.CreateHttpHeader()
+      self.assertEqual(header, expected_header)
 
 
 class GoogleServiceAccountTest(unittest.TestCase):
@@ -240,7 +283,7 @@ class GoogleServiceAccountTest(unittest.TestCase):
     def refresh(request):
       self.mock_credentials_instance.token = (
           self.access_token_unrefreshed if
-          self.mock_credentials_instance.token is 'x'
+          self.mock_credentials_instance.token == 'x'
           else self.access_token_refreshed)
       self.mock_credentials_instance.token_expiry = datetime.datetime.utcnow()
 
@@ -283,7 +326,7 @@ class GoogleServiceAccountTest(unittest.TestCase):
         header = self.sa_client.CreateHttpHeader()
         self.assertEqual(mock_session_instance.proxies, {})
         self.assertEqual(mock_session_instance.verify, True)
-        self.assertEqual(mock_session_instance.cert, None)
+        self.assertIsNone(mock_session_instance.cert)
         self.mock_req.assert_called_once_with(session=mock_session_instance)
         self.assertEqual(expected_header, header)
       self.mock_credentials_instance.refresh.assert_called_once_with(

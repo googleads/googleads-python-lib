@@ -23,8 +23,10 @@ server and/or centralize refreshing credentials to prevent every Python process
 from independently refreshing the credentials.
 """
 
+
 import googleads.errors
 import requests
+
 import google.auth.transport.requests
 import google.oauth2.credentials
 import google.oauth2.service_account
@@ -209,6 +211,42 @@ class GoogleRefreshTokenClient(GoogleRefreshableOAuth2Client):
 
       self.creds.refresh(
           google.auth.transport.requests.Request(session=session))
+
+
+class GoogleCredentialsClient(GoogleRefreshableOAuth2Client):
+  """A simple client for using OAuth2 for Google APIs with a credentials object.
+
+  This class is not capable of supporting any flows other than taking an
+  existing credentials (google.auth.credentials) to generate the refresh
+  and access tokens.
+  """
+
+  def __init__(self, credentials):
+    """Initializes an OAuth2 client using a credentials object.
+
+    Args:
+      credentials: A credentials object implementing google.auth.credentials.
+    """
+    self.creds = credentials
+
+  def CreateHttpHeader(self):
+    """Creates an OAuth2 HTTP header.
+
+    Returns:
+      A dictionary containing one entry: the OAuth2 Bearer header under the
+      'Authorization' key.
+    """
+    if self.creds.expiry is None or self.creds.expired:
+      self.Refresh()
+
+    oauth2_header = {}
+    self.creds.apply(oauth2_header)
+    return oauth2_header
+
+  def Refresh(self):
+    """Uses the credentials object to retrieve and set a new Access Token."""
+    transport = google.auth.transport.requests.Request()
+    self.creds.refresh(transport)
 
 
 class GoogleServiceAccountClient(GoogleRefreshableOAuth2Client):
