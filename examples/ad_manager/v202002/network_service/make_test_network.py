@@ -22,10 +22,6 @@ http://www.google.com/accounts/newaccount if you currently don't have one) that
 is not associated with any other Ad Manager test networks. Once this network is
 created, you can supply the network code in your settings to make calls to
 other services.
-
-Alternatively, if you do not wish to run this example, you can create a test
-network at:
-https://dfp-playground.appspot.com
 """
 
 

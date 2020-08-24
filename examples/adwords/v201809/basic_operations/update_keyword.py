@@ -69,7 +69,8 @@ def main(client, ad_group_id, criterion_id):
               '"%s" currently has bids:'
               % (criterion['adGroupId'], criterion['criterion']['id']))
         for bid in criterion['biddingStrategyConfiguration']['bids']:
-          print('\tType: "%s", value: %s' % (bid['Bids.Type']), bid['bid']['microAmount'])
+          print('\tType: "%s", value: %s' %
+                (bid['Bids.Type'], bid['bid']['microAmount']))
   else:
     print('No ad group criteria were updated.')
 

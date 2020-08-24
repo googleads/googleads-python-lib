@@ -1,3 +1,8 @@
+25.0.0 -- 08/18/2020
+* Added support for Ad Manager v202008.
+* Removed support for Ad Manager v201908.
+* Removed examples for Ad Manager v201911.
+
 24.1.0 -- 07/13/2020
 * Added 'GoogleCredentialsClient' class to re-use an OAuth2 credentials object
 
