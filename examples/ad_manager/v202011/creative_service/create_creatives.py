@@ -43,11 +43,13 @@ def main(client, advertiser_id):
 
   # Create creative objects.
   creatives = []
-  with open(os.path.join(os.path.split(__file__)[0], '..', '..', 'data',
-                         'medium_rectangle.jpg'), 'r') as image:
+  with open(
+      os.path.join(
+          os.path.split(__file__)[0], '..', '..', 'data',
+          'medium_rectangle.jpg'), 'rb') as image:
     image_data = image.read()
 
-  for _ in xrange(5):
+  for _ in range(5):
     # Create creative size.
     size = {
         'width': '300',
@@ -80,9 +82,10 @@ def main(client, advertiser_id):
   # Display results.
   for creative in creatives:
     print('Image creative with id "%s", name "%s", and type "%s" was '
-          'created and can be previewed at %s.'
-          % (creative['id'], creative['name'],
-              ad_manager.AdManagerClassType(creative), creative['previewUrl']))
+          'created and can be previewed at %s.' %
+          (creative['id'], creative['name'],
+           ad_manager.AdManagerClassType(creative), creative['previewUrl']))
+
 
 if __name__ == '__main__':
   # Initialize client object.

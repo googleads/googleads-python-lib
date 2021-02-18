@@ -44,7 +44,7 @@ def main(client, order_id, targeted_placement_ids):
 
   # Create line item objects.
   line_items = []
-  for _ in xrange(5):
+  for _ in range(5):
     line_item = {
         'name': 'Line item #%s' % uuid.uuid4(),
         'orderId': order_id,
@@ -163,4 +163,3 @@ if __name__ == '__main__':
   # Initialize client object.
   ad_manager_client = ad_manager.AdManagerClient.LoadFromStorage()
   main(ad_manager_client, ORDER_ID, TARGETED_PLACEMENT_IDS)
-

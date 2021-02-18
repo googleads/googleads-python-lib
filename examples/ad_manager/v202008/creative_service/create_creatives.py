@@ -47,7 +47,7 @@ def main(client, advertiser_id):
                          'medium_rectangle.jpg'), 'r') as image:
     image_data = image.read()
 
-  for _ in xrange(5):
+  for _ in range(5):
     # Create creative size.
     size = {
         'width': '300',

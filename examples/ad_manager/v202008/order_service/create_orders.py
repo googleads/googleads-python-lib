@@ -36,7 +36,7 @@ def main(client, company_id, salesperson_id, trafficker_id):
 
   # Create order objects.
   orders = []
-  for _ in xrange(5):
+  for _ in range(5):
     order = {
         'name': 'Order #%s' % uuid.uuid4(),
         'advertiserId': company_id,

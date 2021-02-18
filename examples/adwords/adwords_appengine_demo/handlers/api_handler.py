@@ -225,7 +225,7 @@ class APIHandler(object):
     # and is taking too long.
     max_tries = 3
     today = time.strftime('%Y%m%d', time.localtime())
-    for i in xrange(1, max_tries + 1):
+    for i in range(1, max_tries + 1):
       try:
         selector = {
             'fields': ['Id', 'Name', 'Status', 'BudgetId', 'Amount'],

@@ -33,7 +33,7 @@ def main(client):
 
   # Create label objects.
   labels = []
-  for _ in xrange(5):
+  for _ in range(5):
     label = {
         'name': 'Label #%s' % uuid.uuid4(),
         'isActive': 'true',

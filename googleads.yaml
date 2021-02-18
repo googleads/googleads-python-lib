@@ -89,7 +89,7 @@ ad_manager:
       # formatter: default_fmt
       # level: INFO
   # loggers:
-    # Configure root logger
+    ## Configure root logger
     # "":
       # handlers: [default_handler]
       # level: INFO

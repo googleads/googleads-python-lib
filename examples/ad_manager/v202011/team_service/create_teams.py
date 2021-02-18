@@ -37,7 +37,7 @@ def main(client):
 
   # Create team objects.
   teams = []
-  for _ in xrange(5):
+  for _ in range(5):
     team = {
         'name': 'Team %s' % uuid.uuid4(),
         'hasAllCompanies': 'false',

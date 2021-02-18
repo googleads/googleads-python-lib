@@ -1,3 +1,8 @@
+27.0.0 -- 02/17/2021
+* Added support for Ad Manager v202102.
+* Removed support for Ad Manager v202002.
+* Removed examples for Ad Manager v202005.
+
 26.0.0 -- 11/10/2020
 * Added support for Ad Manager v202011.
 * Removed support for Ad Manager v201911.
