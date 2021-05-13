@@ -18,7 +18,6 @@
 
 import time
 
-
 from demo import VERSION
 from googleads.adwords import AdWordsClient
 from googleads.common import ZeepServiceProxy

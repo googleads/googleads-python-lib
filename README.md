@@ -1,13 +1,12 @@
 # The googleads Python client library
 
-**Note:** DoubleClick for Publishers was recently renamed to Google Ad Manager, and this library
-was modified to follow suit. Please see the [migration guide](https://github.com/googleads/googleads-python-lib/wiki/dfp-rebrand)
-for more details.
-
 This client library simplifies accessing Google's SOAP Ads APIs - AdWords,
 and DoubleClick for Publishers. The library provides easy ways to store your
 authentication and create SOAP web service clients. It also contains example
 code to help you get started integrating with our APIs.
+
+> **The Google AdWords API will [sunset on April 27, 2022](https://ads-developers.googleblog.com/2021/04/upgrade-to-google-ads-api-from-adwords.html).  
+> Upgrade to the [Google Ads API](https://developers.google.com/google-ads/api/docs/client-libs).**
 
 **NOTE**: As of v20.0.0 this library is _not_ compatible with Python versions less than Python 3.6.
 Also `suds` is no longer supported in this library, `zeep` is now the only supported SOAP client.

@@ -37,7 +37,7 @@ import zeep.exceptions
 
 
 TEST_DIR = os.path.dirname(__file__)
-CURRENT_VERSION = 'v202102'
+CURRENT_VERSION = 'v202105'
 
 
 class CommonTest(testing.CleanUtilityRegistryTestCase):
@@ -616,7 +616,6 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         ' (%s, %s, %s)' % (my_name, googleads.common._COMMON_LIB_SIG,
                            googleads.common._PYTHON_VERSION),
         googleads.common.GenerateLibSig(my_name))
-
 
   def testGenerateLibSigWithUtilities(self):
     my_name = 'Mark'

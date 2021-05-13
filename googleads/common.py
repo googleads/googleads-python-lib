@@ -54,8 +54,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'order to benefit from important security improvements and ensure '
     'compatibility with this library, upgrade to Python 3.6 or higher.')
 
-
-VERSION = '27.0.0'
+VERSION = '28.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
@@ -338,8 +337,6 @@ def _ExtractProxyConfig(product_yaml_key, proxy_config_data):
       disable_certificate_validation=disable_certificate_validation)
 
   return proxy_config
-
-
 
 
 def IncludeUtilitiesInUserAgent(value):
@@ -638,7 +635,6 @@ class GoogleSoapService(object):
     self._version = version
     self._method_proxies = {}
 
-
   @abc.abstractmethod
   def CreateSoapElementForType(self, type_name):
     """Create an instance of a SOAP type.
@@ -722,8 +718,6 @@ class _ZeepAuthHeaderPlugin(zeep.Plugin):
     return envelope, http_headers
 
 
-
-
 class ZeepServiceProxy(GoogleSoapService):
   """Wraps a zeep service object, allowing custom logic to be injected.
 
@@ -778,7 +772,6 @@ class ZeepServiceProxy(GoogleSoapService):
     first_service = list(self.zeep_client.wsdl.services.values())[0]
     first_port = list(first_service.ports.values())[0]
     self._method_bindings = first_port.binding
-
 
   def CreateSoapElementForType(self, type_name):
     """Create an instance of a SOAP type.

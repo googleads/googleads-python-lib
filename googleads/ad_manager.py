@@ -44,23 +44,6 @@ _data_downloader_logger = logging.getLogger(
 
 # A giant dictionary of Ad Manager versions and the services they support.
 _SERVICE_MAP = {
-    'v202005':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
-         'CdnConfigurationService', 'CmsMetadataService', 'CompanyService',
-         'ContactService', 'ContentBundleService', 'ContentService',
-         'CreativeReviewService', 'CreativeService', 'CreativeSetService',
-         'CreativeTemplateService', 'CreativeWrapperService',
-         'CustomFieldService', 'CustomTargetingService',
-         'DaiAuthenticationKeyService', 'ForecastService', 'InventoryService',
-         'LabelService', 'LineItemCreativeAssociationService',
-         'LineItemService', 'LineItemTemplateService', 'LiveStreamEventService',
-         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
-         'OrderService', 'PlacementService', 'ProposalLineItemService',
-         'ProposalService', 'PublisherQueryLanguageService', 'ReportService',
-         'StreamActivityMonitorService', 'SuggestedAdUnitService',
-         'TeamService', 'TargetingPresetService', 'UserService',
-         'UserTeamAssociationService'),
     'v202008':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
@@ -98,6 +81,24 @@ _SERVICE_MAP = {
          'SuggestedAdUnitService', 'TeamService', 'TargetingPresetService',
          'UserService', 'UserTeamAssociationService'),
     'v202102':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
+         'CdnConfigurationService', 'CmsMetadataService', 'CompanyService',
+         'ContactService', 'ContentBundleService', 'ContentService',
+         'CreativeReviewService', 'CreativeService', 'CreativeSetService',
+         'CreativeTemplateService', 'CreativeWrapperService',
+         'CustomFieldService', 'CustomTargetingService',
+         'DaiAuthenticationKeyService', 'DaiEncodingProfileService',
+         'ForecastService', 'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService',
+         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
+         'OrderService', 'PlacementService', 'ProposalLineItemService',
+         'ProposalService', 'PublisherQueryLanguageService', 'ReportService',
+         'SiteService', 'StreamActivityMonitorService',
+         'SuggestedAdUnitService', 'TeamService', 'TargetingPresetService',
+         'UserService', 'UserTeamAssociationService'),
+    'v202105':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
          'CdnConfigurationService', 'CmsMetadataService', 'CompanyService',
@@ -235,7 +236,6 @@ class AdManagerClient(googleads.common.CommonClient):
       self.application_name = '%s (gzip)' % self.application_name
 
     self.timeout = timeout
-
 
   def GetService(self, service_name, version=sorted(_SERVICE_MAP.keys())[-1],
                  server=None):

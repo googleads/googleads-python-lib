@@ -231,7 +231,6 @@ class AdManagerHeaderHandlerTest(testing.CleanUtilityRegistryTestCase):
             soap_header.applicationName)
 
 
-
 class AdManagerClientTest(unittest.TestCase):
   """Tests for the googleads.ad_manager.AdManagerClient class."""
 
@@ -302,8 +301,6 @@ class AdManagerClientTest(unittest.TestCase):
             ad_manager.application_name)
         mock_h.assert_called_once_with(
             ad_manager, enable_compression, custom_headers)
-
-
 
   def testInitializeWithDefaultApplicationName(self):
     self.application_name = 'INSERT_APPLICATION_NAME_HERE'

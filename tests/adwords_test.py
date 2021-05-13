@@ -343,7 +343,6 @@ class AdWordsClientTest(unittest.TestCase):
     self.header_handler = googleads.adwords._AdWordsHeaderHandler(
         self.adwords_client, CURRENT_VERSION, False, None)
 
-
   def testLoadFromStorage(self):
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient.Refresh'):
       self.assertIsInstance(googleads.adwords.AdWordsClient.LoadFromStorage(
