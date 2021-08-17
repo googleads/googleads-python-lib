@@ -49,7 +49,7 @@ def main(client, key_id):
     response = custom_targeting_service.getCustomTargetingValuesByStatement(
         statement.ToStatement())
     if 'results' in response and len(response['results']):
-      value_ids = [value['id'] for value in response['results']]
+      value_ids = [str(value['id']) for value in response['results']]
       action = {'xsi_type': 'DeleteCustomTargetingValues'}
       value_statement = (ad_manager.StatementBuilder(version='v202102')
                          .Where('customTargetingKeyId = :keyId '

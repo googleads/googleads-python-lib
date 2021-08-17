@@ -51,9 +51,10 @@ def main(client, master_creative_id, companion_creative_id):
   # Display results.
   if creative_set:
     print(('Creative set with ID "%s", master creative ID "%s", and '
-           'companion creative IDs {%s} was created.')
-          % (creative_set['id'], creative_set['masterCreativeId'],
-              ','.join(creative_set['companionCreativeIds'])))
+           'companion creative IDs "%s" was created.') %
+          (creative_set['id'], creative_set['masterCreativeId'], ','.join(
+              str(v) for v in creative_set['companionCreativeIds'])))
+
 
 if __name__ == '__main__':
   # Initialize client object.
