@@ -492,7 +492,7 @@ class AdWordsPackerTest(unittest.TestCase):
     query_regex = (r'SELECT (.*) WHERE Status = "ENABLED"'
                    r' ORDER BY Name ASC LIMIT 0,100')
 
-    self.assertRegexpMatches(self.packer.Pack(query, CURRENT_VERSION),
+    self.assertRegex(self.packer.Pack(query, CURRENT_VERSION),
                              query_regex)
 
   def testAdWordsPackerForUnsupportedObjectType(self):
@@ -1354,15 +1354,15 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
         restored_uploader = googleads.adwords.IncrementalUploadHelper.Load(
             s, client=self.client)
 
-    self.assertEquals(restored_uploader._current_content_length,
+    self.assertEqual(restored_uploader._current_content_length,
                       self.incremental_uploader._current_content_length)
-    self.assertEquals(restored_uploader._is_last,
+    self.assertEqual(restored_uploader._is_last,
                       self.incremental_uploader._is_last)
-    self.assertEquals(restored_uploader._request_builder._version,
+    self.assertEqual(restored_uploader._request_builder._version,
                       self.version)
-    self.assertEquals(restored_uploader._upload_url,
+    self.assertEqual(restored_uploader._upload_url,
                       self.incremental_uploader._upload_url)
-    self.assertEquals(restored_uploader._request_builder.GetServer(),
+    self.assertEqual(restored_uploader._request_builder.GetServer(),
                       self.server)
 
   def testUploadOperations(self):
@@ -2137,7 +2137,7 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     # The SELECT clause can show fields listed in any orders.
     self.assertCountEqual(selected_fields,
       [field.strip() for field in match.group(1).split(',')])
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
   def testFailUsingCopyConstructor(self):
     builder = googleads.adwords._QueryBuilder()
@@ -2157,7 +2157,7 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     # The SELECT clause can show fields listed in any orders.
     self.assertCountEqual(selected_fields,
       [field.strip() for field in match.group(1).split(',')])
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
   def testBuild_duplicateSelectedFieldsRetainOnlyUnique(self):
     awql_regex = (r'SELECT (.*) LIMIT 0,100')
@@ -2171,7 +2171,7 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     # The SELECT clause retains only unique fields.
     self.assertCountEqual(set(selected_fields),
       [field.strip() for field in match.group(1).split(',')])
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
   def testBuild_whereConditions(self):
     awql_regex = (r'SELECT (.*)'
@@ -2192,7 +2192,7 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     # The SELECT clause can show fields listed in any orders.
     self.assertCountEqual(selected_fields,
       [field.strip() for field in match.group(1).split(',')])
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
   def testBuild_orderByDesc(self):
     awql_regex = (r'SELECT (.*)'
@@ -2209,7 +2209,7 @@ class ServiceQueryBuilderTest(testing.CleanUtilityRegistryTestCase):
     # The SELECT clause can show fields listed in any orders.
     self.assertCountEqual(selected_fields,
       [field.strip() for field in match.group(1).split(',')])
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
   def testBuild_selectIsNone(self):
     with self.assertRaises(ValueError):
@@ -2244,7 +2244,7 @@ class ServiceQueryTest(testing.CleanUtilityRegistryTestCase):
     # Do next page and check if the LIMIT clause is modified correctly.
     awql_regex = (r'SELECT (.*) LIMIT 100,100')
     actual_query.NextPage()
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
   def testNextPageForDataService(self):
     selected_fields = ['Id', 'Name']
@@ -2265,7 +2265,7 @@ class ServiceQueryTest(testing.CleanUtilityRegistryTestCase):
     # points of the page.
     awql_regex = (r'SELECT (.*) LIMIT 4,2')
     actual_query.NextPage(page)
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
   def testNextPageFail(self):
     actual_query = googleads.adwords.ServiceQuery('SELECT Id, Name', None, 100)
@@ -2280,19 +2280,19 @@ class ServiceQueryTest(testing.CleanUtilityRegistryTestCase):
                     .Limit(0, 1)
                     .Build())
     awql_regex = (r'SELECT (.*) LIMIT 0,1')
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
     page = {'totalNumEntries': 3}
 
     self.assertTrue(actual_query.HasNext(page))
     awql_regex = (r'SELECT (.*) LIMIT 1,1')
     actual_query.NextPage()
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
     self.assertTrue(actual_query.HasNext(page))
     awql_regex = (r'SELECT (.*) LIMIT 2,1')
     actual_query.NextPage()
-    self.assertRegexpMatches(str(actual_query), awql_regex)
+    self.assertRegex(str(actual_query), awql_regex)
 
     self.assertFalse(actual_query.HasNext(page))
 
