@@ -37,7 +37,7 @@ def main(client):
       for targeting_preset in response['results']:
         # Print out some information for each targeting preset.
         print(
-            'Targeting preset with ID "%s" and name "%d" was found.\n'
+            'Targeting preset with ID "%d" and name "%s" was found.\n'
             % (targeting_preset['id'], targeting_preset['name']))
       statement.offset += statement.limit
     else:
