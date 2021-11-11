@@ -744,7 +744,7 @@ class BatchJobHelper(object):
           for a single AdWords Service.
         has_prefix: a boolean indicating whether the prefix should be included
           in the request body.
-        has_suffix: a boolean indicating whether the suffic should be included
+        has_suffix: a boolean indicating whether the suffix should be included
           in the request body.
 
       Returns:
@@ -2245,7 +2245,7 @@ class ServiceQueryBuilder(_QueryBuilder):
     """Creates the service query builder with the optionally specified builder.
 
     Creates the service query builder by initializing all attributes including
-    oder by list, start index, and page size.
+    order by list, start index, and page size.
     If the optional query builder are specified, copy all its attributes to this
     instance.
 

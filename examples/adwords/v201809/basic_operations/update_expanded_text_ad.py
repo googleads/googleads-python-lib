@@ -53,7 +53,7 @@ def main(client, ad_id):
       'operand': expanded_text_ad
   }]
 
-  # Updates the ad on ther server.
+  # Updates the ad on their server.
   result = ad_service.mutate(operations)
   updated_ad = result['value'][0]
 
