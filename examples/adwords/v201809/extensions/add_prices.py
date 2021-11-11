@@ -17,7 +17,7 @@
 
 """Adds a price extension and associates it with an account.
 
-Campaign targeting is also set usin the specified campaign ID. To get campaigns,
+Campaign targeting is also set using the specified campaign ID. To get campaigns,
 run get_campaigns.py.
 
 The LoadFromStorage method is pulling credentials and properties from a

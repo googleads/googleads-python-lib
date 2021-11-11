@@ -42,7 +42,7 @@ def main(client, line_item_id, key_id1, key_id2, key_id3, value_id1, value_id2,
   # Initialize appropriate service.
   line_item_service = client.GetService('LineItemService', version='v202108')
 
-  # create custom criterias
+  # create custom criteria
   custom_criteria1 = {
       'xsi_type': 'CustomCriteria',
       'keyId': key_id1,
