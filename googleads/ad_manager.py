@@ -44,24 +44,6 @@ _data_downloader_logger = logging.getLogger(
 
 # A giant dictionary of Ad Manager versions and the services they support.
 _SERVICE_MAP = {
-    'v202011':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
-         'CdnConfigurationService', 'CmsMetadataService', 'CompanyService',
-         'ContactService', 'ContentBundleService', 'ContentService',
-         'CreativeReviewService', 'CreativeService', 'CreativeSetService',
-         'CreativeTemplateService', 'CreativeWrapperService',
-         'CustomFieldService', 'CustomTargetingService',
-         'DaiAuthenticationKeyService', 'DaiEncodingProfileService',
-         'ForecastService', 'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService',
-         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
-         'OrderService', 'PlacementService', 'ProposalLineItemService',
-         'ProposalService', 'PublisherQueryLanguageService', 'ReportService',
-         'SiteService', 'StreamActivityMonitorService',
-         'SuggestedAdUnitService', 'TeamService', 'TargetingPresetService',
-         'UserService', 'UserTeamAssociationService'),
     'v202102':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
@@ -99,6 +81,24 @@ _SERVICE_MAP = {
          'SuggestedAdUnitService', 'TeamService', 'TargetingPresetService',
          'UserService', 'UserTeamAssociationService'),
     'v202108':
+        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
+         'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
+         'CdnConfigurationService', 'CmsMetadataService', 'CompanyService',
+         'ContactService', 'ContentBundleService', 'ContentService',
+         'CreativeReviewService', 'CreativeService', 'CreativeSetService',
+         'CreativeTemplateService', 'CreativeWrapperService',
+         'CustomFieldService', 'CustomTargetingService',
+         'DaiAuthenticationKeyService', 'DaiEncodingProfileService',
+         'ForecastService', 'InventoryService', 'LabelService',
+         'LineItemCreativeAssociationService', 'LineItemService',
+         'LineItemTemplateService', 'LiveStreamEventService',
+         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
+         'OrderService', 'PlacementService', 'ProposalLineItemService',
+         'ProposalService', 'PublisherQueryLanguageService', 'ReportService',
+         'SiteService', 'StreamActivityMonitorService',
+         'SuggestedAdUnitService', 'TeamService', 'TargetingPresetService',
+         'UserService', 'UserTeamAssociationService'),
+    'v202111':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
          'CdnConfigurationService', 'CmsMetadataService', 'CompanyService',
@@ -783,18 +783,12 @@ class DataDownloader(object):
     service = self._GetReportService()
     report_job_id = service.runReportJob(report_job)['id']
 
-    if self._version > 'v201502':
-      status = service.getReportJobStatus(report_job_id)
-    else:
-      status = service.getReportJob(report_job_id)['reportJobStatus']
+    status = service.getReportJobStatus(report_job_id)
 
     while status != 'COMPLETED' and status != 'FAILED':
       _data_downloader_logger.debug('Report job status: %s', status)
       time.sleep(30)
-      if self._version > 'v201502':
-        status = service.getReportJobStatus(report_job_id)
-      else:
-        status = service.getReportJob(report_job_id)['reportJobStatus']
+      status = service.getReportJobStatus(report_job_id)
 
     if status == 'FAILED':
       raise googleads.errors.AdManagerReportError(report_job_id)
@@ -919,9 +913,9 @@ class DataDownloader(object):
       elif class_type == 'DateTimeValue':
         return self._ConvertDateTimeToOffset(field)
       elif class_type == 'DateValue':
-        return datetime.date(int(field['date']['year']),
-                             int(field['date']['month']),
-                             int(field['date']['day'])).isoformat()
+        return datetime.date(int(field['year']),
+                             int(field['month']),
+                             int(field['day'])).isoformat()
       else:
         return field
     else:

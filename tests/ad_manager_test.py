@@ -428,9 +428,8 @@ class DataDownloaderTest(unittest.TestCase):
 
     row1_field2 = {
         'value': {
-            'date': {
-                'year': '1999', 'month': '04', 'day': '03'}
-            },
+            'year': '1999', 'month': '04', 'day': '03'
+        },
         'xsi_type': 'DateValue'
     }
 
@@ -476,11 +475,9 @@ class DataDownloaderTest(unittest.TestCase):
 
     row2_field2 = {
         'value': {
-            'date': {
-                'year': '2009',
-                'month': '02',
-                'day': '05'
-            }
+            'year': '2009',
+            'month': '02',
+            'day': '05'
         },
         'xsi_type': 'DateValue'
     }
