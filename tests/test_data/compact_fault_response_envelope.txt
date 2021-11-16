@@ -1,8 +1,0 @@
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <soap:Fault>
-      <faultcode>soap:Client</faultcode>
-      <faultstring>Unmarshalling Error: For input string: &quot;INSERT_ADVERTISER_COMPANY_ID_HERE&quot; </faultstring>
-    </soap:Fault>
-  </soap:Body>
-</soap:Envelope>

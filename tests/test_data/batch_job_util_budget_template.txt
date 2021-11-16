@@ -1,6 +1,0 @@
-    <ns1:budgetId>%s</ns1:budgetId>
-    <ns1:name>%s</ns1:name>
-    <ns1:amount>
-    <ns1:microAmount>%s</ns1:microAmount>
-    </ns1:amount>
-    <ns1:deliveryMethod>%s</ns1:deliveryMethod>
