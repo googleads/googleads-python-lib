@@ -5,11 +5,8 @@ and DoubleClick for Publishers. The library provides easy ways to store your
 authentication and create SOAP web service clients. It also contains example
 code to help you get started integrating with our APIs.
 
-> **The Google AdWords API will [sunset on April 27, 2022](https://ads-developers.googleblog.com/2021/04/upgrade-to-google-ads-api-from-adwords.html).  
+> **The Google AdWords API will [sunset on April 27, 2022](https://ads-developers.googleblog.com/2021/04/upgrade-to-google-ads-api-from-adwords.html).
 > Upgrade to the [Google Ads API](https://developers.google.com/google-ads/api/docs/client-libs).**
-
-**NOTE**: As of v20.0.0 this library is _not_ compatible with Python versions less than Python 3.6.
-Also `suds` is no longer supported in this library, `zeep` is now the only supported SOAP client.
 
 ## Getting started
 1. Download and install the library
@@ -164,7 +161,7 @@ adwords_client = adwords.AdWordsClient(
 
 ### Python Versions
 
-This library only supports Python 3.6+.
+This library only supports Python 3.7+.
 
 ### External Dependencies:
 

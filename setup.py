@@ -35,7 +35,7 @@ TEST_DEPENDENCIES = ['mock>=2.0.0,<3.0.0', 'pyfakefs>=3.2,<3.3']
 CLASSIFIERS = [
     'Intended Audience :: Developers',
     'License :: OSI Approved :: Apache Software License',
-    'Programming Language :: Python :: 3.6'
+    'Programming Language :: Python :: 3.7'
 ]
 
 
@@ -69,7 +69,7 @@ You can find more information about the Google Ads Python Client Libraries
 Supported Python Versions
 =========================
 
-This library is supported for Python 3.6+.
+This library is supported for Python 3.7+.
 
 Installation
 ============

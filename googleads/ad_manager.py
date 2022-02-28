@@ -44,24 +44,6 @@ _data_downloader_logger = logging.getLogger(
 
 # A giant dictionary of Ad Manager versions and the services they support.
 _SERVICE_MAP = {
-    'v202102':
-        ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
-         'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
-         'CdnConfigurationService', 'CmsMetadataService', 'CompanyService',
-         'ContactService', 'ContentBundleService', 'ContentService',
-         'CreativeReviewService', 'CreativeService', 'CreativeSetService',
-         'CreativeTemplateService', 'CreativeWrapperService',
-         'CustomFieldService', 'CustomTargetingService',
-         'DaiAuthenticationKeyService', 'DaiEncodingProfileService',
-         'ForecastService', 'InventoryService', 'LabelService',
-         'LineItemCreativeAssociationService', 'LineItemService',
-         'LineItemTemplateService', 'LiveStreamEventService',
-         'MobileApplicationService', 'NativeStyleService', 'NetworkService',
-         'OrderService', 'PlacementService', 'ProposalLineItemService',
-         'ProposalService', 'PublisherQueryLanguageService', 'ReportService',
-         'SiteService', 'StreamActivityMonitorService',
-         'SuggestedAdUnitService', 'TeamService', 'TargetingPresetService',
-         'UserService', 'UserTeamAssociationService'),
     'v202105':
         ('ActivityGroupService', 'ActivityService', 'AdExclusionRuleService',
          'AdjustmentService', 'AdRuleService', 'AudienceSegmentService',
@@ -116,6 +98,24 @@ _SERVICE_MAP = {
          'SiteService', 'StreamActivityMonitorService',
          'SuggestedAdUnitService', 'TeamService', 'TargetingPresetService',
          'UserService', 'UserTeamAssociationService'),
+    'v202202':
+        ('ActivityGroupService', 'ActivityService', 'AdjustmentService',
+         'AdRuleService', 'AudienceSegmentService', 'CdnConfigurationService',
+         'CmsMetadataService', 'CompanyService', 'ContactService',
+         'ContentBundleService', 'ContentService', 'CreativeReviewService',
+         'CreativeService', 'CreativeSetService', 'CreativeTemplateService',
+         'CreativeWrapperService', 'CustomFieldService',
+         'CustomTargetingService', 'DaiAuthenticationKeyService',
+         'DaiEncodingProfileService', 'ForecastService', 'InventoryService',
+         'LabelService', 'LineItemCreativeAssociationService',
+         'LineItemService', 'LineItemTemplateService',
+         'LiveStreamEventService', 'MobileApplicationService',
+         'NativeStyleService', 'NetworkService', 'OrderService',
+         'PlacementService', 'ProposalLineItemService', 'ProposalService',
+         'PublisherQueryLanguageService', 'ReportService', 'SiteService',
+         'StreamActivityMonitorService', 'SuggestedAdUnitService',
+         'TeamService', 'TargetingPresetService', 'UserService',
+         'UserTeamAssociationService', 'YieldGroupService'),
 }
 
 
