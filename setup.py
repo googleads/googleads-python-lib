@@ -78,11 +78,11 @@ You have two options for installing the Ads Python Client Libraries:
 
 * Install with a tool such as pip::
 
-  $ sudo pip install googleads
+  $ pip install googleads
 
 * Install manually after downloading and extracting the tarball::
 
-  $ sudo python setup.py install
+  $ python setup.py install
 
 Examples
 ========
