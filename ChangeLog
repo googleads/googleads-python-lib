@@ -1,3 +1,8 @@
+32.0.0 -- 05/17/2022
+* Added support for Ad Manager v202205.
+* Removed support for Ad Manager v202105.
+* Removed examples for Ad Manager v202108.
+
 31.0.0 -- 02/16/2022
 * The minimum supported version of Python is now 3.7.0.
 * Added support for Ad Manager v202202.
