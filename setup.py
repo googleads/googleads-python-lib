@@ -26,7 +26,7 @@ PACKAGES = ['googleads']
 
 DEPENDENCIES = ['google-auth>=1.0.0,<2.0.0',
                 'google-auth-oauthlib>=0.0.1,<1.0.0', 'pytz>=2015.7',
-                'PyYAML>=5.1, <6.0', 'requests>=2.0.0,<3.0.0',
+                'PyYAML>=6.0, <7.0', 'requests>=2.0.0,<3.0.0',
                 'xmltodict>=0.9.2,<1.0.0', 'zeep>=2.5.0']
 
 # Note: Breaking change introduced in pyfakefs 3.3.
