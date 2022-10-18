@@ -1330,7 +1330,7 @@ class IncrementalUploadHelperTest(testing.CleanUtilityRegistryTestCase):
         'version: %s}\n' % self.version)
 
   def testDump(self):
-    expected = yaml.load(self.incremental_uploader_dump)
+    expected = yaml.safe_load(self.incremental_uploader_dump)
 
     with tempfile.NamedTemporaryFile(delete=False, mode='w') as t:
       name = t.name

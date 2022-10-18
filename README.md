@@ -27,7 +27,7 @@ code to help you get started integrating with our APIs.
 
    `$ python setup.py build install`
 
-1. Copy the [googleads.yaml](https://github.com/googleads/googleads-python-lib/blob/master/googleads.yaml)
+1. Copy the [googleads.yaml](https://github.com/googleads/googleads-python-lib/blob/main/googleads.yaml)
    file to your home directory.
 
    This will be used to store credentials and other settings that can be loaded
@@ -53,8 +53,8 @@ code to help you get started integrating with our APIs.
 You can find code examples for the latest versions of AdWords or Ad Manager on the
 [releases](https://github.com/googleads/googleads-python-lib/releases) page.
 
-Alternatively, you can find [AdWords](https://github.com/googleads/googleads-python-lib/tree/master/examples/adwords)
-or [Ad Manager](https://github.com/googleads/googleads-python-lib/tree/master/examples/ad_manager)
+Alternatively, you can find [AdWords](https://github.com/googleads/googleads-python-lib/tree/main/examples/adwords)
+or [Ad Manager](https://github.com/googleads/googleads-python-lib/tree/main/examples/ad_manager)
 samples in the examples directory of this repository.
 
 #### Where can I find the pydocs?
@@ -101,7 +101,7 @@ If you have issues pertaining to a specific API, use the product support forums:
 
 ## How do I log SOAP interactions?
 The library uses Python's built in logging framework. You can specify your
-configuration via the configuration file; see [googleads.yaml](https://github.com/googleads/googleads-python-lib/blob/master/googleads.yaml)
+configuration via the configuration file; see [googleads.yaml](https://github.com/googleads/googleads-python-lib/blob/main/googleads.yaml)
 for an example.
 
 Alternatively, you can manually specify your logging configuration. For example,
