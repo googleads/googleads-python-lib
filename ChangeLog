@@ -1,3 +1,9 @@
+35.0.0 -- 10/28/2022
+* Added support for Ad Manager v202211.
+* Removed support for Ad Manager v202111.
+* Updated setup.py to support the latest 2.x google-auth version.
+* Removed examples for Ad Manager v202202.
+
 34.0.0 -- 10/17/2022
 * Updated setup.py to support the latest 6.x PyYaml version.
 
