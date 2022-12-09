@@ -33,14 +33,8 @@ class GetAPIScopeTest(unittest.TestCase):
   """Tests for the googleads.oauth2.GetAPIScope function."""
 
   def setUp(self):
-    self.api_name_adwords = 'adwords'
     self.api_name_ad_manager = 'ad_manager'
-    self.scope_adwords = 'https://www.googleapis.com/auth/adwords'
     self.scope_ad_manager = 'https://www.googleapis.com/auth/dfp'
-
-  def testGetAPIScope_adwords(self):
-    self.assertEqual(googleads.oauth2.GetAPIScope(self.api_name_adwords),
-                     self.scope_adwords)
 
   def testGetAPIScope_badKey(self):
     self.assertRaises(googleads.errors.GoogleAdsValueError,

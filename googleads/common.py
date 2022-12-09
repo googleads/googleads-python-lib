@@ -54,7 +54,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'order to benefit from important security improvements and ensure '
     'compatibility with this library, upgrade to Python 3.6 or higher.')
 
-VERSION = '35.0.0'
+VERSION = '36.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
@@ -106,7 +106,7 @@ def GenerateLibSig(short_name):
 
 
 class CommonClient(object):
-  """Contains shared startup code between Ad Manager and AdWords clients."""
+  """Contains shared startup code between clients."""
 
   def __init__(self):
     # Warn users on deprecated Python versions on initialization.
@@ -517,7 +517,6 @@ class _ZeepProxyTransport(zeep.transports.Transport):
     self.session.proxies = proxy_config.proxies
 
 
-
 class SoapPacker(object):
   """A utility class to be passed to argument packing functions.
 
@@ -537,8 +536,8 @@ def GetSchemaHelperForLibrary():
 class GoogleSchemaHelper(object):
   """Base class for type to xml conversion.
 
-  Only used for AdWords reporting specialness. A subclass should be created
-  for each underlying SOAP implementation.
+  Legacy class previously used for AdWords reporting specialness. A subclass
+  should be created for each underlying SOAP implementation.
   """
   __metaclass__ = abc.ABCMeta
 

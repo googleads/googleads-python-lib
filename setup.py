@@ -60,7 +60,6 @@ The googleads Python Client Libraries
 
 The googleads Python Client Libraries support the following products:
 
-* AdWords API
 * Google Ad Manager API
 
 You can find more information about the Google Ads Python Client Libraries
@@ -109,7 +108,7 @@ setup(name='googleads',
       long_description=long_description,
       packages=PACKAGES,
       platforms='any',
-      keywords='adwords dfp admanager google',
+      keywords='admanager google',
       classifiers=CLASSIFIERS,
       install_requires=DEPENDENCIES,
       tests_require=TEST_DEPENDENCIES,

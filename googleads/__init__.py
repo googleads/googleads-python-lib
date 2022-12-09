@@ -15,4 +15,3 @@
 """A client library for Google's SOAP Ads APIs."""
 
 from .ad_manager import AdManagerClient
-from .adwords import AdWordsClient

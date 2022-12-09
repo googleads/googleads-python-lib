@@ -32,14 +32,6 @@ class ErrorsTest(unittest.TestCase):
     """Coverage test only for the GoogleAdsValueError class."""
     errors.GoogleAdsValueError('error message2')
 
-  def testAdWordsReportError(self):
-    """Coverage test only for the AdWordsReportError class."""
-    errors.AdWordsReportError('code', 'response', 'error message3')
-
-  def testAdWordsReportBadRequestError(self):
-    """Coverage test only for the AdWordsReportBadRequestError class."""
-    errors.AdWordsReportBadRequestError(
-        'type', 'trigger', 'fieldpath', 'code', 'response', 'error message')
 
 if __name__ == '__main__':
   unittest.main()

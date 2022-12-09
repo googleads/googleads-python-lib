@@ -1,12 +1,9 @@
 # The googleads Python client library
 
-This client library simplifies accessing Google's SOAP Ads APIs - AdWords,
-and DoubleClick for Publishers. The library provides easy ways to store your
-authentication and create SOAP web service clients. It also contains example
-code to help you get started integrating with our APIs.
-
-> **The Google AdWords API will [sunset on April 27, 2022](https://ads-developers.googleblog.com/2021/04/upgrade-to-google-ads-api-from-adwords.html).
-> Upgrade to the [Google Ads API](https://developers.google.com/google-ads/api/docs/client-libs).**
+This client library simplifies accessing Google's SOAP Ads APIs - such as
+Ad Manager. The library provides easy ways to store your authentication and
+create SOAP web service clients. It also contains example code to help you get
+started integrating with our APIs.
 
 ## Getting started
 1. Download and install the library
@@ -27,39 +24,33 @@ code to help you get started integrating with our APIs.
 
    `$ python setup.py build install`
 
-1. Copy the [googleads.yaml](https://github.com/googleads/googleads-python-lib/blob/main/googleads.yaml)
+2. Copy the [googleads.yaml](https://github.com/googleads/googleads-python-lib/blob/main/googleads.yaml)
    file to your home directory.
 
    This will be used to store credentials and other settings that can be loaded
    to initialize a client.
 
-1. Set up your OAuth2 credentials
+3. Set up your OAuth2 credentials
 
-   The AdWords and DoubleClick for Publishers APIs use
-   [OAuth2](http://oauth.net/2/) as the authentication mechanism. Follow the
-   appropriate guide below based on your use case.
+   The Ad Manager API uses [OAuth2](http://oauth.net/2/) as the authentication
+4. mechanism. Follow the appropriate guide below based on your use case.
 
    **If you're accessing an API using your own credentials...**
 
-   * [Using AdWords](https://github.com/googleads/googleads-python-lib/wiki/API-access-using-own-credentials-(installed-application-flow))
    * [Using Ad Manager](https://github.com/googleads/googleads-python-lib/wiki/API-access-using-own-credentials-(server-to-server-flow))
 
    **If you're accessing an API on behalf of clients...**
 
-   * [Developing a web application (AdWords or Ad Manager)](https://github.com/googleads/googleads-python-lib/wiki/API-access-on-behalf-of-your-clients-(web-flow))
+   * [Developing a web application (Ad Manager)](https://github.com/googleads/googleads-python-lib/wiki/API-access-on-behalf-of-your-clients-(web-flow))
 
 #### Where can I find samples?
 
-You can find code examples for the latest versions of AdWords or Ad Manager on the
+You can find code examples for the latest versions of Ad Manager on the
 [releases](https://github.com/googleads/googleads-python-lib/releases) page.
 
-Alternatively, you can find [AdWords](https://github.com/googleads/googleads-python-lib/tree/main/examples/adwords)
-or [Ad Manager](https://github.com/googleads/googleads-python-lib/tree/main/examples/ad_manager)
+Alternatively, you can find
+[Ad Manager](https://github.com/googleads/googleads-python-lib/tree/main/examples/ad_manager)
 samples in the examples directory of this repository.
-
-#### Where can I find the pydocs?
-
-Our pydocs can be found [here](http://googleads.github.io/googleads-python-lib).
 
 #### Caching authentication information
 
@@ -72,20 +63,11 @@ contents.
 
 ```python
 # Use the default location - your home directory:
-adwords_client = adwords.AdWordsClient.LoadFromStorage()
+ad_manager_client = ad_manager.AdManagerClient.LoadFromStorage()
 
 # Alternatively, pass in the location of the file:
 ad_manager_client = ad_manager.AdManagerClient.LoadFromStorage('C:\My\Directory\googleads.yaml')
 ```
-
-#### How do I change the Client Customer Id at runtime?
-You can change the Client Customer Id with the following:
-
-```
-adwords_client = AdWordsClient.LoadFromStorage()
-adwords_client.SetClientCustomerId('my_client_customer_id')
-```
-
 
 ## Where do I submit bug reports and/or feature requests?
 
@@ -95,7 +77,6 @@ tracker](https://github.com/googleads/googleads-python-lib/issues).
 
 If you have issues pertaining to a specific API, use the product support forums:
 
-* [AdWords](https://groups.google.com/forum/#!forum/adwords-api)
 * [Ad Manager](https://groups.google.com/forum/#!forum/google-doubleclick-for-publishers-api)
 
 
@@ -128,7 +109,7 @@ class DangerousZeepLogger(zeep.Plugin):
     logging.debug('Incoming response: \n%s', etree.tostring(envelope, pretty_print=True))
     return envelope, http_headers
 
-adwords_client.zeep_client.plugins.append(DangerousZeepLogger())
+ad_manager_client.zeep_client.plugins.append(DangerousZeepLogger())
 ```
 
 ## How can I configure or disable caching?
@@ -138,22 +119,21 @@ can be expensive. However, the default caching method requires permission to
 access a local file system that may not be available in certain hosting
 environments such as App Engine.
 
-You can pass an implementation of `zeep.cache.Base` to the `AdWordsClient` or
-`AdManagerClient` initializer to modify the default caching behavior.
+You can pass an implementation of `zeep.cache.Base` to the `AdManagerClient`
+initializer to modify the default caching behavior.
 
-For example, configuring a different location and duration of the cache file with zeep
+For example, configuring a different location and duration of the cache file
+with zeep
 ```python
 doc_cache = zeep.cache.SqliteCache(path=cache_path)
-adwords_client = adwords.AdWordsClient(
-  developer_token, oauth2_client, user_agent,
-  client_customer_id=client_customer_id, cache=doc_cache)
+ad_manager_client = ad_manager.AdManagerClient(
+  oauth2_client, application_name, network_code=network_code, cache=doc_cache)
 ```
 
 You can also disable caching in similar fashion with zeep
 ```python
-adwords_client = adwords.AdWordsClient(
-  developer_token, oauth2_client, user_agent,
-  client_customer_id=client_customer_id,
+ad_manager_client = ad_manager.AdManagerClient(
+  oauth2_client, application_name, network_code=network_code,
   cache=googleads.common.ZeepServiceProxy.NO_CACHE)
 ```
 

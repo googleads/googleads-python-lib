@@ -1,7 +1,0 @@
-    <ns1:CampaignCriterion.Type>%s</ns1:CampaignCriterion.Type>
-    <ns1:campaignId>%s</ns1:campaignId>
-    <ns1:criterion>
-      <ns1:Criterion.Type>%s</ns1:Criterion.Type>
-      <ns1:text>%s</ns1:text>
-      <ns1:matchType>%s</ns1:matchType>
-    </ns1:criterion>

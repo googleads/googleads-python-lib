@@ -20,7 +20,6 @@ import os
 import unittest
 
 import googleads.ad_manager
-import googleads.adwords
 import googleads.errors
 import googleads.util
 from lxml import etree
@@ -34,22 +33,6 @@ class PatchesTest(unittest.TestCase):
     oauth_header = {'Authorization': 'header'}
     oauth2_client = mock.Mock()
     oauth2_client.CreateHttpHeader.return_value = dict(oauth_header)
-
-    # AdWordsClient setup
-    client_customer_id = 'client customer id'
-    dev_token = '?wH47154M4n'
-    user_agent = '4M153rAb13p1l30F53CR37s'
-    self.adwords_client = googleads.adwords.AdWordsClient(
-        dev_token, oauth2_client, user_agent,
-        client_customer_id=client_customer_id)
-    # AdWordsClient setup (compression enabled)
-    self.adwords_client_with_compression = googleads.adwords.AdWordsClient(
-        dev_token, oauth2_client, user_agent,
-        client_customer_id=client_customer_id,
-        enable_compression=True)
-    self.adwords_version = sorted(googleads.adwords._SERVICE_MAP.keys())[-1]
-    self.adwords_namespace_partial = (
-        'https://adwords.google.com/api/adwords/%s/' + self.adwords_version)
 
     # AdManagerClient setup
     network_code = '12345'

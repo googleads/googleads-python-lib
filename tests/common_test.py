@@ -310,17 +310,18 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_passesWithHTTPAndHTTPSProxy(self):
     yaml_doc = self._CreateYamlDoc(
-        {'adwords': {},
+        {'ad_manager': {},
          'proxy_config': {
              'http': self.uri1,
              'https': self.uri2}},
-        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+        insert_oauth2_key='ad_manager',
+        oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
-              yaml_doc, 'adwords', [], [])
+              yaml_doc, 'ad_manager', [], [])
 
     proxy_config.assert_called_once_with(
         http_proxy=self.uri1, https_proxy=self.uri2, cafile=None,
@@ -334,16 +335,17 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_passesWithHTTPProxy(self):
     yaml_doc = self._CreateYamlDoc(
-        {'adwords': {},
+        {'ad_manager': {},
          'proxy_config': {
              'http': self.uri1}},
-        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+        insert_oauth2_key='ad_manager',
+        oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
-              yaml_doc, 'adwords', [], [])
+              yaml_doc, 'ad_manager', [], [])
     proxy_config.assert_called_once_with(http_proxy=self.uri1,
                                          https_proxy=None, cafile=None,
                                          disable_certificate_validation=False)
@@ -356,15 +358,16 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_passesWithHTTPProxyLogin(self):
     yaml_doc = self._CreateYamlDoc(
-        {'adwords': {},
+        {'ad_manager': {},
          'proxy_config': {
              'http': self.uri1_w_creds}},
-        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+        insert_oauth2_key='ad_manager',
+        oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
-          rval = googleads.common.LoadFromString(yaml_doc, 'adwords', [], [])
+          rval = googleads.common.LoadFromString(yaml_doc, 'ad_manager', [], [])
 
     proxy_config.assert_called_once_with(http_proxy=self.uri1_w_creds,
                                          https_proxy=None, cafile=None,
@@ -378,15 +381,16 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_passesWithHTTPSProxy(self):
     yaml_doc = self._CreateYamlDoc(
-        {'adwords': {},
+        {'ad_manager': {},
          'proxy_config': {
              'https': self.uri1}},
-        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+        insert_oauth2_key='ad_manager',
+        oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
-          rval = googleads.common.LoadFromString(yaml_doc, 'adwords', [], [])
+          rval = googleads.common.LoadFromString(yaml_doc, 'ad_manager', [], [])
 
     proxy_config.assert_called_once_with(http_proxy=None,
                                          https_proxy=self.uri1,
@@ -401,15 +405,16 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_passesWithHTTPSProxyLogin(self):
     yaml_doc = self._CreateYamlDoc(
-        {'adwords': {},
+        {'ad_manager': {},
          'proxy_config': {
              'https': self.uri1_w_creds}},
-        insert_oauth2_key='adwords', oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
+        insert_oauth2_key='ad_manager',
+        oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with mock.patch('googleads.common.open', self.fake_open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
-          rval = googleads.common.LoadFromString(yaml_doc, 'adwords', [], [])
+          rval = googleads.common.LoadFromString(yaml_doc, 'ad_manager', [], [])
 
     proxy_config.assert_called_once_with(http_proxy=None,
                                          https_proxy=self.uri1_w_creds,
