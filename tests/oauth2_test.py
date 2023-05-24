@@ -22,8 +22,8 @@ import mock
 import googleads.common
 import googleads.errors
 import googleads.oauth2
-from pyfakefs import fake_filesystem
-from pyfakefs import fake_tempfile
+import tempfile
+from pyfakefs import fake_filesystem_unittest
 from google.auth.exceptions import RefreshError
 from google.auth.transport import Request
 from google.oauth2.credentials import Credentials
@@ -232,23 +232,24 @@ class GoogleCredentialsClientTest(unittest.TestCase):
       self.assertEqual(header, expected_header)
 
 
-class GoogleServiceAccountTest(unittest.TestCase):
+class GoogleServiceAccountTest(
+    fake_filesystem_unittest.TestCase, unittest.TestCase
+):
   """Tests for the googleads.oauth2.GoogleServiceAccountClient class."""
 
   def setUp(self):
+    super().setUp()
+    self.setUpPyfakefs()
     self.scope = 'scope'
     self.private_key = b'IT\'S A SECRET TO EVERYBODY.'
     self.delegated_account = 'delegated_account@delegated.com'
 
     # Mock out filesystem and file for testing.
-    filesystem = fake_filesystem.FakeFilesystem()
-    tempfile = fake_tempfile.FakeTempfileModule(filesystem)
-    self.fake_open = fake_filesystem.FakeFileOpen(filesystem)
     self.key_file_path = tempfile.NamedTemporaryFile(delete=False).name
     self.cert_file_path = tempfile.NamedTemporaryFile(
         delete=False, prefix='cert_', suffix='.pem').name
 
-    with self.fake_open(self.key_file_path, 'wb') as file_handle:
+    with open(self.key_file_path, 'wb') as file_handle:
       file_handle.write(self.private_key)
 
     self.access_token_unrefreshed = 'a'
@@ -283,13 +284,14 @@ class GoogleServiceAccountTest(unittest.TestCase):
 
     self.mock_credentials_instance.apply = mock.Mock(side_effect=apply)
     self.mock_credentials_instance.refresh = mock.Mock(side_effect=refresh)
-    with mock.patch('builtins.open', self.fake_open):
-      with mock.patch('google.oauth2.service_account.Credentials',
-                      self.mock_credentials):
-        self.sa_client = googleads.oauth2.GoogleServiceAccountClient(
-            self.key_file_path, self.scope)
-      # Undo the call count for the auto-refresh
-      self.mock_credentials_instance.refresh.reset_mock()
+    with mock.patch(
+        'google.oauth2.service_account.Credentials', self.mock_credentials
+    ):
+      self.sa_client = googleads.oauth2.GoogleServiceAccountClient(
+          self.key_file_path, self.scope
+      )
+    # Undo the call count for the auto-refresh
+    self.mock_credentials_instance.refresh.reset_mock()
 
   def testCreateDelegatedGoogleServiceAccountClient(self):
     with mock.patch('google.oauth2.service_account.Credentials') as mock_cred:

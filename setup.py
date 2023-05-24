@@ -29,8 +29,7 @@ DEPENDENCIES = ['google-auth>=2.0.0,<3.0.0',
                 'PyYAML>=6.0, <7.0', 'requests>=2.0.0,<3.0.0',
                 'xmltodict>=0.9.2,<1.0.0', 'zeep>=2.5.0']
 
-# Note: Breaking change introduced in pyfakefs 3.3.
-TEST_DEPENDENCIES = ['mock>=2.0.0,<3.0.0', 'pyfakefs>=3.2,<3.3']
+TEST_DEPENDENCIES = ['mock>=2.0.0,<3.0.0', 'pyfakefs>=5.1.0']
 
 CLASSIFIERS = [
     'Intended Audience :: Developers',

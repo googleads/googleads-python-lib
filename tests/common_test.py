@@ -19,12 +19,12 @@ from contextlib import contextmanager
 import numbers
 import os
 import ssl
+import tempfile
 import unittest
+from unittest import mock
 import warnings
 
-from pyfakefs import fake_filesystem
-from pyfakefs import fake_tempfile
-import mock
+from pyfakefs import fake_filesystem_unittest
 import requests.exceptions
 import yaml
 import zeep.cache
@@ -37,10 +37,12 @@ import zeep.exceptions
 
 
 TEST_DIR = os.path.dirname(__file__)
-CURRENT_VERSION = 'v202302'
+CURRENT_VERSION = 'v202305'
 
 
-class CommonTest(testing.CleanUtilityRegistryTestCase):
+class CommonTest(
+    fake_filesystem_unittest.TestCase, testing.CleanUtilityRegistryTestCase
+):
   """Tests for the googleads.common module."""
 
   # Dictionaries with all the required OAuth2 keys
@@ -51,9 +53,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
       'delegated_account': 'delegated_account@example.com'}
 
   def setUp(self):
-    self.filesystem = fake_filesystem.FakeFilesystem()
-    self.tempfile = fake_tempfile.FakeTempfileModule(self.filesystem)
-    self.fake_open = fake_filesystem.FakeFileOpen(self.filesystem)
+    super().setUp()
+    self.setUpPyfakefs()
     self.uri1 = 'http://h1:1'
     self.uri1_w_creds = 'http://username:password@h1:1'
     self.uri2 = 'http://h2:2'
@@ -100,8 +101,8 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def _CreateYamlFile(self, data, insert_oauth2_key=None, oauth_dict=None):
     """Return the filename of a yaml file created for testing."""
-    yaml_file = self.tempfile.NamedTemporaryFile(delete=False)
-    with self.fake_open(yaml_file.name, 'w') as yaml_handle:
+    yaml_file = tempfile.NamedTemporaryFile(delete=False)
+    with open(yaml_file.name, 'w') as yaml_handle:
       for key in data:
         if key is insert_oauth2_key:
           data[key].update(oauth_dict)
@@ -110,14 +111,14 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     return yaml_file.name
 
   def testLoadFromStorage_missingFile(self):
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
+    with mock.patch('googleads.common.open', open, create=True):
       self.assertRaises(
           googleads.errors.GoogleAdsValueError,
           googleads.common.LoadFromStorage,
           'yaml_filename', 'woo', [], [])
 
   def testLoadFromStorage_missingRequiredKey(self):
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
+    with mock.patch('googleads.common.open', open, create=True):
       # Both keys are missing.
       yaml_fname = self._CreateYamlFile({'two': {}}, 'two',
                                         self._OAUTH_INSTALLED_APP_DICT)
@@ -140,7 +141,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         {'one': {'needed': 'd', 'keys': 'e'}}, 'one',
         self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromStorage(
@@ -166,7 +167,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
          googleads.common.CUSTOM_HEADERS_KEY: {'X-My-Header': 'abc'}},
         'one', self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           with mock.patch('logging.config.dictConfig') as mock_dict_config:
             proxy_config.return_value = mock.Mock()
@@ -188,16 +189,16 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
             self.assertTrue(googleads.common._utility_registry._enabled)
 
   def testLoadFromStorage_relativePath(self):
-    fake_os = fake_filesystem.FakeOsModule(self.filesystem)
     yaml_contents = {'one': {'needed': 'd', 'keys': 'e'}}
     yaml_contents['one'].update(self._OAUTH_INSTALLED_APP_DICT)
-    self.filesystem.CreateFile('/home/test/yaml/googleads.yaml',
-                               contents=yaml.dump(yaml_contents))
-    fake_os.chdir('/home/test')
+    self.fs.create_file(
+        '/home/test/yaml/googleads.yaml', contents=yaml.dump(yaml_contents)
+    )
+    os.chdir('/home/test')
 
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.os', fake_os):
-        with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.os', os):
+        with mock.patch('googleads.common.open', open, create=True):
           with mock.patch('googleads.common.ProxyConfig') as proxy_config:
             proxy_config.return_value = mock.Mock()
             rval = googleads.common.LoadFromStorage(
@@ -237,7 +238,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_emptyYamlString(self):
     yaml_doc = ''
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
+    with mock.patch('googleads.common.open', open, create=True):
       self.assertRaises(
           googleads.errors.GoogleAdsValueError,
           googleads.common.LoadFromString,
@@ -259,7 +260,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_missingOAuthKey(self):
     yaml_doc = self._CreateYamlDoc({'woo': {}})
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
+    with mock.patch('googleads.common.open', open, create=True):
       self.assertRaises(
           googleads.errors.GoogleAdsValueError,
           googleads.common.LoadFromString,
@@ -267,7 +268,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_missingProductYamlKey(self):
     yaml_doc = self._CreateYamlDoc({'woo': {}})
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
+    with mock.patch('googleads.common.open', open, create=True):
       self.assertRaises(
           googleads.errors.GoogleAdsValueError,
           googleads.common.LoadFromString,
@@ -275,7 +276,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_missingRequiredKey(self):
     yaml_doc = self._CreateYamlDoc({'woo': {}})
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
+    with mock.patch('googleads.common.open', open, create=True):
       self.assertRaises(
           googleads.errors.GoogleAdsValueError,
           googleads.common.LoadFromString,
@@ -283,7 +284,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
 
   def testLoadFromString_missingPartialInstalledAppOAuthCredential(self):
     yaml_doc = self._CreateYamlDoc({'woo': {}}, 'woo', {'client_id': 'abc'})
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
+    with mock.patch('googleads.common.open', open, create=True):
       self.assertRaises(
           googleads.errors.GoogleAdsValueError,
           googleads.common.LoadFromString,
@@ -293,7 +294,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     yaml_doc = self._CreateYamlDoc({'woo': {}}, 'woo',
                                    self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(yaml_doc, 'woo', [], [])
@@ -317,7 +318,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         insert_oauth2_key='ad_manager',
         oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
@@ -341,7 +342,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         insert_oauth2_key='ad_manager',
         oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
@@ -364,7 +365,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         insert_oauth2_key='ad_manager',
         oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(yaml_doc, 'ad_manager', [], [])
@@ -387,7 +388,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         insert_oauth2_key='ad_manager',
         oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(yaml_doc, 'ad_manager', [], [])
@@ -411,7 +412,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         insert_oauth2_key='ad_manager',
         oauth_dict=self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(yaml_doc, 'ad_manager', [], [])
@@ -428,7 +429,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                       googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
 
   def testLoadFromString_missingRequiredKeys(self):
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
+    with mock.patch('googleads.common.open', open, create=True):
       # Both keys are missing.
       yaml_doc = self._CreateYamlDoc({
           'two': {}
@@ -448,7 +449,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                         ['needed', 'keys'], [])
 
   def testLoadFromString_migrateToAdManager(self):
-    with mock.patch('googleads.common.open', self.fake_open, create=True):
+    with mock.patch('googleads.common.open', open, create=True):
       # Both keys are missing.
       yaml_doc = self._CreateYamlDoc({
           'dfp': {}
@@ -467,7 +468,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         }
     }, 'one', self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
@@ -490,7 +491,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                                             'other': 'f'}}, 'one',
                                    self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
@@ -517,7 +518,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         oauth_dict=self._OAUTH_SERVICE_ACCT_DICT)
     with mock.patch(
         'googleads.oauth2.GoogleServiceAccountClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
@@ -543,7 +544,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         'ad_manager', self._OAUTH_SERVICE_ACCT_DICT)
     with mock.patch(
         'googleads.oauth2.GoogleServiceAccountClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
@@ -563,7 +564,6 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                       googleads.common.CUSTOM_HEADERS_KEY: None}, rval)
     self.assertTrue(googleads.common._utility_registry._enabled)
 
-
   def testLoadFromString_utilityRegistryDisabled(self):
     yaml_doc = self._CreateYamlDoc(
         {'one': {'needed': 'd', 'keys': 'e'},
@@ -571,7 +571,7 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
         'one', self._OAUTH_INSTALLED_APP_DICT)
 
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
-      with mock.patch('googleads.common.open', self.fake_open, create=True):
+      with mock.patch('googleads.common.open', open, create=True):
         with mock.patch('googleads.common.ProxyConfig') as proxy_config:
           proxy_config.return_value = mock.Mock()
           rval = googleads.common.LoadFromString(
@@ -589,14 +589,13 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
                            rval)
           self.assertFalse(googleads.common._utility_registry._enabled)
 
-
   def testLoadFromString_warningWithUnrecognizedKey(self):
     yaml_doc = self._CreateYamlDoc(
         {'kval': {'Im': 'here', 'whats': 'this?'}}, 'kval',
         self._OAUTH_INSTALLED_APP_DICT)
     with mock.patch('googleads.oauth2.GoogleRefreshTokenClient') as mock_client:
       with warnings.catch_warnings(record=True) as captured_warnings:
-        with mock.patch('googleads.common.open', self.fake_open, create=True):
+        with mock.patch('googleads.common.open', open, create=True):
           with mock.patch('googleads.common.ProxyConfig') as proxy_config:
             proxy_config.return_value = mock.Mock()
             rval = googleads.common.LoadFromString(
@@ -613,7 +612,6 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
             }, rval)
         self.assertTrue(googleads.common._utility_registry._enabled)
         self.assertEqual(len(captured_warnings), 1)
-
 
   def testGenerateLibSig(self):
     my_name = 'Joseph'
@@ -654,7 +652,6 @@ class CommonTest(testing.CleanUtilityRegistryTestCase):
     generated = set(googleads.common.GenerateLibSig(my_name)[2:-1].split(', '))
 
     self.assertEqual(expected, generated)
-
 
   def testGenerateLibSigWithUtilitiesDisabled(self):
     my_name = 'Mark'
