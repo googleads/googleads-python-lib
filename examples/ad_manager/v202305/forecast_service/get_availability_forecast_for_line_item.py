@@ -49,7 +49,7 @@ def main(client, line_item_id):
   else:
     available_percent = 0
 
-  contending_line_items = getattr(forecast, 'contentingLineItems', [])
+  contending_line_items = getattr(forecast, 'contendingLineItems', [])
 
   # Display results.
   print('%s %s matched.' % (matched, forecast['unitType'].lower()))
