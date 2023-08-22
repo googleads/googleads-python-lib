@@ -1,3 +1,9 @@
+39.0.0 -- 08/14/2023
+* Added support for v202308.
+* Removed support for v202208.
+* Removed examples for v202211.
+* Updated setup.py to support the latest 1.x.x google-auth-oauthlib version.
+
 38.0.0 -- 05/10/2023
 * Added support for v202305.
 * Removed support for v202205.
