@@ -1,7 +1,7 @@
-# The googleads Python client library
+# The Google Ad Manager SOAP API Python client library
 
-This client library simplifies accessing Google's SOAP Ads APIs - such as
-Ad Manager. The library provides easy ways to store your authentication and
+This client library simplifies accessing the Google Ad Manager SOAP API.
+The library provides easy ways to store your authentication and
 create SOAP web service clients. It also contains example code to help you get
 started integrating with our APIs.
 

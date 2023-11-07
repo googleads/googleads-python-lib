@@ -37,7 +37,7 @@ import zeep.exceptions
 
 
 TEST_DIR = os.path.dirname(__file__)
-CURRENT_VERSION = 'v202308'
+CURRENT_VERSION = 'v202311'
 
 
 class CommonTest(
