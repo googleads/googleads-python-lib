@@ -1,3 +1,8 @@
+41.0.0 -- 02/06/2024
+* Added support for v202402.
+* Removed support for v202302.
+* Removed examples for v202305.
+
 40.0.0 -- 11/03/2023
 * Added support for v202311.
 * Removed support for v202211.
