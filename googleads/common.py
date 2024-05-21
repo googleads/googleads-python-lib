@@ -54,7 +54,7 @@ _DEPRECATED_VERSION_TEMPLATE = (
     'order to benefit from important security improvements and ensure '
     'compatibility with this library, upgrade to Python 3.6 or higher.')
 
-VERSION = '41.0.0'
+VERSION = '42.0.0'
 _COMMON_LIB_SIG = 'googleads/%s' % VERSION
 _LOGGING_KEY = 'logging'
 _HTTP_PROXY_YAML_KEY = 'http'
@@ -94,8 +94,7 @@ def GenerateLibSig(short_name):
     A library signature string to append to user-supplied user-agent value.
   """
   with _UTILITY_LOCK:
-    utilities_used = ', '.join([utility for utility
-                                in sorted(_utility_registry)])
+    utilities_used = ', '.join(list(sorted(_utility_registry)))
     _utility_registry.Clear()
 
   if utilities_used:

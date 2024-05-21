@@ -40,7 +40,7 @@ def main(client):
   print('Test network with network code "%s" and display name "%s" '
         'created.' % (network['networkCode'], network['displayName']))
   print('You may now sign in at '
-        'http://www.google.com/admanager/main?networkCode=%s'
+        'http://admanager.google.com/%s'
         % network['networkCode'])
 
 if __name__ == '__main__':
