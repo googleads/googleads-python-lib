@@ -150,7 +150,6 @@ This library only supports Python 3.7+.
     - pysocks              -- https://pypi.python.org/pypi/PySocks/
     - pytz                 -- https://pypi.python.org/pypi/pytz
     - pyYAML               -- https://pypi.python.org/pypi/pyYAML/
-    - xmltodict            -- https://pypi.python.org/pypi/xmltodict/
     - zeep                 -- https://pypi.python.org/pypi/zeep
     - mock                 -- https://pypi.python.org/pypi/mock
                               (only needed to run unit tests)
