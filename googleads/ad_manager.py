@@ -877,7 +877,7 @@ class DataDownloader(object):
           'PublisherQueryLanguageService', self._version, self._server)
     return self._pql_service
 
-  def WaitForReport(self, report_job, pollTimeSeconds = 30):
+  def WaitForReport(self, report_job, poolTimeSeconds = 30):
     """Runs a report, then waits (blocks) for the report to finish generating.
 
     Args:
