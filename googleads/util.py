@@ -18,7 +18,6 @@ import logging
 import re
 import threading
 
-
 from lxml import etree
 import zeep
 

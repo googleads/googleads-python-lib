@@ -23,7 +23,6 @@ server and/or centralize refreshing credentials to prevent every Python process
 from independently refreshing the credentials.
 """
 
-
 import googleads.errors
 import requests
 
