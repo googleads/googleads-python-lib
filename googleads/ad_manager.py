@@ -875,12 +875,14 @@ class DataDownloader(object):
           'PublisherQueryLanguageService', self._version, self._server)
     return self._pql_service
 
-  def WaitForReport(self, report_job):
+  def WaitForReport(self, report_job, pollTimeSeconds = 30):
     """Runs a report, then waits (blocks) for the report to finish generating.
 
     Args:
       report_job: The report job to wait for. This may be a dictionary or an
           instance of the SOAP ReportJob class.
+      pollTimeSeconds: The number of seconds to wait between calls to getReportJobStatus
+          generating before timing out. Defaults to 30 seconds.
 
     Returns:
       The completed report job's ID as a string.
@@ -895,7 +897,7 @@ class DataDownloader(object):
 
     while status != 'COMPLETED' and status != 'FAILED':
       _data_downloader_logger.debug('Report job status: %s', status)
-      time.sleep(30)
+      time.sleep(pollTimeSeconds)
       status = service.getReportJobStatus(report_job_id)
 
     if status == 'FAILED':
