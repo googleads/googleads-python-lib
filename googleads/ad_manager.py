@@ -883,7 +883,7 @@ class DataDownloader(object):
     Args:
       report_job: The report job to wait for. This may be a dictionary or an
           instance of the SOAP ReportJob class.
-      poolTimeSeconds: The number of seconds to wait for the report to finish
+      pollTimeSeconds: The number of seconds to wait between calls to getReportJobStatus
           generating before timing out. Defaults to 30 seconds.
 
     Returns:
