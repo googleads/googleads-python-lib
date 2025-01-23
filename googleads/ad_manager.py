@@ -899,7 +899,7 @@ class DataDownloader(object):
 
     while status != 'COMPLETED' and status != 'FAILED':
       _data_downloader_logger.debug('Report job status: %s', status)
-      time.sleep(poolTimeSeconds)
+      time.sleep(pollTimeSeconds)
       status = service.getReportJobStatus(report_job_id)
 
     if status == 'FAILED':
