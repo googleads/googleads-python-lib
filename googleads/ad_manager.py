@@ -44,52 +44,6 @@ _data_downloader_logger = logging.getLogger(
 
 # A giant dictionary of Ad Manager versions and the services they support.
 _SERVICE_MAP = {
-    'v202402': (
-        'ActivityGroupService',
-        'ActivityService',
-        'AdjustmentService',
-        'AdRuleService',
-        'AudienceSegmentService',
-        'CdnConfigurationService',
-        'CmsMetadataService',
-        'CompanyService',
-        'ContactService',
-        'ContentBundleService',
-        'ContentService',
-        'CreativeService',
-        'CreativeSetService',
-        'CreativeTemplateService',
-        'CreativeWrapperService',
-        'CustomFieldService',
-        'CustomTargetingService',
-        'DaiAuthenticationKeyService',
-        'DaiEncodingProfileService',
-        'ForecastService',
-        'InventoryService',
-        'LabelService',
-        'LineItemCreativeAssociationService',
-        'LineItemService',
-        'LineItemTemplateService',
-        'LiveStreamEventService',
-        'MobileApplicationService',
-        'NativeStyleService',
-        'NetworkService',
-        'OrderService',
-        'PlacementService',
-        'ProposalLineItemService',
-        'ProposalService',
-        'PublisherQueryLanguageService',
-        'ReportService',
-        'SegmentPopulationService',
-        'SiteService',
-        'StreamActivityMonitorService',
-        'SuggestedAdUnitService',
-        'TeamService',
-        'TargetingPresetService',
-        'UserService',
-        'UserTeamAssociationService',
-        'YieldGroupService',
-    ),
     'v202405': (
         'AdjustmentService',
         'AdRuleService',
@@ -180,6 +134,51 @@ _SERVICE_MAP = {
         'YieldGroupService',
     ),
     'v202411': (
+        'AdjustmentService',
+        'AdRuleService',
+        'AdsTxtService',
+        'AudienceSegmentService',
+        'CdnConfigurationService',
+        'CmsMetadataService',
+        'CompanyService',
+        'ContactService',
+        'ContentBundleService',
+        'ContentService',
+        'CreativeService',
+        'CreativeSetService',
+        'CreativeTemplateService',
+        'CreativeWrapperService',
+        'CustomFieldService',
+        'CustomTargetingService',
+        'DaiAuthenticationKeyService',
+        'DaiEncodingProfileService',
+        'ForecastService',
+        'InventoryService',
+        'LabelService',
+        'LineItemCreativeAssociationService',
+        'LineItemService',
+        'LineItemTemplateService',
+        'LiveStreamEventService',
+        'MobileApplicationService',
+        'NativeStyleService',
+        'NetworkService',
+        'OrderService',
+        'PlacementService',
+        'ProposalLineItemService',
+        'ProposalService',
+        'PublisherQueryLanguageService',
+        'ReportService',
+        'SegmentPopulationService',
+        'SiteService',
+        'StreamActivityMonitorService',
+        'SuggestedAdUnitService',
+        'TeamService',
+        'TargetingPresetService',
+        'UserService',
+        'UserTeamAssociationService',
+        'YieldGroupService',
+    ),
+    'v202502': (
         'AdjustmentService',
         'AdRuleService',
         'AdsTxtService',
@@ -875,14 +874,14 @@ class DataDownloader(object):
           'PublisherQueryLanguageService', self._version, self._server)
     return self._pql_service
 
-  def WaitForReport(self, report_job, pollTimeSeconds = 30):
+  def WaitForReport(self, report_job, poll_time_seconds=30):
     """Runs a report, then waits (blocks) for the report to finish generating.
 
     Args:
       report_job: The report job to wait for. This may be a dictionary or an
           instance of the SOAP ReportJob class.
-      pollTimeSeconds: The number of seconds to wait between calls to getReportJobStatus
-          generating before timing out. Defaults to 30 seconds.
+      poll_time_seconds: The number of seconds to wait between calls to
+          getReportJobStatus. Defaults to 30 seconds.
 
     Returns:
       The completed report job's ID as a string.
@@ -897,7 +896,7 @@ class DataDownloader(object):
 
     while status != 'COMPLETED' and status != 'FAILED':
       _data_downloader_logger.debug('Report job status: %s', status)
-      time.sleep(pollTimeSeconds)
+      time.sleep(poll_time_seconds)
       status = service.getReportJobStatus(report_job_id)
 
     if status == 'FAILED':

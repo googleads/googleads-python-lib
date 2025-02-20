@@ -649,6 +649,19 @@ class DataDownloaderTest(unittest.TestCase):
     self.assertEqual(id_, rval)
     self.report_service.getReportJobStatus.assert_any_call(id_)
 
+  def testWaitForReport_customPollTime(self):
+    id_ = 'fhqwhgads'
+    input_ = {'reportQuery': 'something', 'id': id_}
+    self.report_service.getReportJobStatus.side_effect = ['IN_PROGRESS',
+                                                          'COMPLETED']
+    self.report_service.runReportJob.return_value = input_
+
+    with mock.patch('time.sleep') as mock_sleep:
+      rval = self.report_downloader.WaitForReport(input_, poll_time_seconds=10)
+      mock_sleep.assert_called_once_with(10)
+    self.assertEqual(id_, rval)
+    self.report_service.getReportJobStatus.assert_any_call(id_)
+
   def testWaitForReport_failure(self):
     self.report_service.getReportJobStatus.return_value = 'FAILED'
     self.report_service.runReportJob.return_value = {'id': '782yt97r2'}
