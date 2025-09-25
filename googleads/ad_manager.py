@@ -17,11 +17,14 @@
 
 import csv
 import datetime
+import gzip
+import io
 import logging
 import numbers
 import os
 import sys
 import time
+import threading
 from urllib.request import build_opener
 
 import pytz
@@ -1099,6 +1102,39 @@ class DataDownloader(object):
       return date_time_str[:-6] + 'Z'
     else:
       return date_time_str
+  
+  def _run_downloader_thread(self, outfile, **kwargs):
+    """
+    Run `DownloadReportToFile` and afterward flush and close `outfile`.
+
+    :param outfile: Write pipe.
+    :param kwargs: Remaining keyword arguments.
+    """
+    kwargs['outfile'] = outfile
+    self.DownloadReportToFile(**kwargs)
+    outfile.flush()
+    outfile.close()
+
+  def IterReportRows(self, **kwargs):
+    """
+    Stream data from `DownloadReportToFile` via a pipe and generate records from it. All kwargs but `outfile`,
+    `export_format` and `use_gzip_compression` are passed to `_run_downloader_thread` which passes them to
+    `DownloadReportToFile`.
+
+    :param kwargs: Passed into `DownloadReportToFile`.
+    """
+    r_fd, w_fd = os.pipe()
+    r_pipe = gzip.GzipFile(fileobj=os.fdopen(r_fd, 'rb', buffering=io.DEFAULT_BUFFER_SIZE), mode='rb')
+    w_pipe = open(w_fd, 'wb', buffering=io.DEFAULT_BUFFER_SIZE)
+
+    kwargs['outfile'] = w_pipe
+    kwargs['export_format'] = 'TSV'
+    kwargs['use_gzip_compression'] = True
+    t = threading.Thread(target=self._run_downloader_thread, kwargs=kwargs)
+    t.start()
+    reader = csv.DictReader((line.decode() for line in r_pipe), delimiter='\t')
+    for row in reader:
+      yield row
 
 
 def AdManagerClassType(value):
