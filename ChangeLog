@@ -1,3 +1,8 @@
+48.0.0 -- 11/18/2025
+* Added support for v202511.
+* Removed support for v202411.
+* Removed examples for v202502.
+
 47.0.0 -- 08/12/2025
 * Added support for v202508.
 * Removed support for v202408.
