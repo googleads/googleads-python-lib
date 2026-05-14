@@ -110,7 +110,7 @@ class ZeepLogger(zeep.Plugin, _AbstractDevTokenSOAPFilter):
         if 'methodName' not in warn_data:
           warn_data['methodName'] = operation.name
 
-        self._logger.warn('Error summary: %s', warn_data)
+        self._logger.warning('Error summary: %s', warn_data)
 
     return envelope, http_headers
 
