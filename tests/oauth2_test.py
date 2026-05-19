@@ -303,6 +303,43 @@ class GoogleServiceAccountTest(
           self.key_file_path, scopes=[self.scope],
           subject=self.delegated_account)
 
+  def testCreateFromServiceAccountInfo(self):
+    with mock.patch('google.oauth2.service_account.Credentials') as mock_cred:
+      # Mock service account info dictionary
+      service_account_info = {'private_key': 'fake_key', 'client_email': 'test@example.com'}
+      mock_cred.from_service_account_info.return_value = self.mock_credentials_instance
+      
+      # Create a GoogleServiceAccountClient using from_service_account_info
+      client = googleads.oauth2.GoogleServiceAccountClient.from_service_account_info(
+          service_account_info, self.scope, sub=self.delegated_account)
+      
+      # Verify the credentials were instantiated correctly
+      mock_cred.from_service_account_info.assert_called_once_with(
+          service_account_info, scopes=[self.scope],
+          subject=self.delegated_account)
+      
+      # Verify the client has the expected properties
+      self.assertEqual(client.creds, self.mock_credentials_instance)
+      self.assertEqual(client.proxy_config.proxies, {})
+
+  def testCreateFromServiceAccountInfoWithProxyConfig(self):
+    with mock.patch('google.oauth2.service_account.Credentials') as mock_cred:
+      # Mock service account info dictionary
+      service_account_info = {'private_key': 'fake_key', 'client_email': 'test@example.com'}
+      mock_cred.from_service_account_info.return_value = self.mock_credentials_instance
+      
+      # Create proxy config
+      https_proxy = 'http://myproxy.com:443'
+      proxy_config = googleads.common.ProxyConfig(https_proxy=https_proxy)
+      
+      # Create a GoogleServiceAccountClient using from_service_account_info with proxy config
+      client = googleads.oauth2.GoogleServiceAccountClient.from_service_account_info(
+          service_account_info, self.scope, sub=self.delegated_account, 
+          proxy_config=proxy_config)
+      
+      # Verify the client has the expected proxy config
+      self.assertEqual(client.proxy_config.proxies, {'https': https_proxy})
+
   def testCreateHttpHeader_noRefresh(self):
     header = {'authorization': 'Bearer %s' % self.access_token_unrefreshed}
     self.mock_credentials_instance.expiry = (
