@@ -1,3 +1,8 @@
+51.0.0 -- 08/19/2026
+* Added support for v202608.
+* Removed support for v202508.
+* Removed examples for v202511.
+
 50.0.0 -- 05/14/2026
 * Added support for v202605.
 * Removed support for v202505.
