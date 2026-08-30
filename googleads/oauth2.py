@@ -251,8 +251,8 @@ class GoogleServiceAccountClient(GoogleRefreshableOAuth2Client):
   """A simple client for using OAuth2 for Google APIs with a service account.
 
   This class is not capable of supporting any flows other than generating
-  credentials from a service account email and key file. This is incompatible
-  with App Engine.
+  credentials from a service account email and key file or service account info 
+  dictionary. Using a key file is incompatible with App Engine.
 
   Attributes:
     proxy_info: A ProxyInfo instance used for refresh requests.
@@ -287,6 +287,30 @@ class GoogleServiceAccountClient(GoogleRefreshableOAuth2Client):
     self.proxy_config = (proxy_config if proxy_config else
                          googleads.common.ProxyConfig())
     self.Refresh()
+
+  @classmethod
+  def from_service_account_info(cls, service_account_info, scope, sub=None, proxy_config=None):
+    """Creates a GoogleServiceAccountClient from a service account info dict.
+
+    Args:
+      service_account_info: A dict containing the service account info in Google format.
+      scope: The scope of the API you're authorizing for.
+      [optional]
+      sub: A string containing the email address of a user account you want to
+           impersonate.
+      proxy_config: A googleads.common.ProxyConfig instance.
+
+    Returns:
+      A GoogleServiceAccountClient instance.
+    """
+    instance = cls.__new__(cls)
+    instance.creds = (
+        google.oauth2.service_account.Credentials.from_service_account_info(
+            service_account_info, scopes=[scope], subject=sub))
+    instance.proxy_config = (proxy_config if proxy_config else
+                       googleads.common.ProxyConfig())
+    instance.Refresh()
+    return instance
 
   def CreateHttpHeader(self):
     """Creates an OAuth2 HTTP header.
