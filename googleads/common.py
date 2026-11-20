@@ -583,7 +583,11 @@ class ZeepSchemaHelper(GoogleSchemaHelper):
     except requests.exceptions.HTTPError as e:
       raise googleads.errors.GoogleAdsSoapTransportError(str(e))
 
-    self.schema = zeep.xsd.Schema(lxml.etree.fromstring(data))
+    # Avoid expanding XML entities or loading external DTDs from WSDL data.
+    parser = lxml.etree.XMLParser(
+        resolve_entities=False, load_dtd=False, no_network=True)
+    self.schema = zeep.xsd.Schema(
+        lxml.etree.fromstring(data, parser=parser))
     self._namespace_override = namespace_override
     self._element_maker = lxml.builder.ElementMaker(
         namespace=namespace_override, nsmap={'tns': namespace_override})
