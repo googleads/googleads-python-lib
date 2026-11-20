@@ -760,6 +760,26 @@ class ZeepServiceProxyTest(unittest.TestCase):
             self.fake_version)
 
   @mock.patch('googleads.common._ZeepProxyTransport')
+  def testSchemaHelperDoesNotResolveEntities(self, mock_transport_class):
+    mock_transport_class.return_value.load.return_value = (
+        b'<!DOCTYPE xs:schema [<!ENTITY marker "expanded">]>'
+        b'<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">'
+        b'<xs:annotation><xs:documentation>&marker;</xs:documentation>'
+        b'</xs:annotation></xs:schema>')
+
+    with mock.patch('googleads.common.zeep.xsd.Schema') as mock_schema:
+      googleads.common.ZeepSchemaHelper(
+          'https://example.com/service.wsdl', 100,
+          googleads.common.ProxyConfig(), 'urn:test', None)
+
+    schema_element = mock_schema.call_args[0][0]
+    documentation = schema_element.find(
+        '{http://www.w3.org/2001/XMLSchema}annotation').find(
+            '{http://www.w3.org/2001/XMLSchema}documentation')
+    self.assertIsNone(documentation.text)
+    self.assertEqual(documentation[0].name, 'marker')
+
+  @mock.patch('googleads.common._ZeepProxyTransport')
   def testSchemaHelperRaisesGoogleError(self, mock_transport_class):
     mock_transport_class.return_value.load.side_effect = (
         requests.exceptions.HTTPError)
